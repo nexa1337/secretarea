@@ -2379,10 +2379,19 @@ const SecretArea: React.FC = () => {
     const recent: ResourceItem[] = [];
     ['game', 'hypervisor', 'steamtools', 'architect', 'extra'].forEach(cat => {
         const items = allResources[cat] || [];
-        const catRecent = [...items].reverse().slice(0, 10);
+        const catRecent = [...items].slice(0, 10);
         recent.push(...catRecent);
     });
-    return recent;
+    
+    // Sort globally by timestamp descending
+    return recent.sort((a, b) => {
+        const dA = new Date(a.dateAdded || 0).getTime();
+        const dB = new Date(b.dateAdded || 0).getTime();
+        if (!isNaN(dA) && !isNaN(dB)) return dB - dA;
+        if (!isNaN(dA)) return -1;
+        if (!isNaN(dB)) return 1;
+        return 0;
+    });
   }, [allResources]);
   const [showSteamModal, setShowSteamModal] = useState(false);
 
