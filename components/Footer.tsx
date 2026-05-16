@@ -5,7 +5,7 @@ import Icon from './Icon';
 
 export const NEXA_ECOSYSTEM_LINKS = [
   { name: 'N E X A 1337', url: 'https://nexa1337.github.io/nexa1337', clicks: '342K' },
-  { name: 'N E X A 1337 - Portfolio', url: 'https://nexa1337.github.io/Owner', clicks: '215K' },
+  { name: 'N E X A 1337 - Secret Area', url: 'https://nexa1337.github.io/secretarea', clicks: '215K' },
   { name: 'N E X A 1337 - Tool', url: 'https://nexa1337.github.io/tool', clicks: '189K' },
   { name: 'N E X A 1337 - Tool v2', url: 'https://nexa1337.github.io/toolv2', clicks: '92K' },
   { name: 'N E X A 1337 - School', url: 'https://school-lime-psi.vercel.app/', clicks: '54K' },

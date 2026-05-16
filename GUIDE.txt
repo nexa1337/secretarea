@@ -42,7 +42,7 @@ This file is the "Brain" of your site. It controls the Navigation menu and your 
     *Tip: Use a square image hosted on Imgur, Blogger, or GitHub.*
 
 *   **Change Name & Title:**
-    Search for "Marouan Anouar" or "Own path, own rules" and edit the text directly.
+    Search for "N E X A 1337" or "Own path, own rules" and edit the text directly.
 
 *   **Change Bio Text:**
     Scroll down to the `div` containing the bio paragraphs (e.g., "I’m an interior designer...") and edit the text.
@@ -79,7 +79,7 @@ This controls the "Wolf" chatbot Q&A.
 *   **To Change Questions/Answers:**
     Look for `const STATIC_DATA`.
     It is organized by sections:
-    *   `section1`: About Marouan
+    *   `section1`: About N E X A 1337
     *   `section2`: NEXA 1337
     *   `section3`: Architecture
     *   `section4`: IT/Tech

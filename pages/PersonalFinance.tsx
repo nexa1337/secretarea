@@ -425,7 +425,7 @@ const PersonalFinance: React.FC = () => {
 
   const handleUnlock = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'Marouan.anouar1') {
+    if (password === 'Nexa.1337') {
       setLocked(false);
       sessionStorage.setItem('admin_unlocked', 'true');
       setShowAuthModal(false);
@@ -955,7 +955,7 @@ const PersonalFinance: React.FC = () => {
                 <div className="p-2 bg-slate-900 dark:bg-white rounded-lg text-white dark:text-slate-900"><Icon name="User" size={24} /></div>
                 <div>
                     <h1 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Admin <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600">Space</span></h1>
-                    <p className="text-slate-500 dark:text-slate-400 font-mono text-[10px] md:text-xs">ID: Marouan.Anouar | Access: <span className={locked ? "text-orange-500 font-bold" : "text-emerald-500 font-bold"}>{locked ? "Partial" : "Full"}</span></p>
+                    <p className="text-slate-500 dark:text-slate-400 font-mono text-[10px] md:text-xs">ID: Nexa.1337 | Access: <span className={locked ? "text-orange-500 font-bold" : "text-emerald-500 font-bold"}>{locked ? "Partial" : "Full"}</span></p>
                 </div>
             </div>
           </div>

@@ -99,13 +99,13 @@ const BottomNav: React.FC = () => {
                     <Icon name="ExternalLink" size={14} className="text-slate-300 dark:text-slate-500 group-hover:text-blue-500 transition-colors" />
                 </a>
 
-                <a href="#" className="flex items-center justify-between p-3.5 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm transition-all group">
+                <a href="https://nexa1337.github.io/secretarea" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3.5 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm transition-all group">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-100 dark:border-indigo-500/20 group-hover:scale-110 transition-transform">
                             <Icon name="Layout" size={18} />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-slate-900 dark:text-white font-extrabold text-[13px] tracking-tight">N E X A 1337 - Portfolio</span>
+                            <span className="text-slate-900 dark:text-white font-extrabold text-[13px] tracking-tight">N E X A 1337 - Secret Area</span>
                             <span className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">215K clicks</span>
                         </div>
                     </div>
