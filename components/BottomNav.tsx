@@ -77,16 +77,24 @@ const BottomNav: React.FC = () => {
 
       <AnimatePresence>
         {showMoreMobile && (
-          <motion.div 
-            initial={{ opacity: 0, y: 100 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 100 }}
-            className="md:hidden fixed inset-x-4 bottom-20 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-3xl p-4 shadow-2xl flex flex-col items-stretch max-h-[70vh]"
-          >
-             <h3 className="text-slate-900 dark:text-white font-bold mb-4 px-2 tracking-tight">N E X A 1337 Ecosystem</h3>
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowMoreMobile(false)}
+              className="md:hidden fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, y: 100 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 100 }}
+              className="md:hidden fixed inset-x-4 bottom-20 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-3xl p-4 shadow-2xl flex flex-col items-stretch max-h-[85vh]"
+            >
+             <h3 className="text-slate-900 dark:text-white font-bold mb-3 px-2 tracking-tight">N E X A 1337 Ecosystem</h3>
              
-             <div className="flex flex-col gap-2 overflow-y-auto px-2 pb-2">
-                <a href="https://instagram.com/nexa1337" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3.5 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm transition-all group">
+             <div className="flex flex-col gap-2 overflow-y-auto no-scrollbar px-2 pb-2">
+                <a href="https://instagram.com/nexa1337" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm transition-all group">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-100 dark:border-blue-500/20 group-hover:scale-110 transition-transform">
                             <Icon name="Briefcase" size={18} />
@@ -99,7 +107,7 @@ const BottomNav: React.FC = () => {
                     <Icon name="ExternalLink" size={14} className="text-slate-300 dark:text-slate-500 group-hover:text-blue-500 transition-colors" />
                 </a>
 
-                <a href="https://nexa1337.github.io/secretarea" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3.5 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm transition-all group">
+                <a href="https://nexa1337.github.io/secretarea" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm transition-all group">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-100 dark:border-indigo-500/20 group-hover:scale-110 transition-transform">
                             <Icon name="Layout" size={18} />
@@ -112,7 +120,7 @@ const BottomNav: React.FC = () => {
                     <Icon name="ExternalLink" size={14} className="text-slate-300 dark:text-slate-500 group-hover:text-indigo-500 transition-colors" />
                 </a>
 
-                <a href="https://nexa1337.github.io/tool/" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3.5 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm transition-all group">
+                <a href="https://nexa1337.github.io/tool/" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm transition-all group">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-500/20 group-hover:scale-110 transition-transform">
                             <Icon name="Wrench" size={18} />
@@ -125,7 +133,7 @@ const BottomNav: React.FC = () => {
                     <Icon name="ExternalLink" size={14} className="text-slate-300 dark:text-slate-500 group-hover:text-emerald-500 transition-colors" />
                 </a>
 
-                <a href="#" className="flex items-center justify-between p-3.5 bg-slate-900 dark:bg-slate-950 active:scale-[0.98] rounded-2xl border border-purple-500/20 shadow-lg transition-all group overflow-hidden relative">
+                <a href="https://nexa1337.github.io/toolv2/" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-slate-900 dark:bg-slate-950 active:scale-[0.98] rounded-2xl border border-purple-500/20 shadow-lg transition-all group overflow-hidden relative">
                     <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 opacity-50"></div>
                     <div className="flex items-center gap-3 relative z-10">
                         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 text-white flex items-center justify-center shrink-0 shadow-md group-hover:scale-110 transition-transform">
@@ -141,7 +149,7 @@ const BottomNav: React.FC = () => {
                     <Icon name="ExternalLink" size={14} className="text-slate-500 relative z-10 group-hover:text-purple-400 transition-colors" />
                 </a>
 
-                <a href="https://school-lime-psi.vercel.app/" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3.5 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm transition-all group">
+                <a href="https://school-lime-psi.vercel.app/" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm transition-all group">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-100 dark:border-amber-500/20 group-hover:scale-110 transition-transform">
                             <Icon name="GraduationCap" size={18} />
@@ -154,7 +162,7 @@ const BottomNav: React.FC = () => {
                     <Icon name="ExternalLink" size={14} className="text-slate-300 dark:text-slate-500 group-hover:text-amber-500 transition-colors" />
                 </a>
 
-                <a href="https://digitalstore-iota-five.vercel.app/" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3.5 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm transition-all group">
+                <a href="https://digitalstore-iota-five.vercel.app/" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm transition-all group">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-100 dark:border-rose-500/20 group-hover:scale-110 transition-transform">
                             <Icon name="ShoppingCart" size={18} />
@@ -168,10 +176,11 @@ const BottomNav: React.FC = () => {
                 </a>
              </div>
 
-             <button onClick={() => setShowMoreMobile(false)} className="mt-4 w-full py-3.5 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-600 dark:text-red-500 rounded-xl font-bold active:scale-95 transition-all outline-none">
+             <button onClick={() => setShowMoreMobile(false)} className="mt-2 w-full py-3 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-600 dark:text-red-500 rounded-xl font-bold active:scale-95 transition-all outline-none text-sm">
                Close Menu
              </button>
           </motion.div>
+          </>
         )}
       </AnimatePresence>
     </>

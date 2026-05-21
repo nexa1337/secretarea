@@ -169,8 +169,8 @@ function doGet() {
     var sheet = sheets[i];
     var name = sheet.getName().trim().toLowerCase();
     
-    // Define which tabs to export (Added mastergift)
-    if (['game', 'steamtools', 'architect', 'extra', 'upcoming', 'steamaccounts', 'mastergift'].indexOf(name) > -1) {
+    // Define which tabs to export (Added profil and hypervisor)
+    if (['game', 'hypervisor', 'steamtools', 'architect', 'profil', 'extra', 'upcoming', 'steamaccounts', 'mastergift'].indexOf(name) > -1) {
       var data = sheet.getDataRange().getValues();
       if (data.length > 1) {
         var headers = data[0];

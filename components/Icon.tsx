@@ -11,7 +11,7 @@ import {
   TbLink, TbCamera, TbPlane, TbBook, TbDeviceDesktop, TbBrandYoutube, TbBrandInstagram,
   TbBrandLinkedin, TbBrandGithub, TbBrandX, TbBug, TbDatabase, TbRocket, TbHelp,
   TbBrandWindows, TbBrandXbox, TbBrandTiktok, TbSitemap, TbFaceId,
-  TbUser, TbLock, TbKey, TbUsers, TbBrandDiscord, TbPin, TbAlertTriangle,
+  TbUser, TbLock, TbKey, TbUsers, TbBrandDiscord, TbBrandTelegram, TbPin, TbAlertTriangle,
   TbLoader, TbSend, TbCopy, TbGhost, TbShoppingCart, TbShieldExclamation, TbGift,
   TbBold, TbItalic, TbList, TbCheckbox, TbGridDots, TbSearch, TbCalculator, TbBulb, TbSparkles, TbRefresh, TbInfoCircle,
   TbTarget, TbEye, TbBookmark, TbRadar, TbTerminal, TbBell, TbHistory, TbFilter, TbMenu2, TbDots
@@ -112,6 +112,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Bike: TbMotorbike,
   Users: TbUsers,
   Discord: TbBrandDiscord,
+  Telegram: TbBrandTelegram,
   Pin: TbPin,
   AlertTriangle: TbAlertTriangle,
   ShieldAlert: TbShieldExclamation,
@@ -211,6 +212,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
 };
 
 const Icon: React.FC<IconProps> = ({ name, size = 24, className }) => {
+  if (!name) return <TbHelp size={size} className={className} />;
   const IconComponent = ICON_MAP[name] || ICON_MAP[name.toUpperCase()] || TbHelp;
   return <IconComponent size={size} className={className} />;
 };

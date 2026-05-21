@@ -7,8 +7,9 @@ import Icon from '../components/Icon';
 import { CommentsSection } from '../components/CommentsSection';
 
 // --- CONFIGURATION ---
-const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzgf5ksoqfknXvJpAidk4NXoIlCdGbtp3UA1jxfHOacwCuAzigal8lsZ-XaLr0XJo4-/exec';
+const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwrVkWctd_jYKyqziHTDZQfGhcUCjVaUE8p9IUaymt7mPTh6J2oxMtBkOM_ksBzmDHH/exec';
 const DISCORD_LINK = 'https://discord.gg/MgqvMyZv2b';
+const TELEGRAM_LINK = 'https://t.me/nexa1337agency';
 const INSTAGRAM_LINK = 'https://instagram.com/nexa1337';
 const ITEMS_PER_PAGE = 12; // Show 12 items per page for laptop grid (4x3)
 
@@ -91,6 +92,7 @@ interface ResourceItem {
   galleryImages: string[];
   description: string;
   gameId?: string;
+  developer?: string;
   ratingPositive?: string;
   ratingNegative?: string;
   dateAdded?: string;
@@ -110,6 +112,18 @@ interface ResourceItem {
     dlc?: string;
     trailer?: string;
   };
+}
+
+interface CompanyProfile {
+  id: string;
+  name: string;
+  logoUrl: string;
+  description: string;
+  gameIds?: string[];
+  hypervisorIds?: string[];
+  steamtoolsIds?: string[];
+  architectIds?: string[];
+  extraIds?: string[];
 }
 
 interface UpcomingGame {
@@ -812,6 +826,7 @@ const GameCarousel: React.FC<{ games: UpcomingGame[], loading: boolean, errorSta
 
     const handleTouchStart = (e: React.TouchEvent) => {
         touchStartX.current = e.targetTouches[0].clientX;
+        touchEndX.current = e.targetTouches[0].clientX;
     };
 
     const handleTouchMove = (e: React.TouchEvent) => {
@@ -970,6 +985,7 @@ const RecentProductsCarousel: React.FC<{
 
     const handleTouchStart = (e: React.TouchEvent) => {
         touchStartX.current = e.targetTouches[0].clientX;
+        touchEndX.current = e.targetTouches[0].clientX;
     };
 
     const handleTouchMove = (e: React.TouchEvent) => {
@@ -1481,13 +1497,168 @@ const NoteModal: React.FC<{
   </motion.div>
 );
 
+const CompanyProfileModal: React.FC<{
+  profile: CompanyProfile;
+  resources: ResourceItem[];
+  onClose: () => void;
+  onItemClick: (item: ResourceItem) => void;
+}> = ({ profile, resources, onClose, onItemClick }) => {
+  const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [imgError, setImgError] = useState(false);
+  const itemsPerPage = 24;
+
+  useEffect(() => {
+    setImgError(false);
+  }, [profile.logoUrl]);
+
+  const categories = Array.from(new Set(resources.map(r => r.category)));
+  categories.unshift('all');
+
+  const filteredResources = activeCategory === 'all' 
+      ? resources 
+      : resources.filter(r => r.category === activeCategory);
+
+  const totalPages = Math.ceil(filteredResources.length / itemsPerPage) || 1;
+  const currentItems = filteredResources.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 20 }}
+      className="fixed inset-0 z-[100] flex flex-col bg-slate-50 dark:bg-slate-950 overflow-hidden"
+    >
+      <div className="flex-none p-4 md:p-8 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md">
+        <div className="flex items-center gap-4 md:gap-6">
+          <div className="w-16 h-16 md:w-24 md:h-24 shrink-0 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex items-center justify-center p-2 relative group">
+             {!imgError && profile.logoUrl ? (
+               <>
+                 <img src={profile.logoUrl} alt={profile.name} referrerPolicy="no-referrer" className="w-full h-full object-contain" onError={() => setImgError(true)} />
+               </>
+             ) : (
+                <div className="absolute inset-0 flex items-center justify-center bg-slate-100 dark:bg-slate-800">
+                   <Icon name="Briefcase" size={32} className="text-slate-300 dark:text-slate-600" />
+                </div>
+             )}
+          </div>
+          <div>
+            <h2 className="text-2xl md:text-5xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-1 md:mb-2">{profile.name}</h2>
+            <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 max-w-3xl line-clamp-2 md:line-clamp-none leading-relaxed">{profile.description || 'Welcome to this company\'s profile. Explore their ecosystem of products and releases below.'}</p>
+          </div>
+        </div>
+        <button onClick={onClose} className="p-2 md:p-3 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-500 bg-slate-100 dark:bg-slate-900 shrink-0 border border-slate-200 dark:border-slate-700 ml-4">
+           <Icon name="X" size={24} />
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar relative">
+        <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 custom-scrollbar">
+           {categories.map(cat => (
+              <button
+                 key={cat}
+                 onClick={() => { setActiveCategory(cat); setCurrentPage(1); }}
+                 className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors flex items-center gap-2 ${
+                    activeCategory === cat 
+                    ? 'bg-primary-500 text-white shadow-md shadow-primary-500/20 border border-primary-500' 
+                    : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-primary-500/50'
+                 }`}
+              >
+                 {cat === 'all' ? 'All Products' : (cat === 'steamtools' ? 'SteamTools' : cat)}
+                 <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded ${activeCategory === cat ? 'bg-black/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
+                     {cat === 'all' ? resources.length : resources.filter(r => r.category === cat).length}
+                 </span>
+              </button>
+           ))}
+        </div>
+
+        {currentItems.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4 md:gap-6">
+            {currentItems.map(item => (
+               <div 
+                  key={item.id} 
+                  onClick={() => onItemClick(item)}
+                  className="group cursor-pointer bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden hover:border-primary-500 dark:hover:border-primary-500 transition-all shadow-sm hover:shadow-xl flex flex-col h-full"
+               >
+                  <div className="aspect-[9/16] bg-slate-100 dark:bg-slate-800 relative overflow-hidden shrink-0">
+                     <img src={item.coverImage} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                     <div className="absolute top-2 inset-x-2 flex justify-between items-start">
+                         <div className="bg-primary-600 text-white px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest shadow-md">
+                             {(item.category || '').toUpperCase()}
+                         </div>
+                         {item.version && (
+                             <div className="bg-slate-900/80 backdrop-blur-sm text-slate-200 border border-slate-700 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold shadow-md truncate ml-2">
+                                 {item.version}
+                             </div>
+                         )}
+                     </div>
+                  </div>
+                  <div className="p-3 flex-1 flex flex-col">
+                     <h4 className="font-bold text-slate-900 dark:text-white line-clamp-2 text-[11px] md:text-sm tracking-tight leading-tight group-hover:text-primary-500 transition-colors">{item.name}</h4>
+                     
+                     <div className="mt-auto pt-2 flex flex-wrap gap-1">
+                        {item.genres && (
+                           <span className="text-[9px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded truncate max-w-full">
+                               {item.genres.split(',')[0]}
+                           </span>
+                        )}
+                        {!item.genres && item.repackBy && (
+                           <span className="text-[9px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded truncate max-w-full">
+                               {item.repackBy}
+                           </span>
+                        )}
+                     </div>
+                  </div>
+               </div>
+            ))}
+          </div>
+        ) : (
+          <div className="h-64 flex flex-col items-center justify-center text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl bg-white/50 dark:bg-slate-900/50">
+             <Icon name="SearchX" size={48} className="mb-4 opacity-30" />
+             <span className="text-sm font-bold uppercase tracking-widest text-slate-500">No products found in this category</span>
+          </div>
+        )}
+        
+        {totalPages > 1 && (
+            <div className="mt-8 flex justify-center gap-2 pb-8">
+               <button 
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center"
+               ><Icon name="ChevronLeft" size={16} /></button>
+               <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar px-1">
+                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                     <button
+                         key={page}
+                         onClick={() => setCurrentPage(page)}
+                         className={`w-10 h-10 rounded-lg text-xs font-bold transition-colors shrink-0 ${currentPage === page ? 'bg-primary-500 text-white shadow-md' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-primary-500/50 text-slate-600 dark:text-slate-300'}`}
+                     >
+                         {page}
+                     </button>
+                 ))}
+               </div>
+               <button 
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center"
+               ><Icon name="ChevronRight" size={16} /></button>
+            </div>
+        )}
+      </div>
+    </motion.div>
+  );
+};
+
 const ResourceDetailModal: React.FC<{ 
   item: ResourceItem; 
   onClose: () => void;
   isHypervisor?: boolean;
   stash: string[];
   toggleStash: (id: string, e?: React.MouseEvent) => void;
-}> = ({ item, onClose, isHypervisor, stash, toggleStash }) => {
+  onCompanyClick?: (companyName: string) => void;
+  resolvedDev?: string;
+}> = ({ item, onClose, isHypervisor, stash, toggleStash, onCompanyClick, resolvedDev }) => {
   const [activeImage, setActiveImage] = useState(item.coverImage);
   const [showTrailer, setShowTrailer] = useState(false);
   const [translatedDesc, setTranslatedDesc] = useState<string | null>(null);
@@ -1635,6 +1806,15 @@ const ResourceDetailModal: React.FC<{
                   {!isSteamTool && <Badge text={item.version} color="slate" icon="Code" />}
                   {isSteamTool && item.gameId && <Badge text={`ID: ${item.gameId}`} color="slate" icon="Hash" />}
                   {!isSteamTool && item.category !== 'architect' && item.repackBy && <Badge text={`REPACK: ${item.repackBy.toUpperCase()}`} color="emerald" icon="Box" />}
+                  {resolvedDev && (
+                      <button 
+                         onClick={() => onCompanyClick && onCompanyClick(resolvedDev)}
+                         className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-400 hover:bg-violet-200 dark:hover:bg-violet-500/30 transition-colors border border-violet-200 dark:border-violet-500/30"
+                      >
+                          <Icon name="Briefcase" size={12} />
+                          {resolvedDev}
+                      </button>
+                  )}
                </div>
                <div className="flex items-start justify-between gap-4">
                  <h2 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white leading-none tracking-tight uppercase italic">{item.name}</h2>
@@ -2156,6 +2336,154 @@ const LatestIntelPanel: React.FC<{ open: boolean; onClose: () => void; items: In
   );
 };
 
+const BestStudiosCarousel: React.FC<{ 
+    profiles: CompanyProfile[], 
+    onSelect: (profile: CompanyProfile) => void,
+    onSeeAll: () => void,
+    categoryType: 'games' | 'tools'
+}> = ({ profiles, onSelect, onSeeAll, categoryType }) => {
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [itemsPerView, setItemsPerView] = useState(5);
+    const [isHovered, setIsHovered] = useState(false);
+    const touchStartX = useRef(0);
+    const touchEndX = useRef(0);
+
+    const sortedProfiles = useMemo(() => {
+        return [...profiles]
+            .map(p => {
+                let count = 0;
+                if (categoryType === 'games') {
+                    count = (p.gameIds?.length || 0) + (p.hypervisorIds?.length || 0) + (p.steamtoolsIds?.length || 0);
+                } else {
+                    count = (p.architectIds?.length || 0) + (p.extraIds?.length || 0);
+                }
+                return {
+                    ...p,
+                    totalGames: count
+                };
+            })
+            .filter(p => p.totalGames > 0)
+            .sort((a, b) => b.totalGames - a.totalGames);
+    }, [profiles, categoryType]);
+
+    useEffect(() => {
+        const handleResize = () => {
+            const w = window.innerWidth;
+            if (w < 480) setItemsPerView(2.2); 
+            else if (w < 640) setItemsPerView(3.2); 
+            else if (w < 768) setItemsPerView(4.2); 
+            else if (w < 1024) setItemsPerView(5.2); 
+            else setItemsPerView(6); 
+        };
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    if (sortedProfiles.length === 0) return null;
+
+    const maxIndex = Math.max(0, sortedProfiles.length - Math.floor(itemsPerView));
+
+    const handleNext = () => setCurrentIndex(prev => Math.min(prev + 1, maxIndex));
+    const handlePrev = () => setCurrentIndex(prev => Math.max(prev - 1, 0));
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        touchStartX.current = e.targetTouches[0].clientX;
+        touchEndX.current = e.targetTouches[0].clientX;
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        touchEndX.current = e.targetTouches[0].clientX;
+    };
+
+    const handleTouchEnd = () => {
+        if (touchStartX.current - touchEndX.current > 50) handleNext();
+        if (touchStartX.current - touchEndX.current < -50) handlePrev();
+    };
+
+    return (
+        <div className="mt-12 bg-white/50 dark:bg-slate-900/50 rounded-3xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 backdrop-blur-sm relative z-10 w-full overflow-hidden">
+            <div className="flex items-center justify-between mb-6">
+                <div>
+                    <h2 className="text-lg md:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
+                        <Icon name="Briefcase" className="text-blue-500" /> {categoryType === 'games' ? 'Best Studios' : 'Best Company'}
+                    </h2>
+                    <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1">Top developers by released items</p>
+                </div>
+                <button 
+                    onClick={onSeeAll}
+                    className="shrink-0 text-xs sm:text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2 transition-all px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-500/20"
+                >
+                    <span>VIEW ALL</span> <Icon name="ArrowRight" size={16} />
+                </button>
+            </div>
+            
+            <div 
+                className="relative group w-full"
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+            >
+                <div className="overflow-hidden w-full relative">
+                    <motion.div 
+                        className="flex will-change-transform pb-4"
+                        animate={{ x: `-${currentIndex * (100 / itemsPerView)}%` }}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    >
+                        {sortedProfiles.map((profile) => (
+                            <div 
+                                key={profile.id}
+                                style={{ width: `${100 / itemsPerView}%` }}
+                                className="flex-shrink-0 px-2"
+                            >
+                                <div 
+                                    onClick={() => onSelect(profile)}
+                                    className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-4 cursor-pointer hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/10 transition-all h-full group/studio"
+                                >
+                                    <div className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 bg-slate-50 dark:bg-slate-900 rounded-2xl flex items-center justify-center p-3 border border-slate-100 dark:border-slate-800 group-hover/studio:border-blue-500/30 group-hover/studio:bg-blue-50 dark:group-hover/studio:bg-blue-900/20 overflow-hidden shrink-0 transition-all shadow-inner">
+                                        {profile.logoUrl ? (
+                                            <img src={profile.logoUrl} alt={profile.name} className="w-full h-full object-contain filter group-hover/studio:brightness-110 transition-all" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = '<span class="font-black text-lg sm:text-xl text-slate-400 group-hover/studio:text-blue-500 transition-colors">' + profile.name.substring(0, 2).toUpperCase() + '</span>'; }} />
+                                        ) : (
+                                            <span className="font-black text-lg sm:text-xl text-slate-400 group-hover/studio:text-blue-500 transition-colors">{profile.name.substring(0, 2).toUpperCase()}</span>
+                                        )}
+                                    </div>
+                                    <div className="text-center w-full">
+                                        <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-1 group-hover/studio:text-blue-500 transition-colors" title={profile.name}>{profile.name}</h3>
+                                        <span className="inline-block mt-2 px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 text-[9px] sm:text-[10px] font-black uppercase tracking-wider rounded border border-blue-200 dark:border-blue-500/30 group-hover/studio:shadow-sm">
+                                            {profile.totalGames} {profile.totalGames === 1 ? 'Item' : 'Items'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </motion.div>
+                </div>
+
+                <div className="absolute top-1/2 -translate-y-1/2 -left-3 sm:-left-4 z-30 opacity-100 transition-opacity duration-300">
+                    <button 
+                        onClick={handlePrev} 
+                        disabled={currentIndex === 0}
+                        className="p-1 sm:p-2 sm:p-2.5 rounded-full bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xl hover:scale-110 transition-transform disabled:opacity-0 disabled:scale-100 border border-slate-200 dark:border-slate-700"
+                    >
+                        <Icon name="ChevronLeft" size={20} />
+                    </button>
+                </div>
+                <div className="absolute top-1/2 -translate-y-1/2 -right-3 sm:-right-4 z-30 opacity-100 transition-opacity duration-300">
+                    <button 
+                        onClick={handleNext} 
+                        disabled={currentIndex >= maxIndex}
+                        className="p-1 sm:p-2 sm:p-2.5 rounded-full bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xl hover:scale-110 transition-transform disabled:opacity-0 disabled:scale-100 border border-slate-200 dark:border-slate-700"
+                    >
+                        <Icon name="ChevronRight" size={20} />
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // --- MAIN PAGE COMPONENT ---
 
 const SecretArea: React.FC = () => {
@@ -2167,9 +2495,47 @@ const SecretArea: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [allResources, setAllResources] = useState<Record<string, ResourceItem[]>>({ game: [], hypervisor: [], steamtools: [], architect: [], extra: [] });
+  const [companyProfiles, setCompanyProfiles] = useState<CompanyProfile[]>([]);
+  
+  const getResolvedDeveloper = (item: ResourceItem) => {
+      if (item.developer && item.developer.trim()) return item.developer;
+      const catMap: Record<string, keyof CompanyProfile> = {
+          'game': 'gameIds',
+          'hypervisor': 'hypervisorIds',
+          'steamtools': 'steamtoolsIds',
+          'architect': 'architectIds',
+          'extra': 'extraIds'
+      };
+      
+      const key = catMap[item.category];
+      if (!key) return '';
+
+      for (const profile of companyProfiles) {
+          const ids = (profile[key] as string[]) || [];
+          const lowerIds = ids.map(id => String(id).toLowerCase().trim()).filter(Boolean);
+          const numericIds = ids.map(id => String(id).replace(/^[A-Za-z]+[-]?/, '').toLowerCase().trim()).filter(Boolean);
+          const itemIdsToMatch = [
+              String(item.id || '').toLowerCase().trim(),
+              String(item.id || '').replace(/^[A-Za-z]+[-]?/, '').toLowerCase().trim(),
+              String(item.gameId || '').toLowerCase().trim()
+          ].filter(Boolean);
+
+          if (lowerIds.length > 0) {
+              const matched = lowerIds.some(id => 
+                  itemIdsToMatch.includes(id) || 
+                  itemIdsToMatch.some(itemId => itemId === id || itemId.endsWith(`-${id}`) || itemId.endsWith(id))
+              ) || numericIds.some(id => itemIdsToMatch.includes(id));
+              
+              if (matched) return profile.name;
+          }
+      }
+      return '';
+  };
+
   const [activeTab, setActiveTab] = useState<'game' | 'hypervisor' | 'steamtools' | 'architect' | 'extra' | 'stash'>('game');
   const [searchQuery, setSearchQuery] = useState('');
   const [stash, setStash] = useState<string[]>([]);
+  const [showAllProfiles, setShowAllProfiles] = useState(false);
 
   useEffect(() => {
     const savedStash = localStorage.getItem('myStash');
@@ -2195,6 +2561,7 @@ const SecretArea: React.FC = () => {
   };
 
   const [selectedResource, setSelectedResource] = useState<ResourceItem | null>(null);
+  const [selectedCompanyProfile, setSelectedCompanyProfile] = useState<CompanyProfile | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [visitorCount, setVisitorCount] = useState(2491);
   const [showRequestModal, setShowRequestModal] = useState(false);
@@ -2641,15 +3008,19 @@ const SecretArea: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = async (silent = false) => {
     if (!isUnlocked) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     setError(null);
     setIsUpcomingMissing(false);
     setScriptError(false);
 
     try {
-      const response = await fetch(`${API_ENDPOINT}?t=${Date.now()}`);
+      const response = await fetch(API_ENDPOINT, {
+          method: 'GET',
+          cache: 'no-store',
+          redirect: 'follow'
+      });
       if (!response.ok) {
           throw new Error(`Server returned ${response.status} ${response.statusText}`);
       }
@@ -2721,6 +3092,34 @@ const SecretArea: React.FC = () => {
           setMasterGifts([]);
       }
 
+      // Handle Company Profiles
+      const profilKey = Object.keys(data).find(k => {
+          const lowerK = k.toLowerCase().trim();
+          return lowerK === 'profil' || lowerK === 'profile' || lowerK === 'profiles' || lowerK === 'company';
+      });
+      if (profilKey && Array.isArray(data[profilKey])) {
+          const profiles: CompanyProfile[] = data[profilKey].map((row: any, idx: number) => {
+             const getVal = (key: string) => {
+                const normalizedSearchKey = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const foundKey = Object.keys(row).find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedSearchKey);
+                return foundKey ? row[foundKey] : '';
+             };
+             return {
+                 id: row.id || `profile-${idx}`,
+                 name: getVal('name') || getVal('company') || getVal('studio') || getVal('developer') || 'Unknown Company',
+                 logoUrl: getVal('logourl') || getVal('logo') || getVal('image') || getVal('icon') || '',
+                 description: getVal('description') || getVal('info') || '',
+                 gameIds: (getVal('gamesid') || getVal('gameids') || getVal('gameid') || '').toString().split(',').map(s => s.trim()).filter(Boolean),
+                 hypervisorIds: (getVal('hypervisionid') || getVal('hypervisorid') || getVal('hypervisorids') || '').toString().split(',').map(s => s.trim()).filter(Boolean),
+                 steamtoolsIds: (getVal('steamtoolsid') || getVal('steamtoolsids') || '').toString().split(',').map(s => s.trim()).filter(Boolean),
+                 architectIds: (getVal('toolsid') || getVal('architectids') || getVal('architectid') || '').toString().split(',').map(s => s.trim()).filter(Boolean)
+             };
+          });
+          setCompanyProfiles(profiles);
+      } else {
+          setCompanyProfiles([]);
+      }
+
       const transformed: Record<string, ResourceItem[]> = { game: [], hypervisor: [], steamtools: [], architect: [], extra: [] };
       Object.keys(data).forEach(tabKey => {
         const normalizedKey = tabKey.toLowerCase();
@@ -2735,10 +3134,10 @@ const SecretArea: React.FC = () => {
 
         if (targetKey && transformed.hasOwnProperty(targetKey)) {
           transformed[targetKey] = data[tabKey].map((row: any, idx: number) => {
-            // Robust access: check case-insensitive and ignore spaces
+            // Robust access: check case-insensitive and ignore non-alphanumeric
             const getVal = (key: string) => {
-                const normalizedSearchKey = key.toLowerCase().replace(/\s+/g, '');
-                const foundKey = Object.keys(row).find(k => k.toLowerCase().replace(/\s+/g, '') === normalizedSearchKey);
+                const normalizedSearchKey = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const foundKey = Object.keys(row).find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedSearchKey);
                 return foundKey ? row[foundKey] : '';
             };
             
@@ -2830,6 +3229,7 @@ const SecretArea: React.FC = () => {
               genres: getVal('genres') || '',
               languages: getVal('languages') || 'ENG',
               repackBy: getVal('repackBy') || 'NEXA',
+              developer: getVal('developer') || getVal('studio') || getVal('company') || '',
               coverImage: getVal('coverImage') || 'https://placehold.co/600x800/0f172a/334155?text=ENCRYPTED',
               galleryImages: gallery,
               description: getVal('description') || 'No intel available.',
@@ -2867,7 +3267,63 @@ const SecretArea: React.FC = () => {
     }
   };
 
-  useEffect(() => { if (isUnlocked) fetchData(); }, [isUnlocked]);
+  const getCompanyResources = (profile: CompanyProfile) => {
+      const resources: ResourceItem[] = [];
+      const isMatch = (item: ResourceItem, ids: string[]) => {
+          const lowerIds = (ids || []).map(id => String(id).toLowerCase().trim()).filter(Boolean);
+          const numericIds = (ids || []).map(id => String(id).replace(/^[A-Za-z]+[-]?/, '').toLowerCase().trim()).filter(Boolean);
+          const itemIdsToMatch = [
+              String(item.id || '').toLowerCase().trim(),
+              String(item.id || '').replace(/^[A-Za-z]+[-]?/, '').toLowerCase().trim(),
+              String(item.gameId || '').toLowerCase().trim()
+          ].filter(Boolean);
+          
+          if (lowerIds.length > 0) {
+              return lowerIds.some(id => 
+                 itemIdsToMatch.includes(id) || 
+                 itemIdsToMatch.some(itemId => itemId === id || itemId.endsWith(`-${id}`) || itemId.endsWith(id))
+              ) || numericIds.some(id => itemIdsToMatch.includes(id));
+          }
+          
+          // Fallback strict matching if no IDs were provided (e.g. for temporary profiles)
+          const dev = String(item.developer || '').trim().toLowerCase();
+          const rep = String(item.repackBy || '').trim().toLowerCase();
+          const pname = String(profile.name || '').trim().toLowerCase();
+          
+          if (dev && pname && (dev === pname || dev.includes(pname) || pname.includes(dev))) return true;
+          if (rep && pname && (rep === pname || rep.includes(pname) || pname.includes(rep))) return true;
+          
+          return false;
+      };
+      
+      if (allResources.game) resources.push(...allResources.game.filter(item => isMatch(item, profile.gameIds || [])));
+      if (allResources.hypervisor) resources.push(...allResources.hypervisor.filter(item => isMatch(item, profile.hypervisorIds || [])));
+      if (allResources.steamtools) resources.push(...allResources.steamtools.filter(item => isMatch(item, profile.steamtoolsIds || [])));
+      if (allResources.architect) resources.push(...allResources.architect.filter(item => isMatch(item, profile.architectIds || [])));
+      if (allResources.extra) resources.push(...allResources.extra.filter(item => isMatch(item, profile.extraIds || [])));
+
+      return resources;
+  };
+
+  const handleCompanyClick = (companyName: string) => {
+      const profile = companyProfiles.find(p => p.name.trim().toLowerCase() === companyName.trim().toLowerCase());
+      if (profile) {
+          setSelectedCompanyProfile(profile);
+      } else {
+          setSelectedCompanyProfile({
+              id: 'temp-' + companyName,
+              name: companyName,
+              logoUrl: '',
+              description: 'Company Profile not fully established in our database yet. Explore ecosystem tools below.'
+          });
+      }
+  };
+
+  useEffect(() => { 
+      if (isUnlocked) {
+          fetchData(); 
+      }
+  }, [isUnlocked]);
   useEffect(() => { setCurrentPage(1); }, [activeTab, searchQuery]);
 
   const filteredData = useMemo(() => {
@@ -3309,7 +3765,23 @@ const SecretArea: React.FC = () => {
             isHypervisor={selectedResource.category === 'hypervisor'}
             stash={stash}
             toggleStash={toggleStash}
+            onCompanyClick={handleCompanyClick}
+            resolvedDev={getResolvedDeveloper(selectedResource)}
           />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {selectedCompanyProfile && (
+            <CompanyProfileModal
+                profile={selectedCompanyProfile}
+                resources={getCompanyResources(selectedCompanyProfile)}
+                onClose={() => setSelectedCompanyProfile(null)}
+                onItemClick={(item) => {
+                    setSelectedCompanyProfile(null);
+                    setSelectedResource(item);
+                }}
+            />
         )}
       </AnimatePresence>
 
@@ -3397,14 +3869,15 @@ const SecretArea: React.FC = () => {
             </p>
           </div>
           
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 shrink-0">
+          <div className="grid grid-cols-2 min-[600px]:grid-cols-3 xl:grid-cols-5 gap-3 w-full xl:w-auto shrink-0 mt-6 xl:mt-0">
             <button 
                 onClick={() => setShowSteamModal(true)}
-                className="relative flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-[#171a21] to-[#2a475e] hover:to-[#66c0f4] text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 group border border-white/10"
+                className="relative flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 p-3 sm:px-4 sm:py-4 bg-gradient-to-r from-[#171a21] to-[#2a475e] hover:to-[#66c0f4] text-white rounded-xl font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 group border border-white/10 text-center"
             >
                 <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <Icon name="BrandSteam" size={20} className="group-hover:animate-bounce" /> 
-                <span className="relative z-10">Free Accounts</span>
+                <Icon name="BrandSteam" size={20} className="group-hover:animate-bounce shrink-0" /> 
+                <span className="relative z-10 hidden sm:inline">Free Accounts</span>
+                <span className="relative z-10 sm:hidden">Free</span>
                 {steamAccounts.length > 0 && (
                     <span className="absolute top-1.5 right-1.5 flex h-3 w-3 z-20">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -3414,11 +3887,12 @@ const SecretArea: React.FC = () => {
             </button>
             <button 
                 onClick={() => setShowMasterGiftModal(true)}
-                className="relative flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:to-indigo-500 text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg shadow-violet-500/20 active:scale-95 group border border-white/10"
+                className="relative flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 p-3 sm:px-4 sm:py-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:to-indigo-500 text-white rounded-xl font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all shadow-lg shadow-violet-500/20 active:scale-95 group border border-white/10 text-center"
             >
                 <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <Icon name="Gift" size={20} className="group-hover:animate-bounce text-yellow-400" /> 
-                <span className="relative z-10">Master Gift</span>
+                <Icon name="Gift" size={20} className="group-hover:animate-bounce text-yellow-400 shrink-0" /> 
+                <span className="relative z-10 hidden sm:inline">Master Gift</span>
+                <span className="relative z-10 sm:hidden">Gift</span>
                 {masterGifts.length > 0 && (
                     <span className="absolute top-1.5 right-1.5 flex h-3 w-3 z-20">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
@@ -3426,14 +3900,19 @@ const SecretArea: React.FC = () => {
                     </span>
                 )}
             </button>
-            <a href={DISCORD_LINK} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-3 px-6 py-4 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 group">
-               <Icon name="Discord" size={20} className="group-hover:animate-bounce" /> Join Community
+            <a href={DISCORD_LINK} target="_blank" rel="noreferrer" className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 p-3 sm:px-4 sm:py-4 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-xl font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 group text-center">
+               <Icon name="Discord" size={20} className="group-hover:animate-bounce shrink-0" /> 
+               <span className="hidden sm:inline">Join Community</span>
+               <span className="sm:hidden">Discord</span>
+            </a>
+            <a href={TELEGRAM_LINK} target="_blank" rel="noreferrer" className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 p-3 sm:px-4 sm:py-4 bg-[#229ED9] hover:bg-[#1D85B8] text-white rounded-xl font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 group text-center">
+               <Icon name="Telegram" size={20} className="group-hover:animate-bounce shrink-0" /> Channel
             </a>
             <button 
               onClick={() => { localStorage.removeItem('secret_area_unlocked'); setIsUnlocked(false); }} 
-              className="px-6 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-red-500/50 rounded-xl text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-500 transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2 group"
+              className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 p-3 sm:px-4 sm:py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-red-500/50 rounded-xl text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-500 transition-all shadow-sm active:scale-95 group text-center col-span-2 min-[600px]:col-span-1"
             >
-              <Icon name="Lock" size={20} /> <span className="text-xs font-bold uppercase tracking-widest">Logout</span>
+              <Icon name="Lock" size={20} className="shrink-0" /> <span className="font-bold text-[10px] sm:text-xs uppercase tracking-widest">Logout</span>
             </button>
           </div>
         </header>
@@ -3508,91 +3987,93 @@ const SecretArea: React.FC = () => {
 
         <div className="sticky top-20 z-40 mb-10">
            <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-2 rounded-2xl shadow-2xl transition-all">
-              <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
-                  <div className="flex overflow-x-auto no-scrollbar p-1 bg-slate-100 dark:bg-slate-950 rounded-xl w-full lg:w-auto gap-1 shrink-0">
-                    {(['game', 'hypervisor', 'steamtools', 'architect', 'extra', 'stash'] as const).map(tab => (
-                      <button 
-                          key={tab}
-                          onClick={() => setActiveTab(tab)}
-                          className={`shrink-0 relative px-4 py-2.5 sm:px-6 md:px-8 sm:py-3 rounded-lg font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all z-10 flex items-center justify-center ${activeTab === tab ? 'text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-300'}`}
-                      >
-                        {activeTab === tab && (
-                          <motion.div layoutId="activeTab" className="absolute inset-0 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700" transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />
-                        )}
-                        <span className="relative z-10 flex items-center gap-1.5">
-                          {tab === 'hypervisor' ? (
-                            <>
-                              GAME
-                              <span className="bg-red-600 text-white px-1.5 py-0.5 rounded-md text-[8px] sm:text-[9px] font-black tracking-widest shadow-sm">
-                                HYPERVISOR
-                              </span>
-                            </>
-                          ) : tab === 'architect' ? (
-                            'TOOLS'
-                          ) : tab === 'stash' ? (
-                            <>
-                              <Icon name="Bookmark" size={14} className={activeTab === 'stash' ? 'text-primary-500' : ''} />
-                              MY STASH
-                            </>
-                          ) : tab}
-                        </span>
-                      </button>
-                    ))}
+              <div className="flex flex-col gap-3 items-stretch justify-between">
+                  <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between w-full min-w-0">
+                      <div className="flex overflow-x-auto no-scrollbar p-1 bg-slate-100 dark:bg-slate-950 rounded-xl flex-1 gap-1">
+                        {(['game', 'hypervisor', 'steamtools', 'architect', 'extra', 'stash'] as const).map(tab => (
+                          <button 
+                              key={tab}
+                              onClick={() => setActiveTab(tab as any)}
+                              className={`shrink-0 relative px-4 py-2.5 sm:px-6 md:px-8 sm:py-3 rounded-lg font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all z-10 flex items-center justify-center ${activeTab === tab ? 'text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-300'}`}
+                          >
+                            {activeTab === tab && (
+                              <motion.div layoutId="activeTab" className="absolute inset-0 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700" transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />
+                            )}
+                            <span className="relative z-10 flex items-center gap-1.5">
+                              {tab === 'hypervisor' ? (
+                                <>
+                                  GAME
+                                  <span className="bg-red-600 text-white px-1.5 py-0.5 rounded-md text-[8px] sm:text-[9px] font-black tracking-widest shadow-sm">
+                                    HYPERVISOR
+                                  </span>
+                                </>
+                              ) : tab === 'architect' ? (
+                                'TOOLS'
+                              ) : tab === 'stash' ? (
+                                <>
+                                  <Icon name="Bookmark" size={14} className={activeTab === 'stash' ? 'text-primary-500' : ''} />
+                                  MY STASH
+                                </>
+                              ) : tab}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0 overflow-x-auto no-scrollbar min-w-0">
+                          <button 
+                            onClick={() => setShowIntelPanel(true)}
+                            className="relative flex items-center justify-center p-3 sm:p-3.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-all shrink-0"
+                            title="Latest Intel (Live Changelog)"
+                          >
+                            <Icon name="Radar" size={20} className="animate-pulse text-primary-500" />
+                            <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-slate-200 dark:border-slate-800"></div>
+                          </button>
+
+                          <button 
+                            onClick={() => setShowGlobalFilter(!showGlobalFilter)}
+                            className={`flex items-center justify-center p-3 sm:p-3.5 rounded-xl transition-all shrink-0 border ${globalSpecs.isActive ? 'bg-primary-500 text-white border-primary-500 shadow-lg shadow-primary-500/20' : 'bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-transparent'}`}
+                            title="Global System Filter"
+                          >
+                            <Icon name="Cpu" size={20} />
+                          </button>
+
+                          <button 
+                            onClick={() => fetchData()}
+                            className="flex items-center justify-center p-3 sm:p-3.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-all shrink-0"
+                            title="Reload Data"
+                          >
+                            <Icon name="RefreshCw" size={20} className={loading ? "animate-spin" : ""} />
+                          </button>
+
+                          <button 
+                            onClick={() => {
+                                setRequestModalInitialTitle(searchQuery);
+                                setShowRequestModal(true);
+                            }}
+                            className="flex items-center gap-2 px-3 sm:px-4 py-3 sm:py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all shrink-0 whitespace-nowrap"
+                            title="Request a game or tool not listed here"
+                          >
+                            <Icon name="Plus" size={20} />
+                            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">
+                                <span className="inline sm:hidden">Request</span>
+                                <span className="hidden sm:inline">Request Item</span>
+                            </span>
+                          </button>
+                      </div>
                   </div>
 
-                  <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full lg:w-auto lg:flex-1 lg:justify-end min-w-0">
-                      <div className="relative flex-1 min-w-[150px] lg:max-w-[400px] group">
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-500 transition-colors">
-                          <Icon name="Search" size={18} />
-                        </div>
-                        <input 
-                          type="text" 
-                          value={searchQuery} 
-                          onChange={e => setSearchQuery(e.target.value)} 
-                          placeholder={`SEARCH ${activeTab.toUpperCase()}...`} 
-                          className="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/20 text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all truncate"
-                        />
-                      </div>
-                      
-                      <button 
-                        onClick={() => setShowIntelPanel(true)}
-                        className="relative flex items-center justify-center p-3.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-all shrink-0"
-                        title="Latest Intel (Live Changelog)"
-                      >
-                        <Icon name="Radar" size={20} className="animate-pulse text-primary-500" />
-                        <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-slate-200 dark:border-slate-800"></div>
-                      </button>
-
-                      <button 
-                        onClick={() => setShowGlobalFilter(!showGlobalFilter)}
-                        className={`flex items-center justify-center p-3.5 rounded-xl transition-all shrink-0 border ${globalSpecs.isActive ? 'bg-primary-500 text-white border-primary-500 shadow-lg shadow-primary-500/20' : 'bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-transparent'}`}
-                        title="Global System Filter"
-                      >
-                        <Icon name="Cpu" size={20} />
-                      </button>
-
-                      <button 
-                        onClick={fetchData}
-                        className="flex items-center justify-center p-3.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-all shrink-0"
-                        title="Reload Data"
-                      >
-                        <Icon name="RefreshCw" size={20} className={loading ? "animate-spin" : ""} />
-                      </button>
-
-                      <button 
-                        onClick={() => {
-                            setRequestModalInitialTitle(searchQuery);
-                            setShowRequestModal(true);
-                        }}
-                        className="flex items-center gap-2 px-4 py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all shrink-0 whitespace-nowrap"
-                        title="Request a game or tool not listed here"
-                      >
-                        <Icon name="Plus" size={20} />
-                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">
-                            <span className="inline sm:hidden">Request</span>
-                            <span className="hidden sm:inline">Request Item</span>
-                        </span>
-                      </button>
+                  <div className="relative w-full group">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-500 transition-colors">
+                      <Icon name="Search" size={18} />
+                    </div>
+                    <input 
+                      type="text" 
+                      value={searchQuery} 
+                      onChange={e => setSearchQuery(e.target.value)} 
+                      placeholder={`SEARCH ${activeTab.toUpperCase()}...`} 
+                      className="w-full pl-12 pr-4 py-3 sm:py-3.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/20 text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all truncate"
+                    />
                   </div>
               </div>
 
@@ -3713,6 +4194,7 @@ const SecretArea: React.FC = () => {
                 {paginatedData.map((item, idx) => {
                       const compStatus = globalSpecs.isActive ? checkCompatibilityStatus(globalSpecs, item.systemReqs) : null;
                       const isFail = compStatus === 'fail';
+                      const resolvedDev = getResolvedDeveloper(item);
                       
                       return (
                       <motion.div 
@@ -3723,7 +4205,13 @@ const SecretArea: React.FC = () => {
                           transition={{ delay: idx * 0.05 }}
                           whileHover={{ y: -8, transition: { duration: 0.2 } }}
                           className={`group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden cursor-pointer hover:shadow-2xl hover:shadow-primary-900/10 hover:border-primary-500/30 transition-all relative flex flex-col ${isFail ? 'opacity-50 grayscale hover:grayscale-0 hover:opacity-100' : ''}`}
-                          onClick={() => setSelectedResource(item)}
+                          onClick={() => {
+                              if (item.category === 'profil') {
+                                  handleCompanyClick(resolvedDev || item.name);
+                              } else {
+                                  setSelectedResource(item);
+                              }
+                          }}
                       >
                           <div className="aspect-[3/4] relative overflow-hidden bg-slate-100 dark:bg-slate-950">
                             <img src={item.coverImage} alt={item.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-90 group-hover:opacity-100" />
@@ -3784,6 +4272,18 @@ const SecretArea: React.FC = () => {
                             </div>
                             
                             <div className="absolute bottom-0 left-0 right-0 p-5 z-20">
+                                {resolvedDev && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleCompanyClick(resolvedDev);
+                                        }}
+                                        className="mb-2 flex items-center gap-1.5 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-black/60 backdrop-blur-sm text-violet-300 border border-violet-500/30 hover:bg-violet-900/60 transition-colors w-max"
+                                    >
+                                        <Icon name="Briefcase" size={10} />
+                                        {resolvedDev}
+                                    </button>
+                                )}
                                 <h3 className="font-black text-lg text-white leading-tight uppercase italic mb-2 line-clamp-2 group-hover:text-primary-400 transition-colors drop-shadow-md">
                                   {item.name}
                                 </h3>
@@ -3881,11 +4381,203 @@ const SecretArea: React.FC = () => {
             />
         </div>
 
+        {['game', 'hypervisor', 'steamtools'].includes(activeTab) && (
+            <BestStudiosCarousel 
+                profiles={companyProfiles}
+                onSelect={setSelectedCompanyProfile}
+                onSeeAll={() => setShowAllProfiles(true)}
+                categoryType="games"
+            />
+        )}
+        {['architect', 'extra'].includes(activeTab) && (
+            <BestStudiosCarousel 
+                profiles={companyProfiles}
+                onSelect={setSelectedCompanyProfile}
+                onSeeAll={() => setShowAllProfiles(true)}
+                categoryType="tools"
+            />
+        )}
+
       </div>
       </motion.div>
       )}
+
+      <AnimatePresence>
+          {showAllProfiles && (
+              <AllProfilesModal 
+                  profiles={companyProfiles}
+                  onClose={() => setShowAllProfiles(false)}
+                  onSelect={(profile) => {
+                      setShowAllProfiles(false);
+                      setSelectedCompanyProfile(profile);
+                  }}
+                  categoryType={['game', 'hypervisor', 'steamtools'].includes(activeTab) ? 'games' : 'tools'}
+              />
+          )}
+      </AnimatePresence>
     </div>
   );
+};
+
+const AllProfilesModal: React.FC<{
+    profiles: CompanyProfile[],
+    onClose: () => void,
+    onSelect: (profile: CompanyProfile) => void,
+    categoryType: 'games' | 'tools'
+}> = ({ profiles, onClose, onSelect, categoryType }) => {
+    const [searchQuery, setSearchQuery] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const PROFILES_PER_PAGE = 30;
+
+    const filteredProfiles = useMemo(() => {
+        return profiles
+            .map(p => {
+                let count = 0;
+                if (categoryType === 'games') {
+                    count = (p.gameIds?.length || 0) + (p.hypervisorIds?.length || 0) + (p.steamtoolsIds?.length || 0);
+                } else {
+                    count = (p.architectIds?.length || 0) + (p.extraIds?.length || 0);
+                }
+                return {
+                    ...p,
+                    totalGames: count
+                };
+            })
+            .filter(p => p.totalGames > 0 && p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+            .sort((a, b) => b.totalGames - a.totalGames);
+    }, [profiles, categoryType, searchQuery]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery]);
+
+    const totalPages = Math.ceil(filteredProfiles.length / PROFILES_PER_PAGE);
+    
+    const paginatedProfiles = useMemo(() => {
+        const start = (currentPage - 1) * PROFILES_PER_PAGE;
+        return filteredProfiles.slice(start, start + PROFILES_PER_PAGE);
+    }, [filteredProfiles, currentPage]);
+
+    return (
+        <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/90 backdrop-blur-md p-4"
+            onClick={onClose}
+        >
+            <motion.div 
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, y: 20 }}
+                className="bg-slate-50 dark:bg-slate-950 w-full h-full max-w-5xl max-h-[90vh] rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col"
+                onClick={e => e.stopPropagation()}
+            >
+                <div className="bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900/50 dark:to-indigo-900/50 p-4 sm:p-6 border-b border-blue-200 dark:border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 shrink-0 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none"></div>
+                    <div className="relative z-10 flex items-center gap-3">
+                        <Icon name="Briefcase" size={28} className="text-blue-500 dark:text-blue-400 sm:w-8 sm:h-8" /> 
+                        <div>
+                            <h3 className="text-lg sm:text-2xl font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                                {categoryType === 'games' ? 'All Studios' : 'All Companies'}
+                            </h3>
+                            <p className="text-blue-600 dark:text-blue-200 text-[10px] sm:text-sm font-bold mt-1">
+                                {filteredProfiles.length} Total Found
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="relative z-10 flex items-center gap-3 w-full sm:w-auto">
+                        <div className="relative flex-1 sm:w-64">
+                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                              <Icon name="Search" size={16} />
+                            </div>
+                            <input 
+                              type="text" 
+                              value={searchQuery} 
+                              onChange={e => setSearchQuery(e.target.value)} 
+                              placeholder="SEARCH PROFILES..." 
+                              className="w-full pl-10 pr-4 py-2.5 bg-white/60 dark:bg-black/40 border border-slate-300 dark:border-slate-700/50 rounded-xl focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider placeholder:text-slate-500 transition-all"
+                            />
+                        </div>
+                        <button onClick={onClose} className="p-2.5 bg-white/60 dark:bg-black/40 hover:bg-white dark:hover:bg-black/60 rounded-xl transition-colors text-slate-700 dark:text-white border border-slate-300 dark:border-slate-700/50 hover:border-slate-400 dark:hover:border-slate-500 shadow">
+                            <Icon name="X" size={18} />
+                        </button>
+                    </div>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-100/50 dark:bg-slate-950/50">
+                    {paginatedProfiles.length > 0 ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+                            {paginatedProfiles.map((profile) => (
+                                <div 
+                                    key={profile.id}
+                                    onClick={() => onSelect(profile as CompanyProfile)}
+                                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-4 cursor-pointer hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/10 transition-all h-full group/studio"
+                                >
+                                    <div className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 bg-slate-50 dark:bg-slate-950 rounded-2xl flex items-center justify-center p-3 border border-slate-100 dark:border-slate-800 group-hover/studio:border-blue-500/30 group-hover/studio:bg-blue-50 dark:group-hover/studio:bg-blue-900/20 overflow-hidden shrink-0 transition-all shadow-inner">
+                                        {profile.logoUrl ? (
+                                            <img src={profile.logoUrl} alt={profile.name} className="w-full h-full object-contain filter group-hover/studio:brightness-110 transition-all" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = '<span class="font-black text-lg sm:text-xl text-slate-400 dark:text-slate-500 group-hover/studio:text-blue-500 dark:group-hover/studio:text-blue-400 transition-colors">' + profile.name.substring(0, 2).toUpperCase() + '</span>'; }} />
+                                        ) : (
+                                            <span className="font-black text-lg sm:text-xl text-slate-400 dark:text-slate-500 group-hover/studio:text-blue-500 dark:group-hover/studio:text-blue-400 transition-colors">{profile.name.substring(0, 2).toUpperCase()}</span>
+                                        )}
+                                    </div>
+                                    <div className="text-center w-full">
+                                        <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-1 group-hover/studio:text-blue-500 dark:group-hover/studio:text-blue-400 transition-colors" title={profile.name}>{profile.name}</h3>
+                                        <span className="inline-block mt-2 px-2 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-300 text-[9px] sm:text-[10px] font-black uppercase tracking-wider rounded border border-blue-200 dark:border-blue-500/30 group-hover/studio:shadow-sm">
+                                            {profile.totalGames} {profile.totalGames === 1 ? 'Item' : 'Items'}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                            <Icon name="SearchX" size={48} className="text-slate-400 dark:text-slate-600 mb-4" />
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No Profiles Found</h3>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm">Try adjusting your search criteria.</p>
+                        </div>
+                    )}
+                </div>
+                
+                {totalPages > 1 && (
+                    <div className="p-4 sm:p-6 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-center items-center shrink-0">
+                        <div className="flex flex-wrap justify-center gap-1 sm:gap-2">
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
+                            >
+                                <Icon name="ChevronLeft" size={16} />
+                            </button>
+                            
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                                <button
+                                    key={page}
+                                    onClick={() => setCurrentPage(page)}
+                                    className={`w-8 h-8 rounded-lg text-xs font-bold transition-colors ${
+                                        currentPage === page 
+                                        ? 'bg-blue-600 text-white shadow shadow-blue-500/20' 
+                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
+                                    }`}
+                                >
+                                    {page}
+                                </button>
+                            ))}
+
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
+                            >
+                                <Icon name="ChevronRight" size={16} />
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </motion.div>
+        </motion.div>
+    );
 };
 
 export default SecretArea;
