@@ -2575,7 +2575,7 @@ const SecretArea: React.FC = () => {
   const [requestModalInitialTitle, setRequestModalInitialTitle] = useState('');
   
   // Terminal State
-  const [terminalHistory, setTerminalHistory] = useState<{type: string, text: string}[]>([
+  const [terminalHistory, setTerminalHistory] = useState<{type: string, text: React.ReactNode}[]>([
     { type: 'system', text: 'N E X A 1337 OS v9.0.1 - SECURE terminal' },
     { type: 'system', text: 'Unauthorized access is strictly prohibited.' },
     { type: 'system', text: 'Type "help" for available commands.' }
@@ -2607,9 +2607,9 @@ const SecretArea: React.FC = () => {
     const newHistory = [...terminalHistory];
     
     if (terminalMode === 'password') {
-      newHistory.push({ type: 'user', text: `guest@nexa-vault:~$ ${'*'.repeat(cmd.length)}` });
+      newHistory.push({ type: 'user', text: `┌──(guest㉿nexa1337.com)-[~]\n└─$ ${'*'.repeat(cmd.length)}` });
     } else {
-      newHistory.push({ type: 'user', text: `guest@nexa-vault:~$ ${cmd}` });
+      newHistory.push({ type: 'user', text: `┌──(guest㉿nexa1337.com)-[~]\n└─$ ${cmd}` });
     }
 
     const lowerCmd = cmd.toLowerCase();
@@ -2635,19 +2635,45 @@ const SecretArea: React.FC = () => {
       }
     } else {
       if (lowerCmd === 'help') {
-        newHistory.push({ type: 'info', text: 'Available options:' });
-        newHistory.push({ type: 'info', text: '  [1] What is inside?' });
-        newHistory.push({ type: 'info', text: '  [2] Contact Support' });
-        newHistory.push({ type: 'info', text: '  [3] Enter Secret Code' });
-        newHistory.push({ type: 'info', text: '  clear - Clear terminal output' });
+        newHistory.push({ type: 'system', text: '┌──────────────────────────────────┐' });
+        newHistory.push({ type: 'system', text: '│ AVAILABLE PROTOCOLS              │' });
+        newHistory.push({ type: 'system', text: '└──────────────────────────────────┘' });
+        newHistory.push({ type: 'info', text: '  [1] INQUIRE : What is inside?' });
+        newHistory.push({ type: 'info', text: '  [2] COMMS   : Contact Support' });
+        newHistory.push({ type: 'info', text: '  [3] AUTH    : Enter Secret Code' });
+        newHistory.push({ type: 'info', text: '  [4] NETWORK : Join Telegram' });
+        newHistory.push({ type: 'info', text: '  clear       : Flush terminal memory' });
       } else if (lowerCmd === '1') {
-        newHistory.push({ type: 'info', text: 'Inside the vault: Exclusive Repacks, Hypervisors, Steam Tools, and Architect Software.' });
+        newHistory.push({ type: 'system', text: '>>> VAULT SUMMARY EXECUTED <<<' });
+        newHistory.push({ type: 'info', text: '  ██████╗  ██████╗ ██╗███████╗' });
+        newHistory.push({ type: 'info', text: '  ██╔══██╗██╔═══██╗██║██╔════╝' });
+        newHistory.push({ type: 'info', text: '  ██████╔╝██║   ██║██║███████╗' });
+        newHistory.push({ type: 'info', text: '  ██╔══██╗██║   ██║██║╚════██║' });
+        newHistory.push({ type: 'info', text: '  ██████╔╝╚██████╔╝██║███████║' });
+        newHistory.push({ type: 'info', text: '  ╚═════╝  ╚═════╝ ╚═╝╚══════╝' });
+        newHistory.push({ type: 'system', text: '────────────────────────────────────' });
+        newHistory.push({ type: 'info', text: '[-] Elite-grade Repacks & Premium Games    [ENCRYPTED]' });
+        newHistory.push({ type: 'info', text: '[-] Undetected Hypervisors & Injectors     [ENCRYPTED]' });
+        newHistory.push({ type: 'info', text: '[-] Exclusive Steam Manipulation Tools     [ENCRYPTED]' });
+        newHistory.push({ type: 'info', text: '[-] Architect-level Developer Software     [ENCRYPTED]' });
+        newHistory.push({ type: 'info', text: '[-] Zero-Day Vulnerability Modules         [ENCRYPTED]' });
+        newHistory.push({ type: 'system', text: '────────────────────────────────────' });
+        newHistory.push({ type: 'error', text: 'Status: CLASSIFIED. Authentication required for decryption.' });
       } else if (lowerCmd === '2') {
-        newHistory.push({ type: 'info', text: 'Support Channels:' });
-        newHistory.push({ type: 'info', text: '  WhatsApp: +212723242286' });
-        newHistory.push({ type: 'info', text: '  Instagram: @nexa1337' });
-        newHistory.push({ type: 'info', text: '  Email: support@nexa1337.com' });
-      } else if (lowerCmd === '3') {
+        newHistory.push({ type: 'system', text: 'ESTABLISHING SECURE COMMS...' });
+        newHistory.push({ type: 'info', text: '  WhatsApp  : +212723242286' });
+        newHistory.push({ type: 'info', text: '  Instagram : @nexa1337' });
+        newHistory.push({ type: 'info', text: '  Email     : support@nexa1337.com' });
+      } else if (lowerCmd === '4') {
+        newHistory.push({ 
+          type: 'info', 
+          text: (
+            <span>
+              Secure channel established. Connect here: <a href="https://t.me/nexa1337agency" target="_blank" rel="noreferrer" className="text-blue-400 hover:text-blue-300 underline underline-offset-2">t.me/nexa1337agency</a>
+            </span>
+          ) 
+        });
+      } else if (lowerCmd === '3' || lowerCmd === 'auth') {
         newHistory.push({ type: 'system', text: 'Please enter the Secret Code:' });
         setTerminalMode('password');
       } else if (lowerCmd === 'clear') {
@@ -3431,7 +3457,7 @@ const SecretArea: React.FC = () => {
           <motion.div 
             initial={{ opacity: 0, scale: 0.95, y: 20 }} 
             animate={{ opacity: 1, scale: 1, y: 0 }} 
-            className="w-full max-w-[420px] relative z-10"
+            className="w-[95%] sm:w-[85%] md:w-[75%] lg:w-[60%] xl:w-[50%] max-w-5xl relative z-10"
           >
           <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.1)] dark:shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden relative group">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1 bg-gradient-to-r from-transparent via-primary-500 to-transparent opacity-50 group-hover:opacity-100 transition-opacity"></div>
@@ -3545,64 +3571,98 @@ const SecretArea: React.FC = () => {
                     )}
                 </div>
             ) : (
-                <div className="p-8 md:p-10 space-y-8">
-                   <div className="text-center">
-                      <div className="w-20 h-20 mx-auto bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-950 rounded-[1.5rem] flex items-center justify-center shadow-inner border border-slate-200 dark:border-white/5 mb-6 relative">
-                         <div className="absolute inset-0 bg-primary-500/10 rounded-[1.5rem] blur-lg"></div>
-                         <Icon name="Terminal" size={32} className="text-primary-500 relative z-10 drop-shadow-sm" />
-                      </div>
-                      <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-1">Restricted Access</h2>
-                      <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em]">Security Protocol Alpha</p>
-                   </div>
+                <div className="p-4 sm:p-8 md:p-10 flex flex-col gap-4 relative overflow-hidden h-full min-h-[500px]">
+                   {/* Grid Background Effect */}
+                   <div className="absolute inset-0 bg-[linear-gradient(rgba(14,165,233,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(14,165,233,0.03)_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none -z-10"></div>
                    
-                   <div className="bg-white dark:bg-black rounded-xl border border-slate-300 dark:border-slate-800 overflow-hidden flex flex-col h-[200px] sm:h-[240px] md:h-[260px] shadow-inner">
-                      <div className="bg-slate-100 dark:bg-slate-900 px-3 py-2 flex items-center gap-2 border-b border-slate-300 dark:border-slate-800 shrink-0">
-                        <div className="flex gap-1.5">
-                          <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
-                          <div className="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
-                          <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+                   <motion.div 
+                     initial={{ y: 20, opacity: 0 }}
+                     animate={{ y: 0, opacity: 1 }}
+                     transition={{ duration: 0.5 }}
+                     className="text-center shrink-0"
+                   >
+                      <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-1 select-none">Restricted Access</h2>
+                      <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em] flex items-center justify-center gap-2 select-none">
+                         <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                         Security Protocol Alpha
+                      </p>
+                   </motion.div>
+                   
+                   <motion.div 
+                     initial={{ scale: 0.95, opacity: 0 }}
+                     animate={{ scale: 1, opacity: 1 }}
+                     transition={{ duration: 0.6, delay: 0.1, type: "spring", stiffness: 100 }}
+                     className="bg-black/5 dark:bg-black/40 backdrop-blur-md rounded-xl border border-slate-300 dark:border-slate-800 overflow-hidden flex flex-col flex-1 shadow-2xl relative group min-h-[300px]"
+                   >
+                      <div className="absolute inset-0 bg-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                      <div className="bg-[#2E3440] dark:bg-[#20242D] px-3 py-2 flex items-center gap-3 border-b border-[#4C566A] dark:border-[#3B4252] shrink-0 relative z-10">
+                        <div className="flex gap-1.5 p-1">
+                          <Icon name="Terminal" size={14} className="text-[#D8DEE9]" />
                         </div>
-                        <div className="flex-1 text-center text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400">
-                          guest@nexa-vault ~ bash
+                        <div className="flex-1 text-center text-xs font-sans text-[#E5E9F0] dark:text-[#E5E9F0] py-1">
+                          guest@nexa1337.com: ~
+                        </div>
+                        <div className="flex gap-1.5 p-1 group">
+                          <Icon name="X" size={14} className="text-[#D8DEE9] hover:text-[#BF616A] cursor-pointer transition-colors" />
                         </div>
                       </div>
-                      <div className="flex-1 p-3 overflow-y-auto font-mono text-xs custom-scrollbar" onClick={() => document.getElementById('terminal-input')?.focus()}>
+                      <div className="flex-1 p-4 overflow-y-auto font-mono text-[12px] sm:text-[13px] custom-scrollbar relative z-10 bg-[#121212] text-[#D8DEE9]" onClick={() => document.getElementById('terminal-input')?.focus()}>
+                        <div className="mb-4">
+                           <span className="text-[#89B4FA] font-bold">┌──(</span><span className="text-[#E5E9F0] font-bold">guest㉿nexa1337.com</span><span className="text-[#89B4FA] font-bold">)-[</span><span className="text-[#E5E9F0] font-bold">~</span><span className="text-[#89B4FA] font-bold">]</span><br/>
+                           <span className="text-[#89B4FA] font-bold">└─$</span> <span className="text-[#A6E3A1]">systemctl start nexa-os</span>
+                        </div>
                         {terminalHistory.map((line, i) => (
-                          <div key={i} className={`mb-1 ${
-                            line.type === 'system' ? 'text-blue-600 dark:text-blue-400 font-bold' :
-                            line.type === 'user' ? 'text-slate-800 dark:text-slate-300' :
-                            line.type === 'error' ? 'text-red-600 dark:text-red-400' :
-                            line.type === 'success' ? 'text-green-600 dark:text-green-400 font-bold' :
-                            'text-slate-600 dark:text-slate-400'
-                          }`}>
+                          <motion.div 
+                            key={i} 
+                            initial={{ opacity: 0, x: -5 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className={`mb-1.5 leading-relaxed tracking-wide whitespace-pre-wrap ${
+                              line.type === 'system' ? 'text-[#89B4FA] font-bold' :
+                              line.type === 'user' ? 'text-[#E5E9F0]' :
+                              line.type === 'error' ? 'text-[#BF616A]' :
+                              line.type === 'success' ? 'text-[#A6E3A1] font-bold' :
+                              'text-[#D8DEE9]'
+                            }`}
+                          >
                             {line.text}
-                          </div>
+                          </motion.div>
                         ))}
-                        <form onSubmit={handleTerminalSubmit} className="flex items-center mt-2">
-                          <span className="text-green-600 dark:text-green-500 font-bold mr-2 shrink-0">guest@nexa-vault:~$</span>
-                          <input 
-                            id="terminal-input"
-                            type={terminalMode === 'password' ? 'password' : 'text'} 
-                            value={terminalInput}
-                            onChange={(e) => setTerminalInput(e.target.value)}
-                            className="flex-1 bg-transparent outline-none text-slate-800 dark:text-slate-200 font-mono"
-                            autoFocus
-                            autoComplete="off"
-                            spellCheck="false"
-                          />
+                        <form onSubmit={handleTerminalSubmit} className="flex flex-col mt-2">
+                          <div className="flex items-center text-[#89B4FA] font-bold">
+                             ┌──(<span className="text-[#E5E9F0]">guest㉿nexa1337.com</span>)-[<span className="text-[#E5E9F0]">~</span>]
+                          </div>
+                          <div className="flex items-center items-stretch">
+                            <span className="text-[#89B4FA] font-bold mr-2 shrink-0 drop-shadow-sm flex items-center">
+                               └─$
+                            </span>
+                            <input 
+                              id="terminal-input"
+                              type={terminalMode === 'password' ? 'password' : 'text'} 
+                              value={terminalInput}
+                              onChange={(e) => setTerminalInput(e.target.value)}
+                              className="flex-1 bg-transparent outline-none text-[#E5E9F0] font-mono tracking-wide caret-[#E5E9F0]"
+                              autoFocus
+                              autoComplete="off"
+                              spellCheck="false"
+                            />
+                          </div>
                         </form>
                         <div ref={terminalEndRef} />
                       </div>
-                   </div>
+                   </motion.div>
 
-                   <div className="space-y-3 pt-2">
-                      <button type="button" onClick={startMathGame} className="w-full px-4 py-3.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-bold text-[10px] md:text-xs uppercase tracking-wider transition-colors text-center flex items-center justify-center gap-2 border border-transparent hover:border-blue-300 dark:hover:border-blue-600">
-                         <Icon name="Cpu" size={14} /> Crack Code (Math Game)
+                   <motion.div 
+                     initial={{ y: 20, opacity: 0 }}
+                     animate={{ y: 0, opacity: 1 }}
+                     transition={{ duration: 0.5, delay: 0.2 }}
+                     className="space-y-3 pt-2"
+                   >
+                      <button type="button" onClick={startMathGame} className="w-full px-4 py-3.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 font-bold text-[9px] sm:text-[10px] uppercase tracking-widest transition-all text-center flex items-center justify-center gap-2 border border-transparent shadow-sm hover:shadow-primary-500/20 active:scale-[0.98]">
+                         <Icon name="Cpu" size={14} /> 
+                         <span>Initiate Crack Protocol <span className="opacity-50 ml-1">(Math Game)</span></span>
                       </button>
-                   </div>
-                   <Link to="/" className="block text-center text-[10px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors mt-4">
-                       ← Return Home
-                   </Link>
+                   </motion.div>
                 </div>
             )}
           </div>
