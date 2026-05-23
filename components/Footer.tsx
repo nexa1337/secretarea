@@ -12,12 +12,42 @@ export const NEXA_ECOSYSTEM_LINKS = [
   { name: 'N E X A 1337 - Digital Store', url: 'https://digitalstore-iota-five.vercel.app/', clicks: '128K' }
 ];
 
+const WindowsLogo = () => (
+  <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+    <path d="M2 5.09L11.36 3.73V11.5H2V5.09ZM12.64 3.55L22 2.18V11.5H12.64V3.55ZM12.64 12.5H22V21.82L12.64 20.45V12.5ZM2 12.5H11.36V20.27L2 18.91V12.5Z"/>
+  </svg>
+);
+
+const AndroidLogo = () => (
+  <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+    <path d="M15 4l1.4-1.9c.2-.3.1-.7-.2-.9-.3-.2-.7-.1-.9.2L13.8 3.5c-1.3-.4-2.8-.4-4 0L8.2 1.4C8 1.1 7.6 1 7.3 1.2c-.3.2-.4.6-.2.9L8.5 4C4.3 6 1.4 10.1 1 14.8h22C22.6 10.1 19.7 6 15 4zm-7.5 7.5c-.8 0-1.5-.7-1.5-1.5s.7-1.5 1.5-1.5 1.5.7 1.5 1.5-.7 1.5-1.5 1.5zm8.5 0c-.8 0-1.5-.7-1.5-1.5s.7-1.5 1.5-1.5 1.5.7 1.5 1.5-.7 1.5-1.5 1.5z"/>
+  </svg>
+);
+
 const Footer: React.FC = () => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
 
   return (
     <>
-      <footer className="w-full py-8 text-center text-slate-500 dark:text-slate-400 text-sm pb-24 md:pb-8">
+      <footer className="w-full py-8 text-center text-slate-500 dark:text-slate-400 text-sm pb-24 md:pb-8 flex flex-col items-center">
+        <div className="flex flex-wrap justify-center gap-4 mb-6">
+          <a href="#" className="flex items-center gap-3 px-4 py-2 border border-[#00a2ed]/40 hover:border-[#00a2ed] rounded-lg text-[#00a2ed] bg-[#00a2ed]/5 hover:bg-[#00a2ed]/10 transition-all">
+            <WindowsLogo />
+            <div className="text-left font-sans">
+              <div className="text-[10px] leading-tight font-medium opacity-90 uppercase tracking-widest text-[#00a2ed]">Download for</div>
+              <div className="text-[15px] font-bold leading-tight">Desktop App</div>
+            </div>
+          </a>
+
+          <a href="#" className="flex items-center gap-3 px-4 py-2 border border-[#3DDC84]/40 hover:border-[#3DDC84] rounded-lg text-[#3DDC84] bg-[#3DDC84]/5 hover:bg-[#3DDC84]/10 transition-all">
+            <AndroidLogo />
+            <div className="text-left font-sans">
+              <div className="text-[10px] leading-tight font-medium opacity-90 uppercase tracking-widest text-[#3DDC84]">Download for</div>
+              <div className="text-[15px] font-bold leading-tight">Android App</div>
+            </div>
+          </a>
+        </div>
+
         <div className="flex flex-wrap items-center justify-center gap-6 mb-4 font-medium">
           <Link to="/" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Secret Area</Link>
           <Link to="/personal-space" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Personal Space</Link>
