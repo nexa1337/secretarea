@@ -14,7 +14,8 @@ import {
   TbUser, TbLock, TbKey, TbUsers, TbBrandDiscord, TbBrandTelegram, TbPin, TbAlertTriangle,
   TbLoader, TbSend, TbCopy, TbGhost, TbShoppingCart, TbShieldExclamation, TbGift,
   TbBold, TbItalic, TbList, TbCheckbox, TbGridDots, TbSearch, TbCalculator, TbBulb, TbSparkles, TbRefresh, TbInfoCircle,
-  TbTarget, TbEye, TbBookmark, TbRadar, TbTerminal, TbBell, TbHistory, TbFilter, TbMenu2, TbDots
+  TbTarget, TbEye, TbBookmark, TbRadar, TbTerminal, TbBell, TbHistory, TbFilter, TbMenu2, TbDots,
+  TbHash, TbFolder, TbDeviceFloppy, TbChartPie
 } from 'react-icons/tb';
 
 import {
@@ -208,7 +209,11 @@ const ICON_MAP: Record<string, React.ElementType> = {
   History: TbHistory,
   Filter: TbFilter,
   MoreHorizontal: TbDots,
-  Menu: TbMenu2
+  Menu: TbMenu2,
+  Hash: TbHash,
+  Folder: TbFolder,
+  Save: TbDeviceFloppy,
+  PieChart: TbChartPie
 };
 
 const Icon: React.FC<IconProps> = ({ name, size = 24, className }) => {

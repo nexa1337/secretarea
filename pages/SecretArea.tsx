@@ -1049,7 +1049,7 @@ const RecentProductsCarousel: React.FC<{
                                     </div>
                                 )}
                                 <div className="absolute top-2 left-2 px-2 py-1 bg-primary-600 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg z-20">
-                                    {item.category === 'steamtools' ? 'STEAMTOOLS' : item.category.toUpperCase()}
+                                    {item.category === 'steamtools' ? 'STEAMTOOLS' : item.category === 'extra' ? 'SAVEGAME' : item.category.toUpperCase()}
                                 </div>
 
                                 <button
@@ -1715,6 +1715,7 @@ const ResourceDetailModal: React.FC<{
   };
 
   const isSteamTool = item.category === 'steamtools';
+  const isExtra = item.category === 'extra';
   const scoreConfig = (item.ratingPositive) ? ((score) => {
     if (isNaN(score)) return { emoji: '🤔', color: 'text-slate-500', bg: 'bg-slate-100 dark:bg-slate-800', border: 'border-slate-200 dark:border-slate-700', wrapper: 'bg-slate-50 dark:bg-slate-900' };
     if (score > 50) return { emoji: '😎', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-500/20', border: 'border-emerald-500/10', wrapper: 'bg-emerald-500/5' };
@@ -1802,10 +1803,11 @@ const ResourceDetailModal: React.FC<{
         <div className="flex-1 bg-white dark:bg-slate-900 overflow-y-auto custom-scrollbar relative flex flex-col">
             <div className="p-6 md:p-8 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 sticky top-0 z-30 backdrop-blur-xl">
                <div className="flex flex-wrap items-center gap-2 mb-3">
-                  <Badge text={isSteamTool ? 'STEAMTOOLS' : item.category} color="blue" icon={isSteamTool ? 'BrandSteam' : 'Folder'} />
+                  <Badge text={isSteamTool ? 'STEAMTOOLS' : (isExtra ? 'SAVEGAME' : item.category)} color="blue" icon={isSteamTool ? 'BrandSteam' : (isExtra ? 'Save' : 'Folder')} />
                   {!isSteamTool && <Badge text={item.version} color="slate" icon="Code" />}
-                  {isSteamTool && item.gameId && <Badge text={`ID: ${item.gameId}`} color="slate" icon="Hash" />}
-                  {!isSteamTool && item.category !== 'architect' && item.repackBy && <Badge text={`REPACK: ${item.repackBy.toUpperCase()}`} color="emerald" icon="Box" />}
+                  <Badge text={`ID: ${item.gameId || item.id}`} color="slate" icon="Hash" />
+                  {!isSteamTool && !isExtra && item.category !== 'architect' && item.repackBy && <Badge text={`REPACK: ${item.repackBy.toUpperCase()}`} color="emerald" icon="Box" />}
+                  {isExtra && item.repackBy && <Badge text={`AUTHOR: ${item.repackBy.toUpperCase()}`} color="emerald" icon="User" />}
                   {resolvedDev && (
                       <button 
                          onClick={() => onCompanyClick && onCompanyClick(resolvedDev)}
@@ -1871,6 +1873,12 @@ const ResourceDetailModal: React.FC<{
                                 </div>
                             </div>
                         </div>
+                    </div>
+                ) : isExtra ? (
+                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                       <StatBox label="File Size" value={item.originalSize || item.repackSize} icon="Database" color="text-primary-500 dark:text-sky-400" />
+                       <StatBox label="Status by %" value={item.version} icon="PieChart" color="text-amber-500 dark:text-amber-400" />
+                       <StatBox label="Downloads" value={getFakeDownloads(item.id)} icon="Download" color="text-blue-500 dark:text-blue-400" />
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1971,7 +1979,7 @@ const ResourceDetailModal: React.FC<{
                 )}
 
                 {item.installSteps.length > 0 && (
-                   <Section title="Deployment Protocol">
+                   <Section title={isExtra ? "Steps You Need" : "Deployment Protocol"}>
                       <div className="space-y-3">
                         {item.installSteps.map((step, idx) => (
                           <div key={idx} className="flex gap-4 p-4 bg-slate-50 dark:bg-slate-800/20 rounded-xl border border-slate-200 dark:border-slate-800/50">
@@ -2279,7 +2287,7 @@ const LatestIntelPanel: React.FC<{ open: boolean; onClose: () => void; items: In
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}
               >
-                {cat === 'ARCHITECT' ? 'TOOLS' : cat}
+                {cat === 'ARCHITECT' ? 'TOOLS' : cat === 'EXTRA' ? 'SAVEGAME' : cat}
               </button>
             ))}
           </div>
@@ -3153,10 +3161,10 @@ const SecretArea: React.FC = () => {
         let idPrefix = '';
         
         if (normalizedKey.includes('hypervisor')) { targetKey = 'hypervisor'; idPrefix = 'H'; }
-        else if (normalizedKey.includes('game')) { targetKey = 'game'; idPrefix = 'G'; }
+        else if (normalizedKey.includes('game') && !normalizedKey.includes('savegame')) { targetKey = 'game'; idPrefix = 'G'; }
         else if (normalizedKey.includes('steamtools')) { targetKey = 'steamtools'; idPrefix = 'S'; }
         else if (normalizedKey.includes('architect')) { targetKey = 'architect'; idPrefix = 'A'; }
-        else if (normalizedKey.includes('extra')) { targetKey = 'extra'; idPrefix = 'E'; }
+        else if (normalizedKey.includes('extra') || normalizedKey.includes('savegame')) { targetKey = 'extra'; idPrefix = 'E'; }
 
         if (targetKey && transformed.hasOwnProperty(targetKey)) {
           transformed[targetKey] = data[tabKey].map((row: any, idx: number) => {
@@ -4069,6 +4077,8 @@ const SecretArea: React.FC = () => {
                                 </>
                               ) : tab === 'architect' ? (
                                 'TOOLS'
+                              ) : tab === 'extra' ? (
+                                'SAVEGAME'
                               ) : tab === 'stash' ? (
                                 <>
                                   <Icon name="Bookmark" size={14} className={activeTab === 'stash' ? 'text-primary-500' : ''} />
