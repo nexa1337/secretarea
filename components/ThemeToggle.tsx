@@ -2,19 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { TbMoon, TbSun } from 'react-icons/tb';
 
 const ThemeToggle: React.FC = () => {
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
-    // Check local storage or system preference
     const savedTheme = localStorage.getItem('theme');
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     
-    if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+    if (savedTheme === 'dark') {
       setTheme('dark');
       document.documentElement.classList.add('dark');
     } else {
       setTheme('light');
       document.documentElement.classList.remove('dark');
+      if (!savedTheme) localStorage.setItem('theme', 'light');
     }
   }, []);
 
