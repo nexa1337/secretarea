@@ -1840,6 +1840,19 @@ const ResourceDetailModal: React.FC<{
             </div>
 
             <div className="p-6 md:p-8 space-y-8 pb-32">
+                <div className="bg-amber-50 dark:bg-amber-900/10 border-l-4 border-amber-500 p-4 rounded-r-xl">
+                    <div className="flex gap-3">
+                        <Icon name="AlertTriangle" className="text-amber-500 shrink-0 mt-0.5" />
+                        <div>
+                            <h4 className="text-sm font-bold text-amber-800 dark:text-amber-400 mb-1">N E X A 1337 Says :</h4>
+                            <p className="text-xs text-amber-700 dark:text-amber-500/80 leading-relaxed font-medium">
+                                Support the original developers and creators by purchasing legitimate copies of their products.<br/>
+                                All trademarks, copyrights, and intellectual property belong to their respective owners.<br/>
+                                If you are a rights holder and wish to request content removal, please contact us.
+                            </p>
+                        </div>
+                    </div>
+                </div>
                 
                 {isSteamTool ? (
                     <div className="bg-slate-100 dark:bg-slate-950 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">

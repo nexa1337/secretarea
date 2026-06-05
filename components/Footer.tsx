@@ -52,6 +52,7 @@ const Footer: React.FC = () => {
           <Link to="/" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Secret Area</Link>
           <Link to="/personal-space" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Personal Space</Link>
           <Link to="/roadmap" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Roadmap</Link>
+          <Link to="/disclaimer" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Disclaimer</Link>
         </div>
         <p>
           © 2026 <button onClick={() => setIsPopupOpen(true)} className="font-bold text-slate-700 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">N E X A 1337</button>. All rights reserved.

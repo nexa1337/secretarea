@@ -9,6 +9,7 @@ import Roadmap from './pages/Roadmap';
 import CategoryDetail from './pages/CategoryDetail';
 import SecretArea from './pages/SecretArea';
 import PersonalFinance from './pages/PersonalFinance';
+import Disclaimer from './pages/Disclaimer';
 import Footer from './components/Footer';
 
 // Logic to handle initial redirect and scrolling
@@ -46,6 +47,7 @@ const App: React.FC = () => {
             <Route path="/roadmap" element={<ProtectedRoute><Roadmap /></ProtectedRoute>} />
             <Route path="/roadmap/:id" element={<ProtectedRoute><CategoryDetail /></ProtectedRoute>} />
             <Route path="/personal-space" element={<ProtectedRoute><PersonalFinance /></ProtectedRoute>} />
+            <Route path="/disclaimer" element={<Disclaimer />} />
           </Routes>
           <Footer />
         </main>
