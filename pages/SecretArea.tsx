@@ -624,11 +624,17 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
         setDuplicateItem(foundMatch || null);
 
         // 2. Auto-Categorization
-        const toolKeywords = ['adobe', 'autocad', 'photoshop', 'illustrator', 'office', 'windows', 'software', 'revit', 'sketchup', 'blender', '3ds max', 'lumion', 'v-ray', 'unreal engine', 'd5 render', 'twinmotion', 'archicad'];
-        const steamToolKeywords = ['steam', 'bypass', 'tool', 'unlocker', 'greenluma', 'koalageddon'];
-        
+        const toolKeywords = ['adobe', 'autocad', 'photoshop', 'illustrator', 'office', 'windows', 'software', 'revit', 'sketchup', 'blender', '3ds max', 'lumion', 'v-ray', 'unreal engine', 'd5 render', 'twinmotion', 'archicad', 'intellij', 'webstorm', 'pycharm', 'clip studio'];
+        const steamToolKeywords = ['steam', 'bypass', 'tool', 'unlocker', 'greenluma', 'koalageddon', 'creamapi', 'autocreamapi', 'goldberg', 'steamworks'];
+        const hypervisorKeywords = ['hypervisor', 'kvm', 'qemu', 'vmware', 'virtualbox', 'anti-cheat bypass', 'hyper-v', 'vt-x', 'amd-v'];
+        const saveKeywords = ['save', 'savegame', '100%', 'completed', 'completion', 'platinum', 'unlock all'];
+
         let suggestedCategory = 'Game';
-        if (toolKeywords.some(kw => query.includes(kw))) {
+        if (saveKeywords.some(kw => query.includes(kw))) {
+            suggestedCategory = 'SaveGame';
+        } else if (hypervisorKeywords.some(kw => query.includes(kw))) {
+            suggestedCategory = 'Hypervisor';
+        } else if (toolKeywords.some(kw => query.includes(kw))) {
             suggestedCategory = 'Tools';
         } else if (steamToolKeywords.some(kw => query.includes(kw))) {
             suggestedCategory = 'SteamTools';
@@ -721,8 +727,10 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
                                 onChange={handleCategoryChange}
                             >
                                 <option value="Game">Game</option>
+                                <option value="Hypervisor">Hypervisor</option>
                                 <option value="SteamTools">SteamTools</option>
                                 <option value="Tools">Tools</option>
+                                <option value="SaveGame">SaveGame</option>
                             </select>
                             {autoCategorized && formData.title.length > 2 && (
                                 <p className="text-[10px] text-blue-500 mt-1.5 flex items-center gap-1 font-bold uppercase tracking-wider">
@@ -1250,26 +1258,28 @@ const analyzeRequirements = (reqs: {label: string, value: string}[]) => {
       }
     }
 
-    if (label.includes('os') || label.includes('system')) {
+    if (label.includes('os') || label.includes('system') || label.includes('windows')) {
       if (val.includes('11')) minOs = 11;
       else if (val.includes('10')) minOs = 10;
+      else if (val.includes('8.1')) minOs = 8;
       else if (val.includes('8')) minOs = 8;
       else if (val.includes('7')) minOs = 7;
     }
 
     if (label.includes('graphics') || label.includes('gpu') || label.includes('video')) {
-      if (val.match(/4090|4080|7900|3090/)) minGpuTier = 5;
-      else if (val.match(/3070|3080|4070|6700|6800|7700|7800|2080/)) minGpuTier = 4;
-      else if (val.match(/1060|1660|2060|3060|4060|580|590|5700|6600|7600|1070|980/)) minGpuTier = 3;
-      else if (val.match(/1050|970|960|750|560|460|1030|mx/)) minGpuTier = 2;
-      else minGpuTier = 3;
+      if (val.match(/4090|4080|7900\s?xt|3090|rx\s?6900/)) minGpuTier = 5;
+      else if (val.match(/3070|3080|4070|6700|6800|7700|7800|2080\s?ti|rx\s?5700\s?xt|1080\s?ti/)) minGpuTier = 4;
+      else if (val.match(/1060|1660|2060|3060|4060|580|590|5700|6600|7600|1070|980\s?ti/)) minGpuTier = 3;
+      else if (val.match(/1050|970|960|750|560|460|1030|mx|intel\s?hd|uhd/)) minGpuTier = 2;
+      else minGpuTier = 3; // default assumption for listed but unknown discrete GPU
     }
 
     if (label.includes('processor') || label.includes('cpu')) {
-      if (val.match(/i9|ryzen 9|i7|ryzen 7/)) minCpuTier = 4;
-      else if (val.match(/i5|ryzen 5/)) minCpuTier = 3;
-      else if (val.match(/i3|ryzen 3/)) minCpuTier = 2;
-      else minCpuTier = 2;
+      if (val.match(/i9|ryzen\s?9|threadripper/)) minCpuTier = 5;
+      else if (val.match(/i7|ryzen\s?7/)) minCpuTier = 4;
+      else if (val.match(/i5|ryzen\s?5/)) minCpuTier = 3;
+      else if (val.match(/i3|ryzen\s?3|pentium|celeron/)) minCpuTier = 2;
+      else minCpuTier = 3; // default assumption
     }
   });
 
@@ -1308,43 +1318,54 @@ const SystemChecker: React.FC<{ reqs: {label: string, value: string}[] }> = ({ r
 
     if (parsedReqs.minRam > 0) {
       if (userSpecs.ram < parsedReqs.minRam) {
-        messages.push(`❌ RAM: You have ${userSpecs.ram}GB, but ${parsedReqs.minRam}GB is required.`);
+        messages.push(`❌ RAM: You have ${userSpecs.ram}GB, but ${parsedReqs.minRam}GB is strictly required. Your system will likely crash or experience severe stuttering.`);
         status = 'fail';
+      } else if (userSpecs.ram === parsedReqs.minRam) {
+        messages.push(`⚠️ RAM: You have exactly ${userSpecs.ram}GB which is the minimum. Close background apps before running!`);
+        if (status === 'pass') status = 'warn';
       } else {
-        messages.push(`✅ RAM: ${userSpecs.ram}GB meets the ${parsedReqs.minRam}GB requirement.`);
+        messages.push(`✅ RAM: Your ${userSpecs.ram}GB provides plenty of headroom over the required ${parsedReqs.minRam}GB.`);
       }
     }
 
     if (parsedReqs.minOs > 0) {
       const userOsNum = parseInt(userSpecs.os);
       if (userOsNum < parsedReqs.minOs) {
-        messages.push(`❌ OS: You have Windows ${userOsNum}, but Windows ${parsedReqs.minOs} is required.`);
+        messages.push(`❌ OS: You are running exactly Windows ${userOsNum}, but this requires Windows ${parsedReqs.minOs}+. It may refuse to launch.`);
         status = 'fail';
       } else {
-        messages.push(`✅ OS: Windows ${userOsNum} meets the requirement.`);
+        messages.push(`✅ OS: Windows ${userOsNum} perfectly meets the OS compatibility requirement.`);
       }
     }
 
     if (parsedReqs.minGpuTier > 1) {
       if (userSpecs.gpuTier < parsedReqs.minGpuTier) {
-        messages.push(`⚠️ GPU: Your GPU might be too weak for optimal performance.`);
+        messages.push(`⚠️ GPU: Your graphics processor is in tier ${userSpecs.gpuTier}, which is below the recommended tier ${parsedReqs.minGpuTier}. Expect low framerates; try setting all graphics to "Low" and using upscaling (FSR/DLSS).`);
         if (status === 'pass') status = 'warn';
+      } else if (userSpecs.gpuTier === parsedReqs.minGpuTier) {
+        messages.push(`✅ GPU: Your graphics processor meets the minimum target. You should get playable framerates on medium-to-low settings.`);
       } else {
-        messages.push(`✅ GPU: Your GPU should handle this game well.`);
+        messages.push(`🚀 GPU: Excellent! Your chosen GPU is above the recommended specifications. Enjoy high fidelity gameplay.`);
       }
     }
 
     if (parsedReqs.minCpuTier > 1) {
       if (userSpecs.cpuTier < parsedReqs.minCpuTier) {
-        messages.push(`⚠️ CPU: Your CPU might bottleneck this game.`);
+        messages.push(`⚠️ CPU: Your processor (tier ${userSpecs.cpuTier}) might bottleneck this software (tier ${parsedReqs.minCpuTier} expected). You may experience long load times and sudden stutters.`);
         if (status === 'pass') status = 'warn';
       } else {
-        messages.push(`✅ CPU: Your CPU is sufficient.`);
+        messages.push(`✅ CPU: Your processor easily handles the compute requirements! No bottlenecks expected.`);
       }
     }
 
     if (messages.length === 0) {
-      messages.push("✅ No specific requirements found. It might run fine!");
+      messages.push("✅ No specific heavy requirements detected. Your system should handle this flawlessly.");
+    } else if (status === 'pass') {
+      messages.push("✨ SUMMARY: Incredible specs! You exceed all major requirements for this software.");
+    } else if (status === 'warn') {
+      messages.push("🚧 SUMMARY: Proceed with caution. The software will likely run, but you may need to reduce settings or close background apps to maintain stability.");
+    } else if (status === 'fail') {
+      messages.push("🚨 SUMMARY: System failure expected. Your current specifications fall critically below the minimum required limits.");
     }
 
     setResult({ status, messages });
@@ -1443,11 +1464,14 @@ const SystemChecker: React.FC<{ reqs: {label: string, value: string}[] }> = ({ r
                   {result.status === 'pass' ? 'Looks Good to Go!' : result.status === 'warn' ? 'Might Struggle a Bit' : 'Probably Won\'t Run Well'}
                 </h4>
                 <div className="space-y-2">
-                  {result.messages.map((msg, idx) => (
-                    <div key={idx} className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      {msg}
+                  {result.messages.map((msg, idx) => {
+                    const iconName = msg.startsWith('❌') ? 'XCircle' : msg.startsWith('⚠️') ? 'AlertTriangle' : msg.startsWith('✅') ? 'CheckCircle2' : msg.startsWith('🚀') ? 'Rocket' : msg.startsWith('✨') ? 'Sparkles' : msg.startsWith('🚧') ? 'HardHat' : msg.startsWith('🚨') ? 'AlertOctagon' : 'Info';
+                    return (
+                    <div key={idx} className="flex gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                      <Icon name={iconName as any} size={16} className={`shrink-0 mt-0.5 ${msg.startsWith('❌') || msg.startsWith('🚨') ? 'text-red-500' : msg.startsWith('⚠️') || msg.startsWith('🚧') ? 'text-yellow-500' : msg.startsWith('✅') || msg.startsWith('✨') || msg.startsWith('🚀') ? 'text-emerald-500' : 'text-slate-500'}`} />
+                      <span>{msg.replace(/^(❌|⚠️|✅|🚀|✨|🚧|🚨)\s*/, '')}</span>
                     </div>
-                  ))}
+                  )})}
                 </div>
               </div>
             )}
@@ -3920,7 +3944,7 @@ const SecretArea: React.FC = () => {
                </div>
             </div>
             
-            <h1 className="text-5xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tighter leading-none uppercase italic relative">
+            <h1 className="text-5xl md:text-7xl lg:text-[5rem] xl:text-7xl lg:whitespace-nowrap font-black text-slate-900 dark:text-white tracking-tighter leading-none uppercase italic relative shrink-0">
               Secret 
               <motion.span 
                 className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-cyan-300 inline-block ml-2"
@@ -3945,12 +3969,11 @@ const SecretArea: React.FC = () => {
               </motion.span>
             </h1>
             <p className="text-slate-500 dark:text-slate-400 max-w-xl text-sm md:text-base font-medium leading-relaxed border-l-2 border-slate-300 dark:border-slate-800 pl-4">
-              Access high-tier digital assets, exclusive repacks, and premium architectural resources. 
-              <span className="text-primary-600 dark:text-primary-500"> For authorized eyes only.</span>
+              Everything you need, from games to tools, collected from trusted sources and presented in a clean experience ad-free.
             </p>
           </div>
           
-          <div className="grid grid-cols-2 min-[600px]:grid-cols-3 xl:grid-cols-5 gap-3 w-full xl:w-auto shrink-0 mt-6 xl:mt-0">
+          <div className="flex flex-wrap items-center justify-start xl:justify-end gap-3 w-full xl:w-auto shrink-0 mt-6 xl:mt-0 xl:max-w-[60%]">
             <button 
                 onClick={() => setShowSteamModal(true)}
                 className="relative flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 p-3 sm:px-4 sm:py-4 bg-gradient-to-r from-[#171a21] to-[#2a475e] hover:to-[#66c0f4] text-white rounded-xl font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 group border border-white/10 text-center"
