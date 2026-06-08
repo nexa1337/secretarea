@@ -2050,7 +2050,9 @@ const ResourceDetailModal: React.FC<{
                                     <div className="p-2 bg-white/10 rounded-full backdrop-blur-sm"><Icon name="Download" size={20} className="text-white sm:w-6 sm:h-6 animate-bounce" /></div>
                                     <div className="text-left sm:text-center">
                                         <div className="text-[10px] font-black text-primary-100 uppercase tracking-[0.2em] opacity-80">Master File</div>
-                                        <div className="text-[11px] sm:text-lg font-black text-white uppercase tracking-wider leading-tight sm:leading-none break-all sm:break-normal">Full Project ({item.repackSize})</div>
+                                        <div className="text-[11px] sm:text-lg font-black text-white uppercase tracking-wider leading-tight sm:leading-none break-all sm:break-normal">
+                                            {['game', 'hypervisor'].includes(item.category) ? `Magnet (${item.repackSize})` : `Full Project (${item.repackSize})`}
+                                        </div>
                                         {item.links.fullNote && (
                                             <div className="mt-1 flex items-center gap-2">
                                                 <div className="text-[9px] sm:text-[10px] text-white/80 font-bold truncate max-w-[150px] sm:max-w-[200px]">
@@ -2074,7 +2076,7 @@ const ResourceDetailModal: React.FC<{
                         {item.links.parts.map(part => (
                             <DownloadButton 
                                 key={`part-${part.id}`}
-                                label={`Download Part ${part.id < 10 ? '0' + part.id : part.id}`} 
+                                label={['game', 'hypervisor'].includes(item.category) ? <span className="text-red-500 group-hover:text-red-400">DataNodes (Speed &amp; Usability) - Part {part.id < 10 ? '0' + part.id : part.id}</span> : `Download Part ${part.id < 10 ? '0' + part.id : part.id}`} 
                                 sub="Primary Server" 
                                 href={part.link} 
                                 icon="Server" 
@@ -2091,7 +2093,7 @@ const ResourceDetailModal: React.FC<{
                         {item.links.mirrors.map(mirror => (
                             <DownloadButton 
                                 key={`mirror-${mirror.id}`}
-                                label={`Mirror Link ${mirror.id < 10 ? '0' + mirror.id : mirror.id}`} 
+                                label={['game', 'hypervisor'].includes(item.category) ? `FuckingFast (REALLY Fucking Fast 🙂) - Link ${mirror.id < 10 ? '0' + mirror.id : mirror.id}` : `Mirror Link ${mirror.id < 10 ? '0' + mirror.id : mirror.id}`} 
                                 sub="Backup Server" 
                                 href={mirror.link} 
                                 icon="Database" 
@@ -2187,7 +2189,7 @@ const Thumbnail: React.FC<{ src: string; isActive: boolean; onClick: () => void 
   );
 };
 
-const DownloadButton: React.FC<{ label: string; sub: string; href: string; icon: string; secondary?: boolean; note?: string; onNoteClick?: (note: string) => void }> = ({ label, sub, href, icon, secondary, note, onNoteClick }) => (
+const DownloadButton: React.FC<{ label: React.ReactNode; sub: string; href: string; icon: string; secondary?: boolean; note?: string; onNoteClick?: (note: string) => void }> = ({ label, sub, href, icon, secondary, note, onNoteClick }) => (
   <div className={`relative group flex flex-col p-2 sm:p-4 rounded-xl border transition-all active:scale-95 hover:-translate-y-1 ${secondary ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 hover:border-primary-500/50'}`}>
      <div className="flex items-center gap-2 sm:gap-4 flex-1">
          <div className={`p-1.5 sm:p-2.5 rounded-lg shrink-0 transition-colors ${secondary ? 'bg-slate-100 dark:bg-slate-950 text-slate-500 group-hover:text-slate-800 dark:group-hover:text-slate-300' : 'bg-slate-200 dark:bg-slate-900 text-primary-600 dark:text-primary-500 group-hover:text-white group-hover:bg-primary-500'}`}>
@@ -2195,7 +2197,7 @@ const DownloadButton: React.FC<{ label: string; sub: string; href: string; icon:
          </div>
          <div className="min-w-0 flex-1">
             <div className="text-[8px] sm:text-[10px] font-bold uppercase tracking-widest opacity-60 mb-0.5 text-slate-500 dark:text-slate-400">{sub}</div>
-            <div className={`text-[9px] sm:text-sm font-bold break-all sm:break-words leading-tight ${secondary ? 'text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white' : 'text-slate-700 dark:text-slate-200 group-hover:text-primary-600 dark:group-hover:text-white'}`}>{label}</div>
+            <div className={`text-xs font-bold break-words leading-tight ${secondary ? 'text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white' : 'text-slate-700 dark:text-slate-200 group-hover:text-primary-600 dark:group-hover:text-white'}`}>{label}</div>
          </div>
          <Icon name="ExternalLink" size={14} className={`shrink-0 w-3 h-3 sm:w-4 sm:h-4 opacity-50 sm:opacity-0 group-hover:opacity-100 transition-opacity ${secondary ? 'text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white' : 'text-slate-400 group-hover:text-primary-600 dark:group-hover:text-white'}`} />
      </div>
