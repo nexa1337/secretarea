@@ -436,7 +436,7 @@ const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: 
             <motion.div 
                 initial={{ scale: 0.9, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
-                className="bg-zinc-950 bg-white w-[95%] md:w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl border border-zinc-800 dark:border-zinc-800 border-slate-200 flex flex-col max-h-[85vh] sm:max-h-[85vh]"
+                className="bg-white dark:bg-zinc-950 w-[95%] md:w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-zinc-800 flex flex-col max-h-[85vh] sm:max-h-[85vh]"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
@@ -460,8 +460,8 @@ const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: 
                 <div className="p-4 sm:p-6 overflow-y-auto flex-1 custom-scrollbar bg-slate-50 dark:bg-zinc-950">
                     {accounts.length === 0 ? (
                         <div className="text-center py-10 flex flex-col items-center justify-center h-full">
-                            <div className="w-20 h-20 bg-zinc-900 rounded-full flex items-center justify-center mb-4 border border-zinc-800">
-                                <Icon name="Gift" size={40} className="text-zinc-600 opacity-50"/>
+                            <div className="w-20 h-20 bg-slate-200 dark:bg-zinc-900 rounded-full flex items-center justify-center mb-4 border border-slate-300 dark:border-zinc-800">
+                                <Icon name="Gift" size={40} className="text-slate-400 dark:text-zinc-600 opacity-50"/>
                             </div>
                             <h4 className="text-lg font-bold text-slate-800 dark:text-zinc-300 mb-2">No Gifts Right Now</h4>
                             <p className="text-sm text-slate-500 dark:text-zinc-500">We continuously restock new premium accounts. Check back later!</p>
@@ -1681,8 +1681,9 @@ const ResourceDetailModal: React.FC<{
   stash: string[];
   toggleStash: (id: string, e?: React.MouseEvent) => void;
   onCompanyClick?: (companyName: string) => void;
+  onGenreClick?: (genre: string) => void;
   resolvedDev?: string;
-}> = ({ item, onClose, isHypervisor, stash, toggleStash, onCompanyClick, resolvedDev }) => {
+}> = ({ item, onClose, isHypervisor, stash, toggleStash, onCompanyClick, onGenreClick, resolvedDev }) => {
   const [activeImage, setActiveImage] = useState(item.coverImage);
   const [showTrailer, setShowTrailer] = useState(false);
   const [translatedDesc, setTranslatedDesc] = useState<string | null>(null);
@@ -1857,8 +1858,28 @@ const ResourceDetailModal: React.FC<{
                  </button>
                </div>
                {item.genres && (
-                 <div className="mt-3 text-xs font-mono text-primary-500 dark:text-sky-400 font-bold uppercase tracking-widest flex items-center gap-2">
-                    <Icon name="Gamepad2" size={14} /> {item.genres}
+                 <div className="mt-3 text-xs font-mono text-primary-500 dark:text-sky-400 font-bold uppercase tracking-widest flex items-center gap-2 flex-wrap">
+                    <Icon name="Gamepad2" size={14} className="shrink-0" /> 
+                    {item.genres.split(',').map((genre, idx, arr) => {
+                        const trimmedGenre = genre.trim();
+                        const isClickable = ['game', 'hypervisor', 'steamtools'].includes(item.category.toLowerCase());
+                        
+                        return (
+                            <span key={idx} className="flex-shrink-0">
+                                {isClickable ? (
+                                    <span 
+                                        onClick={(e) => { e.stopPropagation(); onGenreClick?.(trimmedGenre); }}
+                                        className="cursor-pointer hover:text-primary-600 dark:hover:text-primary-200 hover:underline transition-colors"
+                                    >
+                                        {trimmedGenre}
+                                    </span>
+                                ) : (
+                                    <span>{trimmedGenre}</span>
+                                )}
+                                {idx < arr.length - 1 && <span className="text-slate-400 dark:text-slate-600 ml-1">,</span>}
+                            </span>
+                        );
+                    })}
                  </div>
                )}
             </div>
@@ -3414,6 +3435,7 @@ const SecretArea: React.FC = () => {
     const filtered = currentTabData.filter(item => 
       item.name.toLowerCase().includes(query) || 
       item.id.toLowerCase().includes(query) ||
+      (item.genres && item.genres.toLowerCase().includes(query)) ||
       (item.gameId && String(item.gameId).toLowerCase().includes(query))
     );
     return filtered.sort((a, b) => {
@@ -3873,6 +3895,13 @@ const SecretArea: React.FC = () => {
             stash={stash}
             toggleStash={toggleStash}
             onCompanyClick={handleCompanyClick}
+            onGenreClick={(genre) => {
+              setSearchQuery(genre);
+              if (['game', 'hypervisor', 'steamtools'].includes(selectedResource.category.toLowerCase())) {
+                  setActiveTab(selectedResource.category.toLowerCase() as any);
+              }
+              setSelectedResource(null);
+            }}
             resolvedDev={getResolvedDeveloper(selectedResource)}
           />
         )}
@@ -3978,12 +4007,11 @@ const SecretArea: React.FC = () => {
           <div className="flex flex-wrap items-center justify-start xl:justify-end gap-3 w-full xl:w-auto shrink-0 mt-6 xl:mt-0 xl:max-w-[60%]">
             <button 
                 onClick={() => setShowSteamModal(true)}
-                className="relative flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 p-3 sm:px-4 sm:py-4 bg-gradient-to-r from-[#171a21] to-[#2a475e] hover:to-[#66c0f4] text-white rounded-xl font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 group border border-white/10 text-center"
+                className="relative flex items-center justify-center gap-2 sm:gap-3 p-3 sm:px-5 sm:py-4 bg-gradient-to-r from-[#171a21] to-[#2a475e] hover:to-[#66c0f4] text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 group border border-white/10 text-center whitespace-nowrap"
             >
                 <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <Icon name="BrandSteam" size={20} className="group-hover:animate-bounce shrink-0" /> 
-                <span className="relative z-10 hidden sm:inline">Free Accounts</span>
-                <span className="relative z-10 sm:hidden">Free</span>
+                <span className="relative z-10">Free Accounts</span>
                 {steamAccounts.length > 0 && (
                     <span className="absolute top-1.5 right-1.5 flex h-3 w-3 z-20">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -3993,12 +4021,11 @@ const SecretArea: React.FC = () => {
             </button>
             <button 
                 onClick={() => setShowMasterGiftModal(true)}
-                className="relative flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 p-3 sm:px-4 sm:py-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:to-indigo-500 text-white rounded-xl font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all shadow-lg shadow-violet-500/20 active:scale-95 group border border-white/10 text-center"
+                className="relative flex items-center justify-center gap-2 sm:gap-3 p-3 sm:px-5 sm:py-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:to-indigo-500 text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg shadow-violet-500/20 active:scale-95 group border border-white/10 text-center whitespace-nowrap"
             >
                 <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <Icon name="Gift" size={20} className="group-hover:animate-bounce text-yellow-400 shrink-0" /> 
-                <span className="relative z-10 hidden sm:inline">Master Gift</span>
-                <span className="relative z-10 sm:hidden">Gift</span>
+                <span className="relative z-10">Master Gift</span>
                 {masterGifts.length > 0 && (
                     <span className="absolute top-1.5 right-1.5 flex h-3 w-3 z-20">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
@@ -4006,19 +4033,18 @@ const SecretArea: React.FC = () => {
                     </span>
                 )}
             </button>
-            <a href={DISCORD_LINK} target="_blank" rel="noreferrer" className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 p-3 sm:px-4 sm:py-4 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-xl font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 group text-center">
+            <a href={DISCORD_LINK} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 sm:gap-3 p-3 sm:px-5 sm:py-4 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 group text-center whitespace-nowrap">
                <Icon name="Discord" size={20} className="group-hover:animate-bounce shrink-0" /> 
-               <span className="hidden sm:inline">Join Community</span>
-               <span className="sm:hidden">Discord</span>
+               <span>Join Community</span>
             </a>
-            <a href={TELEGRAM_LINK} target="_blank" rel="noreferrer" className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 p-3 sm:px-4 sm:py-4 bg-[#229ED9] hover:bg-[#1D85B8] text-white rounded-xl font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 group text-center">
-               <Icon name="Telegram" size={20} className="group-hover:animate-bounce shrink-0" /> Channel
+            <a href={TELEGRAM_LINK} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 sm:gap-3 p-3 sm:px-5 sm:py-4 bg-[#229ED9] hover:bg-[#1D85B8] text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 group text-center whitespace-nowrap">
+               <Icon name="Telegram" size={20} className="group-hover:animate-bounce shrink-0" /> <span>Channel</span>
             </a>
             <button 
               onClick={() => { localStorage.removeItem('secret_area_unlocked'); setIsUnlocked(false); }} 
-              className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 p-3 sm:px-4 sm:py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-red-500/50 rounded-xl text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-500 transition-all shadow-sm active:scale-95 group text-center col-span-2 min-[600px]:col-span-1"
+              className="flex items-center justify-center gap-2 sm:gap-3 p-3 sm:px-5 sm:py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-red-500/50 rounded-xl text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-500 transition-all shadow-sm active:scale-95 group text-center whitespace-nowrap"
             >
-              <Icon name="Lock" size={20} className="shrink-0" /> <span className="font-bold text-[10px] sm:text-xs uppercase tracking-widest">Logout</span>
+              <Icon name="Lock" size={20} className="shrink-0" /> <span className="font-bold text-xs uppercase tracking-widest">Logout</span>
             </button>
           </div>
         </header>
