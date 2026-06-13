@@ -41,7 +41,7 @@ const Header: React.FC = () => {
     localStorage.removeItem('secret_area_unlocked');
     setIsUnlocked(false);
     window.dispatchEvent(new Event('authChange'));
-    window.location.href = '/';
+    window.location.reload();
   };
 
   return (
