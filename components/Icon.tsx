@@ -15,7 +15,7 @@ import {
   TbLoader, TbSend, TbCopy, TbGhost, TbShoppingCart, TbShieldExclamation, TbGift,
   TbBold, TbItalic, TbList, TbCheckbox, TbGridDots, TbSearch, TbCalculator, TbBulb, TbSparkles, TbRefresh, TbInfoCircle,
   TbTarget, TbEye, TbBookmark, TbRadar, TbTerminal, TbBell, TbHistory, TbFilter, TbMenu2, TbDots,
-  TbHash, TbFolder, TbDeviceFloppy, TbChartPie
+  TbHash, TbFolder, TbDeviceFloppy, TbChartPie, TbCircleX
 } from 'react-icons/tb';
 
 import {
@@ -122,6 +122,10 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Copy: TbCopy,
   Ghost: TbGhost,
   Gift: TbGift,
+  XCircle: TbCircleX,
+  AlertOctagon: TbShieldExclamation,
+  Sparkles: TbSparkles,
+  HardHat: TbTools,
   
   // Hardware Aliases for System Requirements
   RAM: TbCpu,
@@ -198,7 +202,6 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Search: TbSearch,
   Calculator: TbCalculator,
   Bulb: TbBulb,
-  Sparkles: TbSparkles,
   RefreshCw: TbRefresh,
   Target: TbTarget,
   Eye: TbEye,

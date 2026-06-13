@@ -2554,6 +2554,8 @@ const BestStudiosCarousel: React.FC<{
 
 // --- MAIN PAGE COMPONENT ---
 
+import { DuaPopup } from '../components/DuaPopup';
+
 const SecretArea: React.FC = () => {
   const [isUnlocked, setIsUnlocked] = useState(() => localStorage.getItem('secret_area_unlocked') === 'true');
   const [showHackerLoader, setShowHackerLoader] = useState(() => localStorage.getItem('secret_area_unlocked') === 'true');
@@ -3885,6 +3887,7 @@ const SecretArea: React.FC = () => {
 
       <DisclaimerModal open={showDisclaimer} onClose={handleCloseDisclaimer} />
       <LatestIntelPanel open={showIntelPanel} onClose={() => setShowIntelPanel(false)} items={intelItems} />
+      <DuaPopup />
 
       <AnimatePresence>
         {selectedResource && (
