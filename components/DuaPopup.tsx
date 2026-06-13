@@ -126,7 +126,7 @@ export const DuaPopup: React.FC = () => {
                             {currentDua.arabic}
                         </div>
                         
-                        <div className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 text-center max-h-[80px] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                        <div className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 text-center max-h-[100px] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                             « {currentDua.english} »
                         </div>
                         

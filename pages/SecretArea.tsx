@@ -4043,12 +4043,6 @@ const SecretArea: React.FC = () => {
             <a href={TELEGRAM_LINK} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 sm:gap-3 p-3 sm:px-5 sm:py-4 bg-[#229ED9] hover:bg-[#1D85B8] text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 group text-center whitespace-nowrap">
                <Icon name="Telegram" size={20} className="group-hover:animate-bounce shrink-0" /> <span>Channel</span>
             </a>
-            <button 
-              onClick={() => { localStorage.removeItem('secret_area_unlocked'); setIsUnlocked(false); }} 
-              className="flex items-center justify-center gap-2 sm:gap-3 p-3 sm:px-5 sm:py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-red-500/50 rounded-xl text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-500 transition-all shadow-sm active:scale-95 group text-center whitespace-nowrap"
-            >
-              <Icon name="Lock" size={20} className="shrink-0" /> <span className="font-bold text-xs uppercase tracking-widest">Logout</span>
-            </button>
           </div>
         </header>
 

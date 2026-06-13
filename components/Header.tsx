@@ -21,6 +21,28 @@ const MoroccanFlag = () => (
 
 const Header: React.FC = () => {
   const location = useLocation();
+  const [isUnlocked, setIsUnlocked] = React.useState(() => localStorage.getItem('secret_area_unlocked') === 'true');
+
+  React.useEffect(() => {
+    const handleStorage = () => setIsUnlocked(localStorage.getItem('secret_area_unlocked') === 'true');
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('authChange', handleStorage);
+    const interval = setInterval(() => {
+      setIsUnlocked(localStorage.getItem('secret_area_unlocked') === 'true');
+    }, 1000);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('authChange', handleStorage);
+      clearInterval(interval);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('secret_area_unlocked');
+    setIsUnlocked(false);
+    window.dispatchEvent(new Event('authChange'));
+    window.location.href = '/';
+  };
 
   return (
     <header className="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50 transition-colors duration-300">
@@ -64,6 +86,15 @@ const Header: React.FC = () => {
           <div className="flex items-center gap-3 md:gap-4">
             <MoroccanFlag />
             <ThemeToggle />
+            {isUnlocked && (
+              <button
+                onClick={handleLogout}
+                className="p-2 rounded-xl bg-slate-100 hover:bg-red-500 hover:text-white dark:bg-slate-800 dark:hover:bg-red-500 text-slate-600 dark:text-slate-300 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500/50 shadow-sm"
+                title="Logout"
+              >
+                <Icon name="Logout" size={20} />
+              </button>
+            )}
           </div>
 
         </div>
