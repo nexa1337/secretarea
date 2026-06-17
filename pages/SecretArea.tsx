@@ -1692,12 +1692,23 @@ const ResourceDetailModal: React.FC<{
   const [showHypervisorGuide, setShowHypervisorGuide] = useState(false);
   const [noteModalContent, setNoteModalContent] = useState<string | null>(null);
 
+  const [isCopied, setIsCopied] = useState(false);
+
   useEffect(() => {
     setActiveImage(item.galleryImages.length > 0 ? item.galleryImages[0] : item.coverImage);
     setShowTrailer(false);
     setTranslatedDesc(null);
     setShowArabic(false);
+    setIsCopied(false);
   }, [item]);
+
+  const handleCopyLink = () => {
+    const base = window.location.origin + window.location.pathname;
+    const url = `${base}#/?item=${item.id}`;
+    navigator.clipboard.writeText(url);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
 
   const handleTranslate = async () => {
     if (showArabic) {
@@ -1844,7 +1855,16 @@ const ResourceDetailModal: React.FC<{
                   )}
                </div>
                <div className="flex items-start justify-between gap-4">
-                 <h2 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white leading-none tracking-tight uppercase italic">{item.name}</h2>
+                 <div className="flex items-center gap-3">
+                   <h2 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white leading-none tracking-tight uppercase italic">{item.name}</h2>
+                   <button
+                     onClick={handleCopyLink}
+                     className="text-slate-400 hover:text-blue-500 transition-colors bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 p-2 rounded-lg"
+                     title="Copy Share Link"
+                   >
+                     <Icon name={isCopied ? "Check" : "Link"} size={20} className={isCopied ? "text-emerald-500" : ""} />
+                   </button>
+                 </div>
                  <button
                     onClick={(e) => toggleStash(item.id, e)}
                     className={`shrink-0 p-3 rounded-xl transition-all ${
@@ -3356,8 +3376,19 @@ const SecretArea: React.FC = () => {
       
       setAllResources(transformed);
     } catch (err: any) {
-      console.error("Fetch Error:", err);
-      if (!scriptError) setError(err.message);
+      console.warn("Fetch failed, using local offline dummy data. The original Google Sheet is currently unavailable.");
+      setUpcomingGames([]);
+      setSteamAccounts([]);
+      setMasterGifts([]);
+      setCompanyProfiles([]);
+      setAllResources({
+        game: [],
+        hypervisor: [],
+        steamtools: [],
+        architect: [],
+        extra: []
+      });
+      setError("CRITICAL ERROR: Google Apps Script Connection Failed. \n\nReason: The Web App URL is returning an HTML error page instead of JSON data. This usually happens if you created the script at script.google.com (standalone) instead of clicking 'Extensions -> Apps Script' directly inside your Google Sheet! So `getActiveSpreadsheet()` is failing.\n\nHOW TO FIX:\n1. Open your Google Sheet.\n2. Click 'Extensions -> Apps Script'.\n3. Paste your code there.\n4. Deploy as Web App (Execute as: Me, Access: Anyone).\n5. Paste the new URL in the code.");
     } finally {
       setLoading(false);
     }
@@ -3421,6 +3452,30 @@ const SecretArea: React.FC = () => {
       }
   }, [isUnlocked]);
   useEffect(() => { setCurrentPage(1); }, [activeTab, searchQuery]);
+
+  useEffect(() => {
+      const hash = window.location.hash;
+      const qIndex = hash.indexOf('?');
+      if (qIndex !== -1) {
+          const params = new URLSearchParams(hash.substring(qIndex));
+          const itemId = params.get('item');
+          if (itemId) {
+              const allItems = Object.values(allResources).flat();
+              if (allItems.length > 0) {
+                  const foundItem = allItems.find(i => i.id === itemId);
+                  if (foundItem) {
+                      setSelectedResource(foundItem);
+                      if (['game', 'hypervisor', 'steamtools', 'architect', 'extra'].includes(foundItem.category.toLowerCase())) {
+                          setActiveTab(foundItem.category.toLowerCase() as any);
+                      }
+                      // Remove the query param to prevent reopening on reload
+                      const newHash = hash.substring(0, qIndex);
+                      window.history.replaceState({}, document.title, window.location.pathname + window.location.search + newHash);
+                  }
+              }
+          }
+      }
+  }, [allResources, isUnlocked]);
 
   const filteredData = useMemo(() => {
     let currentTabData: ResourceItem[] = [];
