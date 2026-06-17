@@ -126,6 +126,15 @@ interface CompanyProfile {
   extraIds?: string[];
 }
 
+interface TopGame {
+  id: string;
+  rank: number;
+  name: string;
+  bannerUrl: string;
+  logoUrl: string;
+  symbolUrl: string;
+}
+
 interface UpcomingGame {
   id: string;
   title: string;
@@ -2424,6 +2433,193 @@ const LatestIntelPanel: React.FC<{ open: boolean; onClose: () => void; items: In
   );
 };
 
+const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
+    const [currentPage, setCurrentPage] = useState(0);
+    const ITEMS_PER_PAGE = 10;
+    
+    const noData = !games || games.length === 0;
+
+    const dummyGames: TopGame[] = [
+        {
+            id: 'dummy-1',
+            rank: 1,
+            name: 'Red Dead Redemption 2',
+            bannerUrl: 'https://images.igdb.com/igdb/image/upload/t_1080p/ar5n9.jpg',
+            logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Red_Dead_Redemption_2_Logo.svg/800px-Red_Dead_Redemption_2_Logo.svg.png',
+            symbolUrl: 'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/red-dead-redemption-2.svg'
+        },
+        {
+            id: 'dummy-2',
+            rank: 2,
+            name: 'The Witcher 3: Wild Hunt',
+            bannerUrl: 'https://images.igdb.com/igdb/image/upload/t_1080p/sc5tk7.jpg',
+            logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/The_Witcher_3_Wild_Hunt_logo.svg/800px-The_Witcher_3_Wild_Hunt_logo.svg.png',
+            symbolUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Witcher_3_School_of_the_Wolf_Medallion.svg/200px-Witcher_3_School_of_the_Wolf_Medallion.svg.png'
+        }
+    ];
+
+    const displayGames = noData ? dummyGames : games;
+    const totalPages = Math.ceil(displayGames.length / ITEMS_PER_PAGE);
+    const displayedPageGames = displayGames.slice(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE);
+
+    return (
+        <div className="mt-12 w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] overflow-hidden bg-slate-50 dark:bg-[#0a0a0a] border-y border-slate-200 dark:border-white/10 shadow-2xl transition-colors duration-300">
+            {noData && (
+                <div className="bg-yellow-500/10 border border-yellow-500/30 p-4 m-4 md:m-8 rounded-xl relative z-20 mx-auto max-w-5xl">
+                    <h4 className="text-yellow-400 font-bold mb-2 flex items-center gap-2">
+                        <Icon name="AlertTriangle" size={20} /> Action Required: Google Apps Script Update
+                    </h4>
+                    <p className="text-sm text-yellow-200/80 mb-2">
+                        Your Google Apps Script is not returning the "topgames" sheet data. You are currently seeing a preview with dummy data.
+                    </p>
+                    <p className="text-xs text-yellow-200/60 font-mono bg-black/30 p-3 rounded-lg overflow-x-auto">
+                        1. Open your Google Sheet <br/>
+                        2. Go to Extensions &gt; Apps Script <br/>
+                        3. Make sure it fetches the new sheet. If you have hardcoded sheet names, add "topgames" (or exactly how you named it) to the loop.<br/>
+                        4. VERY IMPORTANT: Click Deploy &gt; New deployment &gt; Web app. Overwriting an old version without "New deployment" will NOT work!
+                    </p>
+                </div>
+            )}
+            {/* Header / Title Style */}
+            <div className="relative z-10 flex flex-col items-center justify-center py-16 px-4">
+                <div 
+                    className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20 dark:opacity-40 mix-blend-luminosity"
+                    style={{ backgroundImage: `url('https://e1.pxfuel.com/desktop-wallpaper/123/929/desktop-wallpaper-we-loved-them-all-games-collage.jpg')` }}
+                ></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-slate-50 via-slate-50/70 to-slate-50 dark:from-[#0a0a0a] dark:via-[#0a0a0a]/50 dark:to-[#0a0a0a] transition-colors duration-300"></div>
+                
+                <div className="relative z-20 text-center flex flex-col items-center">
+                    <h2 className="flex flex-col md:flex-row items-center justify-center font-black tracking-tighter leading-none drop-shadow-2xl transition-colors duration-300">
+                        <span className="text-8xl md:text-[11rem] xl:text-[13rem] text-slate-900 dark:text-slate-100 font-['Anton'] md:pr-6 leading-none">
+                            {displayGames.length}
+                        </span>
+                        <div className="flex flex-col items-center md:items-start md:mt-2">
+                            <span className="text-5xl md:text-7xl xl:text-[6.5rem] font-['Bebas_Neue'] uppercase leading-[0.8] tracking-widest text-[#0b1b3d] dark:text-[#c4d4e2]">
+                                OPEN WORLD
+                            </span>
+                            <span className="text-[5rem] md:text-[8rem] xl:text-[10rem] font-['Permanent_Marker'] md:-ml-2 text-transparent bg-clip-text bg-gradient-to-br from-red-600 via-red-500 to-orange-600 leading-[0.8] drop-shadow-[0_4px_4px_rgba(220,38,38,0.4)] -mt-2 md:-mt-6 text-stroke-2 text-stroke-white dark:text-stroke-black" style={{ WebkitTextStroke: '2px rgba(255,255,255,0.1)' }}>
+                                GAMES
+                            </span>
+                        </div>
+                    </h2>
+                    <div className="mt-4 md:mt-6 flex items-center gap-4 text-slate-800 dark:text-slate-200 font-['Inter'] font-black tracking-[0.3em] text-lg md:text-2xl uppercase transition-colors duration-300">
+                        <span className="h-[2px] w-12 md:w-24 bg-slate-800 dark:bg-slate-200 transition-colors duration-300 opacity-50"></span>
+                        YOU MUST PLAY
+                        <span className="h-[2px] w-12 md:w-24 bg-slate-800 dark:bg-slate-200 transition-colors duration-300 opacity-50"></span>
+                    </div>
+                    <p className="mt-4 text-[9px] md:text-xs text-slate-500 dark:text-slate-400 font-bold tracking-[0.25em] uppercase transition-colors duration-300">
+                        From Fantasy Kingdoms to Chaotic Cities
+                    </p>
+                </div>
+            </div>
+
+            <div className="flex flex-col relative z-10 max-w-7xl mx-auto w-full px-4 mb-10">
+                <AnimatePresence mode="wait">
+                    <motion.div 
+                        key={currentPage}
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -30 }}
+                        transition={{ duration: 0.4 }}
+                        className="flex flex-col rounded-2xl overflow-hidden border border-slate-300 dark:border-white/10 shadow-2xl transition-colors duration-300"
+                    >
+                        {displayedPageGames.map((game, idx) => {
+                            // Rank text e.g. "01"
+                            const rankNum = game.rank.toString().padStart(2, '0');
+                            
+                            // Neon colors
+                            const neonColors = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#0ea5e9', '#8b5cf6', '#d946ef', '#f43f5e'];
+                            const c1 = neonColors[idx % neonColors.length];
+                            
+                            return (
+                                <div key={game.id} className="relative group flex items-stretch border-b border-slate-300 dark:border-white/10 last:border-b-0 overflow-hidden min-h-[90px] sm:min-h-[110px] md:min-h-[130px] transition-all hover:brightness-105 dark:hover:brightness-125 bg-white sm:bg-transparent dark:bg-black/60 dark:backdrop-blur-md">
+                                    {/* Number Box on the left */}
+                                    <div className="w-[70px] md:w-[120px] shrink-0 flex items-center justify-center bg-slate-100 dark:bg-[#050505] relative z-20 border-r border-slate-300 dark:border-white/5 shadow-none dark:shadow-[5px_0_15px_rgba(0,0,0,0.5)] transition-colors duration-300">
+                                        <span 
+                                            style={{ 
+                                                textShadow: `0 0 10px ${c1}66`,
+                                                color: c1
+                                            }}
+                                            className="font-['Anton'] italic text-4xl md:text-6xl drop-shadow-md brightness-90 dark:brightness-125"
+                                        >
+                                            {rankNum}
+                                        </span>
+                                    </div>
+                                    
+                                    {/* Content Area with Banner Background */}
+                                    <div className="flex-1 relative flex items-center px-4 md:px-8 py-2 overflow-hidden bg-slate-200 dark:bg-slate-900 transition-colors duration-300">
+                                        {/* Banner Background */}
+                                        <div 
+                                            className="absolute inset-0 bg-cover bg-center transition-transform duration-[20s] group-hover:scale-110"
+                                            style={{ backgroundImage: `url(${game.bannerUrl})` }}
+                                        ></div>
+                                        {/* Dynamic Gradient for Light/Dark */}
+                                        <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/50 to-white/95 dark:hidden"></div>
+                                        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-black/90 hidden dark:block"></div>
+                                        
+                                        {/* Logo / Title Area */}
+                                        <div className="relative z-10 flex-1 flex items-center justify-start">
+                                            {game.logoUrl ? (
+                                                <img src={game.logoUrl} alt={game.name} className="h-12 md:h-20 object-contain drop-shadow-[0_2px_5px_rgba(0,0,0,0.2)] dark:drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)] max-w-[220px] md:max-w-[400px] transition-transform duration-300 group-hover:scale-105" />
+                                            ) : (
+                                                <h3 className="font-black italic text-xl md:text-4xl text-slate-900 dark:text-white tracking-tight uppercase drop-shadow-[0_2px_5px_rgba(255,255,255,1)] dark:drop-shadow-[0_5px_15px_rgba(0,0,0,1)] transition-colors duration-300">
+                                                    {game.name}
+                                                </h3>
+                                            )}
+                                        </div>
+
+                                        {/* Symbol on the right */}
+                                        {game.symbolUrl && (
+                                            <div className="relative z-10 shrink-0 ml-4 flex items-center h-full">
+                                                <img src={game.symbolUrl} alt="Symbol" className="max-h-12 md:max-h-20 w-auto object-contain opacity-90 group-hover:opacity-100 transition-all duration-300 drop-shadow-md" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    
+                                    {/* Right Edge Glow */}
+                                    <div className="absolute right-0 top-0 bottom-0 w-1 bg-black/20 dark:bg-white opacity-0 group-hover:opacity-50 blur-[2px] transition-opacity"></div>
+                                </div>
+                            );
+                        })}
+                    </motion.div>
+                </AnimatePresence>
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+                <div className="bg-slate-950 p-4 border-t border-slate-800 flex justify-center items-center gap-2">
+                    <button 
+                        onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                        disabled={currentPage === 0}
+                        className="p-3 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:hover:bg-slate-800 text-white rounded-full transition-colors flex items-center justify-center shrink-0"
+                    >
+                        <Icon name="ChevronLeft" size={20} />
+                    </button>
+                    <div className="flex gap-2 mx-2">
+                        {Array.from({ length: totalPages }).map((_, i) => (
+                            <button
+                                key={i}
+                                onClick={() => setCurrentPage(i)}
+                                className={`w-3 h-3 rounded-full transition-all ${
+                                    currentPage === i ? 'bg-red-500 w-6' : 'bg-slate-600 hover:bg-slate-500'
+                                }`}
+                                aria-label={`Page ${i + 1}`}
+                            />
+                        ))}
+                    </div>
+                    <button 
+                        onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+                        disabled={currentPage === totalPages - 1}
+                        className="p-3 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:hover:bg-slate-800 text-white rounded-full transition-colors flex items-center justify-center shrink-0"
+                    >
+                        <Icon name="ChevronRight" size={20} />
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+};
+
 const BestStudiosCarousel: React.FC<{ 
     profiles: CompanyProfile[], 
     onSelect: (profile: CompanyProfile) => void,
@@ -2586,6 +2782,7 @@ const SecretArea: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [allResources, setAllResources] = useState<Record<string, ResourceItem[]>>({ game: [], hypervisor: [], steamtools: [], architect: [], extra: [] });
   const [companyProfiles, setCompanyProfiles] = useState<CompanyProfile[]>([]);
+  const [topGames, setTopGames] = useState<TopGame[]>([]);
   
   const getResolvedDeveloper = (item: ResourceItem) => {
       if (item.developer && item.developer.trim()) return item.developer;
@@ -3236,6 +3433,29 @@ const SecretArea: React.FC = () => {
           setCompanyProfiles([]);
       }
 
+      // Handle Top Games
+      const topGamesKey = Object.keys(data).find(k => k.toLowerCase().replace(/\s+/g, '') === 'topgames');
+      if (topGamesKey && Array.isArray(data[topGamesKey])) {
+          const topGamesList: TopGame[] = data[topGamesKey].map((row: any, idx: number) => {
+             const getVal = (keyStr: string) => {
+                const normalizedSearchKey = keyStr.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const foundKey = Object.keys(row).find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedSearchKey);
+                return foundKey ? row[foundKey] : '';
+             };
+             return {
+                 id: row.id || `topgame-${idx}`,
+                 rank: Number(getVal('rank') || idx + 1),
+                 name: getVal('name') || getVal('gamename') || getVal('title') || 'Unknown Game',
+                 bannerUrl: getVal('bannerurl') || getVal('banner') || getVal('image') || '',
+                 logoUrl: getVal('logourl') || getVal('logo') || '',
+                 symbolUrl: getVal('symbolurl') || getVal('symbol') || getVal('icon') || ''
+             };
+          }).sort((a: TopGame, b: TopGame) => a.rank - b.rank);
+          setTopGames(topGamesList);
+      } else {
+          setTopGames([]);
+      }
+
       const transformed: Record<string, ResourceItem[]> = { game: [], hypervisor: [], steamtools: [], architect: [], extra: [] };
       Object.keys(data).forEach(tabKey => {
         const normalizedKey = tabKey.toLowerCase();
@@ -3243,6 +3463,7 @@ const SecretArea: React.FC = () => {
         let idPrefix = '';
         
         if (normalizedKey.includes('hypervisor')) { targetKey = 'hypervisor'; idPrefix = 'H'; }
+        else if (normalizedKey.includes('upcoming') || normalizedKey.includes('steamaccounts') || normalizedKey.includes('mastergift') || normalizedKey.includes('profil') || normalizedKey.includes('topgames')) { return; }
         else if (normalizedKey.includes('game') && !normalizedKey.includes('savegame')) { targetKey = 'game'; idPrefix = 'G'; }
         else if (normalizedKey.includes('steamtools')) { targetKey = 'steamtools'; idPrefix = 'S'; }
         else if (normalizedKey.includes('architect')) { targetKey = 'architect'; idPrefix = 'A'; }
@@ -4568,12 +4789,15 @@ const SecretArea: React.FC = () => {
         </div>
 
         {['game', 'hypervisor', 'steamtools'].includes(activeTab) && (
-            <BestStudiosCarousel 
-                profiles={companyProfiles}
-                onSelect={setSelectedCompanyProfile}
-                onSeeAll={() => setShowAllProfiles(true)}
-                categoryType="games"
-            />
+            <>
+                <BestStudiosCarousel 
+                    profiles={companyProfiles}
+                    onSelect={setSelectedCompanyProfile}
+                    onSeeAll={() => setShowAllProfiles(true)}
+                    categoryType="games"
+                />
+                <TopGamesSection games={topGames} />
+            </>
         )}
         {['architect', 'extra'].includes(activeTab) && (
             <BestStudiosCarousel 
