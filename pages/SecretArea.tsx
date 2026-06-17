@@ -2550,17 +2550,20 @@ const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
                                     <div className="flex-1 relative flex items-center px-4 md:px-8 py-2 overflow-hidden bg-slate-200 dark:bg-slate-900 transition-colors duration-300">
                                         {/* Banner Background */}
                                         <div 
-                                            className="absolute inset-0 bg-cover bg-center transition-transform duration-[20s] group-hover:scale-110"
+                                            className="absolute inset-0 bg-cover bg-[center_30%] transition-transform duration-[20s] group-hover:scale-110 opacity-80 dark:opacity-100"
                                             style={{ backgroundImage: `url(${game.bannerUrl})` }}
                                         ></div>
+                                        
                                         {/* Dynamic Gradient for Light/Dark */}
                                         <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/50 to-white/95 dark:hidden"></div>
                                         <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-black/90 hidden dark:block"></div>
                                         
                                         {/* Logo / Title Area */}
-                                        <div className="relative z-10 flex-1 flex items-center justify-start">
+                                        <div className="relative z-10 flex-1 flex items-center justify-start h-full">
                                             {game.logoUrl ? (
-                                                <img src={game.logoUrl} alt={game.name} className="h-12 md:h-20 object-contain drop-shadow-[0_2px_5px_rgba(0,0,0,0.2)] dark:drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)] max-w-[220px] md:max-w-[400px] transition-transform duration-300 group-hover:scale-105" />
+                                                <div className="flex items-center justify-start w-[140px] sm:w-[220px] md:w-[350px] h-12 md:h-20 flex-shrink-0">
+                                                    <img src={game.logoUrl} alt={game.name} className="max-w-full max-h-full object-contain object-left drop-shadow-[0_2px_5px_rgba(0,0,0,0.2)] dark:drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)] transition-transform duration-300 group-hover:scale-105" />
+                                                </div>
                                             ) : (
                                                 <h3 className="font-black italic text-xl md:text-4xl text-slate-900 dark:text-white tracking-tight uppercase drop-shadow-[0_2px_5px_rgba(255,255,255,1)] dark:drop-shadow-[0_5px_15px_rgba(0,0,0,1)] transition-colors duration-300">
                                                     {game.name}
@@ -2570,8 +2573,8 @@ const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
 
                                         {/* Symbol on the right */}
                                         {game.symbolUrl && (
-                                            <div className="relative z-10 shrink-0 ml-4 flex items-center h-full">
-                                                <img src={game.symbolUrl} alt="Symbol" className="max-h-12 md:max-h-20 w-auto object-contain opacity-90 group-hover:opacity-100 transition-all duration-300 drop-shadow-md" />
+                                            <div className="relative z-10 shrink-0 ml-4 flex items-center justify-end w-[40px] md:w-[80px] h-10 md:h-20 mr-2">
+                                                <img src={game.symbolUrl} alt="Symbol" className="max-w-full max-h-full object-contain object-right opacity-90 group-hover:opacity-100 transition-all duration-300 drop-shadow-md" />
                                             </div>
                                         )}
                                     </div>
@@ -2587,11 +2590,11 @@ const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-                <div className="bg-slate-950 p-4 border-t border-slate-800 flex justify-center items-center gap-2">
+                <div className="bg-slate-100 dark:bg-[#050505] p-4 border-t border-slate-300 dark:border-white/5 flex justify-center items-center gap-2 transition-colors duration-300">
                     <button 
                         onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
                         disabled={currentPage === 0}
-                        className="p-3 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:hover:bg-slate-800 text-white rounded-full transition-colors flex items-center justify-center shrink-0"
+                        className="p-3 bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 text-slate-800 dark:text-white rounded-full transition-colors flex items-center justify-center shrink-0 border border-slate-300 dark:border-transparent shadow-sm"
                     >
                         <Icon name="ChevronLeft" size={20} />
                     </button>
@@ -2600,8 +2603,8 @@ const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
                             <button
                                 key={i}
                                 onClick={() => setCurrentPage(i)}
-                                className={`w-3 h-3 rounded-full transition-all ${
-                                    currentPage === i ? 'bg-red-500 w-6' : 'bg-slate-600 hover:bg-slate-500'
+                                className={`h-3 rounded-full transition-all ${
+                                    currentPage === i ? 'bg-red-600 dark:bg-red-500 w-6' : 'bg-slate-400 dark:bg-slate-600 hover:bg-slate-500 w-3'
                                 }`}
                                 aria-label={`Page ${i + 1}`}
                             />
@@ -2610,7 +2613,7 @@ const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
                     <button 
                         onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
                         disabled={currentPage === totalPages - 1}
-                        className="p-3 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:hover:bg-slate-800 text-white rounded-full transition-colors flex items-center justify-center shrink-0"
+                        className="p-3 bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 text-slate-800 dark:text-white rounded-full transition-colors flex items-center justify-center shrink-0 border border-slate-300 dark:border-transparent shadow-sm"
                     >
                         <Icon name="ChevronRight" size={20} />
                     </button>
@@ -3167,28 +3170,32 @@ const SecretArea: React.FC = () => {
 
   useEffect(() => {
     if (isUnlocked && !showHackerLoader) {
+        const hasSeenWolfGreeting = localStorage.getItem('nexa_wolf_greeting_seen');
+        if (hasSeenWolfGreeting) return;
+        localStorage.setItem('nexa_wolf_greeting_seen', 'true');
+
         const t1 = setTimeout(() => {
             const id = Date.now();
             setNotifications(prev => [...prev, {
                 id,
-                title: '🐺 New Wolf Detected',
-                text: 'Welcome, new Wolf.\nYou are one of the few chosen to enter the Secret Area.\nOnly Wolves belong here 🖤',
-                time: 'Now'
+                title: '🐺 Alpha Protocol Initiated',
+                text: 'Welcome to the inner circle.\nOnly the most perceptive navigate this far.\nYour instinct has led you to the pack. 🖤',
+                time: 'Just now'
             }]);
-            setTimeout(() => setNotifications(prev => prev.filter(n => n.id !== id)), 6000);
+            setTimeout(() => setNotifications(prev => prev.filter(n => n.id !== id)), 8000);
         }, 5000);
 
         const t2 = setTimeout(() => {
             const id = Date.now() + 1;
             setNotifications(prev => [...prev, {
                 id,
-                title: '🐺 انضمام ذئب جديد',
-                text: 'مرحباً بالذئب الجديد\nأنت من القلّة التي تمكنت من دخول الـ Secret Area.\nهنا لا يوجد إلا الـ Wolves 🖤',
+                title: '🐺 تفعيل بروتوكول النخبة',
+                text: 'مرحباً بك في الدائرة الداخلية.\nغريزتك قادتك إلى هذا العمق حيث ينتمي الأقوى.\nهنا، لا مكان سوى للذئاب الحقيقية. 🖤',
                 time: 'الآن',
                 isAr: true
             }]);
-            setTimeout(() => setNotifications(prev => prev.filter(n => n.id !== id)), 6000);
-        }, 12000); 
+            setTimeout(() => setNotifications(prev => prev.filter(n => n.id !== id)), 8000);
+        }, 14000); 
 
         return () => { clearTimeout(t1); clearTimeout(t2); };
     }
