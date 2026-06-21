@@ -22,6 +22,7 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
   
   const [selectedServer, setSelectedServer] = useState<string>('auto');
   const [activeServerDetails, setActiveServerDetails] = useState<string>('');
+  const [isVisible, setIsVisible] = useState<boolean>(false);
   
   const servers = [
     { name: "Auto Select Best Server", url: "auto" },
@@ -629,8 +630,22 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
   };
 
   return (
-    <div className="w-full flex justify-center py-4 sm:px-4 md:px-6">
-      <div className="w-full max-w-full flex flex-col lg:flex-row bg-white dark:bg-[#1e1e1e] border border-stone-200 dark:border-stone-800 rounded-2xl lg:rounded-3xl overflow-hidden shadow-xl dark:shadow-2xl font-sans text-stone-900 dark:text-stone-100 h-auto lg:min-h-[600px]">
+    <div className="w-full flex flex-col items-center justify-center py-4 sm:px-4 md:px-6 relative group">
+      <div className="w-full flex justify-center mb-2 transition-opacity duration-300">
+        <button
+          onClick={() => setIsVisible(!isVisible)}
+          className="flex items-center gap-2 bg-gradient-to-b from-white to-stone-50 dark:from-[#2a2a2a] dark:to-[#1f1f1f] hover:from-stone-50 hover:to-stone-100 dark:hover:from-[#333] dark:hover:to-[#252525] text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-[#444] px-6 py-3 rounded-full text-xs font-bold tracking-widest uppercase transition-all shadow-sm hover:shadow active:scale-95 z-10"
+        >
+          {isVisible ? 'Hide Telemetry View' : 'Show Telemetry View'}
+          <span className="relative flex h-2.5 w-2.5 ml-1">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00ff00] opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#00ff00]"></span>
+          </span>
+        </button>
+      </div>
+      
+      {isVisible && (
+      <div className="w-full mt-4 max-w-full flex flex-col lg:flex-row bg-white dark:bg-[#1e1e1e] border border-stone-200 dark:border-stone-800 rounded-2xl lg:rounded-3xl overflow-hidden shadow-xl dark:shadow-2xl font-sans text-stone-900 dark:text-stone-100 h-auto lg:min-h-[600px] animate-in fade-in slide-in-from-top-4 duration-500">
         
         {/* Left Sidebar / Real-time Data */}
         <div className="w-full lg:w-[320px] xl:w-[360px] bg-stone-50 dark:bg-[#252525] flex flex-col border-b lg:border-b-0 lg:border-r border-stone-200 dark:border-[#333] shrink-0 p-4 lg:p-6 shadow-inner relative overflow-y-auto overflow-x-hidden custom-scrollbar">
@@ -765,8 +780,8 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
                      </span>
                   </div>
                 </div>
-                <div className="flex-1 min-h-[120px] lg:min-h-[150px]">
-                  <ResponsiveContainer width="100%" height="100%" minHeight={1} minWidth={1}>
+                <div className="h-48 lg:flex-1 w-full min-h-[150px]">
+                  <ResponsiveContainer width="100%" height="100%" minHeight={150} minWidth={1}>
                      <LineChart data={perfData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-stone-200 dark:text-[#333]" vertical={true} />
                         <XAxis dataKey="time" stroke="currentColor" className="text-stone-400 dark:text-[#666]" tick={{ fill: 'currentColor', fontSize: 10 }} axisLine={false} tickLine={false} />
@@ -810,8 +825,8 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
                      </span>
                   </div>
                 </div>
-                <div className="flex-1 min-h-[120px] lg:min-h-[150px]">
-                  <ResponsiveContainer width="100%" height="100%" minHeight={1} minWidth={1}>
+                <div className="h-48 lg:flex-1 w-full min-h-[150px]">
+                  <ResponsiveContainer width="100%" height="100%" minHeight={150} minWidth={1}>
                      <LineChart data={latencyData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-stone-200 dark:text-[#333]" vertical={true} />
                         <XAxis dataKey="time" stroke="currentColor" className="text-stone-400 dark:text-[#666]" tick={{ fill: 'currentColor', fontSize: 10 }} axisLine={false} tickLine={false} />
@@ -844,6 +859,7 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
            
         </div>
       </div>
+      )}
     </div>
   );
 };
