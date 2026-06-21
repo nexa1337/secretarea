@@ -85,7 +85,7 @@ export const DuaPopup: React.FC = () => {
         // Play notification sound
         if (audioRef.current) {
             audioRef.current.currentTime = 0;
-            audioRef.current.play().catch(e => console.log('Audio playback prevented by browser policy'));
+            audioRef.current.play().catch(() => {});
         }
     };
 

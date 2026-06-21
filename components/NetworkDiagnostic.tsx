@@ -25,9 +25,9 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
   
   const servers = [
     { name: "Auto Select Best Server", url: "auto" },
-    { name: "Hetzner (Germany) - 100MB", url: "https://speed.hetzner.de/100MB.bin" },
-    { name: "Hetzner (Germany) - 10MB", url: "https://speed.hetzner.de/10MB.bin" },
-    { name: "Cloudflare (Global) - 10MB", url: "https://speed.cloudflare.com/__down?bytes=10000000" }
+    { name: "Cloudflare (Global) - 100MB", url: "https://speed.cloudflare.com/__down?bytes=100000000" },
+    { name: "Cloudflare (Global) - 10MB", url: "https://speed.cloudflare.com/__down?bytes=10000000" },
+    { name: "Cloudflare (Global) - Fast", url: "https://speed.cloudflare.com/__down?bytes=25000000" }
   ];
 
   // Rolling data for charts (last 30 seconds)
@@ -104,9 +104,21 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
               if (isActive) {
                   setNetworkInfo({
                       ip: metaData.clientIp,
-                      isp: metaData.clientAsnName || metaData.asnName || 'Unknown ISP',
+                      isp: metaData.asOrganization || metaData.clientAsnName || metaData.asnName || 'Unknown ISP',
                       location: [metaData.city, metaData.region, metaData.country].filter(Boolean).join(', ') || 'Unknown Location'
                   });
+              }
+          } else {
+              const altFetch = await fetch('https://ipapi.co/json/').catch(()=>null);
+              if (altFetch && altFetch.ok) {
+                  const altData = await altFetch.json();
+                  if (isActive) {
+                      setNetworkInfo({
+                          ip: altData.ip,
+                          isp: altData.org || 'Unknown ISP',
+                          location: [altData.city, altData.region, altData.country_name].filter(Boolean).join(', ') || 'Unknown Location'
+                      });
+                  }
               }
           }
       } catch (e) {}
@@ -185,6 +197,69 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
             return newData.length > 20 ? newData.slice(newData.length - 20) : newData;
         });
 
+        let finalDownSpeed = 0;
+        let finalUpSpeed = 0;
+        let downMicroStalls = 0;
+        let upMicroStalls = 0;
+
+        const computeLiveDiagnostics = (curDown: number, curUp: number) => {
+            const downVar = calcVariance(downloadSpeedStream);
+            const upVar = calcVariance(uploadSpeedStream);
+            const pingVar = calcVariance(pingSamples);
+            
+            const downStd = downVar > 0 ? Math.sqrt(downVar) : 0;
+            const upStd = upVar > 0 ? Math.sqrt(upVar) : 0;
+            const pingStd = pingVar > 0 ? Math.sqrt(pingVar) : 0;
+            
+            const currentPing = pingSamples.length ? pingSamples.reduce((a,b)=>a+b,0)/pingSamples.length : 0;
+            
+            const covDown = curDown > 0 ? downStd / curDown : 1;
+            const covUp = curUp > 0 ? upStd / curUp : 1;
+            const covPing = currentPing > 0 ? pingStd / currentPing : 1;
+
+            let stabilityScoreAvg = 1 - Math.min((covDown + covUp + (covPing / 2)) / 2.5, 1);
+            
+            const totalMicroStalls = downMicroStalls + upMicroStalls;
+            if (totalMicroStalls > 0) {
+                stabilityScoreAvg -= (totalMicroStalls * 0.05); 
+            }
+            
+            const stabilityPercent = Math.max(0, Math.round(stabilityScoreAvg * 100));
+            setStabilityScore(`${stabilityPercent}%`);
+            setPacketLoss(totalRequests > 0 ? Math.round((failedRequests / totalRequests) * 100) : 0);
+
+            // Bufferbloat live
+            const pingDiff = currentPing - idlePing;
+            if (pingDiff > 50) setBufferbloat('High');
+            else if (pingDiff > 15) setBufferbloat('Moderate');
+            else setBufferbloat('Low');
+
+            let conf = 100;
+            if (totalRequests > 0) conf -= (failedRequests / totalRequests) * 200; 
+            if (stabilityScoreAvg < 1) conf -= (1 - stabilityScoreAvg) * 40; 
+            conf -= totalMicroStalls * 3; 
+            if (downloadSpeedStream.length < 10) conf -= 15; 
+            if (uploadSpeedStream.length < 10) conf -= 15;
+            
+            const finalConfidence = Math.max(0, Math.min(100, Math.round(conf)));
+            setConfidenceScore(finalConfidence);
+            
+            const isStableDown = curDown > 0 ? covDown < 0.2 : false; 
+            
+            let q = 'Fair';
+            if (curDown > 50 && curUp > 10 && currentPing < 20) {
+                q = 'Excellent';
+            } else if (curDown > 15 && curUp > 5 && currentPing < 60 && isStableDown) {
+                q = 'Good';
+            } else if (curDown > 5 && currentPing < 150) {
+                q = 'Fair';
+            } else if (curDown > 0) {
+                q = 'Poor';
+            }
+            setQuality(q);
+            return q;
+        };
+
         // Background continuous pinging during file tests for real-time jitter/server routing validation
         const bgPingInterval = setInterval(() => {
             if (!isActive) return;
@@ -219,7 +294,6 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
         const downAbort = new AbortController();
         let globalDownBytes = 0;
         let downActiveTasks = 0;
-        let downMicroStalls = 0;
 
         const startDownloadTask = async () => {
             downActiveTasks++;
@@ -247,7 +321,6 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
         
         let downPassed = 0;
         let lastDownBytes = 0;
-        let finalDownSpeed = 0;
         let downPlateauTicks = 0;
         
         await new Promise(resolve => {
@@ -277,6 +350,8 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
                     setDownloadSpeed(Number(emaDownload.toFixed(2)));
                     appendChart(Number(emaDownload.toFixed(2)), 0);
                     finalDownSpeed = smoothedSpeed;
+                    
+                    computeLiveDiagnostics(finalDownSpeed, finalUpSpeed);
 
                     // Adaptive Connection Scaling
                     if (smoothedSpeed > 50 && downActiveTasks < maxDownConnections) {
@@ -344,7 +419,6 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
         const upAbort = new AbortController();
         let globalUpBytes = 0;
         let upActiveTasks = 0;
-        let upMicroStalls = 0;
 
         const startUploadTask = async () => {
             upActiveTasks++;
@@ -377,7 +451,6 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
 
         let upPassed = 0;
         let lastUpBytes = 0;
-        let finalUpSpeed = 0;
         let upPlateauTicks = 0;
 
         await new Promise(resolve => {
@@ -406,6 +479,8 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
                     setUploadSpeed(Number(emaUpload.toFixed(2)));
                     appendChart(0, Number(emaUpload.toFixed(2)));
                     finalUpSpeed = smoothedSpeed;
+                    
+                    computeLiveDiagnostics(finalDownSpeed, finalUpSpeed);
 
                     if (smoothedSpeed > 10 && upActiveTasks < maxUpConnections) {
                         const needed = Math.min(maxUpConnections, Math.floor(smoothedSpeed / 10) + 2);
@@ -465,68 +540,19 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
         finalPing = pingSamples.length ? pingSamples.reduce((a, b) => a + b, 0) / pingSamples.length : finalPing;
         finalJitter = pingSamples.length ? pingSamples.reduce((a, b) => a + Math.abs(b - finalPing), 0) / pingSamples.length : finalJitter;
 
-        // Bufferbloat detection
-        const pingDiff = finalPing - idlePing;
-        if (pingDiff > 50) setBufferbloat('High');
-        else if (pingDiff > 15) setBufferbloat('Moderate');
-        else setBufferbloat('Low');
-
         if (!isActive) break;
 
         // 4. Data-Driven Diagnostics
         setTestPhase('Final Result');
 
-        const downVar = calcVariance(downloadSpeedStream);
-        const upVar = calcVariance(uploadSpeedStream);
-        const pingVar = calcVariance(pingSamples);
-        
-        // Stability Score derived from standard deviations relative to the actual speeds
-        const downStd = downVar > 0 ? Math.sqrt(downVar) : 0;
-        const upStd = upVar > 0 ? Math.sqrt(upVar) : 0;
-        const pingStd = pingVar > 0 ? Math.sqrt(pingVar) : 0;
-        
-        const covDown = finalDownSpeed > 0 ? downStd / finalDownSpeed : 1;
-        const covUp = finalUpSpeed > 0 ? upStd / finalUpSpeed : 1;
-        const covPing = finalPing > 0 ? pingStd / finalPing : 1;
+        const computedQuality = computeLiveDiagnostics(finalDownSpeed, finalUpSpeed) || 'Poor';
 
-        // If CV is low, stability is high. Avg CV > 1 means very unstable.
-        let stabilityScoreAvg = 1 - Math.min((covDown + covUp + (covPing / 2)) / 2.5, 1);
-        
-        // Micro-stall penalty
-        const totalMicroStalls = downMicroStalls + upMicroStalls;
-        if (totalMicroStalls > 0) {
-            stabilityScoreAvg -= (totalMicroStalls * 0.05); // 5% penalty per micro-stall
+        if (onStatusChange) {
+            // Note: Since this is called in an async block within useEffect, 
+            // the state update isn't queued during the synchronous render
+            // but we still shouldn't call it inside a setState updater function.
+            onStatusChange({ quality: computedQuality, isTesting: false });
         }
-        
-        const stabilityPercent = Math.max(0, Math.round(stabilityScoreAvg * 100));
-        setStabilityScore(`${stabilityPercent}%`);
-        setPacketLoss(totalRequests > 0 ? Math.round((failedRequests / totalRequests) * 100) : 0);
-
-        // Confidence Score Calculation
-        let conf = 100;
-        if (totalRequests > 0) conf -= (failedRequests / totalRequests) * 200; // Packet loss penalty
-        if (stabilityScoreAvg < 1) conf -= (1 - stabilityScoreAvg) * 40; // Variance penalty
-        conf -= totalMicroStalls * 3; // Micro-stalls penalty
-        if (downPassed < 4000) conf -= 15; // Short duration penalty
-        if (upPassed < 4000) conf -= 15;
-        
-        const finalConfidence = Math.max(0, Math.min(100, Math.round(conf)));
-        setConfidenceScore(finalConfidence);
-        
-        const isStableDown = finalDownSpeed > 0 ? covDown < 0.2 : false; 
-
-        // Dynamic Quality Logic
-        let q = 'Poor';
-        if (finalDownSpeed > 50 && finalUpSpeed > 10 && finalPing < 20 && finalJitter < 5) {
-            q = 'Excellent';
-        } else if (finalDownSpeed > 15 && finalUpSpeed > 5 && finalPing < 60 && finalJitter < 15 && isStableDown) {
-            q = 'Good';
-        } else if (finalDownSpeed > 5 && finalPing < 150) {
-            q = 'Fair';
-        }
-
-        setQuality(q);
-        if (onStatusChange) onStatusChange({ quality: q, isTesting: false });
         
         setLastTest(new Date().toLocaleTimeString());
       }
@@ -740,7 +766,7 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
                   </div>
                 </div>
                 <div className="flex-1 min-h-[120px] lg:min-h-[150px]">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" minHeight={1} minWidth={1}>
                      <LineChart data={perfData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-stone-200 dark:text-[#333]" vertical={true} />
                         <XAxis dataKey="time" stroke="currentColor" className="text-stone-400 dark:text-[#666]" tick={{ fill: 'currentColor', fontSize: 10 }} axisLine={false} tickLine={false} />
@@ -785,7 +811,7 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
                   </div>
                 </div>
                 <div className="flex-1 min-h-[120px] lg:min-h-[150px]">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" minHeight={1} minWidth={1}>
                      <LineChart data={latencyData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-stone-200 dark:text-[#333]" vertical={true} />
                         <XAxis dataKey="time" stroke="currentColor" className="text-stone-400 dark:text-[#666]" tick={{ fill: 'currentColor', fontSize: 10 }} axisLine={false} tickLine={false} />
