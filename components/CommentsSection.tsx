@@ -23,47 +23,139 @@ const AVAILABLE_TAGS = [
   "Great Story 📖", "Hardcore 💀", "Chill ☕"
 ];
 
-const FAKE_NAMES = [
-  'Ghost_Protocol', 'Ahmed_DZ', 'Simox1337', 'LeHacker99', 'Carlos_Dev', 'Ivan_B', 'Wang_Wei', 'Kenji_San', 'Min_Jae', 'ShadowWolf', 'Kira99', 'Youssef_DZ', 'Sakura_01',
-  'Neo_Matrix', 'CyberNinja', 'Elite_Gamer', 'Dark_Knight', 'Tech_Guru99', 'Moha_Maroc', 'Sniper_Zero', 'Abdo_Sec', 'Ali_Pro', 'Hacker_DZ', 'Ninja_X', 'X3_Dragon', 'Omar_Gaming', 'Sami_Devz', 'Ryu_Street', 'Dr_Code', 'Agent_47', 'Rami_1337', 'Alex_Smith', 'Timo_Werner', 'Vlad_Russian', 'Luiz_Brasil', 'Akira_Japan', 'Kim_Seoul', 'Pio_Italy', 'Hans_Germany', 'Omar_EG', 'Sayed_KSA'
+const NAME_ADJECTIVES = ['Ghost', 'Cyber', 'Dark', 'Elite', 'Ninja', 'Shadow', 'Neo', 'Tech', 'Sniper', 'Agent', 'Dr', 'Kira', 'Alpha', 'Pro', 'Hacker', 'Silent', 'Crazy', 'Mad', 'Toxic', 'Epic', 'Mystic', 'Iron', 'Blood', 'Ice', 'Fire', 'Venom', 'Doom', 'Void', 'Savage', 'Furious', 'Solid', 'Ahmed', 'Youssef', 'Ali', 'Omar', 'Alex', 'Ivan', 'Carlos', 'Kenji', 'Moha', 'Sayed'];
+const NAME_NOUNS = ['Protocol', 'Gamer', 'Knight', 'Guru', 'Zero', 'Sec', 'Pro', 'Wolf', 'Dragon', 'Code', '1337', 'X', '99', 'DZ', 'Maroc', 'Sniper', 'Hunter', 'Killer', 'Slayer', 'Beast', 'Fox', 'Bear', 'Tiger', 'Lion', 'Viper', 'Phantom', 'Wraith', 'Demon', 'Angel', 'Samurai', 'Ronin', 'KSA', 'EG', 'Dev', 'San', 'Matrix', 'Smith', 'Brasil', 'Japan', 'Russian', 'Germany'];
+
+const getFakeTextsForGames = (title: string = 'this game') => [
+  { lang: 'en', text: `Works perfectly! Thanks for the upload.` },
+  { lang: 'ar', text: `شغال 100%، شكرا جزيلا على المجهود` },
+  { lang: 'darija', text: `nadi canadi khouya, lay 7fdek` },
+  { lang: 'fr', text: `Super, installation très facile. Merci!` },
+  { lang: 'es', text: `¡Funciona de maravilla! Saludos desde España.` },
+  { lang: 'ru', text: `Всё работает отлично, спасибо автору!` },
+  { lang: 'zh', text: `非常感谢，下载速度很快，完美运行！` },
+  { lang: 'ja', text: `完璧に動作しました。ありがとうございます！` },
+  { lang: 'ko', text: `잘 작동합니다. 공유해주셔서 감사합니다!` },
+  { lang: 'en', text: `Been looking for ${title} everywhere. You are a lifesaver. 😍` },
+  { lang: 'ar', text: `أسطورة، جاري التحميل والتجربة 🔥` },
+  { lang: 'darija', text: `tbarkellah 3lik a sat, dima top` },
+  { lang: 'en', text: `Just tested ${title} on Windows 11 23H2, running flawlessly without any crashes or bugs. Great packing job!` },
+  { lang: 'en', text: `Installation took a bit longer than expected due to unpacking speed, but it completely works and performance is solid. Recommended.` },
+  { lang: 'en', text: `My antivirus flagged one of the files as a false positive, added it to exclusions and everything is running smooth.` },
+  { lang: 'en', text: `This is the most stable version of ${title} I found online. Can confirm it works perfectly even on my low end machine. 🚀` },
+  { lang: 'en', text: `I faced a missing DLL error initially, but reinstalling vcredist fixed it immediately. Thanks bro! 👊` },
+  { lang: 'ar', text: `شغال بدون أي مشاكل، سرعة التحميل خرافية.` },
+  { lang: 'ar', text: `للي يواجه مشكلة في التثبيت، طفوا الانتي فايروس وتشتتغل معاكم طبيعي، تسلم ايدك على الرفع.` },
+  { lang: 'darija', text: `khedama mzyan. bnesba l drari li makatbghich tkhdm lhm ytiro l windows defender rah kaymskheha` },
+  { lang: 'darija', text: `wa narri tbarkellah 3lik akhouya, hadchi m9wd w madi ma fih tachi mochkil` },
+  { lang: 'es', text: `Probado en Windows 10, y el rendimiento es brutal. Ningún tipo de malware, 100% limpio.` },
+  { lang: 'es', text: `Tuve un pequeño error al inicio, pero ejecutarlo como administrador lo solucionó.` },
+  { lang: 'fr', text: `Testé sur ma machine, aucune perte de FPS. Le crack est très propre, bravo.` },
+  { lang: 'fr', text: `J\'ai dû mettre à jour mes pilotes graphiques mais après ça, que du bonheur. 😎` },
+  { lang: 'ru', text: `Репак шикарный, установился за 10 минут. Никаких лагов и вылетов нет.` },
+  { lang: 'ru', text: `Была проблема с запуском, но нужно было просто обновить DirectX. Автору респект!` },
+  { lang: 'en', text: `If anyone gets a black screen on startup for ${title}, try unchecking the full screen optimization in properties.` },
+  { lang: 'en', text: `Literally the only site I trust for these files. Always top notch quality and fast mirrors. ❤️` },
+  { lang: 'en', text: `Was skeptical at first about the file size for ${title}, but the compression is just insane. Fully verified it with CRC check.` },
+  { lang: 'ar', text: `النسخة ذي فيها كل الإضافات لـ ${title} صح ؟ لاني دورت عليها كثير.` },
+  { lang: 'ar', text: `ما شاء الله عليك، اول مره اشوف موقع يوفر كذا روابط سريعه ومافيها إعلانات مزعجة.` },
+  { lang: 'darija', text: `Chokran bzaaaf 3la lmjhod dyalek, ch7al w ana kan9leb 3liha mcrackya mzyan` },
+  { lang: 'pt', text: `Funcionando perfeitamente irmão! Parabéns pelo trabalho excelente.` },
+  { lang: 'de', text: `Läuft einwandfrei ohne jegliche Probleme. Vielen Dank für die Mühe!` },
+  { lang: 'tr', text: `Sorunsuz çalışıyor, emekleriniz için çok teşekkür ederim.` },
+  { lang: 'en', text: `I absolutely love ${title}! ❤️ Played it all weekend, couldn't stop.` },
+  { lang: 'en', text: `Who designed the boss fights in ${title}? They are ridiculously hard! 🤬` },
+  { lang: 'en', text: `Not gonna lie, the story in ${title} made me cry a little at the end. 😭` },
+  { lang: 'en', text: `Why did the intro take 2 hours? Still a solid 8/10 tho. 😂` },
+  { lang: 'ar', text: `قصة ${title} عبارة عن تحفة فنية بصراحة! أبدعوا فيها بشكل كبير. ❤️` },
+  { lang: 'en', text: `This game is an absolute unit! ${title} lived up to the hype for once. 🙌` },
+  { lang: 'en', text: `Bruh, my PC sounds like a jet engine running ${title}. 😂 but totally worth it. 🛫` },
+  { lang: 'en', text: `Honestly I wasn't expecting much, but ${title} completely blew me away. 10/10` },
+  { lang: 'ar', text: `أخيراً لقيت ${title} برابط مباشر! أنقذتني يا بطل 🥇` },
+  { lang: 'en', text: `The graphics in ${title} are next level. Literally took screenshots every 5 mins 📸` },
+  { lang: 'darija', text: `${title} l3ba mraya a drari, li mzl mjarbhash ydirha tchargi db 🔥🔥` },
+  { lang: 'es', text: `¡${title} es una locura! Los gráficos son espectaculares. 🤯` },
+  { lang: 'fr', text: `J'ai pleuré de joie en trouvant ${title} ici. Merci le Boss ! 👑` },
+  { lang: 'en', text: `I've uninstalled and reinstalled ${title} like 3 times now because I keep coming back to it. Addicting af.` },
+  { lang: 'en', text: `Did anyone else experience framedrops in the city area? It's playable but kinda annoying :/` },
+  { lang: 'en', text: `I hate the ending of ${title} so much... why did they do my boy like that?! 😡` },
+  { lang: 'en', text: `Me before playing ${title}: "It's probably overhyped." Me after 50 hours: "I owe this masterpiece an apology." 🙇‍♂️` },
+  { lang: 'ar', text: `لعبة ${title} جابت لي الضغط والسكر من صعوبتها، بس الممتع إني ما قدرت أوقف لعب 😅` },
+  { lang: 'ar', text: `أحببت كل لحظة في ${title}. شكراً على الرفع الرائع والنسخة الخالية من المشاكل! 💕` },
+  { lang: 'es', text: `Sinceramente, ${title} es el mejor juego que he probado este año. Increíble.` },
+  { lang: 'fr', text: `C'est normal que je bloque sur le même boss dans ${title} depuis 3 heures ? Je vais casser ma manette 🤬` },
+  { lang: 'ru', text: `Атмосфера в ${title} просто невероятная. Играешь и забываешь про реальность. ✨` },
+  { lang: 'pt', text: `Mano, ${title} travou no meu PC da Xuxa, mas no do meu amigo rodou liso. O jogo é bom demais kkkk` },
+  { lang: 'en', text: `Pro tip for ${title}: Save often! The autosave is merciless... lost 2 hours of progress 😭` },
+  { lang: 'en', text: `The OST for ${title} is an absolute banger. Literally listening to it on Spotify right now 🎧🔥` },
+  { lang: 'en', text: `I was having an awful week, and playing ${title} actually made me feel a lot better. Thank you. 💖` },
+  { lang: 'darija', text: `wa layn3al tasilt had l boss lakhr, chwht mn 7yati 😡😂` },
+  { lang: 'en', text: `Wait wait wait... is ${title} actually this good or am I dreaming? The mechanics are so fluid! ✨` }
 ];
-const FAKE_TEXTS = [
-  { lang: 'en', text: 'Works perfectly! Thanks for the upload.' },
-  { lang: 'ar', text: 'شغال 100%، شكرا جزيلا على المجهود' },
-  { lang: 'darija', text: 'nadi canadi khouya, lay 7fdek' },
-  { lang: 'fr', text: 'Super, installation très facile. Merci!' },
-  { lang: 'es', text: '¡Funciona de maravilla! Saludos desde España.' },
-  { lang: 'ru', text: 'Всё работает отлично, спасибо автору!' },
-  { lang: 'zh', text: '非常感谢，下载速度很快，完美运行！' },
-  { lang: 'ja', text: '完璧に動作しました。ありがとうございます！' },
-  { lang: 'ko', text: '잘 작동합니다. 공유해주셔서 감사합니다!' },
-  { lang: 'en', text: 'Been looking for this everywhere. You are a lifesaver.' },
-  { lang: 'ar', text: 'أسطورة، جاري التحميل والتجربة' },
-  { lang: 'darija', text: 'tbarkellah 3lik a sat, dima top' },
-  { lang: 'en', text: 'Just tested it on Windows 11 23H2, running flawlessly without any crashes or bugs. Great packing job!' },
-  { lang: 'en', text: 'Installation took a bit longer than expected due to unpacking speed, but it completely works and performance is solid. Recommended.' },
-  { lang: 'en', text: 'My antivirus flagged one of the files as a false positive, added it to exclusions and everything is running smooth.' },
-  { lang: 'en', text: 'This is the most stable version I found online. Can confirm it works perfectly even on my low end machine.' },
-  { lang: 'en', text: 'I faced a missing DLL error initially, but reinstalling vcredist fixed it immediately. Thanks bro!' },
-  { lang: 'ar', text: 'شغال بدون أي مشاكل، سرعة التحميل خرافية.' },
-  { lang: 'ar', text: 'للي يواجه مشكلة في التثبيت، طفوا الانتي فايروس وتشتتغل معاكم طبيعي، تسلم ايدك على الرفع.' },
-  { lang: 'darija', text: 'khedama mzyan. bnesba l drari li makatbghich tkhdm lhm ytiro l windows defender rah kaymskheha' },
-  { lang: 'darija', text: 'wa narri tbarkellah 3lik akhouya, hadchi m9wd w madi ma fih tachi mochkil' },
-  { lang: 'es', text: 'Probado en Windows 10, y el rendimiento es brutal. Ningún tipo de malware, 100% limpio.' },
-  { lang: 'es', text: 'Tuve un pequeño error al inicio, pero ejecutarlo como administrador lo solucionó.' },
-  { lang: 'fr', text: 'Testé sur ma machine, aucune perte de FPS. Le crack est très propre, bravo.' },
-  { lang: 'fr', text: 'J\'ai dû mettre à jour mes pilotes graphiques mais après ça, que du bonheur.' },
-  { lang: 'ru', text: 'Репак шикарный, установился за 10 минут. Никаких лагов и вылетов нет.' },
-  { lang: 'ru', text: 'Была проблема с запуском, но нужно было просто обновить DirectX. Автору респект!' },
-  { lang: 'en', text: 'If anyone gets a black screen on startup, try unchecking the full screen optimization in properties.' },
-  { lang: 'en', text: 'Literally the only site I trust for these files. Always top notch quality and fast mirrors.' },
-  { lang: 'en', text: 'Was skeptical at first about the file size, but the compression is just insane. Fully verified it with CRC check.' },
-  { lang: 'ar', text: 'النسخة ذي فيها كل الإضافات صح ؟ لاني دورت عليها كثير.' },
-  { lang: 'ar', text: 'ما شاء الله عليك، اول مره اشوف موقع يوفر كذا روابط سريعه ومافيها إعلانات مزعجة.' },
-  { lang: 'darija', text: 'Chokran bzaaaf 3la lmjhod dyalek, ch7al w ana kan9leb 3liha mcrackya mzyan' },
-  { lang: 'pt', text: 'Funcionando perfeitamente irmão! Parabéns pelo trabalho excelente.' },
-  { lang: 'de', text: 'Läuft einwandfrei ohne jegliche Probleme. Vielen Dank für die Mühe!' },
-  { lang: 'tr', text: 'Sorunsuz çalışıyor, emekleriniz için çok teşekkür ederim.' }
+
+const getFakeTextsForTools = (title: string = 'this tool') => [
+  { lang: 'en', text: `Works perfectly on my system! Really needed ${title} for my workflow. Thank you! 💻` },
+  { lang: 'ar', text: `تطبيق ممتاز ومفيد جداً. شكراً لك على رفع أحدث نسخة من ${title} وبدون مشاكل.` },
+  { lang: 'darija', text: `nadi lprogram, kan m7ttajo druri f khedmti. lay 7fdk a bro 🙏` },
+  { lang: 'fr', text: `L'installation de ${title} s'est très bien passée. Excellent outil au quotidien.` },
+  { lang: 'es', text: `¡${title} es justo lo que estaba buscando! Funciona muy fluido y no consume recursos.` },
+  { lang: 'ru', text: `Отличная программа, всё активировалось без проблем. Огромное спасибо! 🛠️` },
+  { lang: 'zh', text: `完美兼容我的电脑，非常实用的工具！` },
+  { lang: 'ja', text: `期待通りに機能しました。重宝しています！` },
+  { lang: 'en', text: `Been searching for a clean version of ${title} for weeks. You saved my sanity! 😍` },
+  { lang: 'ar', text: `يا سلام عليك! البرنامج مفعل وجاهز. والله إنك أسطورة 🔥` },
+  { lang: 'darija', text: `khedam 10/10, makrahtch tzidna hta plugins dyalo ila kano. thlay f rasek 👑` },
+  { lang: 'en', text: `Tested ${title} on a fresh Windows 11 install, running flawlessly without any annoying popups. Great repacking!` },
+  { lang: 'en', text: `My antivirus flagged it at first, but I whitelisted the patcher and it fully activated ${title}. Running smooth now.` },
+  { lang: 'en', text: `This is the most stable build of ${title} I've found online. The performance optimization is actually insane. 🚀` },
+  { lang: 'ar', text: `البرنامج شغال بدون أي مشاكل والتفعيل مدى الحياة. أفضل موقع لتحميل البرامج بدون إعلانات مزعجة.` },
+  { lang: 'ar', text: `للي تواجهه مشكلة في تنصيب ${title}، تأكدوا أنكم تقفلون النت وقت التفعيل وتشتغل تمام التمام!` },
+  { lang: 'darija', text: `li bgha ytbto ytfy lwifi w antivirus, rah khedam naddiii a drari.` },
+  { lang: 'es', text: `Rendimiento brutal. Ha mejorado mi productividad un 200%. 100% limpio sin malware.` },
+  { lang: 'fr', text: `Aucun bug rencontré, l'interface de ${title} est vraiment propre et réactive. Je valide. 😎` },
+  { lang: 'ru', text: `Прога просто топ! Установилась за минуту, работает как часы.` },
+  { lang: 'en', text: `I love how lightweight ${title} is compared to the alternatives. Doesn't hog my RAM at all. 🧠` },
+  { lang: 'en', text: `I had a crash on launch initially, but running it as Administrator fixed it immediately. Just a heads up for anyone else!` },
+  { lang: 'ar', text: `ممكن توفير التحديث القادم متى ما نزل؟ صراحة صرت أعتمد عليكم في كل شيء.` },
+  { lang: 'en', text: `If you're hesitating to download ${title}, just do it. It automated half of my daily tasks. 😂` },
+  { lang: 'es', text: `¡Increíble la cantidad de utilidades que tiene esta versión! Muy recomendado. 🤯` },
+  { lang: 'fr', text: `Je pleurais sur mon ancien logiciel, ${title} est tellement plus rapide et moderne. 👏` },
+  { lang: 'pt', text: `Mano, esse app salvou meu dia. Fácil de usar e bem direto ao ponto. Vlw demais! kkk` },
+  { lang: 'en', text: `Pro tip: You can customize the shortcuts in settings to make ${title} even faster for your workflow. 🎧` },
+  { lang: 'en', text: `Literally the only site I trust for these apps. Always top notch quality and secure mirrors. ❤️` },
+  { lang: 'darija', text: `wa fin khesni nrkli la bghit nbdel lougha drari ? lmohim lprogram sda9 nadi ✅` }
+];
+
+const getFakeTextsForSaves = (title: string = 'this file') => [
+  { lang: 'en', text: `This 100% save file for ${title} saved my life! Skipped the grinding. 💯` },
+  { lang: 'ar', text: `تخزينة أسطورية، شكراً لك وفرت علي ساعات من اللعب الممل في ${title} ❤️` },
+  { lang: 'darija', text: `tbarkellah 3lik, fkitina mn l grind. save nadi ✅` },
+  { lang: 'fr', text: `Save à 100% parfaite, tout est débloqué. Merci beaucoup !` },
+  { lang: 'es', text: `¡Esta partida guardada es una maravilla! Todo desbloqueado. 😎` },
+  { lang: 'ru', text: `Отличное сохранение на 100%, всё открыто! Спасибо!` },
+  { lang: 'zh', text: `完美的100%全收集存档，太省心了！` },
+  { lang: 'en', text: `Finally all characters unlocked! Installation was super easy. 🔥` },
+  { lang: 'ar', text: `شباب الطريقة شغالة ومضمونة 100%، شكراً على الرفع.` },
+  { lang: 'darija', text: `nadi lay 7fdk, bghit njerb l mawaslat kharj l khedma, mzyana 👏` },
+  { lang: 'en', text: `Works flawlessly. Put it in my save folder and everything loaded correctly. 🎮` },
+  { lang: 'en', text: `Does this DLC unlocker work for the latest version? Edit: Yes it does! 😍` },
+  { lang: 'en', text: `The language pack fixed my issue! Now playing in my native language. 👍` },
+  { lang: 'ar', text: `ملف التعريب ممتاز جداً ومافيه أي أخطاء، أنصحكم فيه.` },
+  { lang: 'ar', text: `شغال التختيم بكل شيء ماكس! الفلوس، الأسلحة، كل شيء 100%. خيالي 💸` },
+  { lang: 'darija', text: `mod d ltofanatif mzyan, lfer9 kayban f grafikk. sadi9i m3a dak l patch mzyan` },
+  { lang: 'es', text: `Todo full, dinero ilimitado y todos los coches desbloqueados. Rápido y seguro 🚘` },
+  { lang: 'fr', text: `Super fix, le jeu ne crash plus au lancement. Excellent travail ! 🛠️` },
+  { lang: 'ru', text: `Патч помог решить проблему с текстурами. Молодцы.` },
+  { lang: 'en', text: `If you can't find the save folder, it's usually in AppData\\Local. Just drop it there and replace! 📂` },
+  { lang: 'en', text: `I accidentally deleted my save after 60 hours in ${title}... you literally rescued my playthrough. 😭❤️` },
+  { lang: 'ar', text: `تخزينة كاملة مكملة، بس لا تنسون تاخذون نسخة احتياطية لتخزينتكم الأصلية قبل النقل.` },
+  { lang: 'en', text: `The mods and extras included are amazing. Completely changed my experience with ${title} 🙌` },
+  { lang: 'es', text: `Instalé las texturas HD y parece un juego de nueva generación. ¡Increíble! ✨` },
+  { lang: 'fr', text: `Wow, c'est exactement ce qu'il me fallait pour reprendre le jeu sans tout refaire. 🚀` },
+  { lang: 'pt', text: `Save game perfeito, nível máximo e com todos os itens. Show de bola!` },
+  { lang: 'en', text: `Best save file ever! Tested it and got no ban since it's just local data. Awesome. 🛡️` },
+  { lang: 'en', text: `Could you please upload a save file right before the final boss? This 100% one is great though! 🙏` },
+  { lang: 'darija', text: `chokran a khay, rah dlite l patch w l3ba wlat katrta7. top 👍` }
 ];
 
 function seededRandom(seed: number) {
@@ -75,7 +167,7 @@ function seededRandom(seed: number) {
 
 const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxbQKmoUUH4KzLmkAYZMGpoORPDTFYTzqCpnScEFIw5ngQ1cgzvFWU5fq0OXe2M5Ref/exec';
 
-export const CommentsSection: React.FC<{ itemId: string }> = ({ itemId }) => {
+export const CommentsSection: React.FC<{ itemId: string, itemTitle?: string, itemCategory?: string }> = ({ itemId, itemTitle, itemCategory }) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [authorName, setAuthorName] = useState('');
@@ -90,33 +182,64 @@ export const CommentsSection: React.FC<{ itemId: string }> = ({ itemId }) => {
     const numFakes = Math.floor(seededRandom(hash) * 12) + 5; // 5 to 16 comments
     const fakes: Comment[] = [];
     
-    for (let i = 0; i < numFakes; i++) {
+    // Determine category texts
+    const isTool = itemCategory === 'architect' || itemId.startsWith('A') || itemId.startsWith('tool-');
+    const isSave = itemCategory === 'extra' || itemId.startsWith('E');
+    
+    let texts = getFakeTextsForGames(itemTitle || 'this game');
+    if (isTool) {
+        texts = getFakeTextsForTools(itemTitle || 'this tool');
+    } else if (isSave) {
+        texts = getFakeTextsForSaves(itemTitle || 'this save');
+    }
+    
+    // Randomize order based on seed but keep it deterministic
+    const shuffledTexts = [...texts].sort((a, b) => seededRandom(hash + a.text.length) - 0.5);
+    
+    // We only create as many fakes as we have unique text templates to avoid repetition
+    const actualNumFakes = Math.min(numFakes, shuffledTexts.length);
+    
+    const usedAuthors = new Set<string>();
+
+    for (let i = 0; i < actualNumFakes; i++) {
         const seed = hash + i * 100;
-        const nameIdx = Math.floor(seededRandom(seed) * FAKE_NAMES.length);
-        const textIdx = Math.floor(seededRandom(seed + 1) * FAKE_TEXTS.length);
-        const tagIdx = Math.floor(seededRandom(seed + 2) * AVAILABLE_TAGS.length);
         
-        const daysAgo = Math.floor(seededRandom(seed + 3) * 30) + 1;
+        let authorStr = '';
+        let loopSafe = 0;
+        // Generate unique author
+        do {
+            const tempSeed = seed + loopSafe * 13;
+            const nameAdjIdx = Math.floor(seededRandom(tempSeed) * NAME_ADJECTIVES.length);
+            const nameNounIdx = Math.floor(seededRandom(tempSeed + 1) * NAME_NOUNS.length);
+            const nameSuffix = Math.floor(seededRandom(tempSeed + 2) * 9999);
+            authorStr = `${NAME_ADJECTIVES[nameAdjIdx]}_${NAME_NOUNS[nameNounIdx]}${nameSuffix}`;
+            loopSafe++;
+        } while (usedAuthors.has(authorStr) && loopSafe < 10);
+        usedAuthors.add(authorStr);
+
+        const tagIdx = Math.floor(seededRandom(seed + 4) * AVAILABLE_TAGS.length);
+        
+        const daysAgo = Math.floor(seededRandom(seed + 5) * 30) + 1;
         const d = new Date();
         d.setDate(d.getDate() - daysAgo);
 
         fakes.push({
             id: `fake-${itemId}-${i}`,
             itemId,
-            author: FAKE_NAMES[nameIdx],
-            text: FAKE_TEXTS[textIdx].text,
+            author: authorStr,
+            text: shuffledTexts[i].text,
             tags: [AVAILABLE_TAGS[tagIdx]],
             reactions: {
-                like: Math.floor(seededRandom(seed + 4) * 50) + 5,
-                dislike: Math.floor(seededRandom(seed + 5) * 3),
-                love: Math.floor(seededRandom(seed + 6) * 20) + 1
+                like: Math.floor(seededRandom(seed + 6) * 50) + 5,
+                dislike: Math.floor(seededRandom(seed + 7) * 3),
+                love: Math.floor(seededRandom(seed + 8) * 20) + 1
             },
             timestamp: d.toISOString()
         });
     }
     
     return fakes.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [itemId]);
+  }, [itemId, itemTitle, itemCategory]);
 
   // Load comments
   useEffect(() => {
