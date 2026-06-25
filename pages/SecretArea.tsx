@@ -18,15 +18,30 @@ const ITEMS_PER_PAGE = 12; // Show 12 items per page for laptop grid (4x3)
 
 // --- ADVERTISEMENT CONFIGURATION ---
 const AD_CONFIG = {
-  top: {
-    desktop: "https://blogger.googleusercontent.com/img/a/AVvXsEjvKO51qmORWNQeRzbG0U66BuGMMlWmMsA344VdhJ8V3JcioC2XrW66Z3kGy4HQMsosM0LgGjCkVJ8NpZ1VIqQIz-mCNWf2jiDCevjoyxhPdqA6XP2XHfgLGCu8RoW85ZbirIllNSaBFZtKZ6z3-HWvKg8LZQxSlaU80PE4nVwUPB9b4feyPJjzjDMUZhVF",
-    mobile: "https://blogger.googleusercontent.com/img/a/AVvXsEgUaBQ0XP17B2aUVnkbJxWXVg3PUDIKYDs4Q9t3mRsX79mhAPZkJGnPjvyeROac9NZW7MzYsiewRFgiaMbyPVz2dnwl--o6W0IPd95E-r-KWxmPCTtHVIpyXPfu4DdvTzW5wtGZk3ks4TwTK0TBxqOZgGl5eCoALki-Zuz-YEhFXcxsVXK-F1cHpVOy5CCz",
-    link: "https://digitalstore-iota-five.vercel.app"
+  banner1: {
+    desktop: "https://blogger.googleusercontent.com/img/a/AVvXsEg95Vnb1q5cwp-i2pRJWxjHixacYYgJXC1iNW9O_J7HpTSR5ksw8WRZS-yEiehfa8uvbQiv3cz17xQt0GW1a2G8F1WL6yuXmxelRJZsgcYEv1l9ISpUgvRiNudBO4bDeWUQLjWb-x6IWOU7lxdYVriWhGQyu9VvRxtBNytqC1wig6mXReJ0HZnC7e0un2Mg",
+    mobile: "https://blogger.googleusercontent.com/img/a/AVvXsEiRbYidxc8Z_POB5AqCuOsPq1LpMXpvmTnNXZpvbpBJ5TpCMDvdiohn1bU3EfivRxaemyHDG_DMaF0lo1RlM4GmmSO58ZjoEg3MRNL8qP8bHItMJlD3mMZsOadMipi2-CVQdmb40V7WtL5UCUDKqSuSbk9zyvFsMNZjDyisLv0oab6PtNC9KD74LoEwjEvq",
+    link: "https://nexa1337.github.io/nexa1337"
   },
-  bottom: {
-    desktop: "https://blogger.googleusercontent.com/img/a/AVvXsEg0zMrZ22tyGW-aXpu2FAjvrfTlqRz699E3AMMRvV1z26qjt1QZTk45h6pPUhWEzmBW-AmKnKGnEg8qanKwtoP76u8qxQoXjCb91OBqZbQLsr4zRM9WUpBr9w5iGZL668__-C8S7LDj-0nfljMmyL9NLQuKMYsCwPcjtfqbuHF8sbOsKoeyNC-kkXOQ5wnl",
-    mobile: "https://blogger.googleusercontent.com/img/a/AVvXsEi0u1ifLrSsflsFEpWVx9dHUucni_Pl7E4tuja5EHi9N313U8_qnfQXUzQit8tTwoM2z5B3yINT7zCfJAtDj-LnPHWiWe2GgHcZK1Xf7B7y6LzuvhAq5Vx9J-ZMY0ul_YBGqG31lvztFU3keoib7OrzYw5DlfIhpkSjPySH4xy3R2_4NL6pbcN_zAGHK6Wg",
-    link: "https://linktr.ee/nexa1337"
+  banner2: {
+    desktop: "https://blogger.googleusercontent.com/img/a/AVvXsEieujME3eiERRYSKVuqNK5RmR9HNp8dIkYA9RpGwRpFITR4AF-xgaSrGplCnCjdMfq2qERyhFQ3w55UQZKo_2NKJMqwLz9BVbQCBiSF5xq2LIuEP2hZZh6YCWDn7iYCcNvbsAAY7cOPfLbyUI27WR4CrgT84BBjJUvydxicw8aTVMfLV1TDl_ybMlB9w_2-",
+    mobile: "https://blogger.googleusercontent.com/img/a/AVvXsEinwCMKTZTTEwIRwgWImWswN0ZyY_WR59hda2eTjfCsaqCRE081vj5F9NG7Ko4fpWigTmJv1DW7CdzeIC-XVAd-zIrSHCsM9mlCUQhVcJulQIT5A27L2XVG1ddbmPALFBgfPXxLLl6bTq3eBxn_pc1U_fyxJQ5eiwxckBoMXJNDBMi9iJEQ8MJ8gPLqIOBN",
+    link: "https://school-lime-psi.vercel.app/"
+  },
+  banner3: {
+    desktop: "https://blogger.googleusercontent.com/img/a/AVvXsEiSEyx6A5aXHKHgULr34BNBrXr1T1zwDDY6AzfDmoju_y5RofIrU3hD8656Wx_p2CWs-lye2-ZADxwF1OQdiP-iFeHacWd7d0zqi0mcXb6v6GkzSJ8wCnFt0OtmoHW9GigDZK9p5fu5QQw5tyQFoBNOS1dfcDt5e7HHMJD8FeNvGYcfRCoHHBtWdRxbyD_D",
+    mobile: "https://blogger.googleusercontent.com/img/a/AVvXsEjR_OB4CqAqv5g8iq9gu8RKlm8ljH8iuEY-hTnqIlvEHfsz5iJI8QnYmBZ1i9gppBD0axWdTzu9np-rE8wKlDWJ4MjBhNo1uKMVux9ToeY2SK8fpoHy7v7cf493n_FbLo4nF8yOFLD9J2slTY4_3lHTaJJEsUB8U7MCGCHGwXR7ohzD0DdKSlamZY09wQJS",
+    link: "https://nexa1337.github.io/tool/"
+  },
+  banner4: {
+    desktop: "https://blogger.googleusercontent.com/img/a/AVvXsEgN1RQy1V6nR0osv3oNgTei-P_rZykcqf8dfM62jeYWIvxDOQ1fdpvz77DXZ6PWl98uPlH5BLO18M6B8wxeiVds49Ns1lcShLMmG_ASbuQl9-4i6UOaEGyh3Be8bfWnyhL-TZ4igI09zAsmWkqNaULeJxXPFqAQ81BHvQc0F-kZV2yzgF6g8JbWBL7cQhse",
+    mobile: "https://blogger.googleusercontent.com/img/a/AVvXsEg8axchD7U8xQW7JH6F6twwFLvKCG0TfVUjWF8JsFctG42IY3y2pkQDHdRRkVExTf7ewL609l9ztXO9Dq61fPXZPfVlSXwEDB7olykBOZUV4LCzCqdA2SGw0KdJ1F_JPjJPgyl9gMi_gMD9raxaKGAAXqXcEucqknI232gkZPNpYR5OoIzrsmIWh03vy1JF",
+    link: "https://nexa1337.github.io/toolv2"
+  },
+  banner5: {
+    desktop: "https://blogger.googleusercontent.com/img/a/AVvXsEglYrDKA_WlXZZ7wipHFuzNUndOiozyVITTrLQJ7FAYnSVMpLao7EPdx10rxGkfrT9RtoSZadoVdD77Y_pElZyqWEcBX06-MrPBysM8180sAlzvk85IT35ztmLPEJ4ttQw5QNFqWW-8Pz5-hQBCg2AB0NeiviP4I1lXfk9DDta4f0IySkD1JBNUJ9jT8PQL",
+    mobile: "https://blogger.googleusercontent.com/img/a/AVvXsEiZ6vQYIHYF4ft2k3KTHr3oulDVWC7BrP3bhtz0nZ62vr3MyZyZ-JSdASWGqLnC4W_YkH6np8CGyXz1TZNiyzXaBkIEic2DOBkvX1wXQGgHNoavx7HRhAG2sUXhlhOHPAJmDePHsJl5Bs9Ub1lG80u9Zhh2WxqSc1vf8oJjLrq4767OYiLNenojAm9HjijB",
+    link: "https://digitalstore-iota-five.vercel.app/"
   }
 };
 
@@ -786,14 +801,32 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
     );
 };
 
+const Footer = () => (
+  <footer className="w-full mt-2 pt-2 pb-8 flex justify-center items-center gap-4 relative z-20">
+     <a href={DISCORD_LINK} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#5865F2] hover:shadow-lg hover:shadow-[#5865F2]/20 transition-all border border-slate-200 dark:border-slate-800">
+        <Icon name="Discord" size={20} />
+     </a>
+     <a href={TELEGRAM_LINK} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#229ED9] hover:shadow-lg hover:shadow-[#229ED9]/20 transition-all border border-slate-200 dark:border-slate-800">
+        <Icon name="Telegram" size={20} />
+     </a>
+  </footer>
+);
+
 const AdBanner: React.FC<{ desktopSrc: string, mobileSrc: string, link: string, className?: string }> = ({ desktopSrc, mobileSrc, link, className }) => (
-  <a href={link} target="_blank" rel="noreferrer" className={`block w-full group overflow-hidden ${className}`}>
-    <div className="block md:hidden w-full flex justify-center">
-        <img src={mobileSrc} alt="Sponsored" className="w-full max-w-[350px] h-auto rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 hover:opacity-95 transition-opacity"  loading="lazy" />
+  <a href={link} target="_blank" rel="noreferrer" className={`relative block w-full max-w-[320px] md:max-w-[970px] mx-auto aspect-[32/10] md:aspect-[97/25] group overflow-hidden rounded-2xl transition-all duration-500 bg-slate-100 dark:bg-slate-900/50 ${className || ''}`}>
+    {/* Animated glow effect behind the image */}
+    <div className="absolute inset-0 bg-gradient-to-r from-primary-500/0 via-primary-500/20 to-primary-500/0 opacity-0 group-hover:opacity-100 -translate-x-full group-hover:translate-x-full transition-all duration-1000 ease-in-out -skew-x-12 z-10 pointer-events-none" />
+    
+    {/* Sponsored Badge */}
+    <div className="absolute top-2 right-2 md:top-3 md:right-3 z-20 flex items-center gap-1.5 bg-black/40 backdrop-blur-md text-white/90 px-2 py-1 rounded-md border border-white/10 text-[9px] md:text-[10px] font-medium tracking-wide transition-all duration-300 group-hover:bg-black/60 shadow-sm">
+        <Icon name="Info" size={12} className="text-white/70" />
+        <span>Sponsored</span>
     </div>
-    <div className="hidden md:flex w-full justify-center">
-        <img src={desktopSrc} alt="Sponsored" className="w-full max-w-[970px] h-auto rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 hover:opacity-95 transition-opacity"  loading="lazy" />
-    </div>
+
+    <picture className="w-full h-full block">
+        <source media="(min-width: 768px)" srcSet={desktopSrc} />
+        <img src={mobileSrc} alt="Advertisement" className="w-full h-full object-cover transform group-hover:scale-105 md:group-hover:scale-[1.02] transition-transform duration-700" loading="lazy" />
+    </picture>
   </a>
 );
 
@@ -2631,7 +2664,7 @@ const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
     const displayedPageGames = displayGames.slice(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE);
 
     return (
-        <div className="mt-12 w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] overflow-hidden bg-slate-50 dark:bg-[#0a0a0a] border-y border-slate-200 dark:border-white/10 shadow-2xl transition-colors duration-300">
+        <div className="mt-12 w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] overflow-hidden bg-slate-50 dark:bg-[#0a0a0a] border-y border-slate-200 dark:border-white/10 transition-colors duration-300">
             {noData && (
                 <div className="bg-yellow-500/10 border border-yellow-500/30 p-4 m-4 md:m-8 rounded-xl relative z-20 mx-auto max-w-5xl">
                     <h4 className="text-yellow-400 font-bold mb-2 flex items-center gap-2">
@@ -2657,7 +2690,7 @@ const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
                 <div className="absolute inset-0 bg-gradient-to-b from-slate-50 via-slate-50/70 to-slate-50 dark:from-[#0a0a0a] dark:via-[#0a0a0a]/50 dark:to-[#0a0a0a] transition-colors duration-300"></div>
                 
                 <div className="relative z-20 text-center flex flex-col items-center">
-                    <h2 className="flex flex-col md:flex-row items-center justify-center font-black tracking-tighter leading-none drop-shadow-2xl transition-colors duration-300">
+                    <h2 className="flex flex-col md:flex-row items-center justify-center font-black tracking-tighter leading-none transition-colors duration-300">
                         <span className="text-8xl md:text-[11rem] xl:text-[13rem] text-slate-900 dark:text-slate-100 font-['Anton'] md:pr-6 leading-none">
                             {displayGames.length}
                         </span>
@@ -2665,7 +2698,7 @@ const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
                             <span className="text-5xl md:text-7xl xl:text-[6.5rem] font-['Bebas_Neue'] uppercase leading-[0.8] tracking-widest text-[#0b1b3d] dark:text-[#c4d4e2]">
                                 OPEN WORLD
                             </span>
-                            <span className="text-[5rem] md:text-[8rem] xl:text-[10rem] font-['Permanent_Marker'] md:-ml-2 text-transparent bg-clip-text bg-gradient-to-br from-red-600 via-red-500 to-orange-600 leading-[0.8] drop-shadow-[0_4px_4px_rgba(220,38,38,0.4)] -mt-2 md:-mt-6 text-stroke-2 text-stroke-white dark:text-stroke-black" style={{ WebkitTextStroke: '2px rgba(255,255,255,0.1)' }}>
+                            <span className="text-[5rem] md:text-[8rem] xl:text-[10rem] font-['Permanent_Marker'] md:-ml-2 text-transparent bg-clip-text bg-gradient-to-br from-red-600 via-red-500 to-orange-600 leading-[0.8] -mt-2 md:-mt-6 text-stroke-2 text-stroke-white dark:text-stroke-black" style={{ WebkitTextStroke: '2px rgba(255,255,255,0.1)' }}>
                                 GAMES
                             </span>
                         </div>
@@ -3037,6 +3070,19 @@ const SecretArea: React.FC = () => {
   const [isUpcomingMissing, setIsUpcomingMissing] = useState(false);
   const [scriptError, setScriptError] = useState(false);
   const [requestModalInitialTitle, setRequestModalInitialTitle] = useState('');
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   
   // Terminal State
   const [terminalHistory, setTerminalHistory] = useState<{type: string, text: React.ReactNode}[]>([
@@ -3680,7 +3726,7 @@ const SecretArea: React.FC = () => {
                   if (matchingKey) {
                       const val = row[matchingKey];
                       if (val && typeof val === 'string' && val.trim() !== '') {
-                          newLists[category].push(val.trim());
+                          newLists[category].unshift(val.trim());
                       }
                   }
               });
@@ -4757,9 +4803,9 @@ const SecretArea: React.FC = () => {
 
         <div className="mb-10 w-full flex justify-center">
             <AdBanner 
-                desktopSrc={AD_CONFIG.top.desktop} 
-                mobileSrc={AD_CONFIG.top.mobile} 
-                link={AD_CONFIG.top.link} 
+                desktopSrc={AD_CONFIG.banner1.desktop} 
+                mobileSrc={AD_CONFIG.banner1.mobile} 
+                link={AD_CONFIG.banner1.link} 
             />
         </div>
 
@@ -4782,6 +4828,13 @@ const SecretArea: React.FC = () => {
                 onSelect={setSelectedResource}
                 stash={stash}
                 toggleStash={toggleStash}
+             />
+          </div>
+          <div className="mt-10 w-full flex justify-center">
+             <AdBanner 
+                 desktopSrc={AD_CONFIG.banner2.desktop} 
+                 mobileSrc={AD_CONFIG.banner2.mobile} 
+                 link={AD_CONFIG.banner2.link} 
              />
           </div>
         </section>
@@ -5182,9 +5235,9 @@ const SecretArea: React.FC = () => {
 
         <div className="mt-8 mb-4 w-full flex justify-center">
             <AdBanner 
-                desktopSrc={AD_CONFIG.bottom.desktop} 
-                mobileSrc={AD_CONFIG.bottom.mobile} 
-                link={AD_CONFIG.bottom.link} 
+                desktopSrc={AD_CONFIG.banner3.desktop} 
+                mobileSrc={AD_CONFIG.banner3.mobile} 
+                link={AD_CONFIG.banner3.link} 
             />
         </div>
 
@@ -5196,21 +5249,60 @@ const SecretArea: React.FC = () => {
                     onSeeAll={() => setShowAllProfiles(true)}
                     categoryType="games"
                 />
+                <div className="mt-8 mb-10 w-full flex justify-center">
+                    <AdBanner 
+                        desktopSrc={AD_CONFIG.banner4.desktop} 
+                        mobileSrc={AD_CONFIG.banner4.mobile} 
+                        link={AD_CONFIG.banner4.link} 
+                    />
+                </div>
                 <TopGamesSection games={topGames} />
+                <div className="mt-8 mb-2 w-full flex justify-center">
+                    <AdBanner 
+                        desktopSrc={AD_CONFIG.banner5.desktop} 
+                        mobileSrc={AD_CONFIG.banner5.mobile} 
+                        link={AD_CONFIG.banner5.link} 
+                    />
+                </div>
             </>
         )}
         {['architect', 'extra'].includes(activeTab) && (
-            <BestStudiosCarousel 
-                profiles={companyProfiles}
-                onSelect={setSelectedCompanyProfile}
-                onSeeAll={() => setShowAllProfiles(true)}
-                categoryType="tools"
-            />
+            <>
+                <BestStudiosCarousel 
+                    profiles={companyProfiles}
+                    onSelect={setSelectedCompanyProfile}
+                    onSeeAll={() => setShowAllProfiles(true)}
+                    categoryType="tools"
+                />
+                <div className="mt-8 mb-2 w-full flex justify-center">
+                    <AdBanner 
+                        desktopSrc={AD_CONFIG.banner4.desktop} 
+                        mobileSrc={AD_CONFIG.banner4.mobile} 
+                        link={AD_CONFIG.banner4.link} 
+                    />
+                </div>
+            </>
         )}
 
       </div>
+      <Footer />
       </motion.div>
       )}
+
+      {/* Scroll to Top Button */}
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.button 
+            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 20 }}
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="fixed bottom-6 right-6 z-[100] w-12 h-12 rounded-full bg-slate-900/50 dark:bg-slate-100/10 backdrop-blur-md border border-white/20 hover:bg-slate-900/70 dark:hover:bg-slate-100/20 text-white flex items-center justify-center shadow-xl transition-all hover:-translate-y-1"
+          >
+            <Icon name="ArrowUp" size={24} />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
           {showAllProfiles && (

@@ -2,7 +2,7 @@
 import React from 'react';
 import { 
   TbHome, TbMap, TbRobot, TbMail, TbArrowLeft, TbArrowRight, TbX, 
-  TbChevronLeft, TbChevronRight, TbPlus, TbMinus, TbDownload, TbExternalLink,
+  TbChevronLeft, TbChevronRight, TbChevronUp, TbChevronDown, TbArrowUp, TbArrowDown, TbPlus, TbMinus, TbDownload, TbExternalLink,
   TbNetwork, TbPhoto, TbClock, TbPlayerPlay, TbCircleCheck,
   TbNews, TbTrendingUp, TbHeart, TbBolt, TbActivity, TbTools, TbBriefcase,
   TbSchool, TbWorld, TbAward, TbBuildingSkyscraper, TbShieldLock,
@@ -43,9 +43,13 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Mail: TbMail,
   ArrowLeft: TbArrowLeft,
   ArrowRight: TbArrowRight,
+  ArrowUp: TbArrowUp,
+  ArrowDown: TbArrowDown,
   X: TbX,
   ChevronLeft: TbChevronLeft,
   ChevronRight: TbChevronRight,
+  ChevronUp: TbChevronUp,
+  ChevronDown: TbChevronDown,
   Plus: TbPlus,
   Minus: TbMinus,
   Download: TbDownload,

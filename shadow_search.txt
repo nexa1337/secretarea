@@ -1,0 +1,631 @@
+263-        initial={{ scale: 0.9, y: 20 }}
+264-        animate={{ scale: 1, y: 0 }}
+265:        className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl border border-red-500/30 flex flex-col max-h-[90vh]"
+266-      >
+267-        <div className="bg-slate-100 dark:bg-slate-950 p-4 border-b border-slate-200 dark:border-slate-800">
+--
+273-                  className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
+274-                    lang === l 
+275:                    ? 'bg-red-500 text-white shadow-lg shadow-red-500/30' 
+276-                    : 'bg-white dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700'
+277-                  }`}
+--
+298-           <button 
+299-             onClick={onClose}
+300:             className="w-full py-4 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white rounded-xl font-bold text-sm uppercase tracking-widest shadow-lg shadow-red-500/20 transition-all active:scale-95"
+301-           >
+302-             {content.btn}
+--
+331-                initial={{ scale: 0.9, y: 20 }}
+332-                animate={{ scale: 1, y: 0 }}
+333:                className="bg-[#171a21] dark:bg-[#171a21] bg-white w-[95%] md:w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl border border-[#2a475e] dark:border-[#2a475e] border-slate-200 flex flex-col max-h-[85vh] sm:max-h-[85vh]"
+334-                onClick={e => e.stopPropagation()}
+335-            >
+--
+363-                            const isOffline = statusRaw.toLowerCase() === 'offline';
+364-                            return (
+365:                                <div key={idx} className="bg-white dark:bg-[#1b2838] border border-slate-200 dark:border-[#2a475e] rounded-xl p-4 sm:p-5 hover:border-[#66c0f4] transition-colors group shadow-lg relative">
+366-                                    <div className="flex justify-between items-start mb-4">
+367-                                        <div className="flex items-center gap-2">
+--
+464-                initial={{ scale: 0.9, y: 20 }}
+465-                animate={{ scale: 1, y: 0 }}
+466:                className="bg-white dark:bg-zinc-950 w-[95%] md:w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-zinc-800 flex flex-col max-h-[85vh] sm:max-h-[85vh]"
+467-                onClick={e => e.stopPropagation()}
+468-            >
+--
+479-                        </p>
+480-                    </div>
+481:                    <button onClick={onClose} className="p-2 bg-black/20 hover:bg-black/40 rounded-full transition-colors text-white relative z-10 shrink-0 shadow">
+482-                        <Icon name="X" size={20} className="sm:w-6 sm:h-6" />
+483-                    </button>
+--
+502-                                    const isOffline = statusRaw.toLowerCase() === 'offline' || statusRaw.toLowerCase() === 'dead';
+503-                                    return (
+504:                                        <div key={actualIndex} className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-4 hover:border-violet-500/50 transition-all shadow-sm hover:shadow-violet-500/10 group relative flex flex-col h-full">
+505-                                            <div className="flex justify-between items-center mb-4">
+506-                                                <div className="flex items-center gap-3">
+507-                                                    {acc.logo ? (
+508:                                                        <div className="w-10 h-10 rounded-xl overflow-hidden bg-zinc-800 shrink-0 border border-zinc-700 shadow flex items-center justify-center">
+509-                                                            <img src={acc.logo} alt={acc.name} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = '<span class="text-xs font-bold text-zinc-500 uppercase">' + acc.name.substring(0, 2) + '</span>'; }} />
+510-                                                        </div>
+511-                                                    ) : (
+512:                                                        <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-xs shrink-0 shadow">
+513-                                                            {acc.name.substring(0, 2).toUpperCase()}
+514-                                                        </div>
+--
+585-                                                    className={`w-8 h-8 rounded-lg text-xs font-bold transition-colors ${
+586-                                                        currentPage === page 
+587:                                                        ? 'bg-violet-600 text-white shadow shadow-violet-500/20' 
+588-                                                        : 'bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800'
+589-                                                    }`}
+--
+702-                initial={{ scale: 0.9, y: 20 }}
+703-                animate={{ scale: 1, y: 0 }}
+704:                className="bg-white dark:bg-slate-900 w-[95%] sm:w-full max-w-md rounded-3xl overflow-hidden shadow-2xl border border-blue-500/30 flex flex-col max-h-[90vh]"
+705-            >
+706-                <div className="bg-slate-50 dark:bg-slate-950 p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center shrink-0">
+--
+790-                            type="submit" 
+791-                            disabled={loading}
+792:                            className="w-full py-4 mt-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-xl font-bold text-sm uppercase tracking-widest shadow-lg shadow-blue-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+793-                        >
+794-                            {loading ? <Icon name="Loader" size={18} className="animate-spin" /> : <Icon name="Send" size={18} />}
+--
+803-
+804-const AdBanner: React.FC<{ desktopSrc: string, mobileSrc: string, link: string, className?: string }> = ({ desktopSrc, mobileSrc, link, className }) => (
+805:  <a href={link} target="_blank" rel="noreferrer" className={`relative block w-full max-w-[320px] md:max-w-[970px] mx-auto aspect-[32/10] md:aspect-[97/25] group overflow-hidden rounded-2xl shadow-lg border border-slate-200/50 dark:border-slate-800/50 hover:shadow-primary-500/20 hover:border-primary-500/50 transition-all duration-500 bg-slate-100 dark:bg-slate-900/50 ${className || ''}`}>
+806-    {/* Animated glow effect behind the image */}
+807-    <div className="absolute inset-0 bg-gradient-to-r from-primary-500/0 via-primary-500/20 to-primary-500/0 opacity-0 group-hover:opacity-100 -translate-x-full group-hover:translate-x-full transition-all duration-1000 ease-in-out -skew-x-12 z-10 pointer-events-none" />
+808-    
+809-    {/* Sponsored Badge */}
+810:    <div className="absolute top-2 right-2 md:top-3 md:right-3 z-20 flex items-center gap-1.5 bg-black/40 backdrop-blur-md text-white/90 px-2 py-1 rounded-md border border-white/10 text-[9px] md:text-[10px] font-medium tracking-wide transition-all duration-300 group-hover:bg-black/60 shadow-sm">
+811-        <Icon name="Info" size={12} className="text-white/70" />
+812-        <span>Sponsored</span>
+--
+930-                            className="flex-shrink-0 p-1"
+931-                        >
+932:                            <div className="relative aspect-[3/4] bg-slate-200 dark:bg-slate-900 rounded-xl overflow-hidden group/card shadow-sm hover:shadow-lg transition-all duration-300">
+933-                                <img 
+934-                                    src={game.image} 
+--
+945-                                        </span>
+946-                                    </div>
+947:                                    <h3 className="font-black text-xs md:text-sm text-white leading-tight line-clamp-2 drop-shadow-md group-hover/card:text-primary-400 transition-colors">
+948-                                        {game.title}
+949-                                    </h3>
+950-                                    <div className="mt-1 flex justify-between items-center">
+951:                                        <span className="font-mono font-bold text-emerald-400 text-[10px] drop-shadow-md bg-black/40 px-1.5 rounded">
+952-                                            {game.price}
+953-                                        </span>
+--
+960-            </div>
+961-            <div className="absolute top-1/2 -translate-y-1/2 left-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block">
+962:                <button onClick={handlePrev} className="p-2 rounded-full bg-white/90 dark:bg-black/90 text-slate-900 dark:text-white shadow-lg hover:scale-110 transition-transform">
+963-                    <Icon name="ChevronLeft" size={20} />
+964-                </button>
+965-            </div>
+966-            <div className="absolute top-1/2 -translate-y-1/2 right-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block">
+967:                <button onClick={handleNext} className="p-2 rounded-full bg-white/90 dark:bg-black/90 text-slate-900 dark:text-white shadow-lg hover:scale-110 transition-transform">
+968-                    <Icon name="ChevronRight" size={20} />
+969-                </button>
+--
+1076-                            <div 
+1077-                                onClick={() => onSelect(item)}
+1078:                                className="relative aspect-[3/4] bg-slate-200 dark:bg-slate-900 rounded-xl overflow-hidden group/card shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer"
+1079-                            >
+1080-                                <img 
+--
+1087-                                
+1088-                                {item.isFree && (
+1089:                                    <div className="absolute top-2 right-2 px-2 py-1 bg-emerald-500 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1 z-20">
+1090-                                        <Icon name="Tag" size={10} /> Free
+1091-                                    </div>
+1092-                                )}
+1093:                                <div className="absolute top-2 left-2 px-2 py-1 bg-primary-600 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg z-20">
+1094-                                    {item.category === 'steamtools' ? 'STEAMTOOLS' : item.category === 'extra' ? 'SAVEGAME' : item.category.toUpperCase()}
+1095-                                </div>
+--
+1099-                                    className={`absolute top-2 right-2 z-40 p-1.5 rounded-full md:backdrop-blur-md transition-all ${
+1100-                                        stash.includes(item.id) 
+1101:                                        ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
+1102-                                        : 'bg-black/40 text-white/70 hover:bg-black/60 hover:text-white border border-white/10'
+1103-                                    } ${item.isFree ? 'top-10' : ''}`}
+--
+1108-
+1109-                                <div className="absolute bottom-0 left-0 right-0 p-3 z-20">
+1110:                                    <h3 className="font-black text-xs md:text-sm text-white leading-tight line-clamp-2 drop-shadow-md group-hover/card:text-primary-400 transition-colors">
+1111-                                        {item.name}
+1112-                                    </h3>
+1113-                                    <div className="mt-1 flex justify-between items-center">
+1114:                                        <span className="font-mono font-bold text-slate-300 text-[10px] drop-shadow-md bg-black/40 px-1.5 rounded">
+1115-                                            {item.version}
+1116-                                        </span>
+--
+1123-            </div>
+1124-            <div className="absolute top-1/2 -translate-y-1/2 left-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block">
+1125:                <button onClick={handlePrev} className="p-2 rounded-full bg-white/90 dark:bg-black/90 text-slate-900 dark:text-white shadow-lg hover:scale-110 transition-transform">
+1126-                    <Icon name="ChevronLeft" size={20} />
+1127-                </button>
+1128-            </div>
+1129-            <div className="absolute top-1/2 -translate-y-1/2 right-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block">
+1130:                <button onClick={handleNext} className="p-2 rounded-full bg-white/90 dark:bg-black/90 text-slate-900 dark:text-white shadow-lg hover:scale-110 transition-transform">
+1131-                    <Icon name="ChevronRight" size={20} />
+1132-                </button>
+--
+1169-
+1170-    return (
+1171:        <div className="w-full bg-white dark:bg-[#1e232d] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 sm:p-6 md:p-8 relative overflow-hidden transition-colors">
+1172-            {/* Faded Background Image */}
+1173-            <div className="absolute top-0 right-0 bottom-0 w-full md:w-2/3 pointer-events-none opacity-20 dark:opacity-10 transition-opacity duration-500">
+--
+1198-                            key={tab}
+1199-                            onClick={() => handleCategoryChange(tab)}
+1200:                            className={`px-3 py-1.5 rounded-md text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all shadow-sm border ${
+1201-                                activeCategory === tab 
+1202-                                ? 'bg-emerald-500 text-white border-emerald-500 scale-105' 
+--
+1241-                                >
+1242-                                    <span className={`${arrowColor} font-mono text-xs sm:text-sm tracking-tighter mt-1 opacity-70 group-hover:opacity-100 transition-opacity`}>---&gt;</span>
+1243:                                    <span className={`${textColor} font-bold text-sm sm:text-base md:text-lg leading-snug tracking-tight drop-shadow-sm group-hover:brightness-125 transition-all`}>
+1244-                                        {displayItem}
+1245-                                    </span>
+--
+1292-        animate={{ scale: 1, y: 0 }}
+1293-        exit={{ scale: 0.9, y: 20 }}
+1294:        className="bg-white dark:bg-slate-900 w-full h-full max-w-5xl max-h-[90vh] rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col"
+1295-        onClick={(e) => e.stopPropagation()}
+1296-      >
+--
+1629-            <button 
+1630-              onClick={handleCheck}
+1631:              className="w-full py-3 bg-primary-600 hover:bg-primary-500 text-white font-bold rounded-lg transition-colors shadow-lg shadow-primary-600/20"
+1632-            >
+1633-              Check Compatibility
+--
+1673-      animate={{ scale: 1, opacity: 1, y: 0 }}
+1674-      exit={{ scale: 0.95, opacity: 0, y: 10 }}
+1675:      className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl p-6 border border-slate-200 dark:border-slate-800 relative"
+1676-      onClick={e => e.stopPropagation()}
+1677-    >
+--
+1731-      <div className="flex-none p-4 md:p-8 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 md:backdrop-blur-md">
+1732-        <div className="flex items-center gap-4 md:gap-6">
+1733:          <div className="w-16 h-16 md:w-24 md:h-24 shrink-0 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex items-center justify-center p-2 relative group">
+1734-             {!imgError && profile.logoUrl ? (
+1735-               <>
+--
+1760-                 className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors flex items-center gap-2 ${
+1761-                    activeCategory === cat 
+1762:                    ? 'bg-primary-500 text-white shadow-md shadow-primary-500/20 border border-primary-500' 
+1763-                    : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-primary-500/50'
+1764-                 }`}
+--
+1778-                  key={item.id} 
+1779-                  onClick={() => onItemClick(item)}
+1780:                  className="group cursor-pointer bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden hover:border-primary-500 dark:hover:border-primary-500 transition-all shadow-sm hover:shadow-xl flex flex-col h-full"
+1781-               >
+1782-                  <div className="aspect-[9/16] bg-slate-100 dark:bg-slate-800 relative overflow-hidden shrink-0">
+--
+1784-                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+1785-                     <div className="absolute top-2 inset-x-2 flex justify-between items-start">
+1786:                         <div className="bg-primary-600 text-white px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest shadow-md">
+1787-                             {(item.category || '').toUpperCase()}
+1788-                         </div>
+1789-                         {item.version && (
+1790:                             <div className="bg-slate-900/80 md:backdrop-blur-sm text-slate-200 border border-slate-700 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold shadow-md truncate ml-2">
+1791-                                 {item.version}
+1792-                             </div>
+--
+1832-                         key={page}
+1833-                         onClick={() => setCurrentPage(page)}
+1834:                         className={`w-10 h-10 rounded-lg text-xs font-bold transition-colors shrink-0 ${currentPage === page ? 'bg-primary-500 text-white shadow-md' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-primary-500/50 text-slate-600 dark:text-slate-300'}`}
+1835-                     >
+1836-                         {page}
+--
+1947-        animate={{ y: 0, opacity: 1, scale: 1 }}
+1948-        exit={{ y: 50, opacity: 0, scale: 0.95 }}
+1949:        className="bg-white dark:bg-slate-900 w-full h-full md:max-w-6xl md:h-[90vh] rounded-none md:rounded-[2rem] shadow-[0_0_100px_rgba(0,0,0,0.2)] dark:shadow-[0_0_100px_rgba(0,0,0,0.8)] relative overflow-hidden flex flex-col md:flex-row border border-slate-200 dark:border-slate-800"
+1950-        onClick={e => e.stopPropagation()}
+1951-      >
+--
+1988-                        autoPlay
+1989-                        controls
+1990:                        className="max-w-full max-h-full object-contain shadow-2xl z-10"
+1991-                    />
+1992-                ) : (
+--
+1999-                        src={activeImage} 
+2000-                        alt={item.name} 
+2001:                        className="max-w-full max-h-full object-contain shadow-2xl z-10" 
+2002-                    />
+2003-                )}
+--
+2045-                    className={`shrink-0 p-3 rounded-xl transition-all ${
+2046-                        stash.includes(item.id) 
+2047:                        ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
+2048-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+2049-                    }`}
+--
+2261-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+2262-                        {item.links.full && (
+2263:                            <a href={item.links.full} target="_blank" rel="noreferrer" className="col-span-1 md:col-span-2 group relative overflow-hidden bg-gradient-to-r from-primary-600 to-primary-500 p-4 sm:p-5 rounded-xl shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 transition-all hover:-translate-y-1 active:scale-95">
+2264-                                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
+2265-                                <div className="relative z-10 flex items-center justify-center gap-3 sm:gap-4">
+--
+2296-                                                    <button 
+2297-                                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setNoteModalContent(item.links.fullNote!); }}
+2298:                                                        className="flex items-center gap-1 text-[8px] sm:text-[9px] font-bold uppercase tracking-widest bg-white/20 text-white px-1.5 py-0.5 sm:px-2 sm:py-0.5 rounded hover:bg-white/30 transition-colors shadow-sm"
+2299-                                                    >
+2300-                                                        <Icon name="Info" size={12} className="w-3 h-3" />
+--
+2537-          exit={{ x: '100%' }}
+2538-          transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+2539:          className="w-full max-w-md h-full bg-white dark:bg-slate-900 shadow-2xl flex flex-col border-l border-slate-200 dark:border-slate-800"
+2540-          onClick={e => e.stopPropagation()}
+2541-        >
+--
+2563-                className={`shrink-0 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
+2564-                  filter === cat 
+2565:                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md' 
+2566-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+2567-                }`}
+--
+2654-
+2655-    return (
+2656:        <div className="mt-12 w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] overflow-hidden bg-slate-50 dark:bg-[#0a0a0a] border-y border-slate-200 dark:border-white/10 shadow-2xl transition-colors duration-300">
+2657-            {noData && (
+2658-                <div className="bg-yellow-500/10 border border-yellow-500/30 p-4 m-4 md:m-8 rounded-xl relative z-20 mx-auto max-w-5xl">
+--
+2680-                
+2681-                <div className="relative z-20 text-center flex flex-col items-center">
+2682:                    <h2 className="flex flex-col md:flex-row items-center justify-center font-black tracking-tighter leading-none drop-shadow-2xl transition-colors duration-300">
+2683-                        <span className="text-8xl md:text-[11rem] xl:text-[13rem] text-slate-900 dark:text-slate-100 font-['Anton'] md:pr-6 leading-none">
+2684-                            {displayGames.length}
+--
+2688-                                OPEN WORLD
+2689-                            </span>
+2690:                            <span className="text-[5rem] md:text-[8rem] xl:text-[10rem] font-['Permanent_Marker'] md:-ml-2 text-transparent bg-clip-text bg-gradient-to-br from-red-600 via-red-500 to-orange-600 leading-[0.8] drop-shadow-[0_4px_4px_rgba(220,38,38,0.4)] -mt-2 md:-mt-6 text-stroke-2 text-stroke-white dark:text-stroke-black" style={{ WebkitTextStroke: '2px rgba(255,255,255,0.1)' }}>
+2691-                                GAMES
+2692-                            </span>
+--
+2712-                        exit={{ opacity: 0, y: -30 }}
+2713-                        transition={{ duration: 0.4 }}
+2714:                        className="flex flex-col rounded-2xl overflow-hidden border border-slate-300 dark:border-white/10 shadow-2xl transition-colors duration-300"
+2715-                    >
+2716-                        {displayedPageGames.map((game, idx) => {
+--
+2725-                                <div key={game.id} className="relative group flex items-stretch border-b border-slate-300 dark:border-white/10 last:border-b-0 overflow-hidden min-h-[90px] sm:min-h-[110px] md:min-h-[130px] transition-all hover:brightness-105 dark:hover:brightness-125 bg-white sm:bg-transparent dark:bg-black/60 dark:md:backdrop-blur-md">
+2726-                                    {/* Number Box on the left */}
+2727:                                    <div className="w-[70px] md:w-[120px] shrink-0 flex items-center justify-center bg-slate-100 dark:bg-[#050505] relative z-20 border-r border-slate-300 dark:border-white/5 shadow-none dark:shadow-[5px_0_15px_rgba(0,0,0,0.5)] transition-colors duration-300">
+2728-                                        <span 
+2729-                                            style={{ 
+--
+2731-                                                color: c1
+2732-                                            }}
+2733:                                            className="font-['Anton'] italic text-4xl md:text-6xl drop-shadow-md brightness-90 dark:brightness-125"
+2734-                                        >
+2735-                                            {rankNum}
+--
+2753-                                            {game.logoUrl ? (
+2754-                                                <div className="flex items-center justify-start w-[140px] sm:w-[220px] md:w-[350px] h-12 md:h-20 flex-shrink-0">
+2755:                                                    <img src={game.logoUrl} alt={game.name} className="max-w-full max-h-full object-contain object-left drop-shadow-[0_2px_5px_rgba(0,0,0,0.2)] dark:drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)] transition-transform duration-300 group-hover:scale-105"  loading="lazy" />
+2756-                                                </div>
+2757-                                            ) : (
+2758:                                                <h3 className="font-black italic text-xl md:text-4xl text-slate-900 dark:text-white tracking-tight uppercase drop-shadow-[0_2px_5px_rgba(255,255,255,1)] dark:drop-shadow-[0_5px_15px_rgba(0,0,0,1)] transition-colors duration-300">
+2759-                                                    {game.name}
+2760-                                                </h3>
+--
+2765-                                        {game.symbolUrl && (
+2766-                                            <div className="relative z-10 shrink-0 ml-4 flex items-center justify-end w-[40px] md:w-[80px] h-10 md:h-20 mr-2">
+2767:                                                <img src={game.symbolUrl} alt="Symbol" className="max-w-full max-h-full object-contain object-right opacity-90 group-hover:opacity-100 transition-all duration-300 drop-shadow-md"  loading="lazy" />
+2768-                                            </div>
+2769-                                        )}
+--
+2785-                        onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+2786-                        disabled={currentPage === 0}
+2787:                        className="p-3 bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 text-slate-800 dark:text-white rounded-full transition-colors flex items-center justify-center shrink-0 border border-slate-300 dark:border-transparent shadow-sm"
+2788-                    >
+2789-                        <Icon name="ChevronLeft" size={20} />
+--
+2804-                        onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+2805-                        disabled={currentPage === totalPages - 1}
+2806:                        className="p-3 bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 text-slate-800 dark:text-white rounded-full transition-colors flex items-center justify-center shrink-0 border border-slate-300 dark:border-transparent shadow-sm"
+2807-                    >
+2808-                        <Icon name="ChevronRight" size={20} />
+--
+2890-                <button 
+2891-                    onClick={onSeeAll}
+2892:                    className="shrink-0 text-xs sm:text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2 transition-all px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-500/20"
+2893-                >
+2894-                    <span>VIEW ALL</span> <Icon name="ArrowRight" size={16} />
+--
+2918-                                <div 
+2919-                                    onClick={() => onSelect(profile)}
+2920:                                    className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-4 cursor-pointer hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/10 transition-all h-full group/studio"
+2921-                                >
+2922:                                    <div className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 bg-slate-50 dark:bg-slate-900 rounded-2xl flex items-center justify-center p-3 border border-slate-100 dark:border-slate-800 group-hover/studio:border-blue-500/30 group-hover/studio:bg-blue-50 dark:group-hover/studio:bg-blue-900/20 overflow-hidden shrink-0 transition-all shadow-inner">
+2923-                                        {profile.logoUrl ? (
+2924-                                            <img src={profile.logoUrl} alt={profile.name} className="w-full h-full object-contain filter group-hover/studio:brightness-110 transition-all" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = '<span class="font-black text-lg sm:text-xl text-slate-400 group-hover/studio:text-blue-500 transition-colors">' + profile.name.substring(0, 2).toUpperCase() + '</span>'; }} />
+--
+2929-                                    <div className="text-center w-full">
+2930-                                        <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-1 group-hover/studio:text-blue-500 transition-colors" title={profile.name}>{profile.name}</h3>
+2931:                                        <span className="inline-block mt-2 px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 text-[9px] sm:text-[10px] font-black uppercase tracking-wider rounded border border-blue-200 dark:border-blue-500/30 group-hover/studio:shadow-sm">
+2932-                                            {profile.totalGames} {profile.totalGames === 1 ? 'Item' : 'Items'}
+2933-                                        </span>
+--
+2943-                        onClick={handlePrev} 
+2944-                        disabled={currentIndex === 0}
+2945:                        className="p-1 sm:p-2 sm:p-2.5 rounded-full bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xl hover:scale-110 transition-transform disabled:opacity-0 disabled:scale-100 border border-slate-200 dark:border-slate-700"
+2946-                    >
+2947-                        <Icon name="ChevronLeft" size={20} />
+--
+2952-                        onClick={handleNext} 
+2953-                        disabled={currentIndex >= maxIndex}
+2954:                        className="p-1 sm:p-2 sm:p-2.5 rounded-full bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xl hover:scale-110 transition-transform disabled:opacity-0 disabled:scale-100 border border-slate-200 dark:border-slate-700"
+2955-                    >
+2956-                        <Icon name="ChevronRight" size={20} />
+--
+3135-             text: (
+3136-                <div className="flex flex-col items-center justify-center p-6 my-4 bg-red-950/20 border border-red-500/30 rounded-xl space-y-4">
+3137:                  <FaFaceAngry className="text-red-500 text-6xl animate-bounce drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]" />
+3138-                  <span className="text-red-500 font-black uppercase tracking-[0.2em] text-center text-sm md:text-base">you are a loser contact admin to request secret key</span>
+3139-                </div>
+--
+4167-            className="w-[95%] sm:w-[85%] md:w-[75%] lg:w-[60%] xl:w-[50%] max-w-5xl relative z-10"
+4168-          >
+4169:          <div className="bg-white/90 dark:bg-slate-900/90 md:backdrop-blur-2xl rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.1)] dark:shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden relative group">
+4170-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1 bg-gradient-to-r from-transparent via-primary-500 to-transparent opacity-50 group-hover:opacity-100 transition-opacity"></div>
+4171-            
+--
+4188-                    
+4189-                    <div className="relative z-10">
+4190:                        <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 rounded-2xl flex items-center justify-center shadow-inner mb-4 border border-blue-500/20">
+4191-                            <Icon name="Cpu" size={32} className="text-blue-500 animate-pulse" />
+4192-                        </div>
+--
+4245-                                autoFocus
+4246-                                step="any"
+4247:                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 sm:py-4 font-mono text-lg sm:text-xl font-bold text-center outline-none focus:border-blue-500 transition-colors shadow-inner"
+4248-                            />
+4249-                            
+4250:                            <button type="submit" className="w-full py-3 sm:py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all text-xs sm:text-sm">
+4251-                                Verify Calculation
+4252-                            </button>
+--
+4264-                                <span className="font-mono text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-400 select-all">Wolfspace</span>
+4265-                            </div>
+4266:                            <button onClick={copyAndCloseMath} className="w-full py-3 sm:py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 text-xs sm:text-sm">
+4267-                                <Icon name="Copy" size={18} /> Copy & Enter
+4268-                            </button>
+--
+4300-                     animate={{ scale: 1, opacity: 1 }}
+4301-                     transition={{ duration: 0.6, delay: 0.1, type: "spring", stiffness: 100 }}
+4302:                     className="bg-black/5 dark:bg-black/40 md:backdrop-blur-md rounded-xl border border-slate-300 dark:border-slate-800 overflow-hidden flex flex-col flex-1 shadow-2xl relative group min-h-[300px]"
+4303-                   >
+4304-                      <div className="absolute inset-0 bg-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+--
+4361-                          <div className="flex items-center items-stretch">
+4362-                            {terminalMode === 'password' ? null : (
+4363:                              <span className="text-[#89B4FA] font-bold mr-2 shrink-0 drop-shadow-sm flex items-center">
+4364-                                 └─$
+4365-                              </span>
+--
+4429-                  className="absolute inset-6 bg-primary-500/10 rounded-full blur-md"
+4430-                />
+4431:                <div className="w-20 h-20 bg-white dark:bg-slate-900 border border-primary-500/60 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(14,165,233,0.2)] dark:shadow-[0_0_40px_rgba(14,165,233,0.3)] relative z-10">
+4432-                  <Icon name="ShieldAlert" size={32} className="text-primary-500 dark:text-primary-400 animate-pulse" />
+4433-                </div>
+--
+4510-                    animate={{ x: 0, opacity: 1 }}
+4511-                    exit={{ x: 100, opacity: 0 }}
+4512:                    className={`bg-white/80 dark:bg-slate-900/80 md:backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-2xl p-4 rounded-2xl w-[300px] pointer-events-auto flex gap-3 items-start ${n.isAr ? 'rtl' : 'ltr'}`}
+4513-                    dir={n.isAr ? 'rtl' : 'ltr'}
+4514-                >
+--
+4610-                 animate={{ opacity: 1, y: 0 }}
+4611-                 transition={{ duration: 0.5 }}
+4612:                 className={`px-3 py-1.5 border rounded-lg flex items-center gap-2.5 shadow-lg whitespace-nowrap shrink-0 relative overflow-hidden group transition-all duration-300 ${
+4613-                   networkStatus.isTesting
+4614:                     ? 'bg-yellow-50 dark:bg-yellow-900/30 border-yellow-200 dark:border-yellow-500/40 text-yellow-600 dark:text-yellow-400 shadow-[0_0_15px_rgba(234,179,8,0.2)] hover:shadow-[0_0_25px_rgba(234,179,8,0.4)]'
+4615-                     : networkStatus.quality === 'Excellent' || networkStatus.quality === 'Good' || !networkStatus.quality // default fallback
+4616:                       ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-500/40 text-primary-600 dark:text-primary-400 shadow-[0_0_15px_rgba(14,165,233,0.2)] hover:shadow-[0_0_25px_rgba(14,165,233,0.4)]'
+4617:                       : 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-500/40 text-red-600 dark:text-red-400 shadow-[0_0_15px_rgba(239,68,68,0.2)] hover:shadow-[0_0_25px_rgba(239,68,68,0.4)]'
+4618-                 }`}
+4619-               >
+--
+4626-                    }`}></span>
+4627-                    <span className={`relative inline-flex rounded-full h-2 w-2 ${
+4628:                      networkStatus.isTesting ? 'bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,1)]' : (networkStatus.quality === 'Poor' || networkStatus.quality === 'Fair' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,1)]' : 'bg-primary-500 shadow-[0_0_8px_rgba(14,165,233,1)]')
+4629-                    }`}></span>
+4630-                  </span>
+--
+4645-                 animate={{ opacity: 1, y: 0 }}
+4646-                 transition={{ duration: 0.5, delay: 0.1 }}
+4647:                 className="flex items-center gap-2.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-500/30 rounded-lg text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap shrink-0 relative overflow-hidden group shadow-[0_0_10px_rgba(16,185,129,0.1)] hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all duration-300"
+4648-               >
+4649-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-400/10 to-transparent -left-full group-hover:animate-[shimmer_1.5s_infinite]" />
+--
+4701-            <button 
+4702-                onClick={() => setShowSteamModal(true)}
+4703:                className="relative flex items-center justify-center gap-2 sm:gap-3 p-3 sm:px-5 sm:py-4 bg-gradient-to-r from-[#171a21] to-[#2a475e] hover:to-[#66c0f4] text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 group border border-white/10 text-center whitespace-nowrap"
+4704-            >
+4705-                <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+--
+4715-            <button 
+4716-                onClick={() => setShowMasterGiftModal(true)}
+4717:                className="relative flex items-center justify-center gap-2 sm:gap-3 p-3 sm:px-5 sm:py-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:to-indigo-500 text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg shadow-violet-500/20 active:scale-95 group border border-white/10 text-center whitespace-nowrap"
+4718-            >
+4719-                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+--
+4727-                )}
+4728-            </button>
+4729:            <a href={DISCORD_LINK} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 sm:gap-3 p-3 sm:px-5 sm:py-4 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 group text-center whitespace-nowrap">
+4730-               <Icon name="Discord" size={20} className="group-hover:animate-bounce shrink-0" /> 
+4731-               <span>Join Community</span>
+4732-            </a>
+4733:            <a href={TELEGRAM_LINK} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 sm:gap-3 p-3 sm:px-5 sm:py-4 bg-[#229ED9] hover:bg-[#1D85B8] text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 group text-center whitespace-nowrap">
+4734-               <Icon name="Telegram" size={20} className="group-hover:animate-bounce shrink-0" /> <span>Channel</span>
+4735-            </a>
+--
+4744-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-6">
+4745-             <div className="flex items-center gap-3">
+4746:                <div className="p-2 bg-gradient-to-br from-primary-600 to-primary-800 rounded-lg shadow-lg shadow-primary-500/20 text-white">
+4747-                    <Icon name="Rocket" size={20} />
+4748-                </div>
+--
+4759-                        className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all whitespace-nowrap ${
+4760-                            upcomingPlatform === p 
+4761:                            ? 'bg-slate-800 dark:bg-slate-700 text-white shadow-sm' 
+4762-                            : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-300'
+4763-                        }`}
+--
+4789-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-6">
+4790-             <div className="flex items-center gap-3">
+4791:                <div className="p-2 bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-lg shadow-lg shadow-emerald-500/20 text-white">
+4792-                    <Icon name="Sparkles" size={20} />
+4793-                </div>
+--
+4821-
+4822-        <div className="sticky top-20 z-40 mb-10">
+4823:           <div className="bg-white/80 dark:bg-slate-900/80 md:backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-2 rounded-2xl shadow-2xl transition-all">
+4824-              <div className="flex flex-col gap-3 items-stretch justify-between">
+4825-                  <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between w-full min-w-0">
+--
+4832-                          >
+4833-                            {activeTab === tab && (
+4834:                              <motion.div layoutId="activeTab" className="absolute inset-0 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700" transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />
+4835-                            )}
+4836-                            <span className="relative z-10 flex items-center gap-1.5">
+--
+4838-                                <>
+4839-                                  GAME
+4840:                                  <span className="bg-red-600 text-white px-1.5 py-0.5 rounded-md text-[8px] sm:text-[9px] font-black tracking-widest shadow-sm">
+4841-                                    HYPERVISOR
+4842-                                  </span>
+--
+4869-                          <button 
+4870-                            onClick={() => setShowGlobalFilter(!showGlobalFilter)}
+4871:                            className={`flex items-center justify-center p-3 sm:p-3.5 rounded-xl transition-all shrink-0 border ${globalSpecs.isActive ? 'bg-primary-500 text-white border-primary-500 shadow-lg shadow-primary-500/20' : 'bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-transparent'}`}
+4872-                            title="Global System Filter"
+4873-                          >
+--
+4888-                                setShowRequestModal(true);
+4889-                            }}
+4890:                            className="flex items-center gap-2 px-3 sm:px-4 py-3 sm:py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all shrink-0 whitespace-nowrap"
+4891-                            title="Request a game or tool not listed here"
+4892-                          >
+--
+5010-          ) : filteredData.length === 0 ? (
+5011-            <div className="flex flex-col items-center justify-center h-[50vh] text-slate-500">
+5012:               <div className="p-6 bg-white dark:bg-slate-900 rounded-full mb-6 shadow-sm">
+5013-                 <Icon name="Database" size={40} className="opacity-20" />
+5014-               </div>
+--
+5020-                    setShowRequestModal(true);
+5021-                 }}
+5022:                 className="px-6 py-2.5 bg-blue-600 text-white font-bold uppercase tracking-wider text-xs rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20"
+5023-               >
+5024-                 Request This Item
+--
+5041-                          transition={{ delay: idx * 0.05 }}
+5042-                          whileHover={{ y: -8, transition: { duration: 0.2 } }}
+5043:                          className={`group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden cursor-pointer hover:shadow-2xl hover:shadow-primary-900/10 hover:border-primary-500/30 transition-all relative flex flex-col ${isFail ? 'opacity-50 grayscale hover:grayscale-0 hover:opacity-100' : ''}`}
+5044-                          onClick={() => {
+5045-                              if (item.category === 'profil') {
+--
+5056-                            {compStatus && compStatus !== 'unknown' && (
+5057-                                <div className="absolute top-3 right-3 z-30">
+5058:                                    <div className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1 border ${
+5059-                                        compStatus === 'pass' ? 'bg-emerald-500/90 text-white border-emerald-400' : 
+5060-                                        compStatus === 'warn' ? 'bg-yellow-500/90 text-white border-yellow-400' : 
+--
+5069-                            {item.isPinned && !compStatus && (
+5070-                                <div className="absolute top-3 left-3 z-20">
+5071:                                    <div className="bg-yellow-500 text-white p-1.5 rounded-lg shadow-lg border border-white/20">
+5072-                                        <Icon name="Pin" size={16} />
+5073-                                    </div>
+--
+5077-                                <>
+5078-                                    {item.gameId && (
+5079:                                        <div className={`absolute top-3 ${compStatus ? 'left-3' : 'right-3'} px-2 py-1 bg-black/60 md:backdrop-blur-md rounded-md border border-white/10 text-[10px] font-mono font-bold text-white shadow-sm`}>
+5080-                                            ID: {item.gameId}
+5081-                                        </div>
+--
+5087-                                </div>
+5088-                            )}
+5089:                            <div className={`absolute top-3 ${item.isPinned && !compStatus ? 'left-12' : 'left-3'} px-2 py-1 bg-primary-600 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg transition-all`}>
+5090-                              {item.id}
+5091-                            </div>
+5092-                            {item.category === 'hypervisor' && (
+5093-                                <div className={`absolute top-10 ${compStatus ? 'left-3' : 'right-3'} z-20`}>
+5094:                                    <div className="bg-red-600 text-white px-2 py-1 rounded-lg shadow-lg border border-red-400/30 text-[10px] font-black tracking-widest">
+5095-                                        HV
+5096-                                    </div>
+--
+5098-                            )}
+5099-                            {item.isFree && (
+5100:                                <div className={`absolute ${item.category === 'hypervisor' ? 'top-20' : 'top-10'} ${compStatus ? 'left-3' : 'right-3'} px-2 py-1 bg-emerald-500 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1 z-20`}>
+5101-                                    <Icon name="Tag" size={12} /> Free
+5102-                                </div>
+5103-                            )}
+5104-                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-30">
+5105:                               <div className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center text-white shadow-[0_0_20px_rgba(14,165,233,0.5)] transform scale-50 group-hover:scale-100 transition-transform duration-300">
+5106-                                  <Icon name="ArrowRight" size={24} />
+5107-                               </div>
+--
+5121-                                    </button>
+5122-                                )}
+5123:                                <h3 className="font-black text-lg text-white leading-tight uppercase italic mb-2 line-clamp-2 group-hover:text-primary-400 transition-colors drop-shadow-md">
+5124-                                  {item.name}
+5125-                                </h3>
+--
+5136-                                          className={`p-1.5 rounded-md md:backdrop-blur-md transition-all ${
+5137-                                              stash.includes(item.id) 
+5138:                                              ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
+5139-                                              : 'bg-black/40 text-white/70 hover:bg-black/60 hover:text-white border border-white/10'
+5140-                                          }`}
+--
+5143-                                          <Icon name="Bookmark" size={12} className={stash.includes(item.id) ? "fill-current" : ""} />
+5144-                                      </button>
+5145:                                      <span className="text-[10px] font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1 drop-shadow-sm">
+5146-                                         Details <Icon name="ChevronRight" size={12} />
+5147-                                      </span>
+--
+5182-                                  key={idx}
+5183-                                  onClick={() => setCurrentPage(page)}
+5184:                                  className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl font-bold text-[10px] sm:text-xs transition-all shrink-0 ${currentPage === page ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/50' : 'bg-slate-50 dark:bg-slate-950 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'}`}
+5185-                                >
+5186-                                  {page}
+--
+5333-                animate={{ scale: 1, y: 0 }}
+5334-                exit={{ scale: 0.9, y: 20 }}
+5335:                className="bg-slate-50 dark:bg-slate-950 w-full h-full max-w-5xl max-h-[90vh] rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col"
+5336-                onClick={e => e.stopPropagation()}
+5337-            >
+--
+5363-                            />
+5364-                        </div>
+5365:                        <button onClick={onClose} className="p-2.5 bg-white/60 dark:bg-black/40 hover:bg-white dark:hover:bg-black/60 rounded-xl transition-colors text-slate-700 dark:text-white border border-slate-300 dark:border-slate-700/50 hover:border-slate-400 dark:hover:border-slate-500 shadow">
+5366-                            <Icon name="X" size={18} />
+5367-                        </button>
+--
+5376-                                    key={profile.id}
+5377-                                    onClick={() => onSelect(profile as CompanyProfile)}
+5378:                                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-4 cursor-pointer hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/10 transition-all h-full group/studio"
+5379-                                >
+5380:                                    <div className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 bg-slate-50 dark:bg-slate-950 rounded-2xl flex items-center justify-center p-3 border border-slate-100 dark:border-slate-800 group-hover/studio:border-blue-500/30 group-hover/studio:bg-blue-50 dark:group-hover/studio:bg-blue-900/20 overflow-hidden shrink-0 transition-all shadow-inner">
+5381-                                        {profile.logoUrl ? (
+5382-                                            <img src={profile.logoUrl} alt={profile.name} className="w-full h-full object-contain filter group-hover/studio:brightness-110 transition-all" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = '<span class="font-black text-lg sm:text-xl text-slate-400 dark:text-slate-500 group-hover/studio:text-blue-500 dark:group-hover/studio:text-blue-400 transition-colors">' + profile.name.substring(0, 2).toUpperCase() + '</span>'; }} />
+--
+5387-                                    <div className="text-center w-full">
+5388-                                        <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-1 group-hover/studio:text-blue-500 dark:group-hover/studio:text-blue-400 transition-colors" title={profile.name}>{profile.name}</h3>
+5389:                                        <span className="inline-block mt-2 px-2 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-300 text-[9px] sm:text-[10px] font-black uppercase tracking-wider rounded border border-blue-200 dark:border-blue-500/30 group-hover/studio:shadow-sm">
+5390-                                            {profile.totalGames} {profile.totalGames === 1 ? 'Item' : 'Items'}
+5391-                                        </span>
+--
+5420-                                    className={`w-8 h-8 rounded-lg text-xs font-bold transition-colors ${
+5421-                                        currentPage === page 
+5422:                                        ? 'bg-blue-600 text-white shadow shadow-blue-500/20' 
+5423-                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
+5424-                                    }`}
