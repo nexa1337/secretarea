@@ -630,11 +630,11 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
   };
 
   return (
-    <div className="w-full flex flex-col items-center justify-center py-4 sm:px-4 md:px-6 relative group">
+    <div className="w-full flex flex-col items-center justify-center py-4 sm:px-4 md:px-6 relative group z-0">
       <div className="w-full flex justify-center mb-2 transition-opacity duration-300">
         <button
           onClick={() => setIsVisible(!isVisible)}
-          className="flex items-center gap-2 bg-gradient-to-b from-white to-stone-50 dark:from-[#2a2a2a] dark:to-[#1f1f1f] hover:from-stone-50 hover:to-stone-100 dark:hover:from-[#333] dark:hover:to-[#252525] text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-[#444] px-6 py-3 rounded-full text-xs font-bold tracking-widest uppercase transition-all shadow-sm hover:shadow active:scale-95 z-10"
+          className="flex items-center gap-2 bg-gradient-to-b from-white to-stone-50 dark:from-[#2a2a2a] dark:to-[#1f1f1f] hover:from-stone-50 hover:to-stone-100 dark:hover:from-[#333] dark:hover:to-[#252525] text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-[#444] px-6 py-3 rounded-full text-xs font-bold tracking-widest uppercase transition-all shadow-sm hover:shadow active:scale-95"
         >
           {isVisible ? 'Hide Telemetry View' : 'Show Telemetry View'}
           <span className="relative flex h-2.5 w-2.5 ml-1">

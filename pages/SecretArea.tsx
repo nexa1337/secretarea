@@ -10,7 +10,7 @@ import { NetworkDiagnostic } from '../components/NetworkDiagnostic';
 import { FaFaceAngry } from 'react-icons/fa6';
 
 // --- CONFIGURATION ---
-const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwrVkWctd_jYKyqziHTDZQfGhcUCjVaUE8p9IUaymt7mPTh6J2oxMtBkOM_ksBzmDHH/exec';
+const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyZxjJP3pkFwnDsnmq1I_6Va63Vsmm481NmcN06rRDG5YbeyKipTf0wS_PkxXrJc4DM/exec';
 const DISCORD_LINK = 'https://discord.gg/MgqvMyZv2b';
 const TELEGRAM_LINK = 'https://t.me/nexa1337agency';
 const INSTAGRAM_LINK = 'https://instagram.com/nexa1337';
@@ -242,7 +242,7 @@ const DisclaimerModal: React.FC<{ open: boolean; onClose: () => void }> = ({ ope
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[300] flex items-center justify-center bg-black/90 backdrop-blur-md p-4"
+      className="fixed inset-0 z-[300] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-4"
     >
       <motion.div 
         initial={{ scale: 0.9, y: 20 }}
@@ -309,7 +309,7 @@ const SteamAccountsModal: React.FC<{ open: boolean; onClose: () => void; account
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/90 backdrop-blur-md p-2 sm:p-4"
+            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-2 sm:p-4"
             onClick={onClose}
         >
             <motion.div 
@@ -442,7 +442,7 @@ const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/90 backdrop-blur-md p-2 sm:p-4"
+            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-2 sm:p-4"
             onClick={onClose}
         >
             <motion.div 
@@ -681,7 +681,7 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/90 backdrop-blur-md p-4"
+            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-4"
         >
             <motion.div 
                 initial={{ scale: 0.9, y: 20 }}
@@ -789,10 +789,10 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
 const AdBanner: React.FC<{ desktopSrc: string, mobileSrc: string, link: string, className?: string }> = ({ desktopSrc, mobileSrc, link, className }) => (
   <a href={link} target="_blank" rel="noreferrer" className={`block w-full group overflow-hidden ${className}`}>
     <div className="block md:hidden w-full flex justify-center">
-        <img src={mobileSrc} alt="Sponsored" className="w-full max-w-[350px] h-auto rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 hover:opacity-95 transition-opacity" />
+        <img src={mobileSrc} alt="Sponsored" className="w-full max-w-[350px] h-auto rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 hover:opacity-95 transition-opacity"  loading="lazy" />
     </div>
     <div className="hidden md:flex w-full justify-center">
-        <img src={desktopSrc} alt="Sponsored" className="w-full max-w-[970px] h-auto rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 hover:opacity-95 transition-opacity" />
+        <img src={desktopSrc} alt="Sponsored" className="w-full max-w-[970px] h-auto rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 hover:opacity-95 transition-opacity"  loading="lazy" />
     </div>
   </a>
 );
@@ -916,7 +916,7 @@ const GameCarousel: React.FC<{ games: UpcomingGame[], loading: boolean, errorSta
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover/card:opacity-90 transition-opacity"></div>
                                 <div className="absolute bottom-0 left-0 right-0 p-3 z-20">
-                                    <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md border border-white/10 mb-1.5 max-w-full">
+                                    <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/20 md:backdrop-blur-md border border-white/10 mb-1.5 max-w-full">
                                         <Icon name={game.icon} size={10} className="text-white shrink-0" />
                                         <span className="text-[8px] font-bold text-white uppercase tracking-wider truncate">
                                             {formatPlatformDisplay(game.platform)}
@@ -1074,7 +1074,7 @@ const RecentProductsCarousel: React.FC<{
 
                                 <button
                                     onClick={(e) => toggleStash(item.id, e)}
-                                    className={`absolute top-2 right-2 z-40 p-1.5 rounded-full backdrop-blur-md transition-all ${
+                                    className={`absolute top-2 right-2 z-40 p-1.5 rounded-full md:backdrop-blur-md transition-all ${
                                         stash.includes(item.id) 
                                         ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
                                         : 'bg-black/40 text-white/70 hover:bg-black/60 hover:text-white border border-white/10'
@@ -1113,6 +1113,147 @@ const RecentProductsCarousel: React.FC<{
     );
 };
 
+const UpcomingListsDisplay: React.FC<{ lists: { [key: string]: string[] } }> = ({ lists }) => {
+    const [activeCategory, setActiveCategory] = useState<string>('game');
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const itemsPerPage = 10;
+    const tabs = ['game', 'hypervisor', 'steamtools', 'tools', 'savegames'];
+    
+    const handleCategoryChange = (tab: string) => {
+        setActiveCategory(tab);
+        setCurrentPage(1);
+    };
+
+    const getBgImage = (category: string) => {
+        switch (category) {
+            case 'game':
+            case 'hypervisor':
+                return 'https://webvator.com/wp-content/uploads/2025/10/1712163651504.jpg';
+            case 'steamtools':
+                return 'https://cdn.fastly.steamstatic.com/store/home/store_home_share.jpg';
+            case 'tools':
+                return 'https://img.magnific.com/premium-photo/hacker-guy-black-clothes-wearing-mask-with-laptop-funny-comic-3d-illustration-white_926199-4299052.jpg';
+            case 'savegames':
+                return 'https://www.coordinated.com/hubfs/Blog%20Images/bigstock--191129032.jpg';
+            default:
+                return 'https://webvator.com/wp-content/uploads/2025/10/1712163651504.jpg';
+        }
+    };
+
+    const fullList = lists[activeCategory] || [];
+    const totalPages = Math.ceil(fullList.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const activeList = fullList.slice(startIndex, startIndex + itemsPerPage);
+
+    return (
+        <div className="w-full bg-white dark:bg-[#1e232d] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 sm:p-6 md:p-8 relative overflow-hidden transition-colors">
+            {/* Faded Background Image */}
+            <div className="absolute top-0 right-0 bottom-0 w-full md:w-2/3 pointer-events-none opacity-20 dark:opacity-10 transition-opacity duration-500">
+                <motion.img 
+                    key={activeCategory}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                    src={getBgImage(activeCategory)} 
+                    alt={`${activeCategory} Background`} 
+                    className="w-full h-full object-cover md:object-right"
+                    style={{ maskImage: 'linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)', WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)' }}
+                />
+            </div>
+            
+            <div className="relative z-10">
+                <h3 className="text-2xl md:text-3xl font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest mb-2 flex flex-wrap items-center gap-2 sm:gap-3">
+                    UPCOMING <span className="text-emerald-500 dark:text-emerald-400">RELEASES</span>
+                </h3>
+                <div className="flex items-center gap-4 text-xs font-bold text-slate-400 dark:text-slate-500 mb-6 sm:mb-8 uppercase tracking-widest">
+                    <span>{new Date().toLocaleDateString('en-GB', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                </div>
+
+                {/* Category Tabs */}
+                <div className="flex flex-wrap items-center gap-2 mb-6">
+                    {tabs.map(tab => (
+                        <button
+                            key={tab}
+                            onClick={() => handleCategoryChange(tab)}
+                            className={`px-3 py-1.5 rounded-md text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all shadow-sm border ${
+                                activeCategory === tab 
+                                ? 'bg-emerald-500 text-white border-emerald-500 scale-105' 
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
+                            }`}
+                        >
+                            {tab}
+                        </button>
+                    ))}
+                </div>
+
+                {/* List Items */}
+                <div className="space-y-2 sm:space-y-3 min-h-[300px]">
+                    {activeList.length === 0 ? (
+                        <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="text-slate-400 dark:text-slate-600 text-sm italic py-8"
+                        >
+                            No upcoming {activeCategory} listed.
+                        </motion.div>
+                    ) : (
+                        activeList.map((item, idx) => {
+                            const hasArrow = item.trim().startsWith('---') || item.trim().startsWith('->');
+                            const displayItem = hasArrow ? item.replace(/^[-]+>*\s*/, '') : item;
+                            
+                            const isTop5 = idx < 5;
+                            const textColor = isTop5 
+                                ? "text-emerald-600 dark:text-emerald-400" 
+                                : "text-blue-600 dark:text-blue-400";
+                            const arrowColor = isTop5
+                                ? "text-emerald-500 dark:text-emerald-400"
+                                : "text-blue-500 dark:text-blue-400";
+
+                            return (
+                                <motion.div 
+                                    key={`${activeCategory}-${currentPage}-${idx}`} 
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ duration: 0.3, delay: idx * 0.05 }}
+                                    className="flex items-start gap-2 sm:gap-3 group"
+                                >
+                                    <span className={`${arrowColor} font-mono text-xs sm:text-sm tracking-tighter mt-1 opacity-70 group-hover:opacity-100 transition-opacity`}>---&gt;</span>
+                                    <span className={`${textColor} font-bold text-sm sm:text-base md:text-lg leading-snug tracking-tight drop-shadow-sm group-hover:brightness-125 transition-all`}>
+                                        {displayItem}
+                                    </span>
+                                </motion.div>
+                            );
+                        })
+                    )}
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-4 mt-8 pt-6 border-t border-slate-200/50 dark:border-slate-800/50">
+                        <button 
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                        >
+                            <Icon name="ChevronLeft" size={20} />
+                        </button>
+                        <div className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                            PAGE {currentPage} OF {totalPages}
+                        </div>
+                        <button 
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                        >
+                            <Icon name="ChevronRight" size={20} />
+                        </button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
 const HypervisorGuideModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
   if (!open) return null;
 
@@ -1121,7 +1262,7 @@ const HypervisorGuideModal: React.FC<{ open: boolean; onClose: () => void }> = (
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[400] flex items-center justify-center bg-black/90 backdrop-blur-md p-4"
+      className="fixed inset-0 z-[400] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-4"
       onClick={(e) => { e.stopPropagation(); onClose(); }}
     >
       <motion.div 
@@ -1502,7 +1643,7 @@ const NoteModal: React.FC<{
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     exit={{ opacity: 0 }}
-    className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+    className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 md:backdrop-blur-sm p-4"
     onClick={onClose}
   >
     <motion.div
@@ -1565,7 +1706,7 @@ const CompanyProfileModal: React.FC<{
       exit={{ opacity: 0, y: 20 }}
       className="fixed inset-0 z-[100] flex flex-col bg-slate-50 dark:bg-slate-950 overflow-hidden"
     >
-      <div className="flex-none p-4 md:p-8 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md">
+      <div className="flex-none p-4 md:p-8 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 md:backdrop-blur-md">
         <div className="flex items-center gap-4 md:gap-6">
           <div className="w-16 h-16 md:w-24 md:h-24 shrink-0 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex items-center justify-center p-2 relative group">
              {!imgError && profile.logoUrl ? (
@@ -1617,14 +1758,14 @@ const CompanyProfileModal: React.FC<{
                   className="group cursor-pointer bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden hover:border-primary-500 dark:hover:border-primary-500 transition-all shadow-sm hover:shadow-xl flex flex-col h-full"
                >
                   <div className="aspect-[9/16] bg-slate-100 dark:bg-slate-800 relative overflow-hidden shrink-0">
-                     <img src={item.coverImage} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                     <img src={item.coverImage} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"  loading="lazy" />
                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                      <div className="absolute top-2 inset-x-2 flex justify-between items-start">
                          <div className="bg-primary-600 text-white px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest shadow-md">
                              {(item.category || '').toUpperCase()}
                          </div>
                          {item.version && (
-                             <div className="bg-slate-900/80 backdrop-blur-sm text-slate-200 border border-slate-700 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold shadow-md truncate ml-2">
+                             <div className="bg-slate-900/80 md:backdrop-blur-sm text-slate-200 border border-slate-700 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold shadow-md truncate ml-2">
                                  {item.version}
                              </div>
                          )}
@@ -1776,7 +1917,7 @@ const ResourceDetailModal: React.FC<{
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-white/95 dark:bg-slate-950/95 backdrop-blur-md p-0 sm:p-4 md:p-6"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-white/95 dark:bg-slate-950/95 md:backdrop-blur-md p-0 sm:p-4 md:p-6"
       onClick={onClose}
     >
       <motion.div 
@@ -1788,7 +1929,7 @@ const ResourceDetailModal: React.FC<{
       >
         <button 
           onClick={onClose} 
-          className="absolute top-4 right-4 z-[110] bg-white/60 dark:bg-black/60 hover:bg-red-500 hover:text-white text-slate-500 dark:text-slate-400 p-2.5 rounded-full transition-all backdrop-blur-md border border-slate-200 dark:border-white/10"
+          className="absolute top-4 right-4 z-[110] bg-white/60 dark:bg-black/60 hover:bg-red-500 hover:text-white text-slate-500 dark:text-slate-400 p-2.5 rounded-full transition-all md:backdrop-blur-md border border-slate-200 dark:border-white/10"
         >
              <Icon name="X" size={20} />
         </button>
@@ -1849,7 +1990,7 @@ const ResourceDetailModal: React.FC<{
         </div>
 
         <div className="flex-1 bg-white dark:bg-slate-900 overflow-y-auto custom-scrollbar relative flex flex-col">
-            <div className="p-6 md:p-8 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 sticky top-0 z-30 backdrop-blur-xl">
+            <div className="p-6 md:p-8 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 sticky top-0 z-30 md:backdrop-blur-xl">
                <div className="flex flex-wrap items-center gap-2 mb-3">
                   <Badge text={isSteamTool ? 'STEAMTOOLS' : (isExtra ? 'SAVEGAME' : item.category)} color="blue" icon={isSteamTool ? 'BrandSteam' : (isExtra ? 'Save' : 'Folder')} />
                   {!isSteamTool && <Badge text={item.version} color="slate" icon="Code" />}
@@ -2106,16 +2247,16 @@ const ResourceDetailModal: React.FC<{
                                             alt="Drive/Google" 
                                             referrerPolicy="no-referrer"
                                             className="w-10 h-10 sm:w-12 sm:h-12 object-contain"
-                                        />
+                                         loading="lazy" />
                                     ) : ['game', 'hypervisor'].includes(item.category?.toLowerCase()) ? (
                                         <img 
                                             src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/utorrent-icon.png" 
                                             alt="uTorrent" 
                                             referrerPolicy="no-referrer"
                                             className="w-10 h-10 sm:w-12 sm:h-12 object-contain"
-                                        />
+                                         loading="lazy" />
                                     ) : (
-                                        <div className="p-2 bg-white/10 rounded-full backdrop-blur-sm">
+                                        <div className="p-2 bg-white/10 rounded-full md:backdrop-blur-sm">
                                             <Icon name="Download" size={20} className="text-white sm:w-6 sm:h-6" />
                                         </div>
                                     )}
@@ -2251,7 +2392,7 @@ const Thumbnail: React.FC<{ src: string; isActive: boolean; onClick: () => void 
       {isVideo ? (
         <video src={src} className="w-full h-full object-cover" muted loop playsInline />
       ) : (
-        <img src={src} alt="thumb" className="w-full h-full object-cover" />
+        <img src={src} alt="thumb" className="w-full h-full object-cover"  loading="lazy" />
       )}
       {isVideo && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/30">
@@ -2267,7 +2408,7 @@ const DownloadButton: React.FC<{ label: React.ReactNode; sub: string; href: stri
      <div className="flex items-center gap-2 sm:gap-4 flex-1">
          <div className={`p-1.5 sm:p-2.5 rounded-lg shrink-0 transition-colors ${secondary ? 'bg-slate-100 dark:bg-slate-950 text-slate-500 group-hover:text-slate-800 dark:group-hover:text-slate-300' : 'bg-slate-200 dark:bg-slate-900 text-primary-600 dark:text-primary-500 group-hover:text-white group-hover:bg-primary-500'}`}>
             {customIconUrl ? (
-               <img src={customIconUrl} alt="icon" referrerPolicy="no-referrer" className="w-4 h-4 sm:w-5 sm:h-5 object-contain" />
+               <img src={customIconUrl} alt="icon" referrerPolicy="no-referrer" className="w-4 h-4 sm:w-5 sm:h-5 object-contain"  loading="lazy" />
             ) : (
                <Icon name={icon} size={20} className="w-4 h-4 sm:w-5 sm:h-5" />
             )}
@@ -2365,7 +2506,7 @@ const LatestIntelPanel: React.FC<{ open: boolean; onClose: () => void; items: In
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[110] flex justify-end bg-black/60 backdrop-blur-sm"
+        className="fixed inset-0 z-[110] flex justify-end bg-black/60 md:backdrop-blur-sm"
         onClick={onClose}
       >
         <motion.div 
@@ -2559,7 +2700,7 @@ const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
                             const c1 = neonColors[idx % neonColors.length];
                             
                             return (
-                                <div key={game.id} className="relative group flex items-stretch border-b border-slate-300 dark:border-white/10 last:border-b-0 overflow-hidden min-h-[90px] sm:min-h-[110px] md:min-h-[130px] transition-all hover:brightness-105 dark:hover:brightness-125 bg-white sm:bg-transparent dark:bg-black/60 dark:backdrop-blur-md">
+                                <div key={game.id} className="relative group flex items-stretch border-b border-slate-300 dark:border-white/10 last:border-b-0 overflow-hidden min-h-[90px] sm:min-h-[110px] md:min-h-[130px] transition-all hover:brightness-105 dark:hover:brightness-125 bg-white sm:bg-transparent dark:bg-black/60 dark:md:backdrop-blur-md">
                                     {/* Number Box on the left */}
                                     <div className="w-[70px] md:w-[120px] shrink-0 flex items-center justify-center bg-slate-100 dark:bg-[#050505] relative z-20 border-r border-slate-300 dark:border-white/5 shadow-none dark:shadow-[5px_0_15px_rgba(0,0,0,0.5)] transition-colors duration-300">
                                         <span 
@@ -2589,7 +2730,7 @@ const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
                                         <div className="relative z-10 flex-1 flex items-center justify-start h-full">
                                             {game.logoUrl ? (
                                                 <div className="flex items-center justify-start w-[140px] sm:w-[220px] md:w-[350px] h-12 md:h-20 flex-shrink-0">
-                                                    <img src={game.logoUrl} alt={game.name} className="max-w-full max-h-full object-contain object-left drop-shadow-[0_2px_5px_rgba(0,0,0,0.2)] dark:drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)] transition-transform duration-300 group-hover:scale-105" />
+                                                    <img src={game.logoUrl} alt={game.name} className="max-w-full max-h-full object-contain object-left drop-shadow-[0_2px_5px_rgba(0,0,0,0.2)] dark:drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)] transition-transform duration-300 group-hover:scale-105"  loading="lazy" />
                                                 </div>
                                             ) : (
                                                 <h3 className="font-black italic text-xl md:text-4xl text-slate-900 dark:text-white tracking-tight uppercase drop-shadow-[0_2px_5px_rgba(255,255,255,1)] dark:drop-shadow-[0_5px_15px_rgba(0,0,0,1)] transition-colors duration-300">
@@ -2601,7 +2742,7 @@ const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
                                         {/* Symbol on the right */}
                                         {game.symbolUrl && (
                                             <div className="relative z-10 shrink-0 ml-4 flex items-center justify-end w-[40px] md:w-[80px] h-10 md:h-20 mr-2">
-                                                <img src={game.symbolUrl} alt="Symbol" className="max-w-full max-h-full object-contain object-right opacity-90 group-hover:opacity-100 transition-all duration-300 drop-shadow-md" />
+                                                <img src={game.symbolUrl} alt="Symbol" className="max-w-full max-h-full object-contain object-right opacity-90 group-hover:opacity-100 transition-all duration-300 drop-shadow-md"  loading="lazy" />
                                             </div>
                                         )}
                                     </div>
@@ -2716,7 +2857,7 @@ const BestStudiosCarousel: React.FC<{
     };
 
     return (
-        <div className="mt-12 bg-white/50 dark:bg-slate-900/50 rounded-3xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 backdrop-blur-sm relative z-10 w-full overflow-hidden">
+        <div className="mt-12 bg-white/50 dark:bg-slate-900/50 rounded-3xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 md:backdrop-blur-sm relative z-10 w-full overflow-hidden">
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h2 className="text-lg md:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
@@ -2885,6 +3026,13 @@ const SecretArea: React.FC = () => {
   const [notifications, setNotifications] = useState<Array<{id: number, title: string, text: string, time: string, isAr?: boolean}>>([]);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [upcomingGames, setUpcomingGames] = useState<UpcomingGame[]>([]);
+  const [upcomingLists, setUpcomingLists] = useState<{ [key: string]: string[] }>({
+      game: [],
+      hypervisor: [],
+      steamtools: [],
+      tools: [],
+      savegames: []
+  });
   const [upcomingPlatform, setUpcomingPlatform] = useState('PlayStation 5');
   const [isUpcomingMissing, setIsUpcomingMissing] = useState(false);
   const [scriptError, setScriptError] = useState(false);
@@ -3034,7 +3182,7 @@ const SecretArea: React.FC = () => {
                   alt="Telegram" 
                   referrerPolicy="no-referrer" 
                   className="w-5 h-5 object-contain" 
-                />
+                 loading="lazy" />
                 <a 
                   href="https://t.me/nexa1337agency" 
                   target="_blank" 
@@ -3050,7 +3198,7 @@ const SecretArea: React.FC = () => {
                   alt="Discord" 
                   referrerPolicy="no-referrer" 
                   className="w-5 h-5 object-contain" 
-                />
+                 loading="lazy" />
                 <a 
                   href="https://discord.gg/MgqvMyZv2b" 
                   target="_blank" 
@@ -3488,12 +3636,13 @@ const SecretArea: React.FC = () => {
       if (!response.ok) {
           throw new Error(`Server returned ${response.status} ${response.statusText}`);
       }
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
+      let data;
+      try {
+          data = await response.json();
+      } catch (parseError) {
           setScriptError(true);
           throw new Error("Google Script is down or returned invalid data. Please check code.gs deployment.");
       }
-      const data = await response.json();
       
       const upcomingKey = Object.keys(data).find(k => k.toLowerCase() === 'upcoming');
       if (!upcomingKey) {
@@ -3512,6 +3661,39 @@ const SecretArea: React.FC = () => {
          setUpcomingGames(mappedUpcoming);
       } else {
          setUpcomingGames([]);
+      }
+
+      // Handle Upcoming Lists
+      const upcomingListKey = Object.keys(data).find(k => k.toLowerCase() === 'upcominglist');
+      if (upcomingListKey && Array.isArray(data[upcomingListKey])) {
+          const newLists: { [key: string]: string[] } = {
+              game: [],
+              hypervisor: [],
+              steamtools: [],
+              tools: [],
+              savegames: []
+          };
+          data[upcomingListKey].forEach((row: any) => {
+              const rowKeys = Object.keys(row);
+              Object.keys(newLists).forEach(category => {
+                  const matchingKey = rowKeys.find(k => k.toLowerCase().replace(/\s+/g, '') === category);
+                  if (matchingKey) {
+                      const val = row[matchingKey];
+                      if (val && typeof val === 'string' && val.trim() !== '') {
+                          newLists[category].push(val.trim());
+                      }
+                  }
+              });
+          });
+          setUpcomingLists(newLists);
+      } else {
+          setUpcomingLists({
+              game: [],
+              hypervisor: [],
+              steamtools: [],
+              tools: [],
+              savegames: []
+          });
       }
 
       // Handle Steam Accounts with robust header normalization
@@ -3750,6 +3932,13 @@ const SecretArea: React.FC = () => {
     } catch (err: any) {
       console.warn("Fetch failed, using local offline dummy data. The original Google Sheet is currently unavailable.");
       setUpcomingGames([]);
+      setUpcomingLists({
+          game: [],
+          hypervisor: [],
+          steamtools: [],
+          tools: [],
+          savegames: []
+      });
       setSteamAccounts([]);
       setMasterGifts([]);
       setCompanyProfiles([]);
@@ -3943,11 +4132,9 @@ const SecretArea: React.FC = () => {
                   style={{ backgroundImage: `url(${bgImage})` }} 
                 />
              )}
-             <div className="absolute inset-0 bg-slate-50/70 dark:bg-slate-950/70 backdrop-blur-[2px]"></div>
-             <motion.div 
-               animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.3, 0.2] }} 
-               transition={{ duration: 10, repeat: Infinity }}
-               className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary-500/10 dark:bg-primary-900/20 rounded-full blur-[120px]"
+             <div className="absolute inset-0 bg-slate-50/70 dark:bg-slate-950/70 md:backdrop-blur-[2px]"></div>
+             <div 
+               className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary-500/10 dark:bg-primary-900/20 rounded-full md:blur-[120px] blur-[80px]"
              />
              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03]"></div>
           </div>
@@ -3957,7 +4144,7 @@ const SecretArea: React.FC = () => {
             animate={{ opacity: 1, scale: 1, y: 0 }} 
             className="w-[95%] sm:w-[85%] md:w-[75%] lg:w-[60%] xl:w-[50%] max-w-5xl relative z-10"
           >
-          <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.1)] dark:shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden relative group">
+          <div className="bg-white/90 dark:bg-slate-900/90 md:backdrop-blur-2xl rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.1)] dark:shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden relative group">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1 bg-gradient-to-r from-transparent via-primary-500 to-transparent opacity-50 group-hover:opacity-100 transition-opacity"></div>
             
             {showMathGame ? (
@@ -4090,7 +4277,7 @@ const SecretArea: React.FC = () => {
                      initial={{ scale: 0.95, opacity: 0 }}
                      animate={{ scale: 1, opacity: 1 }}
                      transition={{ duration: 0.6, delay: 0.1, type: "spring", stiffness: 100 }}
-                     className="bg-black/5 dark:bg-black/40 backdrop-blur-md rounded-xl border border-slate-300 dark:border-slate-800 overflow-hidden flex flex-col flex-1 shadow-2xl relative group min-h-[300px]"
+                     className="bg-black/5 dark:bg-black/40 md:backdrop-blur-md rounded-xl border border-slate-300 dark:border-slate-800 overflow-hidden flex flex-col flex-1 shadow-2xl relative group min-h-[300px]"
                    >
                       <div className="absolute inset-0 bg-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                       <div className="bg-[#2E3440] dark:bg-[#20242D] px-3 py-2 flex items-center gap-3 border-b border-[#4C566A] dark:border-[#3B4252] shrink-0 relative z-10">
@@ -4192,10 +4379,8 @@ const SecretArea: React.FC = () => {
           >
             {/* Modern Background Elements */}
             <div className="absolute inset-0 z-0 pointer-events-none">
-               <motion.div 
-                 animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }} 
-                 transition={{ duration: 8, repeat: Infinity }}
-                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary-500/10 rounded-full blur-[120px]"
+               <div 
+                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary-500/10 rounded-full md:blur-[120px] blur-[80px]"
                />
                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03] dark:opacity-[0.05]"></div>
                
@@ -4238,7 +4423,7 @@ const SecretArea: React.FC = () => {
               </h2>
               
               {/* Terminal Output */}
-              <div className="w-full bg-slate-100/80 dark:bg-black/50 border border-primary-500/20 rounded-lg p-4 mb-8 h-32 flex flex-col justify-end overflow-hidden relative backdrop-blur-sm">
+              <div className="w-full bg-slate-100/80 dark:bg-black/50 border border-primary-500/20 rounded-lg p-4 mb-8 h-32 flex flex-col justify-end overflow-hidden relative md:backdrop-blur-sm">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary-500/50 to-transparent opacity-50"></div>
                 {terminalLines.map((line, i) => (
                   <motion.div 
@@ -4259,7 +4444,7 @@ const SecretArea: React.FC = () => {
               
               {/* Progress Bar */}
               <div className="w-full relative">
-                <div className="w-full h-2 bg-slate-200 dark:bg-slate-800/80 rounded-full overflow-hidden relative border border-slate-300 dark:border-slate-700/50 backdrop-blur-sm">
+                <div className="w-full h-2 bg-slate-200 dark:bg-slate-800/80 rounded-full overflow-hidden relative border border-slate-300 dark:border-slate-700/50 md:backdrop-blur-sm">
                   <motion.div 
                     className="absolute top-0 left-0 h-full bg-gradient-to-r from-indigo-600 via-primary-500 to-cyan-400"
                     initial={{ width: "0%" }}
@@ -4302,7 +4487,7 @@ const SecretArea: React.FC = () => {
                     initial={{ x: 100, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     exit={{ x: 100, opacity: 0 }}
-                    className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-2xl p-4 rounded-2xl w-[300px] pointer-events-auto flex gap-3 items-start ${n.isAr ? 'rtl' : 'ltr'}`}
+                    className={`bg-white/80 dark:bg-slate-900/80 md:backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-2xl p-4 rounded-2xl w-[300px] pointer-events-auto flex gap-3 items-start ${n.isAr ? 'rtl' : 'ltr'}`}
                     dir={n.isAr ? 'rtl' : 'ltr'}
                 >
                     <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 text-xl border border-slate-200 dark:border-slate-700">
@@ -4601,8 +4786,12 @@ const SecretArea: React.FC = () => {
           </div>
         </section>
 
+        <section className="mb-16">
+           <UpcomingListsDisplay lists={upcomingLists} />
+        </section>
+
         <div className="sticky top-20 z-40 mb-10">
-           <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-2 rounded-2xl shadow-2xl transition-all">
+           <div className="bg-white/80 dark:bg-slate-900/80 md:backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-2 rounded-2xl shadow-2xl transition-all">
               <div className="flex flex-col gap-3 items-stretch justify-between">
                   <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between w-full min-w-0">
                       <div className="flex overflow-x-auto no-scrollbar p-1 bg-slate-100 dark:bg-slate-950 rounded-xl flex-1 gap-1">
@@ -4832,7 +5021,7 @@ const SecretArea: React.FC = () => {
                           }}
                       >
                           <div className="aspect-[3/4] relative overflow-hidden bg-slate-100 dark:bg-slate-950">
-                            <img src={item.coverImage} alt={item.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-90 group-hover:opacity-100" />
+                            <img src={item.coverImage} alt={item.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-90 group-hover:opacity-100"  loading="lazy" />
                             <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent opacity-90"></div>
                             
                             {compStatus && compStatus !== 'unknown' && (
@@ -4858,13 +5047,13 @@ const SecretArea: React.FC = () => {
                             {item.category === 'steamtools' ? (
                                 <>
                                     {item.gameId && (
-                                        <div className={`absolute top-3 ${compStatus ? 'left-3' : 'right-3'} px-2 py-1 bg-black/60 backdrop-blur-md rounded-md border border-white/10 text-[10px] font-mono font-bold text-white shadow-sm`}>
+                                        <div className={`absolute top-3 ${compStatus ? 'left-3' : 'right-3'} px-2 py-1 bg-black/60 md:backdrop-blur-md rounded-md border border-white/10 text-[10px] font-mono font-bold text-white shadow-sm`}>
                                             ID: {item.gameId}
                                         </div>
                                     )}
                                 </>
                             ) : (
-                                <div className={`absolute top-3 ${compStatus ? 'left-3' : 'right-3'} px-2 py-1 bg-white/90 dark:bg-black/60 backdrop-blur-md rounded-md border border-slate-200 dark:border-white/10 text-[10px] font-mono font-bold text-primary-600 dark:text-primary-400`}>
+                                <div className={`absolute top-3 ${compStatus ? 'left-3' : 'right-3'} px-2 py-1 bg-white/90 dark:bg-black/60 md:backdrop-blur-md rounded-md border border-slate-200 dark:border-white/10 text-[10px] font-mono font-bold text-primary-600 dark:text-primary-400`}>
                                     {item.repackSize}
                                 </div>
                             )}
@@ -4896,7 +5085,7 @@ const SecretArea: React.FC = () => {
                                             e.stopPropagation();
                                             handleCompanyClick(resolvedDev);
                                         }}
-                                        className="mb-2 flex items-center gap-1.5 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-black/60 backdrop-blur-sm text-violet-300 border border-violet-500/30 hover:bg-violet-900/60 transition-colors w-max"
+                                        className="mb-2 flex items-center gap-1.5 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-black/60 md:backdrop-blur-sm text-violet-300 border border-violet-500/30 hover:bg-violet-900/60 transition-colors w-max"
                                     >
                                         <Icon name="Briefcase" size={10} />
                                         {resolvedDev}
@@ -4906,16 +5095,16 @@ const SecretArea: React.FC = () => {
                                   {item.name}
                                 </h3>
                                 <div className="flex items-center justify-between border-t border-white/20 pt-3 mt-1">
-                                  <span className="text-[10px] text-slate-200 font-mono font-bold bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded border border-white/10">
+                                  <span className="text-[10px] text-slate-200 font-mono font-bold bg-black/40 md:backdrop-blur-sm px-2 py-0.5 rounded border border-white/10">
                                     {item.category === 'steamtools' ? item.category.toUpperCase() : item.version}
                                   </span>
                                   <div className="flex items-center gap-3">
-                                      <div className="flex items-center gap-1 text-[10px] text-slate-200 font-mono font-bold bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded border border-white/10">
+                                      <div className="flex items-center gap-1 text-[10px] text-slate-200 font-mono font-bold bg-black/40 md:backdrop-blur-sm px-2 py-0.5 rounded border border-white/10">
                                           <Icon name="Download" size={10} /> {getFakeDownloads(item.id)}
                                       </div>
                                       <button
                                           onClick={(e) => toggleStash(item.id, e)}
-                                          className={`p-1.5 rounded-md backdrop-blur-md transition-all ${
+                                          className={`p-1.5 rounded-md md:backdrop-blur-md transition-all ${
                                               stash.includes(item.id) 
                                               ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
                                               : 'bg-black/40 text-white/70 hover:bg-black/60 hover:text-white border border-white/10'
@@ -5084,7 +5273,7 @@ const AllProfilesModal: React.FC<{
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/90 backdrop-blur-md p-4"
+            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-4"
             onClick={onClose}
         >
             <motion.div 

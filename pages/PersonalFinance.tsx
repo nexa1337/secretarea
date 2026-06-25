@@ -906,7 +906,7 @@ const PersonalFinance: React.FC = () => {
                 initial={{ opacity: 0 }} 
                 animate={{ opacity: 1 }} 
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4"
+                className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 md:backdrop-blur-md p-4"
             >
                 <motion.div 
                     initial={{ scale: 0.9, opacity: 0 }} 
@@ -1226,7 +1226,7 @@ const PersonalFinance: React.FC = () => {
                                 <span className="text-[10px] uppercase tracking-widest opacity-60 font-bold text-slate-500 dark:text-slate-400">Book Wisdom • Moroccan Context</span>
                             </div>
                         </div>
-                        <div className="bg-white dark:bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-amber-100 dark:border-white/10 mb-4 relative shadow-sm">
+                        <div className="bg-white dark:bg-white/10 md:backdrop-blur-sm p-4 rounded-xl border border-amber-100 dark:border-white/10 mb-4 relative shadow-sm">
                             <Icon name="Quote" size={24} className="absolute -top-3 -left-2 text-amber-500 dark:text-amber-400 bg-amber-50 dark:bg-slate-900 rounded-full p-1 border border-amber-100 dark:border-slate-700" />
                             <p className="text-sm font-medium italic leading-relaxed pt-2 text-slate-700 dark:text-slate-200">"{dailyTip.text}"</p>
                         </div>
@@ -1262,7 +1262,7 @@ const PersonalFinance: React.FC = () => {
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                         
                         {/* 1. CAREER & ARCHVIZ */}
-                        <div className="bg-slate-50 dark:bg-slate-800/40 backdrop-blur-md border border-slate-200 dark:border-slate-700/50 rounded-3xl p-6 md:p-8 hover:border-blue-500/30 transition-all duration-500 group">
+                        <div className="bg-slate-50 dark:bg-slate-800/40 md:backdrop-blur-md border border-slate-200 dark:border-slate-700/50 rounded-3xl p-6 md:p-8 hover:border-blue-500/30 transition-all duration-500 group">
                             <div className="flex items-center gap-4 mb-8">
                                 <div className="p-3 rounded-2xl bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform shadow-lg shadow-blue-500/10">
                                     <Icon name="Briefcase" size={28} />
@@ -1334,7 +1334,7 @@ const PersonalFinance: React.FC = () => {
                         </div>
 
                         {/* 2. FREELANCER & TECH */}
-                        <div className="bg-slate-50 dark:bg-slate-800/40 backdrop-blur-md border border-slate-200 dark:border-slate-700/50 rounded-3xl p-6 md:p-8 hover:border-purple-500/30 transition-all duration-500 group">
+                        <div className="bg-slate-50 dark:bg-slate-800/40 md:backdrop-blur-md border border-slate-200 dark:border-slate-700/50 rounded-3xl p-6 md:p-8 hover:border-purple-500/30 transition-all duration-500 group">
                             <div className="flex items-center gap-4 mb-8">
                                 <div className="p-3 rounded-2xl bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform shadow-lg shadow-purple-500/10">
                                     <Icon name="Code" size={28} />
@@ -1411,7 +1411,7 @@ const PersonalFinance: React.FC = () => {
                         </div>
 
                         {/* 3. HOBBIES (CYBERSEC) */}
-                        <div className="bg-slate-50 dark:bg-slate-800/40 backdrop-blur-md border border-slate-200 dark:border-slate-700/50 rounded-3xl p-6 md:p-8 hover:border-emerald-500/30 transition-all duration-500 group">
+                        <div className="bg-slate-50 dark:bg-slate-800/40 md:backdrop-blur-md border border-slate-200 dark:border-slate-700/50 rounded-3xl p-6 md:p-8 hover:border-emerald-500/30 transition-all duration-500 group">
                             <div className="flex items-center gap-4 mb-8">
                                 <div className="p-3 rounded-2xl bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform shadow-lg shadow-emerald-500/10">
                                     <Icon name="Cpu" size={28} />
@@ -1498,7 +1498,7 @@ const PersonalFinance: React.FC = () => {
                         </div>
 
                         {/* 4. EMPIRE & LIFESTYLE */}
-                        <div className="bg-slate-50 dark:bg-slate-800/40 backdrop-blur-md border border-slate-200 dark:border-slate-700/50 rounded-3xl p-6 md:p-8 hover:border-orange-500/30 transition-all duration-500 group">
+                        <div className="bg-slate-50 dark:bg-slate-800/40 md:backdrop-blur-md border border-slate-200 dark:border-slate-700/50 rounded-3xl p-6 md:p-8 hover:border-orange-500/30 transition-all duration-500 group">
                             <div className="flex items-center gap-4 mb-8">
                                 <div className="p-3 rounded-2xl bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 group-hover:scale-110 transition-transform shadow-lg shadow-orange-500/10">
                                     <Icon name="Globe" size={28} />
@@ -1693,7 +1693,7 @@ const PersonalFinance: React.FC = () => {
                             initial={{ opacity: 0 }} 
                             animate={{ opacity: 1 }} 
                             exit={{ opacity: 0 }}
-                            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 md:backdrop-blur-sm"
                             onClick={() => setSelectedNote(null)}
                         >
                             <motion.div 

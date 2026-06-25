@@ -97,7 +97,7 @@ export const DuaPopup: React.FC = () => {
                     animate={{ opacity: 1, x: 0, y: 0, scale: 1, rotate: 0 }}
                     exit={{ opacity: 0, x: 100, scale: 0.9, filter: 'blur(5px)' }}
                     transition={{ type: "spring", stiffness: 400, damping: 25, mass: 0.8 }}
-                    className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[100] w-[calc(100vw-2rem)] sm:w-[380px] md:w-[420px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.3)] border border-slate-200/50 dark:border-slate-700/50 overflow-hidden"
+                    className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[100] w-[calc(100vw-2rem)] sm:w-[380px] md:w-[420px] bg-white/95 dark:bg-slate-900/95 md:backdrop-blur-xl rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.3)] border border-slate-200/50 dark:border-slate-700/50 overflow-hidden"
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
                     onTouchStart={() => setIsHovered(true)}

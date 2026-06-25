@@ -73,7 +73,7 @@ const NexaProjectModal: React.FC<{ project: NexaProject; onClose: () => void }> 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 md:backdrop-blur-sm p-4 overflow-y-auto"
             onClick={onClose}
         >
             <div 
@@ -82,7 +82,7 @@ const NexaProjectModal: React.FC<{ project: NexaProject; onClose: () => void }> 
             >
                 <button 
                     onClick={onClose} 
-                    className="absolute top-4 right-4 z-50 p-2 bg-white/20 hover:bg-white/40 backdrop-blur rounded-full text-slate-900 dark:text-white transition-colors"
+                    className="absolute top-4 right-4 z-50 p-2 bg-white/20 hover:bg-white/40 md:backdrop-blur rounded-full text-slate-900 dark:text-white transition-colors"
                 >
                     <Icon name="X" size={24} />
                 </button>
@@ -90,7 +90,7 @@ const NexaProjectModal: React.FC<{ project: NexaProject; onClose: () => void }> 
                 {/* Left: Gallery */}
                 <div className="w-full md:w-1/2 bg-slate-100 dark:bg-slate-950 p-6 flex flex-col">
                     <div className="flex-1 rounded-2xl overflow-hidden mb-4 shadow-lg bg-slate-200 dark:bg-slate-900 flex items-center justify-center">
-                        <img src={activeImage} alt={project.title} className="w-full h-full object-cover" />
+                        <img src={activeImage} alt={project.title} className="w-full h-full object-cover"  loading="lazy" />
                     </div>
                     <div className="flex gap-2 overflow-x-auto no-scrollbar py-2">
                         {project.gallery.map((img, idx) => (
@@ -99,7 +99,7 @@ const NexaProjectModal: React.FC<{ project: NexaProject; onClose: () => void }> 
                                 onClick={() => setActiveImage(img)}
                                 className={`w-20 h-20 rounded-lg overflow-hidden shrink-0 border-2 transition-all ${activeImage === img ? 'border-primary-500 scale-105' : 'border-transparent opacity-70 hover:opacity-100'}`}
                             >
-                                <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
+                                <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover"  loading="lazy" />
                             </button>
                         ))}
                     </div>
@@ -281,7 +281,7 @@ const CategoryDetail: React.FC = () => {
             initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }} 
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm p-4 overflow-hidden"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 md:backdrop-blur-sm p-4 overflow-hidden"
             onClick={closeLightbox}
           >
             {/* Close Button */}
@@ -321,7 +321,7 @@ const CategoryDetail: React.FC = () => {
                   alt={activeProject.title} 
                   className="max-h-full max-w-full object-contain transition-transform duration-300"
                   style={{ transform: `scale(${zoomLevel})` }}
-                />
+                 loading="lazy" />
               </div>
 
               {/* Next Button */}
@@ -343,7 +343,7 @@ const CategoryDetail: React.FC = () => {
             </div>
             
             {/* Info Panel */}
-            <div className="absolute bottom-8 left-8 text-white max-w-md hidden md:block z-40 bg-black/40 p-4 rounded-xl backdrop-blur-md">
+            <div className="absolute bottom-8 left-8 text-white max-w-md hidden md:block z-40 bg-black/40 p-4 rounded-xl md:backdrop-blur-md">
               <h3 className="text-xl font-bold">{activeProject.title}</h3>
               <p className="text-slate-300 text-sm">{activeProject.description}</p>
             </div>
@@ -483,7 +483,7 @@ const CategoryDetail: React.FC = () => {
                          className="group relative bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all cursor-pointer"
                        >
                           <div className="aspect-video relative overflow-hidden">
-                             <img src={project.image} alt={project.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                             <img src={project.image} alt={project.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"  loading="lazy" />
                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                 <span className="bg-white text-slate-900 px-4 py-2 rounded-full font-bold text-sm transform translate-y-4 group-hover:translate-y-0 transition-transform">
                                   Quick View
@@ -653,14 +653,14 @@ const CategoryDetail: React.FC = () => {
                         src={project.images[0]} 
                         alt={project.title} 
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
-                      />
+                       loading="lazy" />
                       
                       {/* Overlay Info */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
                         <h3 className="text-white font-bold text-lg translate-y-2 group-hover:translate-y-0 transition-transform duration-300">{project.title}</h3>
                         <p className="text-slate-300 text-xs mt-1 translate-y-2 group-hover:translate-y-0 transition-transform duration-300 delay-75 line-clamp-1">{project.description}</p>
                         <div className="flex items-center gap-2 mt-3 translate-y-2 group-hover:translate-y-0 transition-transform duration-300 delay-100">
-                          <span className="text-white bg-white/20 backdrop-blur-md px-2 py-1 rounded text-xs flex items-center">
+                          <span className="text-white bg-white/20 md:backdrop-blur-md px-2 py-1 rounded text-xs flex items-center">
                             <Icon name="Images" size={12} className="mr-1" /> {project.images.length}
                           </span>
                         </div>

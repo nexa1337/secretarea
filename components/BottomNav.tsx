@@ -20,7 +20,7 @@ const BottomNav: React.FC = () => {
 
   return (
     <>
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 z-50 pb-safe">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-900/90 md:backdrop-blur-md border-t border-slate-200 dark:border-slate-800 z-50 pb-safe">
         <div className="flex justify-around items-center h-16 relative">
           {mobileNavItems.map((item) => {
             const isActive = !item.isExternal && !item.isMore && location.pathname === item.path;
@@ -83,13 +83,13 @@ const BottomNav: React.FC = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowMoreMobile(false)}
-              className="md:hidden fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm"
+              className="md:hidden fixed inset-0 z-40 bg-slate-900/40 md:backdrop-blur-sm"
             />
             <motion.div 
               initial={{ opacity: 0, y: 100 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 100 }}
-              className="md:hidden fixed inset-x-4 bottom-20 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-3xl p-4 shadow-2xl flex flex-col items-stretch max-h-[85vh]"
+              className="md:hidden fixed inset-x-4 bottom-20 z-50 bg-white/95 dark:bg-slate-900/95 md:backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-3xl p-4 shadow-2xl flex flex-col items-stretch max-h-[85vh]"
             >
              <h3 className="text-slate-900 dark:text-white font-bold mb-3 px-2 tracking-tight">N E X A 1337 Ecosystem</h3>
              
