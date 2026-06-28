@@ -119,7 +119,7 @@ export const DuaPopup: React.FC = () => {
                     
                     <div className="p-5 sm:p-6 pb-4 flex flex-col items-center justify-center space-y-3 relative">
                         <div className="absolute -top-6 -left-6 opacity-5 pointer-events-none transform rotate-[-20deg]">
-                            <svg width="120" height="120" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+                            <Icon name="BuildingMosque" size={120} className="text-current" />
                         </div>
 
                         <div className="text-xl sm:text-2xl font-arabic font-bold text-slate-900 dark:text-white leading-[2] tracking-wide rtl text-center px-4 pt-1 pb-3 max-h-[140px] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] whitespace-pre-line" style={{ fontFamily: '"Amiri", "Scheherazade New", serif' }}>

@@ -2273,6 +2273,11 @@ const ResourceDetailModal: React.FC<{
                         {item.links.full && (
                             <a href={item.links.full} target="_blank" rel="noreferrer" className="col-span-1 md:col-span-2 group relative overflow-hidden bg-gradient-to-r from-primary-600 to-primary-500 p-4 sm:p-5 rounded-xl shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 transition-all hover:-translate-y-1 active:scale-95">
                                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
+                                {['game', 'hypervisor'].includes(item.category?.toLowerCase()) && (
+                                    <div className="absolute top-0 right-0 bg-gradient-to-r from-amber-400 to-orange-500 text-black text-[8px] sm:text-[10px] font-black uppercase tracking-widest px-3 py-1 sm:py-1.5 rounded-bl-xl shadow-[0_0_15px_rgba(245,158,11,0.6)] flex items-center gap-1 z-20 border-l border-b border-yellow-300">
+                                        <Icon name="Sparkles" size={12} className="animate-pulse" /> Recommendation
+                                    </div>
+                                )}
                                 <div className="relative z-10 flex items-center justify-center gap-3 sm:gap-4">
                                     {['steamtools', 'tools', 'savegame', 'extra', 'architect'].includes(item.category?.toLowerCase()) ? (
                                         <img 
