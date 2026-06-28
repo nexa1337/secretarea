@@ -5302,7 +5302,7 @@ const SecretArea: React.FC = () => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 20 }}
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="fixed bottom-6 right-6 z-[100] w-12 h-12 rounded-full bg-slate-900/50 dark:bg-slate-100/10 backdrop-blur-md border border-white/20 hover:bg-slate-900/70 dark:hover:bg-slate-100/20 text-white flex items-center justify-center shadow-xl transition-all hover:-translate-y-1"
+            className="fixed bottom-6 left-6 z-[100] w-12 h-12 rounded-full bg-slate-900/50 dark:bg-slate-100/10 backdrop-blur-md border border-white/20 hover:bg-slate-900/70 dark:hover:bg-slate-100/20 text-white flex items-center justify-center shadow-xl transition-all hover:-translate-y-1"
           >
             <Icon name="ArrowUp" size={24} />
           </motion.button>
