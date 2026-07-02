@@ -54,9 +54,14 @@ const Footer: React.FC = () => {
           <Link to="/roadmap" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Roadmap</Link>
           <Link to="/disclaimer" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Disclaimer</Link>
         </div>
-        <p>
-          © 2026 <button onClick={() => setIsPopupOpen(true)} className="font-bold text-slate-700 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">N E X A 1337</button>. All rights reserved.
-        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-between w-full max-w-[1600px] mx-auto px-8 sm:px-12 md:px-24 mt-8 pb-4">
+          <p className="text-center sm:text-left mb-4 sm:mb-0 ml-0 sm:ml-12 md:ml-20">
+            © 2026 <span className="font-bold text-slate-700 dark:text-slate-300">SecretArea</span>. All rights reserved.
+          </p>
+          <p className="text-center sm:text-right mr-0 sm:mr-12 md:mr-20">
+            Built by : <button onClick={() => setIsPopupOpen(true)} className="font-bold text-slate-700 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">N E X A 1337</button>
+          </p>
+        </div>
       </footer>
 
       <AnimatePresence>

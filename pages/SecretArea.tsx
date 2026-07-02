@@ -1877,6 +1877,8 @@ const ResourceDetailModal: React.FC<{
   const [showArabic, setShowArabic] = useState(false);
   const [showHypervisorGuide, setShowHypervisorGuide] = useState(false);
   const [noteModalContent, setNoteModalContent] = useState<string | null>(null);
+  const [showQBitWarning, setShowQBitWarning] = useState(false);
+  const [qBitSuccess, setQBitSuccess] = useState(false);
 
   const [isCopied, setIsCopied] = useState(false);
 
@@ -2271,7 +2273,18 @@ const ResourceDetailModal: React.FC<{
                 <Section title="Download Channels">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                         {item.links.full && (
-                            <a href={item.links.full} target="_blank" rel="noreferrer" className="col-span-1 md:col-span-2 group relative overflow-hidden bg-gradient-to-r from-primary-600 to-primary-500 p-4 sm:p-5 rounded-xl shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 transition-all hover:-translate-y-1 active:scale-95">
+                            <a 
+                                href={item.links.full} 
+                                target="_blank" 
+                                rel="noreferrer" 
+                                onClick={(e) => {
+                                    if (['game', 'hypervisor'].includes(item.category?.toLowerCase())) {
+                                        e.preventDefault();
+                                        setShowQBitWarning(true);
+                                    }
+                                }}
+                                className="col-span-1 md:col-span-2 group relative overflow-hidden bg-gradient-to-r from-primary-600 to-primary-500 p-4 sm:p-5 rounded-xl shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 transition-all hover:-translate-y-1 active:scale-95"
+                            >
                                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
                                 {['game', 'hypervisor'].includes(item.category?.toLowerCase()) && (
                                     <div className="absolute top-0 right-0 bg-gradient-to-r from-amber-400 to-orange-500 text-black text-[8px] sm:text-[10px] font-black uppercase tracking-widest px-3 py-1 sm:py-1.5 rounded-bl-xl shadow-[0_0_15px_rgba(245,158,11,0.6)] flex items-center gap-1 z-20 border-l border-b border-yellow-300">
@@ -2384,6 +2397,101 @@ const ResourceDetailModal: React.FC<{
         )}
         {noteModalContent && (
           <NoteModal content={noteModalContent} onClose={() => setNoteModalContent(null)} />
+        )}
+        {showQBitWarning && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6 bg-slate-900/80 backdrop-blur-sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowQBitWarning(false);
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md overflow-hidden relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowQBitWarning(false);
+                }}
+                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-full transition-colors z-10"
+                aria-label="Close"
+              >
+                <Icon name="X" size={20} />
+              </button>
+              <div className="p-6 sm:p-8 text-center space-y-6 pt-8">
+                {!qBitSuccess ? (
+                  <>
+                    <div className="w-16 h-16 bg-blue-500/20 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce shadow-lg shadow-blue-500/20">
+                      <Icon name="Download" size={32} />
+                    </div>
+                    <div>
+                      <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-3">Wait a minute! 🛑</h3>
+                      <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
+                        To use this method, you need <span className="font-bold text-blue-600 dark:text-blue-400">qBittorrent</span> to download uTorrent files without problems. Do you already have it installed? 🤔
+                      </p>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                      <a 
+                        href={item.links.full}
+                        target="_blank" 
+                        rel="noreferrer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowQBitWarning(false);
+                        }}
+                        className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 flex items-center justify-center"
+                      >
+                        YES, I HAVE IT 🚀
+                      </a>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open('https://www.qbittorrent.org/download', '_blank');
+                          setQBitSuccess(true);
+                        }}
+                        className="flex-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold py-3 px-4 rounded-xl transition-all border border-slate-200 dark:border-slate-700 flex items-center justify-center"
+                      >
+                        Not Yet 😅
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-16 h-16 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse shadow-lg shadow-emerald-500/20">
+                      <Icon name="Check" size={32} />
+                    </div>
+                    <div>
+                      <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-3">Everything is fine! 🎉</h3>
+                      <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 font-medium leading-relaxed mb-6">
+                        Now you can have it thanks for respect N E X A 1337 Guidelines and instructions, all this for you. 🥳
+                      </p>
+                      <a 
+                        href={item.links.full}
+                        target="_blank" 
+                        rel="noreferrer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowQBitWarning(false);
+                          setTimeout(() => setQBitSuccess(false), 500);
+                        }}
+                        className="block w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-lg shadow-primary-500/30 hover:-translate-y-0.5"
+                      >
+                        Get Files ⚡️
+                      </a>
+                    </div>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </motion.div>
@@ -5078,8 +5186,9 @@ const SecretArea: React.FC = () => {
                               }
                           }}
                       >
+                          <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 dark:via-white/10 to-transparent group-hover:animate-[shimmer_1.5s_infinite] z-40 pointer-events-none"></div>
                           <div className="aspect-[3/4] relative overflow-hidden bg-slate-100 dark:bg-slate-950">
-                            <img src={item.coverImage} alt={item.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-90 group-hover:opacity-100"  loading="lazy" />
+                            <img src={item.coverImage} alt={item.name} className="w-full h-full object-cover transition-opacity duration-300 opacity-90 group-hover:opacity-100"  loading="lazy" />
                             <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent opacity-90"></div>
                             
                             {compStatus && compStatus !== 'unknown' && (
@@ -5302,7 +5411,7 @@ const SecretArea: React.FC = () => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 20 }}
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="fixed bottom-6 left-6 z-[100] w-12 h-12 rounded-full bg-slate-900/50 dark:bg-slate-100/10 backdrop-blur-md border border-white/20 hover:bg-slate-900/70 dark:hover:bg-slate-100/20 text-white flex items-center justify-center shadow-xl transition-all hover:-translate-y-1"
+            className="fixed bottom-[85px] md:bottom-10 left-6 sm:left-10 z-[100] w-12 h-12 rounded-full bg-slate-900/50 dark:bg-slate-100/10 backdrop-blur-md border border-white/20 hover:bg-slate-900/70 dark:hover:bg-slate-100/20 text-white flex items-center justify-center shadow-xl transition-all hover:-translate-y-1"
           >
             <Icon name="ArrowUp" size={24} />
           </motion.button>
