@@ -52,7 +52,7 @@
             },
             keyframes: {
               shimmer: {
-                '100%': { transform: 'translateX(100%)' }
+                '0%': { transform: 'translateX(-100%)' }, '100%': { transform: 'translateX(100%)' }
               }
             }
           },
@@ -81,6 +81,9 @@
       .no-scrollbar {
         -ms-overflow-style: none;
         scrollbar-width: none;
+      }
+      .font-arabic {
+        font-family: 'Amiri', serif;
       }
     </style>
     

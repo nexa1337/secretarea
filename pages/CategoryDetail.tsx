@@ -3,6 +3,9 @@ import React, { useState } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
 import { CATEGORIES } from '../constants';
 import Icon from '../components/Icon';
+import ArchitectureRoadmapComponent from '../components/ArchitectureRoadmapComponent';
+import ITRoadmapComponent from '../components/ITRoadmapComponent';
+import GamingRoadmapComponent from '../components/GamingRoadmapComponent';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Project, MindMapSection, MindMapNode, NexaProject } from '../types';
 
@@ -414,29 +417,74 @@ const CategoryDetail: React.FC = () => {
 
           {/* NEXA BUSINESS SERVICES COLLECTION */}
           {isBusiness && category.nexaServices && (
-             <motion.section variants={item} className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-3xl border border-slate-200 dark:border-slate-800">
-                <div className="text-center mb-8">
-                  <h3 className="text-sm font-bold text-primary-500 tracking-wider uppercase mb-2">All Services</h3>
-                  <h2 className="text-3xl font-bold text-slate-900 dark:text-white">NEXA Collection</h2>
+             <motion.section variants={item} className="relative p-1 lg:p-8 rounded-[40px] overflow-hidden">
+                {/* Background Effects */}
+                <div className="absolute inset-0 bg-slate-900 dark:bg-[#030712] -z-20"></div>
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] -z-10"></div>
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-emerald-500/20 blur-[100px] -z-10"></div>
+
+                <div className="text-center mb-12 relative z-10">
+                  <motion.div 
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    whileInView={{ scale: 1, opacity: 1 }}
+                    className="inline-block px-4 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-bold tracking-widest uppercase mb-4 shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+                  >
+                    Solutions
+                  </motion.div>
+                  <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight">NEXA <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Collection</span></h2>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
                   {category.nexaServices.map((service, idx) => (
-                    <div key={idx} className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm relative overflow-hidden group hover:border-primary-500/50 transition-colors">
-                      {service.discount && (
-                        <div className="absolute top-4 right-4 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md z-10">
-                          {service.discount}
+                    <motion.div 
+                      key={idx} 
+                      whileHover={{ y: -5, scale: 1.01 }}
+                      className="group relative p-[1px] rounded-3xl overflow-hidden bg-slate-800"
+                    >
+                      {/* Animated border gradient */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-800 group-hover:from-emerald-500 group-hover:to-cyan-500 transition-all duration-500 opacity-50"></div>
+                      
+                      {/* Card Content */}
+                      <div className="relative h-full bg-slate-900/90 backdrop-blur-xl p-8 rounded-[23px] flex flex-col justify-between overflow-hidden">
+                        
+                        {/* Glow effect on hover */}
+                        <div className="absolute -top-24 -right-24 w-48 h-48 bg-emerald-500/20 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+                        <div>
+                          <div className="flex justify-between items-start mb-6">
+                            <div className="flex items-center gap-2">
+                               <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 group-hover:text-emerald-400 group-hover:border-emerald-500/50 transition-colors">
+                                  <Icon name={service.category.includes('AI') ? 'Cpu' : service.category.includes('WEB') ? 'Code' : service.category.includes('BRAND') ? 'PenTool' : 'Target'} size={14} />
+                               </div>
+                               <span className="text-xs font-mono font-bold text-slate-400 group-hover:text-slate-300 tracking-wider uppercase transition-colors">{service.category}</span>
+                            </div>
+                            {service.discount && (
+                              <div className="bg-gradient-to-r from-emerald-500 to-teal-400 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.4)]">
+                                {service.discount}
+                              </div>
+                            )}
+                          </div>
+                          
+                          <h4 className="font-bold text-xl md:text-2xl text-white mb-3 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-emerald-300 group-hover:to-cyan-300 transition-all duration-300">{service.title}</h4>
+                          <p className="text-slate-400 text-sm leading-relaxed mb-6">
+                            {service.description}
+                          </p>
                         </div>
-                      )}
-                      <div className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wide">{service.category}</div>
-                      <h4 className="font-bold text-lg text-slate-900 dark:text-white mb-1 group-hover:text-primary-500 transition-colors">{service.title}</h4>
-                      <div className="flex items-center justify-between mt-4">
-                         <span className="text-slate-500 dark:text-slate-400 text-sm">{service.description}</span>
-                         <span className="font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1 rounded-full text-xs">
-                           Starting at {service.price}
-                         </span>
+                        
+                        <div className="flex items-center justify-between pt-6 border-t border-slate-800 group-hover:border-slate-700 transition-colors">
+                           <div className="flex flex-col">
+                             <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-1">Investment</span>
+                             <span className="font-bold text-white text-lg font-mono">
+                               {service.price}
+                             </span>
+                           </div>
+                           
+                           <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300 transform group-hover:rotate-[-45deg]">
+                              <Icon name="ArrowRight" size={16} />
+                           </div>
+                        </div>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
              </motion.section>
@@ -672,76 +720,52 @@ const CategoryDetail: React.FC = () => {
           )}
 
           {/* 2. FIELD ROADMAP / JOURNEY SECTION */}
-          <motion.section variants={item} className={`p-8 rounded-2xl border relative overflow-hidden ${isBusiness ? 'bg-gradient-to-br from-slate-900 to-slate-950 border-slate-800 text-white' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'}`}>
-            {isBusiness ? (
-               <div className="mb-12 relative z-10 text-center md:text-left">
-                  <div className="absolute -left-20 -top-20 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl"></div>
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 rounded-full blur-2xl"></div>
-                  
-                  <div className="inline-block px-4 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-bold tracking-widest uppercase mb-6">
-                    Our Master Plan
-                  </div>
-                  
-                  <h2 className="text-4xl md:text-5xl font-black mb-6 leading-tight">
-                    From <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">0 Clients</span> to a <br/>
-                    Global <span className="text-white">Digital Empire</span>.
-                  </h2>
-                  
-                  <p className="text-lg text-slate-300 max-w-3xl leading-relaxed">
-                    N E X A 1337 isn't just an agency; it's a movement to <span className="text-emerald-400 font-bold">democratize digital power</span>. 
-                    We are bridging the gap between imagination and online reality, transforming small local businesses into dominant internet brands.
-                    Our mission is to empower <span className="text-white font-bold">1 Million+ Clients</span> worldwide with cutting-edge automation, AI, and design.
-                  </p>
-               </div>
-            ) : (
+          {category.id !== 'business' && (
+          <motion.section variants={item} className={`p-8 rounded-2xl border relative overflow-hidden bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800`}>
                 <h2 className="text-2xl font-bold mb-8 flex items-center">
                   <Icon name="Map" className="mr-2 text-primary-500" /> 
                   {isIT ? 'Gamified Learning Path' : 'Roadmap & Learning Path'}
                 </h2>
-            )}
-
             <div className="space-y-12 relative z-10">
               
               {/* Career Path / Learning Roadmap */}
+              {category.id !== 'architecture' && category.id !== 'gaming' && (
               <div>
-                 {!isBusiness && (
+                 {!isIT && (
                    <h3 className="text-lg font-bold text-slate-400 uppercase tracking-widest text-xs mb-6 border-b border-slate-100 dark:border-slate-800 pb-2">
-                     {isIT ? 'Quest Log' : 'Career Path'}
+                     Career Path
                    </h3>
                  )}
                  
-                 <div className={`relative border-l-2 ml-3 space-y-12 ${isBusiness ? 'border-emerald-500/30' : 'border-slate-200 dark:border-slate-700'}`}>
+                 <div className="relative border-l-2 ml-3 space-y-12 border-slate-200 dark:border-slate-700">
                   {category.roadmap.map((step, idx) => (
                     <div key={idx} className="relative pl-10 group">
                       {/* Timeline Dot */}
                       <div className={`absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 transition-all duration-500 z-10 ${
-                        isBusiness 
-                          ? (step.status === 'completed' ? 'bg-emerald-500 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)]' : 'bg-slate-900 border-emerald-500/50')
-                          : (step.status === 'completed' ? 'bg-emerald-500 border-emerald-500' : step.status === 'in-progress' ? 'bg-primary-500 border-primary-500 animate-pulse' : 'bg-slate-200 dark:bg-slate-800 border-slate-400 dark:border-slate-600')
+                          step.status === 'completed' ? 'bg-emerald-500 border-emerald-500' : step.status === 'in-progress' ? 'bg-primary-500 border-primary-500 animate-pulse' : 'bg-slate-200 dark:bg-slate-800 border-slate-400 dark:border-slate-600'
                       }`}></div>
                       
                       {/* Content Card */}
-                      <div className={`transition-all duration-300 ${isBusiness ? 'bg-white/5 border border-white/10 hover:border-emerald-500/50 p-6 rounded-xl hover:bg-white/10' : ''}`}>
+                      <div className="transition-all duration-300">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
                            <div className="flex items-center gap-3">
                               {/* Icon for roadmap step if available */}
-                              {step.icon && <Icon name={step.icon} size={isBusiness ? 24 : 16} className={`${isBusiness ? 'text-emerald-400' : 'text-slate-400'} ${!isBusiness && step.status === 'in-progress' ? 'text-primary-500 animate-pulse' : ''}`}/>}
-                              <h4 className={`font-bold transition-colors ${isBusiness ? 'text-xl text-white' : 'text-base group-hover:text-primary-500'}`}>{step.title}</h4>
+                              {step.icon && <Icon name={step.icon} size={16} className={`text-slate-400 ${step.status === 'in-progress' ? 'text-primary-500 animate-pulse' : ''}`}/>}
+                              <h4 className="font-bold transition-colors text-base group-hover:text-primary-500">{step.title}</h4>
                            </div>
                           <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full w-fit mt-2 sm:mt-0 ${
-                            isBusiness 
-                              ? (step.status === 'completed' ? 'text-emerald-950 bg-emerald-400' : step.status === 'in-progress' ? 'text-white bg-blue-600 animate-pulse' : 'text-slate-400 border border-slate-700')
-                              : (step.status === 'completed' ? 'text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30' : step.status === 'in-progress' ? 'text-primary-600 bg-primary-100 dark:bg-primary-900/30' : 'text-slate-500 bg-slate-100 dark:bg-slate-800')
+                              step.status === 'completed' ? 'text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30' : step.status === 'in-progress' ? 'text-primary-600 bg-primary-100 dark:bg-primary-900/30' : 'text-slate-500 bg-slate-100 dark:bg-slate-800'
                           }`}>
-                            {step.status === 'planned' && isBusiness ? 'Future Vision' : step.status}
+                            {step.status}
                           </span>
                         </div>
-                        <p className={`text-sm leading-relaxed ${isBusiness ? 'text-slate-300' : 'text-slate-600 dark:text-slate-400'}`}>{step.description}</p>
+                        <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">{step.description}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
+              )}
 
               {/* PROFESSIONAL EXPERIENCE */}
               {category.experience && (
@@ -811,8 +835,13 @@ const CategoryDetail: React.FC = () => {
                 </div>
               )}
 
+              {category.id === 'architecture' && <ArchitectureRoadmapComponent />}
+              {category.id === 'it-cybersecurity' && <ITRoadmapComponent />}
+              {category.id === 'gaming' && <GamingRoadmapComponent />}
+
             </div>
           </motion.section>
+          )}
 
         </div>
 
@@ -1002,17 +1031,29 @@ const CategoryDetail: React.FC = () => {
               </div>
 
               {/* Portfolio / Gallery Button */}
-              <a 
-                href={isIT ? "https://marouananouar.github.io/RedTeamSpace/" : "https://batimentartist.github.io/gallery/"} 
-                target="_blank"
-                rel="noreferrer"
-                className="relative z-10 w-full flex items-center justify-center py-3 bg-white text-slate-900 font-bold rounded-xl hover:bg-primary-500 hover:text-white transition-all group mt-4"
-              >
-                <span className="flex items-center">
-                  <Icon name={isIT ? "Rocket" : "ExternalLink"} size={18} className="mr-2 group-hover:animate-bounce" /> 
-                  {isIT ? "Red Team Space" : "Portfolio"}
-                </span>
-              </a>
+              {isIT ? (
+                <a 
+                  href="https://marouananouar.github.io/RedTeamSpace/" 
+                  target="_blank"
+                  rel="noreferrer"
+                  className="relative z-10 w-full flex items-center justify-center py-3 bg-white text-slate-900 font-bold rounded-xl hover:bg-primary-500 hover:text-white transition-all group mt-4"
+                >
+                  <span className="flex items-center">
+                    <Icon name="Rocket" size={18} className="mr-2 group-hover:animate-bounce" /> 
+                    Red Team Space
+                  </span>
+                </a>
+              ) : (
+                <div 
+                  className="relative z-10 w-full flex items-center justify-center py-3 bg-slate-800/50 text-slate-400 font-bold rounded-xl border border-slate-700/50 mt-4 cursor-not-allowed select-none"
+                  title="No link available now"
+                >
+                  <span className="flex items-center">
+                    <Icon name="Lock" size={18} className="mr-2" /> 
+                    Portfolio - No link available now
+                  </span>
+                </div>
+              )}
             </motion.section>
           )}
 

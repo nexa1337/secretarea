@@ -1,99 +1,141 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '../components/Icon';
 import { CATEGORIES } from '../constants';
 
-const Roadmap: React.FC = () => {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
+const getHoverBg = (color: string) => {
+  switch (color) {
+    case 'orange': return 'bg-orange-500/5 dark:bg-orange-500/10';
+    case 'blue': return 'bg-blue-500/5 dark:bg-blue-500/10';
+    case 'purple': return 'bg-purple-500/5 dark:bg-purple-500/10';
+    case 'emerald': return 'bg-emerald-500/5 dark:bg-emerald-500/10';
+    default: return 'bg-slate-500/5 dark:bg-slate-500/10';
+  }
+};
 
-  const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
-  };
+const getIconColors = (color: string) => {
+  switch (color) {
+    case 'orange': return 'group-hover:bg-orange-100 dark:group-hover:bg-orange-900/30 group-hover:text-orange-600 dark:group-hover:text-orange-400';
+    case 'blue': return 'group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 group-hover:text-blue-600 dark:group-hover:text-blue-400';
+    case 'purple': return 'group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30 group-hover:text-purple-600 dark:group-hover:text-purple-400';
+    case 'emerald': return 'group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30 group-hover:text-emerald-600 dark:group-hover:text-emerald-400';
+    default: return 'group-hover:bg-slate-100 dark:group-hover:bg-slate-900/30 group-hover:text-slate-600 dark:group-hover:text-slate-400';
+  }
+};
+
+const Roadmap: React.FC = () => {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   return (
-    <div className="w-full pt-24 pb-24 min-h-screen bg-[#f9f9f8] dark:bg-slate-950 px-4 sm:px-6 md:px-8 font-sans">
-      <div className="max-w-6xl mx-auto">
+    <div className="w-full pt-28 pb-32 min-h-screen bg-[#fcfcfc] dark:bg-[#030712] px-4 sm:px-6 md:px-8 font-sans overflow-hidden">
+      <div className="max-w-6xl mx-auto relative">
         
-        <div className="mb-16 text-center md:text-left">
+        {/* Subtle grid background for the "intelligent" look */}
+        <div className="absolute inset-0 pointer-events-none -z-10 opacity-[0.03] dark:opacity-[0.05]" 
+             style={{ backgroundImage: 'linear-gradient(to right, #808080 1px, transparent 1px), linear-gradient(to bottom, #808080 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+
+        <div className="mb-24 text-left relative z-10">
+          <motion.div 
+            initial={{ opacity: 0, width: 0 }}
+            animate={{ opacity: 1, width: '40px' }}
+            transition={{ duration: 0.8, delay: 0.1 }}
+            className="h-1 bg-emerald-500 mb-8"
+          />
           <motion.h1 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white mb-6 tracking-tight"
+            initial={{ opacity: 0, filter: 'blur(10px)', y: 20 }}
+            animate={{ opacity: 1, filter: 'blur(0px)', y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-5xl md:text-7xl font-black text-slate-900 dark:text-white mb-6 tracking-tighter"
           >
-            Explore <span className="text-emerald-600 dark:text-emerald-400">Roadmap</span>
+            Evolution <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-cyan-500">Matrix</span>
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.1 }}
-            className="text-slate-600 dark:text-slate-400 max-w-2xl text-lg md:text-xl leading-relaxed"
+            transition={{ delay: 0.3, duration: 0.6 }}
+            className="text-slate-500 dark:text-slate-400 max-w-2xl text-lg md:text-xl font-medium leading-relaxed"
           >
-            Dive into the different dimensions of my universe. From architectural designs to cybersecurity protocols and gaming worlds.
+            A non-linear progression of disciplines. Select a node to explore its architecture, insights, and continuous development path.
           </motion.p>
         </div>
 
-        <motion.div 
-          variants={containerVariants}
-          initial="hidden"
-          animate="show"
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 auto-rows-fr"
-        >
-          
-          {CATEGORIES.map((category) => (
-            <motion.div key={category.id} variants={cardVariants} className="h-full">
-              <Link to={`/roadmap/${category.id}`} className="block group h-full">
-                <div className="
-                  h-full relative overflow-hidden rounded-[32px] p-8 md:p-10
-                  bg-white dark:bg-slate-900 
-                  shadow-[0px_4px_20px_rgba(0,0,0,0.03)] dark:shadow-none
-                  border border-transparent dark:border-slate-800
-                  hover:shadow-[0px_8px_30px_rgba(0,0,0,0.08)] dark:hover:border-slate-700
-                  transition-all duration-300
-                  flex flex-col justify-between
-                ">
-                  <div className="relative z-10">
-                    <div className="flex justify-between items-start mb-8">
-                      <div className={`w-14 h-14 rounded-full bg-${category.color}-50 dark:bg-${category.color}-900/20 text-${category.color}-600 dark:text-${category.color}-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
-                        <Icon name={category.iconName} size={28} />
+        <div className="relative z-10 flex flex-col w-full">
+          {/* Vertical connection line */}
+          <div className="absolute left-[29px] md:left-[39px] top-12 bottom-12 w-px bg-gradient-to-b from-transparent via-slate-200 dark:via-slate-800 to-transparent -z-10 hidden sm:block" />
+
+          {CATEGORIES.map((category, index) => {
+            const isHovered = hoveredIndex === index;
+            const itemsCount = category.projects.length + (category.nexaProjects?.length || 0);
+
+            return (
+              <motion.div 
+                key={category.id}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 + index * 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                onMouseEnter={() => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
+                className="group relative border-b border-slate-200 dark:border-slate-800/60 first:border-t"
+              >
+                <Link to={`/roadmap/${category.id}`} className="block w-full py-8 md:py-12 relative overflow-hidden">
+                  
+                  {/* Organic hover effect bg */}
+                  <AnimatePresence>
+                    {isHovered && (
+                      <motion.div 
+                        layoutId="hover-bg"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className={`absolute inset-0 ${getHoverBg(category.color)} -z-10 rounded-2xl`}
+                      />
+                    )}
+                  </AnimatePresence>
+
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-12 relative z-10 px-4">
+                    <div className="flex items-center gap-6 md:w-[45%]">
+                      <div className="hidden sm:flex text-slate-300 dark:text-slate-700 font-mono text-sm md:text-base font-bold bg-white dark:bg-[#030712] py-2 z-10">
+                        0{index + 1}
                       </div>
-                      <div className="px-4 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                         {category.projects.length + (category.nexaProjects?.length || 0)} Items
+                      <div className={`p-4 rounded-2xl bg-slate-100 dark:bg-slate-900 text-slate-400 ${getIconColors(category.color)} transition-all duration-500 shadow-sm group-hover:shadow-md group-hover:-rotate-3`}>
+                        <Icon name={category.iconName} size={32} />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl md:text-4xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight group-hover:translate-x-2 transition-transform duration-500">
+                          {category.title}
+                        </h3>
+                        <p className="text-sm font-medium text-slate-400 dark:text-slate-500 mt-1 uppercase tracking-widest hidden md:block opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-500 delay-75">
+                           {category.role}
+                        </p>
                       </div>
                     </div>
 
-                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                      {category.title}
-                    </h3>
-                    
-                    <p className="text-base text-slate-500 dark:text-slate-400 leading-relaxed">
+                    <div className="md:w-[35%] text-slate-500 dark:text-slate-400 text-sm md:text-base leading-relaxed group-hover:text-slate-700 dark:group-hover:text-slate-300 transition-colors duration-500 font-medium">
                       {category.shortDescription}
-                    </p>
-                  </div>
+                    </div>
 
-                  <div className="relative z-10 mt-10 flex items-center justify-between">
-                     <span className="text-xs font-bold uppercase tracking-widest text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                        Enter Dimension
-                     </span>
-                     <div className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300">
-                        <Icon name="ArrowRight" size={18} />
-                     </div>
+                    <div className="flex items-center justify-between md:justify-end gap-8 md:w-[20%]">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 group-hover:bg-emerald-500 transition-colors duration-500" />
+                        <span className="text-xs font-mono font-bold text-slate-400 uppercase tracking-widest group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                          {itemsCount} Nodes
+                        </span>
+                      </div>
+                      
+                      <div className="w-12 h-12 flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-800 group-hover:border-emerald-500/50 group-hover:bg-emerald-500 text-slate-400 dark:text-slate-500 group-hover:text-white transition-all duration-500">
+                         <Icon name="ArrowRight" className={isHovered ? '-rotate-45 transition-transform duration-500' : 'transition-transform duration-500'} size={20} />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
+                  
+                </Link>
+              </motion.div>
+            );
+          })}
+        </div>
 
-        </motion.div>
       </div>
     </div>
   );

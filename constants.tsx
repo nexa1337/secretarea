@@ -605,7 +605,7 @@ export const CATEGORIES: CategoryData[] = [
           title: 'Premium Health & Medical WordPress Theme', 
           description: 'Build trust and attract more patients with a clean, professional, and modern ...', 
           category: 'web', 
-          image: 'https://medicate.peacefulqode.co.in/wp-content/uploads/2022/04/1-4.jpg',
+          image: 'https://neoocular.qodeinteractive.com/wp-content/uploads/2021/10/landing-img-01-main-home-1.jpg',
           fullDescription: 'Build trust and attract more patients with a clean, professional, and modern Medical WordPress Theme. Designed for doctors, clinics, hospitals, and healthcare professionals, this theme helps you create a reliable online presence that inspires confidence. With easy appointment booking, service pages, and a mobile-friendly design, you can showcase your expertise, highlight your team, and grow your medical practice effortlessly. Fast, SEO-ready, and fully customizable, everything you need to make your healthcare website stand out.',
           client: 'Health & Medical',
           sales: '200+',
@@ -622,7 +622,6 @@ export const CATEGORIES: CategoryData[] = [
           ],
           technologies: 'Php, Wordpress',
           gallery: [
-            'https://medicate.peacefulqode.co.in/wp-content/uploads/2022/04/1-4.jpg',
             'https://neoocular.qodeinteractive.com/wp-content/uploads/2021/10/landing-img-01-main-home-1.jpg',
             'https://denticare.bold-themes.com/wp-content/uploads/2020/03/main_demo_allen.png',
             'https://denticare.bold-themes.com/wp-content/uploads/2020/03/main_demo_oscar.png'
