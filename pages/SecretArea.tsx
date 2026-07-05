@@ -800,18 +800,20 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
         </motion.div>
     );
 };
-
 const Footer = () => (
   <footer className="w-full mt-2 pt-2 pb-8 flex justify-center items-center gap-4 relative z-20">
      <a href={DISCORD_LINK} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#5865F2] hover:shadow-lg hover:shadow-[#5865F2]/20 transition-all border border-slate-200 dark:border-slate-800">
         <Icon name="Discord" size={20} />
      </a>
-     <a href={TELEGRAM_LINK} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#229ED9] hover:shadow-lg hover:shadow-[#229ED9]/20 transition-all border border-slate-200 dark:border-slate-800">
+     <a href={TELEGRAM_LINK} target="_blank" rel="noreferrer" className="relative w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#229ED9] hover:shadow-lg hover:shadow-[#229ED9]/20 transition-all border border-slate-200 dark:border-slate-800">
+        <span className="absolute top-2 right-2 flex h-2 w-2 items-center justify-center z-20">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-60"></span>
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500 border border-white dark:border-slate-800"></span>
+        </span>
         <Icon name="Telegram" size={20} />
      </a>
   </footer>
 );
-
 const AdBanner: React.FC<{ desktopSrc: string, mobileSrc: string, link: string, className?: string }> = ({ desktopSrc, mobileSrc, link, className }) => (
   <a href={link} target="_blank" rel="noreferrer" className={`relative block w-full max-w-[320px] md:max-w-[970px] mx-auto aspect-[32/10] md:aspect-[97/25] group overflow-hidden rounded-2xl transition-all duration-500 bg-slate-100 dark:bg-slate-900/50 ${className || ''}`}>
     {/* Animated glow effect behind the image */}
@@ -4833,42 +4835,52 @@ const SecretArea: React.FC = () => {
               Everything you need, from games to tools, collected from trusted sources and presented in a clean experience ad-free.
             </p>
           </div>
-          
-          <div className="flex flex-wrap items-center justify-start xl:justify-end gap-3 w-full xl:w-auto shrink-0 mt-6 xl:mt-0 xl:max-w-[60%]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-row items-center justify-start xl:justify-end gap-3 w-full xl:w-auto shrink-0 mt-6 xl:mt-0 xl:max-w-[75%]">
             <button 
                 onClick={() => setShowSteamModal(true)}
-                className="relative flex items-center justify-center gap-2 sm:gap-3 p-3 sm:px-5 sm:py-4 bg-gradient-to-r from-[#171a21] to-[#2a475e] hover:to-[#66c0f4] text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 group border border-white/10 text-center whitespace-nowrap"
+                className="relative flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden"
             >
                 <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <Icon name="BrandSteam" size={20} className="group-hover:animate-bounce shrink-0" /> 
-                <span className="relative z-10">Free Accounts</span>
-                {steamAccounts.length > 0 && (
-                    <span className="absolute top-1.5 right-1.5 flex h-3 w-3 z-20">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                    </span>
-                )}
+                <Icon name="BrandSteam" size={18} className="group-hover:scale-110 transition-transform shrink-0 relative z-10" /> 
+                <span className="relative z-10 flex items-center gap-1.5">
+                    Free Accounts
+                    {steamAccounts.length > 0 && (
+                        <span className="flex items-center justify-center bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-black shadow-md border border-red-400">
+                            {steamAccounts.length}
+                        </span>
+                    )}
+                </span>
             </button>
             <button 
                 onClick={() => setShowMasterGiftModal(true)}
-                className="relative flex items-center justify-center gap-2 sm:gap-3 p-3 sm:px-5 sm:py-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:to-indigo-500 text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg shadow-violet-500/20 active:scale-95 group border border-white/10 text-center whitespace-nowrap"
+                className="relative flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden"
             >
                 <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <Icon name="Gift" size={20} className="group-hover:animate-bounce text-yellow-400 shrink-0" /> 
-                <span className="relative z-10">Master Gift</span>
-                {masterGifts.length > 0 && (
-                    <span className="absolute top-1.5 right-1.5 flex h-3 w-3 z-20">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-400"></span>
-                    </span>
-                )}
+                <Icon name="Gift" size={18} className="text-yellow-300 group-hover:scale-110 transition-transform shrink-0 relative z-10" /> 
+                <span className="relative z-10 flex items-center gap-1.5">
+                    Master Gift
+                    {masterGifts.length > 0 && (
+                        <span className="flex items-center justify-center bg-yellow-400 text-yellow-900 text-[9px] px-1.5 py-0.5 rounded-full font-black shadow-md border border-yellow-300">
+                            {masterGifts.length}
+                        </span>
+                    )}
+                </span>
             </button>
-            <a href={DISCORD_LINK} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 sm:gap-3 p-3 sm:px-5 sm:py-4 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 group text-center whitespace-nowrap">
-               <Icon name="Discord" size={20} className="group-hover:animate-bounce shrink-0" /> 
-               <span>Join Community</span>
+            <a href={DISCORD_LINK} target="_blank" rel="noreferrer" className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden">
+               <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+               <Icon name="Discord" size={18} className="group-hover:scale-110 transition-transform shrink-0 relative z-10" /> 
+               <span className="relative z-10">Join Community</span>
             </a>
-            <a href={TELEGRAM_LINK} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 sm:gap-3 p-3 sm:px-5 sm:py-4 bg-[#229ED9] hover:bg-[#1D85B8] text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 group text-center whitespace-nowrap">
-               <Icon name="Telegram" size={20} className="group-hover:animate-bounce shrink-0" /> <span>Channel</span>
+            <a href={TELEGRAM_LINK} target="_blank" rel="noreferrer" className="relative flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-[#229ED9] hover:bg-[#1D85B8] text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden">
+               <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+               <Icon name="Telegram" size={18} className="group-hover:scale-110 transition-transform shrink-0 relative z-10" /> 
+               <span className="relative z-10 flex items-center gap-1.5">
+                   Channel
+                   <span className="flex h-2 w-2 relative">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                   </span>
+               </span>
             </a>
           </div>
         </header>

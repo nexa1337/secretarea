@@ -293,7 +293,7 @@ const PersonalFinance: React.FC = () => {
             localStorage.setItem('nexa_admin_notes', JSON.stringify(fetchedNotes));
         }
       } catch (error) {
-        console.error("Failed to fetch notes:", error);
+        
         // Fallback to local storage if fetch fails
         const saved = localStorage.getItem('nexa_admin_notes');
         if (saved) setNotes(JSON.parse(saved));
@@ -425,7 +425,7 @@ const PersonalFinance: React.FC = () => {
 
   const handleUnlock = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'Nexa.1337') {
+    if (password === 'Marouan.anouar1') {
       setLocked(false);
       sessionStorage.setItem('admin_unlocked', 'true');
       setShowAuthModal(false);
@@ -542,7 +542,7 @@ const PersonalFinance: React.FC = () => {
             body: JSON.stringify({ action: 'addNote', ...newNote })
         });
     } catch (e) {
-        console.error("Failed to sync note to cloud", e);
+        
     } finally {
         setIsSavingNote(false);
     }
@@ -912,19 +912,20 @@ const PersonalFinance: React.FC = () => {
                     initial={{ scale: 0.9, opacity: 0 }} 
                     animate={{ scale: 1, opacity: 1 }} 
                     exit={{ scale: 0.9, opacity: 0 }}
-                    className="bg-black/90 border border-amber-500/30 p-8 rounded-3xl max-w-md w-full relative z-10 shadow-2xl shadow-amber-900/40"
+                    className="bg-white dark:bg-[#0a0a0a] border border-slate-200 dark:border-amber-500/30 p-8 rounded-3xl max-w-md w-full relative z-10 shadow-xl dark:shadow-2xl dark:shadow-amber-900/40"
                 >
-                    <button onClick={() => { setShowAuthModal(false); setPendingTab(null); }} className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors">
+                    <button onClick={() => { setShowAuthModal(false); setPendingTab(null); }} className="absolute top-4 right-4 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
                         <Icon name="X" size={24} />
                     </button>
                     <div className="text-center mb-8">
-                        <div className="w-16 h-16 bg-amber-900/30 rounded-2xl mx-auto flex items-center justify-center text-amber-500 mb-4 border border-amber-500/30 shadow-[0_0_30px_rgba(245,158,11,0.2)]">
+                        <div className="w-16 h-16 bg-amber-50 dark:bg-amber-900/30 rounded-2xl mx-auto flex items-center justify-center text-amber-500 mb-4 border border-amber-200 dark:border-amber-500/30 shadow-sm dark:shadow-[0_0_30px_rgba(245,158,11,0.2)]">
                             <Icon name="Lock" size={32} />
                         </div>
-                        <h1 className="text-2xl font-black text-white uppercase tracking-wider">Restricted Area</h1>
-                        <p className="text-slate-400 text-xs mt-3 leading-relaxed">
-                            Only the <strong className="text-white">E-Wallet</strong> is free to view.<br/>
+                        <h1 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-wider">Restricted Area</h1>
+                        <p className="text-slate-500 dark:text-slate-400 text-xs mt-3 leading-relaxed">
+                            Only the <strong className="text-slate-900 dark:text-white">E-Wallet</strong> is free to view.<br/>
                             To access <strong>MIND</strong> or <strong>MARKET</strong>, please enter the admin secret key.
+                            
                         </p>
                     </div>
                     <form onSubmit={handleUnlock} className="space-y-4">
@@ -934,10 +935,10 @@ const PersonalFinance: React.FC = () => {
                                 value={password} 
                                 onChange={(e) => setPassword(e.target.value)} 
                                 placeholder="SECRET KEY" 
-                                className={`w-full bg-slate-900/50 border ${error ? 'border-red-500 animate-shake' : 'border-amber-900/50'} rounded-xl px-4 py-4 text-center text-white font-mono tracking-[0.2em] focus:outline-none focus:border-amber-500 transition-colors`} 
+                                className={`w-full bg-slate-50 dark:bg-slate-900/50 border ${error ? 'border-red-500 animate-shake' : 'border-slate-200 dark:border-amber-900/50'} rounded-xl px-4 py-4 text-center text-slate-900 dark:text-white font-mono tracking-[0.2em] focus:outline-none focus:border-amber-500 dark:focus:border-amber-500 transition-colors`} 
                             />
                         </div>
-                        <button type="submit" className="w-full bg-amber-600 hover:bg-amber-500 text-black font-bold py-4 rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-amber-600/20">
+                        <button type="submit" className="w-full bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-500 text-white dark:text-black font-bold py-4 rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-amber-500/20 dark:shadow-amber-600/20">
                             Unlock Access
                         </button>
                     </form>
@@ -955,7 +956,7 @@ const PersonalFinance: React.FC = () => {
                 <div className="p-2 bg-slate-900 dark:bg-white rounded-lg text-white dark:text-slate-900"><Icon name="User" size={24} /></div>
                 <div>
                     <h1 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Admin <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600">Space</span></h1>
-                    <p className="text-slate-500 dark:text-slate-400 font-mono text-[10px] md:text-xs">ID: Nexa.1337 | Access: <span className={locked ? "text-orange-500 font-bold" : "text-emerald-500 font-bold"}>{locked ? "Partial" : "Full"}</span></p>
+                    <p className="text-slate-500 dark:text-slate-400 font-mono text-[10px] md:text-xs">ID: Admin | Access: <span className={locked ? "text-orange-500 font-bold" : "text-emerald-500 font-bold"}>{locked ? "Partial" : "Full"}</span></p>
                 </div>
             </div>
           </div>
@@ -963,7 +964,7 @@ const PersonalFinance: React.FC = () => {
             {[ { id: 'finance', icon: 'Briefcase', label: 'E-Wallet' }, { id: 'mind', icon: 'BookOpen', label: 'Mind' }, { id: 'market', icon: 'ShoppingBag', label: 'Market' } ].map((tab) => {
                 const isRestricted = tab.id !== 'finance' && locked;
                 return (
-                    <button key={tab.id} onClick={() => handleTabClick(tab.id as any)} className={`flex-1 lg:flex-none px-6 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 whitespace-nowrap ${activeTab === tab.id ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'}`}>
+                    <button key={tab.id} onClick={() => handleTabClick(tab.id as any)} className={`flex-1 lg:flex-none px-4 sm:px-6 py-3 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap ${activeTab === tab.id ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md scale-105 ring-2 ring-slate-900/10 dark:ring-white/10 z-10' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 hover:scale-105 active:scale-95'}`}>
                         {isRestricted ? <Icon name="Lock" size={14} className="text-amber-500" /> : <Icon name={tab.icon} size={16} />}
                         {tab.label}
                     </button>
