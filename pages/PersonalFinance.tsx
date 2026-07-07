@@ -21,7 +21,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxbQKmoUUH4KzLmkAYZMGpoORPDTFYTzqCpnScEFIw5ngQ1cgzvFWU5fq0OXe2M5Ref/exec';
-const NOTES_API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzP9JCAZ3AGLz4VOaQitdLd5fstCCyp7k2nm7NliK8--c6llxzdhGNvMAF1s1kPifJFmg/exec';
+const NOTES_API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxkuv8tLWYFLEcrZxuIjC5Cq-ER0h4Vb2naiePlwxZ0T2mDYRV_2SQpqp1RQZgzqe2h_w/exec';
 
 // --- CHART DATA ---
 const ARCHVIZ_SALARY_DATA = [
@@ -265,7 +265,10 @@ const PersonalFinance: React.FC = () => {
   ]);
 
   // --- NOTES STATE ---
-  const [notes, setNotes] = useState<Note[]>([]);
+  const [notes, setNotes] = useState<Note[]>(() => {
+    const saved = localStorage.getItem("nexa_admin_notes");
+    return saved ? JSON.parse(saved) : [];
+  });
 
   // Fetch notes from Google Sheet on mount
   useEffect(() => {
@@ -282,10 +285,10 @@ const PersonalFinance: React.FC = () => {
             
             const fetchedNotes = rows.map((row: any[]) => ({
                 id: Number(row[0]),
-                title: row[1],
-                text: row[2],
-                date: row[3],
-                color: row[4]
+                title: String(row[1] || ''),
+                text: String(row[2] || ''),
+                date: String(row[3] || ''),
+                color: String(row[4] || '')
             })).reverse(); // Show newest first
             
             setNotes(fetchedNotes);

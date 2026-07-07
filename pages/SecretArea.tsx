@@ -257,7 +257,7 @@ const DisclaimerModal: React.FC<{ open: boolean; onClose: () => void }> = ({ ope
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[300] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-4"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-4"
     >
       <motion.div 
         initial={{ scale: 0.9, y: 20 }}
@@ -311,8 +311,6 @@ const DisclaimerModal: React.FC<{ open: boolean; onClose: () => void }> = ({ ope
 const SteamAccountsModal: React.FC<{ open: boolean; onClose: () => void; accounts: SteamAccount[] }> = ({ open, onClose, accounts }) => {
     const [copiedIndex, setCopiedIndex] = useState<{idx: number, type: 'user' | 'pass'} | null>(null);
 
-    if (!open) return null;
-
     const handleCopy = (text: string, idx: number, type: 'user' | 'pass') => {
         navigator.clipboard.writeText(text);
         setCopiedIndex({ idx, type });
@@ -324,7 +322,7 @@ const SteamAccountsModal: React.FC<{ open: boolean; onClose: () => void; account
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-2 sm:p-4"
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-2 sm:p-4"
             onClick={onClose}
         >
             <motion.div 
@@ -359,8 +357,8 @@ const SteamAccountsModal: React.FC<{ open: boolean; onClose: () => void; account
                         </div>
                     ) : (
                         accounts.map((acc, idx) => {
-                            const statusRaw = acc.status?.toString().trim();
-                            const isOffline = statusRaw.toLowerCase() === 'offline';
+                        const statusRaw = acc.status?.toString().trim() || 'ONLINE';
+                        const isOffline = statusRaw.toLowerCase() === 'offline';
                             return (
                                 <div key={idx} className="bg-white dark:bg-[#1b2838] border border-slate-200 dark:border-[#2a475e] rounded-xl p-4 sm:p-5 hover:border-[#66c0f4] transition-colors group shadow-lg relative">
                                     <div className="flex justify-between items-start mb-4">
@@ -441,8 +439,6 @@ const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: 
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 4; // Show 4 items per page for Master Gift
     
-    if (!open) return null;
-
     const handleCopy = (text: string, idx: number, type: 'email' | 'pass') => {
         navigator.clipboard.writeText(text);
         setCopiedIndex({ idx, type });
@@ -457,7 +453,7 @@ const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-2 sm:p-4"
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-2 sm:p-4"
             onClick={onClose}
         >
             <motion.div 
@@ -696,7 +692,7 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-4"
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-4"
         >
             <motion.div 
                 initial={{ scale: 0.9, y: 20 }}
@@ -737,7 +733,7 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
                                 >
                                     <Icon name="AlertTriangle" size={18} className="text-amber-500 shrink-0 mt-0.5" />
                                     <div>
-                                        <p className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-1">Already in Vault?</p>
+                                        <p className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-1">Already in Area?</p>
                                         <p className="text-xs text-slate-600 dark:text-slate-400">
                                             We found <strong>{duplicateItem.name}</strong> in the {duplicateItem.category} section. Are you sure you want to request it?
                                         </p>
@@ -802,13 +798,12 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
 };
 const Footer = () => (
   <footer className="w-full mt-2 pt-2 pb-8 flex justify-center items-center gap-4 relative z-20">
-     <a href={DISCORD_LINK} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#5865F2] hover:shadow-lg hover:shadow-[#5865F2]/20 transition-all border border-slate-200 dark:border-slate-800">
+     <a id="join-community-btn" href={DISCORD_LINK} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#5865F2] hover:shadow-lg hover:shadow-[#5865F2]/20 transition-all border border-slate-200 dark:border-slate-800">
         <Icon name="Discord" size={20} />
      </a>
-     <a href={TELEGRAM_LINK} target="_blank" rel="noreferrer" className="relative w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#229ED9] hover:shadow-lg hover:shadow-[#229ED9]/20 transition-all border border-slate-200 dark:border-slate-800">
-        <span className="absolute top-2 right-2 flex h-2 w-2 items-center justify-center z-20">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-60"></span>
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500 border border-white dark:border-slate-800"></span>
+     <a id="telegram-btn" href={TELEGRAM_LINK} target="_blank" rel="noreferrer" className="relative w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#229ED9] hover:shadow-lg hover:shadow-[#229ED9]/20 transition-all border border-slate-200 dark:border-slate-800">
+        <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 items-center justify-center z-20">
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]" style={{ animation: 'pulse 0.8s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}></span>
         </span>
         <Icon name="Telegram" size={20} />
      </a>
@@ -1934,7 +1929,7 @@ const ResourceDetailModal: React.FC<{
   };
 
   const handleReportBrokenLink = () => {
-    const whatsappMessage = `*Report Broken Link in Secret Vault*\n\n*Item Name:* ${item.name}\n*Item ID:* ${item.id}\n*Category:* ${item.category}\n\nPlease check this link, it seems to be down. Thanks!`;
+    const whatsappMessage = `*Report Broken Link in Secret Area*\n\n*Item Name:* ${item.name}\n*Item ID:* ${item.id}\n*Category:* ${item.category}\n\nPlease check this link, it seems to be down. Thanks!`;
     const phoneNumber = '212723242286';
     const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(whatsappMessage)}`;
     window.open(url, '_blank');
@@ -2272,8 +2267,32 @@ const ResourceDetailModal: React.FC<{
                    </Section>
                 )}
 
-                <Section title="Download Channels">
+                <Section title={item.category === 'architect' ? "Download Channels / Via Telegram" : "Download Channels"}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                        {item.category === 'architect' && (
+                            <a 
+                                href={TELEGRAM_LINK} 
+                                target="_blank" 
+                                rel="noreferrer" 
+                                className="col-span-1 md:col-span-2 group relative overflow-hidden bg-gradient-to-r from-[#229ED9] to-[#1D85B8] p-4 sm:p-5 rounded-xl shadow-lg shadow-[#229ED9]/20 hover:shadow-[#229ED9]/40 transition-all hover:-translate-y-1 active:scale-95"
+                            >
+                                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
+                                <div className="relative z-10 flex items-center justify-center gap-3 sm:gap-4">
+                                    <div className="p-2 bg-white/10 rounded-full md:backdrop-blur-sm relative">
+                                        <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 items-center justify-center z-20">
+                                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]" style={{ animation: 'pulse 0.8s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}></span>
+                                        </span>
+                                        <Icon name="Telegram" size={20} className="text-white sm:w-6 sm:h-6 group-hover:scale-110 transition-transform" />
+                                    </div>
+                                    <div className="text-left sm:text-center">
+                                        <div className="text-[10px] font-black text-blue-100 uppercase tracking-[0.2em] opacity-80">Join Channel</div>
+                                        <div className="text-[11px] sm:text-lg font-black text-white uppercase tracking-wider leading-tight sm:leading-none break-all sm:break-normal">
+                                            Download Via Telegram
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        )}
                         {item.links.full && (
                             <a 
                                 href={item.links.full} 
@@ -3257,7 +3276,7 @@ const SecretArea: React.FC = () => {
         setTerminalInput('');
         return;
       } else if (cmd === 'Wolfspace') {
-        newHistory.push({ type: 'success', text: 'Access Granted. Decrypting Vault...' });
+        newHistory.push({ type: 'success', text: 'Access Granted. Decrypting Area...' });
         setIsUnlocked(true);
         setShowHackerLoader(true);
         setHackerProgress(0);
@@ -3299,7 +3318,7 @@ const SecretArea: React.FC = () => {
         newHistory.push({ type: 'system', text: ' ' });
         newHistory.push({ type: 'success', text: '  💡 TIP: Type a number (e.g. "3") or a command and press ENTER.' });
       } else if (lowerCmd === '1') {
-        newHistory.push({ type: 'system', text: '>>> VAULT SUMMARY EXECUTED <<<' });
+        newHistory.push({ type: 'system', text: '>>> AREA SUMMARY EXECUTED <<<' });
         newHistory.push({ type: 'info', text: '  ██╗    ██╗ ██████╗ ██╗     ███████╗   ██╗██████╗ ██████╗ ███████╗' });
         newHistory.push({ type: 'info', text: '  ██║    ██║██╔═══██╗██║     ██╔════╝  ███║╚════██╗╚════██╗╚════██║' });
         newHistory.push({ type: 'info', text: '  ██║ █╗ ██║██║   ██║██║     █████╗    ╚██║ █████╔╝ █████╔╝    ██╔╝' });
@@ -3380,7 +3399,7 @@ const SecretArea: React.FC = () => {
         setTerminalInput('');
         return;
       } else if (lowerCmd === 'login wolfspace' || cmd === 'Wolfspace') {
-        newHistory.push({ type: 'success', text: 'Access Granted. Decrypting Vault...' });
+        newHistory.push({ type: 'success', text: 'Access Granted. Decrypting Area...' });
         setIsUnlocked(true);
         setShowHackerLoader(true);
         setHackerProgress(0);
@@ -3570,7 +3589,7 @@ const SecretArea: React.FC = () => {
         "CONNECTING TO MAINFRAME...",
         "BYPASSING FIREWALL...",
         "ACCESS GRANTED.",
-        "DECRYPTING VAULT CONTENTS...",
+        "DECRYPTING AREA CONTENTS...",
         "SYNCING ASSETS...",
         "VERIFYING CHECKSUMS...",
         "FINALIZING..."
@@ -4573,13 +4592,13 @@ const SecretArea: React.FC = () => {
               </div>
 
               <h2 className="text-slate-900 dark:text-white text-2xl md:text-3xl font-black tracking-[0.3em] uppercase mb-4 text-center relative">
-                <span className="relative z-10">Secret Vault</span>
+                <span className="relative z-10">Secret Area</span>
                 <motion.span 
                   animate={{ opacity: [0, 1, 0], x: [-5, 5, -5] }}
                   transition={{ duration: 0.2, repeat: Infinity, repeatType: "mirror" }}
                   className="absolute inset-0 text-primary-500 opacity-30 dark:opacity-50 blur-[2px] -z-10"
                 >
-                  Secret Vault
+                  Secret Area
                 </motion.span>
               </h2>
               
@@ -4640,7 +4659,7 @@ const SecretArea: React.FC = () => {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="w-full"
         >
-          <div className="fixed top-24 right-4 z-[300] flex flex-col gap-2 pointer-events-none">
+          <div className="fixed top-24 right-4 z-[9999] flex flex-col gap-2 pointer-events-none">
         <AnimatePresence>
             {notifications.map(n => (
                 <motion.div
@@ -4739,9 +4758,9 @@ const SecretArea: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-24 pb-40">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-24 pb-40 relative z-10">
         
-        <header className="flex flex-col xl:flex-row xl:items-end justify-between gap-8 mb-12">
+        <header className="flex flex-col xl:flex-row xl:items-end justify-between gap-8 mb-12 relative z-[9999] pointer-events-auto">
           <div className="space-y-4">
             <div className="flex items-center gap-3 overflow-x-auto no-scrollbar max-w-full pb-1">
                <motion.div 
@@ -4828,23 +4847,24 @@ const SecretArea: React.FC = () => {
                   ease: "easeInOut"
                 }}
               >
-                Vault
+                Area
               </motion.span>
             </h1>
             <p className="text-slate-500 dark:text-slate-400 max-w-xl text-sm md:text-base font-medium leading-relaxed border-l-2 border-slate-300 dark:border-slate-800 pl-4">
               Everything you need, from games to tools, collected from trusted sources and presented in a clean experience ad-free.
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-row items-center justify-start xl:justify-end gap-3 w-full xl:w-auto shrink-0 mt-6 xl:mt-0 xl:max-w-[75%]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-row items-center justify-start xl:justify-end gap-3 w-full xl:w-auto shrink-0 mt-6 xl:mt-0 xl:max-w-[75%] relative z-[90]">
             <button 
-                onClick={() => setShowSteamModal(true)}
-                className="relative flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden"
+                id="btn-free-accounts"
+                type="button"
+                onClick={(e) => { e.preventDefault(); setShowSteamModal(true); }}
+                className="relative flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden z-[100] cursor-pointer"
             >
-                <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <Icon name="BrandSteam" size={18} className="group-hover:scale-110 transition-transform shrink-0 relative z-10" /> 
                 <span className="relative z-10 flex items-center gap-1.5">
                     Free Accounts
-                    {steamAccounts.length > 0 && (
+                    {steamAccounts && steamAccounts.length > 0 && (
                         <span className="flex items-center justify-center bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-black shadow-md border border-red-400">
                             {steamAccounts.length}
                         </span>
@@ -4852,33 +4872,33 @@ const SecretArea: React.FC = () => {
                 </span>
             </button>
             <button 
-                onClick={() => setShowMasterGiftModal(true)}
-                className="relative flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden"
+                id="btn-master-gift"
+                type="button"
+                onClick={(e) => { e.preventDefault(); setShowMasterGiftModal(true); }}
+                className="relative flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden z-[100] cursor-pointer"
             >
-                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <Icon name="Gift" size={18} className="text-yellow-300 group-hover:scale-110 transition-transform shrink-0 relative z-10" /> 
                 <span className="relative z-10 flex items-center gap-1.5">
                     Master Gift
-                    {masterGifts.length > 0 && (
+                    {masterGifts && masterGifts.length > 0 && (
                         <span className="flex items-center justify-center bg-yellow-400 text-yellow-900 text-[9px] px-1.5 py-0.5 rounded-full font-black shadow-md border border-yellow-300">
                             {masterGifts.length}
                         </span>
                     )}
                 </span>
             </button>
-            <a href={DISCORD_LINK} target="_blank" rel="noreferrer" className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden">
+            <a id="join-community-btn" href={DISCORD_LINK} target="_blank" rel="noreferrer" className="relative z-[100] cursor-pointer flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden">
                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                <Icon name="Discord" size={18} className="group-hover:scale-110 transition-transform shrink-0 relative z-10" /> 
                <span className="relative z-10">Join Community</span>
             </a>
-            <a href={TELEGRAM_LINK} target="_blank" rel="noreferrer" className="relative flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-[#229ED9] hover:bg-[#1D85B8] text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden">
+            <a id="channel-btn" href={TELEGRAM_LINK} target="_blank" rel="noreferrer" className="relative z-[100] cursor-pointer flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-[#229ED9] hover:bg-[#1D85B8] text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden">
                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                <Icon name="Telegram" size={18} className="group-hover:scale-110 transition-transform shrink-0 relative z-10" /> 
-               <span className="relative z-10 flex items-center gap-1.5">
+               <span className="relative z-10 flex items-center gap-2">
                    Channel
                    <span className="flex h-2 w-2 relative">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-white shadow-[0_0_8px_rgba(255,255,255,1)]" style={{ animation: 'pulse 0.8s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}></span>
                    </span>
                </span>
             </a>
@@ -4900,12 +4920,14 @@ const SecretArea: React.FC = () => {
                 </h2>
              </div>
              
-             <div className="flex gap-2 bg-white dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800 overflow-x-auto no-scrollbar">
+             <div className="flex gap-2 bg-white dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800 overflow-x-auto no-scrollbar relative z-[90]">
                 {['PlayStation 5', 'Xbox S/X', 'Steam'].map((p) => (
                     <button
                         key={p}
-                        onClick={() => setUpcomingPlatform(p)}
-                        className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all whitespace-nowrap ${
+                        type="button"
+                        id={"btn-platform-" + p.replace(/\s+/g, '-').toLowerCase()}
+                        onClick={(e) => { e.preventDefault(); setUpcomingPlatform(p); }}
+                        className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all whitespace-nowrap cursor-pointer z-[100] ${
                             upcomingPlatform === p 
                             ? 'bg-slate-800 dark:bg-slate-700 text-white shadow-sm' 
                             : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-300'
@@ -5491,7 +5513,7 @@ const AllProfilesModal: React.FC<{
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-4"
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-4"
             onClick={onClose}
         >
             <motion.div 
