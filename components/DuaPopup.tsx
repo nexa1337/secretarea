@@ -43,10 +43,10 @@ export const DuaPopup: React.FC = () => {
             showRandomDua();
         }, 3000);
 
-        // Show a new random dua every 3 minutes (180000ms)
+        // Show a new random dua every 15 minutes (900000ms)
         const interval = setInterval(() => {
             showRandomDua();
-        }, 180000);
+        }, 900000);
 
         return () => {
             clearTimeout(initialTimer);
