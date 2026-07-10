@@ -12,6 +12,10 @@ export const DuaPopup: React.FC = () => {
     const DURATION = 15000;
 
     useEffect(() => {
+        if (localStorage.getItem('duaPopupDisabled') === 'true') {
+            return;
+        }
+
         // Initialize audio – soft notification dot type sound
         const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
         audio.volume = 0.4;
@@ -76,6 +80,8 @@ export const DuaPopup: React.FC = () => {
     }, [isVisible, isHovered]);
 
     const showRandomDua = () => {
+        if (localStorage.getItem('duaPopupDisabled') === 'true') return;
+
         const randomIndex = Math.floor(Math.random() * DUAS.length);
         setCurrentDua(DUAS[randomIndex]);
         setProgress(100);
@@ -115,6 +121,16 @@ export const DuaPopup: React.FC = () => {
                         className="absolute top-3 right-3 p-1.5 rounded-full bg-slate-100/50 dark:bg-slate-800/50 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors hover:bg-slate-200 dark:hover:bg-slate-700 z-10"
                     >
                         <Icon name="X" size={14} />
+                    </button>
+
+                    <button 
+                        onClick={() => {
+                            localStorage.setItem('duaPopupDisabled', 'true');
+                            setIsVisible(false);
+                        }}
+                        className="absolute top-3 left-3 px-2 py-1 rounded bg-slate-100/50 dark:bg-slate-800/50 text-[10px] text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors hover:bg-slate-200 dark:hover:bg-slate-700 z-10"
+                    >
+                        Don't show again
                     </button>
                     
                     <div className="p-5 sm:p-6 pb-4 flex flex-col items-center justify-center space-y-3 relative">
