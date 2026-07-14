@@ -256,7 +256,7 @@ export const CommentsSection: React.FC<{ itemId: string, itemTitle?: string, ite
           }
         }
       } catch (error) {
-        console.warn("Google Script not updated yet, falling back to local storage.");
+        // Suppressed warning
       }
 
       // Fallback to local storage if script fails or isn't updated

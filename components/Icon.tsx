@@ -15,7 +15,8 @@ import {
   TbLoader, TbSend, TbCopy, TbGhost, TbShoppingCart, TbShieldExclamation, TbGift,
   TbBold, TbItalic, TbList, TbCheckbox, TbGridDots, TbSearch, TbCalculator, TbBulb, TbSparkles, TbRefresh, TbInfoCircle,
   TbTarget, TbEye, TbBookmark, TbRadar, TbTerminal, TbBell, TbHistory, TbFilter, TbMenu2, TbDots,
-  TbHash, TbFolder, TbDeviceFloppy, TbChartPie, TbCircleX, TbLogout, TbMessageCircle, TbBuildingMosque
+  TbHash, TbFolder, TbDeviceFloppy, TbChartPie, TbCircleX, TbLogout, TbMessageCircle, TbBuildingMosque,
+  TbCurrencyBitcoin, TbCurrencyEthereum, TbCurrencyMonero, TbCoin, TbWallet
 } from 'react-icons/tb';
 
 import {
@@ -29,6 +30,7 @@ import {
 } from 'react-icons/si';
 
 import { FaLandmark, FaWolfPackBattalion } from 'react-icons/fa6';
+import { BsGpuCard } from 'react-icons/bs';
 
 interface IconProps {
   name: string;
@@ -136,7 +138,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   // Hardware Aliases for System Requirements
   RAM: TbCpu,
   CPU: TbCpu,
-  GPU: TbDeviceDesktop,
+  GPU: BsGpuCard,
   OS: TbBrandWindows,
   Windows: TbBrandWindows,
   Storage: TbDatabase,
@@ -224,7 +226,12 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Save: TbDeviceFloppy,
   PieChart: TbChartPie,
   MessageSquare: TbMessageCircle,
-  BuildingMosque: TbBuildingMosque
+  BuildingMosque: TbBuildingMosque,
+  CurrencyBitcoin: TbCurrencyBitcoin,
+  CurrencyEthereum: TbCurrencyEthereum,
+  CurrencyMonero: TbCurrencyMonero,
+  Coin: TbCoin,
+  Wallet: TbWallet,
 };
 
 const Icon: React.FC<IconProps> = ({ name, size = 24, className }) => {

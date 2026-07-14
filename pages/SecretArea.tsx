@@ -613,6 +613,85 @@ const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: 
     );
 };
 
+// DONATE MODAL
+const DonateModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
+    const [iframeLoaded, setIframeLoaded] = useState(false);
+
+    if (!open) return null;
+
+    return (
+        <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+            onClick={onClose}
+        >
+            <motion.div 
+                initial={{ scale: 0.95, opacity: 0, y: 10 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 10 }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-[360px] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            >
+                <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 rounded-xl">
+                            <Icon name="Heart" size={20} />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">Support Us</h2>
+                            <p className="text-xs text-slate-500 font-medium mt-0.5">Keep the servers alive</p>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={onClose}
+                        className="p-2 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-xl transition-colors border border-slate-200 dark:border-slate-700 shadow-sm"
+                    >
+                        <Icon name="X" size={18} />
+                    </button>
+                </div>
+                
+                <div className="p-5 flex flex-col items-center justify-center w-full bg-slate-50 dark:bg-slate-900 relative min-h-[400px]">
+                    {!iframeLoaded && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                            <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                                className="text-pink-500"
+                            >
+                                <Icon name="Loader2" size={24} />
+                            </motion.div>
+                            <p className="text-xs font-bold text-slate-400 animate-pulse uppercase tracking-widest">Loading Gateway</p>
+                        </div>
+                    )}
+                    <iframe 
+                        src="https://trocador.app/anonpay/?ticker_to=xmr&network_to=Mainnet&address=4A1aLQiLKP9MppgCFYHWhM8GNP9eoxEQBQpAWKuiNaD5C2kLmrG2aM9cSK2pncFNNgKCCKbtqNrijAEampjek7SM7BsUFvX&donation=True&name=SecretArea&description=Support+the+website&email=nexa1337agency@gmail.com&bgcolor=00000000" 
+                        width="310" 
+                        height="350" 
+                        className="bg-white dark:bg-slate-100 rounded-xl"
+                        style={{ border: 0, opacity: iframeLoaded ? 1 : 0, transition: 'opacity 0.5s ease-in-out' }} 
+                        scrolling="no"
+                        onLoad={() => setIframeLoaded(true)}
+                    ></iframe>
+                    
+                    <div className="mt-4 p-3 sm:p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl flex items-start gap-3 w-[310px]">
+                        <div className="p-2 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-xl shrink-0">
+                            <Icon name="Wallet" size={18} />
+                        </div>
+                        <div className="text-left flex-1">
+                            <h4 className="text-xs font-bold text-slate-800 dark:text-slate-300 mb-1">No crypto wallet?</h4>
+                            <p className="text-[10px] text-slate-600 dark:text-slate-500 leading-relaxed font-medium">
+                                You can use <a href="https://exodus.com/" target="_blank" rel="noreferrer" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-bold">Exodus</a>, <a href="https://cakewallet.com/" target="_blank" rel="noreferrer" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-bold">Cake Wallet</a>, or another wallet to exchange and send.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+};
+
 // REQUEST MODAL
 const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (data: any) => Promise<void>; initialTitle?: string; allResources?: Record<string, ResourceItem[]> }> = ({ open, onClose, onSubmit, initialTitle = '', allResources = {} }) => {
     const [formData, setFormData] = useState({ title: initialTitle, category: 'Game', image: '', message: '' });
@@ -796,7 +875,7 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
         </motion.div>
     );
 };
-const Footer = () => (
+const Footer: React.FC<{ onSupportClick?: () => void }> = ({ onSupportClick }) => (
   <footer className="w-full mt-2 pt-2 pb-8 flex justify-center items-center gap-4 relative z-20">
      <a id="join-community-btn" href={DISCORD_LINK} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#5865F2] hover:shadow-lg hover:shadow-[#5865F2]/20 transition-all border border-slate-200 dark:border-slate-800">
         <Icon name="Discord" size={20} />
@@ -807,6 +886,12 @@ const Footer = () => (
         </span>
         <Icon name="Telegram" size={20} />
      </a>
+     {onSupportClick && (
+         <button onClick={onSupportClick} className="relative w-12 h-12 rounded-full bg-gradient-to-tr from-pink-500 to-rose-500 flex items-center justify-center text-white hover:scale-110 hover:shadow-lg hover:shadow-pink-500/30 transition-all border border-pink-400 group">
+            <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"></div>
+            <Icon name="Heart" size={20} className="group-hover:animate-pulse" />
+         </button>
+     )}
   </footer>
 );
 const AdBanner: React.FC<{ desktopSrc: string, mobileSrc: string, link: string, className?: string }> = ({ desktopSrc, mobileSrc, link, className }) => (
@@ -1427,12 +1512,12 @@ const analyzeRequirements = (reqs: {label: string, value: string}[]) => {
   let minOs = 0;
   let minGpuTier = 1;
   let minCpuTier = 1;
-
+  
   reqs.forEach(req => {
     const label = req.label.toLowerCase();
     const val = req.value.toLowerCase();
-
-    if (label.includes('memory') || label.includes('ram')) {
+    
+    if (label.includes("memory") || label.includes("ram")) {
       const match = val.match(/(\d+)\s*gb/);
       if (match) minRam = parseInt(match[1]);
       else {
@@ -1440,34 +1525,46 @@ const analyzeRequirements = (reqs: {label: string, value: string}[]) => {
         if (mbMatch) minRam = parseInt(mbMatch[1]) / 1024;
       }
     }
-
-    if (label.includes('os') || label.includes('system') || label.includes('windows')) {
-      if (val.includes('11')) minOs = 11;
-      else if (val.includes('10')) minOs = 10;
-      else if (val.includes('8.1')) minOs = 8;
-      else if (val.includes('8')) minOs = 8;
-      else if (val.includes('7')) minOs = 7;
+    
+    if (label.includes("os") || label.includes("system") || label.includes("windows")) {
+      if (val.includes("11")) minOs = 11;
+      else if (val.includes("10")) minOs = 10;
+      else if (val.includes("8.1")) minOs = 8;
+      else if (val.includes("8")) minOs = 8;
+      else if (val.includes("7")) minOs = 7;
     }
-
-    if (label.includes('graphics') || label.includes('gpu') || label.includes('video')) {
-      if (val.match(/4090|4080|7900\s?xt|3090|rx\s?6900/)) minGpuTier = 5;
-      else if (val.match(/3070|3080|4070|6700|6800|7700|7800|2080\s?ti|rx\s?5700\s?xt|1080\s?ti/)) minGpuTier = 4;
-      else if (val.match(/1060|1660|2060|3060|4060|580|590|5700|6600|7600|1070|980\s?ti/)) minGpuTier = 3;
-      else if (val.match(/1050|970|960|750|560|460|1030|mx|intel\s?hd|uhd/)) minGpuTier = 2;
-      else minGpuTier = 3; // default assumption for listed but unknown discrete GPU
+    
+    if (label.includes("graphics") || label.includes("gpu") || label.includes("video")) {
+      if (val.match(/5090|5080|4090|4080|7900\s?xtx|7900\s?xt|3090|rx\s?6950|rx\s?6900|rx\s?7900/)) minGpuTier = 6;
+      else if (val.match(/5070|4070\s?ti|4070|3080\s?ti|3080|6800\s?xt|6800|7800\s?xt|rx\s?7800/)) minGpuTier = 5;
+      else if (val.match(/4060\s?ti|4060|3070\s?ti|3070|2080\s?ti|6750\s?xt|6700\s?xt|7700\s?xt|1080\s?ti/)) minGpuTier = 4;
+      else if (val.match(/3060\s?ti|3060|2070\s?super|2070|2060\s?super|2060|1080|1070\s?ti|1070|6650\s?xt|6600\s?xt|6600|7600|rx\s?5700\s?xt|rx\s?5700|arc\s?a770/)) minGpuTier = 3;
+      else if (val.match(/1660\s?ti|1660\s?super|1660|1650\s?super|1650|1060|1050\s?ti|980\s?ti|980|970|rx\s?590|rx\s?580|rx\s?570|rx\s?480|rx\s?470|arc\s?a750/)) minGpuTier = 2;
+      else if (val.match(/1050|1030|960|950|750\s?ti|750|mx\d{3}|intel\s?hd|intel\s?uhd|iris\s?xe|vega\s?\d+/)) minGpuTier = 1;
+      else if (val.match(/(\d+)\s*gb\s*vram|vram\s*(\d+)\s*gb/)) {
+         const vramMatch = val.match(/(\d+)\s*gb\s*vram|vram\s*(\d+)\s*gb/);
+         const vram = parseInt(vramMatch?.[1] || vramMatch?.[2] || "0");
+         if (vram >= 16) minGpuTier = 5;
+         else if (vram >= 12) minGpuTier = 4;
+         else if (vram >= 8) minGpuTier = 3;
+         else if (vram >= 4) minGpuTier = 2;
+         else minGpuTier = 1;
+      }
+      else minGpuTier = 3;
     }
-
-    if (label.includes('processor') || label.includes('cpu')) {
-      if (val.match(/i9|ryzen\s?9|threadripper/)) minCpuTier = 5;
-      else if (val.match(/i7|ryzen\s?7/)) minCpuTier = 4;
-      else if (val.match(/i5|ryzen\s?5/)) minCpuTier = 3;
-      else if (val.match(/i3|ryzen\s?3|pentium|celeron/)) minCpuTier = 2;
-      else minCpuTier = 3; // default assumption
+    
+    if (label.includes("processor") || label.includes("cpu")) {
+      if (val.match(/i9|ryzen\s?9|threadripper|core\s?ultra\s?9/)) minCpuTier = 5;
+      else if (val.match(/i7|ryzen\s?7|core\s?ultra\s?7/)) minCpuTier = 4;
+      else if (val.match(/i5|ryzen\s?5|core\s?ultra\s?5/)) minCpuTier = 3;
+      else if (val.match(/i3|ryzen\s?3|pentium|celeron|athlon/)) minCpuTier = 2;
+      else minCpuTier = 3;
     }
   });
-
+  
   return { minRam, minOs, minGpuTier, minCpuTier };
 };
+
 
 export const checkCompatibilityStatus = (userSpecs: {ram: number, os: string, cpuTier: number, gpuTier: number}, reqs: {label: string, value: string}[]) => {
   if (!reqs || reqs.length === 0) return 'unknown';
@@ -1615,7 +1712,8 @@ const SystemChecker: React.FC<{ reqs: {label: string, value: string}[] }> = ({ r
                   <option value="1">Basic Dual Core (Older Intel/AMD)</option>
                   <option value="2">Standard Quad Core (i3 / Ryzen 3)</option>
                   <option value="3">Solid 6-Core (i5 / Ryzen 5)</option>
-                  <option value="4">High-End 8+ Core (i7/i9 / Ryzen 7/9)</option>
+                  <option value="4">High-End 8+ Core (i7 / Ryzen 7)</option>
+                  <option value="5">Enthusiast (i9 / Ryzen 9)</option>
                 </select>
               </div>
               <div className="space-y-1">
@@ -1629,7 +1727,8 @@ const SystemChecker: React.FC<{ reqs: {label: string, value: string}[] }> = ({ r
                   <option value="2">Entry Level (GTX 1050 / RX 560)</option>
                   <option value="3">Mid Range (RTX 3060 / RX 6600)</option>
                   <option value="4">High End (RTX 4070 / RX 7800)</option>
-                  <option value="5">Ultra (RTX 4090 / RX 7900 XTX)</option>
+                  <option value="5">Ultra (RTX 4080 / RX 7900 XTX)</option>
+                  <option value="6">Enthusiast / Next-Gen (RTX 5090 / 4090)</option>
                 </select>
               </div>
             </div>
@@ -1949,24 +2048,24 @@ const ResourceDetailModal: React.FC<{
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-white/95 dark:bg-slate-950/95 md:backdrop-blur-md p-0 sm:p-4 md:p-6"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-white dark:bg-slate-950 p-0"
       onClick={onClose}
     >
       <motion.div 
         initial={{ y: 50, opacity: 0, scale: 0.95 }}
         animate={{ y: 0, opacity: 1, scale: 1 }}
         exit={{ y: 50, opacity: 0, scale: 0.95 }}
-        className="bg-white dark:bg-slate-900 w-full h-full md:max-w-6xl md:h-[90vh] rounded-none md:rounded-[2rem] shadow-[0_0_100px_rgba(0,0,0,0.2)] dark:shadow-[0_0_100px_rgba(0,0,0,0.8)] relative overflow-hidden flex flex-col md:flex-row border border-slate-200 dark:border-slate-800"
+        className="bg-white dark:bg-slate-900 w-full h-full rounded-none relative overflow-hidden flex flex-col lg:flex-row"
         onClick={e => e.stopPropagation()}
       >
         <button 
           onClick={onClose} 
-          className="absolute top-4 right-4 z-[110] bg-white/60 dark:bg-black/60 hover:bg-red-500 hover:text-white text-slate-500 dark:text-slate-400 p-2.5 rounded-full transition-all md:backdrop-blur-md border border-slate-200 dark:border-white/10"
+          className="absolute top-4 right-4 z-[110] bg-white/60 dark:bg-black/60 hover:bg-red-500 hover:text-white text-slate-500 dark:text-slate-400 p-2.5 rounded-full transition-all md:backdrop-blur-md border border-slate-200 dark:border-white/10 shadow-lg"
         >
              <Icon name="X" size={20} />
         </button>
 
-        <div className="w-full md:w-[45%] bg-slate-100 dark:bg-black flex flex-col shrink-0 h-[40vh] md:h-full border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 relative">
+        <div className="w-full lg:w-[45%] bg-slate-100 dark:bg-black flex flex-col shrink-0 h-[35vh] sm:h-[40vh] md:h-[45vh] lg:h-full border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-800 relative">
            <div className="flex-1 relative flex items-center justify-center overflow-hidden bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]">
               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-slate-200/90 dark:to-slate-900/90 pointer-events-none"></div>
               <AnimatePresence mode="wait">
@@ -2022,7 +2121,7 @@ const ResourceDetailModal: React.FC<{
         </div>
 
         <div className="flex-1 bg-white dark:bg-slate-900 overflow-y-auto custom-scrollbar relative flex flex-col">
-            <div className="p-6 md:p-8 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 sticky top-0 z-30 md:backdrop-blur-xl">
+            <div className="p-4 sm:p-5 md:p-8 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 sticky top-0 z-30 md:backdrop-blur-xl">
                <div className="flex flex-wrap items-center gap-2 mb-3">
                   <Badge text={isSteamTool ? 'STEAMTOOLS' : (isExtra ? 'SAVEGAME' : item.category)} color="blue" icon={isSteamTool ? 'BrandSteam' : (isExtra ? 'Save' : 'Folder')} />
                   {!isSteamTool && <Badge text={item.version} color="slate" icon="Code" />}
@@ -2040,26 +2139,26 @@ const ResourceDetailModal: React.FC<{
                   )}
                </div>
                <div className="flex items-start justify-between gap-4">
-                 <div className="flex items-center gap-3">
-                   <h2 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white leading-none tracking-tight uppercase italic">{item.name}</h2>
+                 <div className="flex items-center gap-2 sm:gap-3">
+                   <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white leading-none tracking-tight uppercase italic">{item.name}</h2>
                    <button
                      onClick={handleCopyLink}
-                     className="text-slate-400 hover:text-blue-500 transition-colors bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 p-2 rounded-lg"
+                     className="text-slate-400 hover:text-blue-500 transition-colors bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 p-1.5 sm:p-2 rounded-lg"
                      title="Copy Share Link"
                    >
-                     <Icon name={isCopied ? "Check" : "Link"} size={20} className={isCopied ? "text-emerald-500" : ""} />
+                     <Icon name={isCopied ? "Check" : "Link"} size={18} className={`sm:w-5 sm:h-5 ${isCopied ? "text-emerald-500" : ""}`} />
                    </button>
                  </div>
                  <button
                     onClick={(e) => toggleStash(item.id, e)}
-                    className={`shrink-0 p-3 rounded-xl transition-all ${
+                    className={`shrink-0 p-2 sm:p-3 rounded-xl transition-all ${
                         stash.includes(item.id) 
                         ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
                         : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                     }`}
                     title={stash.includes(item.id) ? "Remove from Stash" : "Add to Stash"}
                  >
-                    <Icon name="Bookmark" size={20} className={stash.includes(item.id) ? "fill-current" : ""} />
+                    <Icon name="Bookmark" size={18} className={`sm:w-5 sm:h-5 ${stash.includes(item.id) ? "fill-current" : ""}`} />
                  </button>
                </div>
                {item.genres && (
@@ -2089,7 +2188,7 @@ const ResourceDetailModal: React.FC<{
                )}
             </div>
 
-            <div className="p-6 md:p-8 space-y-8 pb-32">
+            <div className="p-4 sm:p-5 md:p-8 space-y-6 sm:space-y-8 pb-32">
                 <div className="bg-amber-50 dark:bg-amber-900/10 border-l-4 border-amber-500 p-4 rounded-r-xl">
                     <div className="flex gap-3">
                         <Icon name="AlertTriangle" className="text-amber-500 shrink-0 mt-0.5" />
@@ -2105,7 +2204,7 @@ const ResourceDetailModal: React.FC<{
                 </div>
                 
                 {isSteamTool ? (
-                    <div className="bg-slate-100 dark:bg-slate-950 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <div className="bg-slate-100 dark:bg-slate-950 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
                         <div className="flex justify-between items-center mb-4 border-b border-slate-200 dark:border-slate-800 pb-2">
                             <h4 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
                                 <Icon name="BrandSteam" size={16} /> Community Score
@@ -2198,28 +2297,49 @@ const ResourceDetailModal: React.FC<{
                 </Section>
 
                 {item.systemReqs.length > 0 && (
-                   <Section title="System Parameters">
-                      <div className="grid grid-cols-1 gap-3">
+                   <Section title="System Requirements">
+                      <motion.div 
+                        initial="hidden" 
+                        animate="visible" 
+                        variants={{
+                          hidden: { opacity: 0 },
+                          visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
+                        }}
+                        className="flex flex-col gap-2"
+                      >
                         {item.systemReqs.map((req, idx) => {
                           let paramIcon = req.icon || 'Cpu';
                           const label = req.label.toLowerCase();
                           if (label.includes('os')) paramIcon = 'BrandWindows';
                           if (label.includes('ram')) paramIcon = 'Cpu';
-                          if (label.includes('gpu')) paramIcon = 'DeviceDesktop';
+                          if (label.includes('gpu')) paramIcon = 'GPU';
                           if (label.includes('storage')) paramIcon = 'Database';
                           
                           return (
-                            <div key={idx} className="flex flex-col sm:flex-row sm:items-start justify-between p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-colors gap-2 sm:gap-4">
-                               <div className="flex items-center gap-3 shrink-0 pt-0.5">
-                                 <div className="p-2 bg-white dark:bg-slate-900 rounded-lg text-slate-500"><Icon name={paramIcon} size={18} /></div>
-                                 <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{req.label}</span>
+                            <motion.div 
+                              key={idx} 
+                              variants={{
+                                hidden: { opacity: 0, x: -10 },
+                                visible: { opacity: 1, x: 0 }
+                              }}
+                              className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl hover:border-slate-300 dark:hover:border-slate-700 transition-all hover:shadow-sm"
+                            >
+                               <div className="flex items-center gap-3 shrink-0 mb-2 sm:mb-0">
+                                 <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-slate-500 group-hover:text-blue-500 transition-colors">
+                                   <Icon name={paramIcon} size={18} />
+                                 </div>
+                                 <span className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">{req.label}</span>
                                </div>
-                               <span className="text-xs font-mono text-slate-900 dark:text-white text-left sm:text-right font-bold break-words leading-relaxed sm:max-w-[70%] pl-1 sm:pl-0">{req.value}</span>
-                            </div>
+                               <span className="text-sm font-mono text-slate-600 dark:text-slate-400 text-left sm:text-right sm:max-w-[60%] leading-relaxed">
+                                 {req.value}
+                               </span>
+                            </motion.div>
                           );
                         })}
+                      </motion.div>
+                      <div className="mt-6">
+                        <SystemChecker reqs={item.systemReqs} />
                       </div>
-                      <SystemChecker reqs={item.systemReqs} />
                    </Section>
                 )}
 
@@ -2242,15 +2362,34 @@ const ResourceDetailModal: React.FC<{
                 )}
 
                 {item.installSteps.length > 0 && (
-                   <Section title={isExtra ? "Steps You Need" : "Deployment Protocol"}>
-                      <div className="space-y-3">
+                   <Section title={isExtra ? "Steps You Need" : "Installation Guide"}>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 mt-[-10px]">Follow these steps to safely install and set up your application.</p>
+                      <motion.div 
+                        initial="hidden"
+                        animate="visible"
+                        variants={{
+                          hidden: { opacity: 0 },
+                          visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+                        }}
+                        className="flex flex-col gap-3"
+                      >
                         {item.installSteps.map((step, idx) => (
-                          <div key={idx} className="flex gap-4 p-4 bg-slate-50 dark:bg-slate-800/20 rounded-xl border border-slate-200 dark:border-slate-800/50">
-                            <span className="font-black text-primary-600 dark:text-primary-500 shrink-0 text-sm">0{idx + 1}</span>
-                            <span className="text-sm text-slate-700 dark:text-slate-300 font-medium">{step}</span>
-                          </div>
+                          <motion.div 
+                            key={idx} 
+                            variants={{
+                              hidden: { opacity: 0, y: 10 },
+                              visible: { opacity: 1, y: 0 }
+                            }}
+                            className="group flex gap-4 p-4 sm:p-5 bg-white dark:bg-slate-900/80 rounded-2xl border border-slate-100 dark:border-slate-800/80 hover:border-blue-300 dark:hover:border-blue-700/50 transition-all hover:shadow-lg hover:-translate-y-0.5 items-start relative overflow-hidden"
+                          >
+                            <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-blue-400 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-bold text-sm shrink-0 group-hover:bg-blue-500 group-hover:text-white transition-all shadow-sm group-hover:scale-110">
+                              {idx + 1}
+                            </div>
+                            <span className="text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed pt-1">{step}</span>
+                          </motion.div>
                         ))}
-                      </div>
+                      </motion.div>
                    </Section>
                 )}
 
@@ -2274,7 +2413,7 @@ const ResourceDetailModal: React.FC<{
                                 href={TELEGRAM_LINK} 
                                 target="_blank" 
                                 rel="noreferrer" 
-                                className="col-span-1 md:col-span-2 group relative overflow-hidden bg-gradient-to-r from-[#229ED9] to-[#1D85B8] p-4 sm:p-5 rounded-xl shadow-lg shadow-[#229ED9]/20 hover:shadow-[#229ED9]/40 transition-all hover:-translate-y-1 active:scale-95"
+                                className="col-span-1 md:col-span-2 group relative overflow-hidden bg-gradient-to-r from-[#229ED9] to-[#1D85B8] p-3 sm:p-5 rounded-xl shadow-lg shadow-[#229ED9]/20 hover:shadow-[#229ED9]/40 transition-all hover:-translate-y-1 active:scale-95"
                             >
                                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
                                 <div className="relative z-10 flex items-center justify-center gap-3 sm:gap-4">
@@ -2304,7 +2443,7 @@ const ResourceDetailModal: React.FC<{
                                         setShowQBitWarning(true);
                                     }
                                 }}
-                                className="col-span-1 md:col-span-2 group relative overflow-hidden bg-gradient-to-r from-primary-600 to-primary-500 p-4 sm:p-5 rounded-xl shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 transition-all hover:-translate-y-1 active:scale-95"
+                                className="col-span-1 md:col-span-2 group relative overflow-hidden bg-gradient-to-r from-primary-600 to-primary-500 p-3 sm:p-5 rounded-xl shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 transition-all hover:-translate-y-1 active:scale-95"
                             >
                                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
                                 {['game', 'hypervisor'].includes(item.category?.toLowerCase()) && (
@@ -2533,7 +2672,7 @@ const Badge: React.FC<{ text: string; color: 'blue' | 'slate' | 'emerald'; icon:
 };
 
 const StatBox: React.FC<{ label: string; value: string; icon: string; color: string; fullWidth?: boolean }> = ({ label, value, icon, color, fullWidth }) => (
-  <div className={`bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center text-center ${fullWidth ? 'col-span-2 lg:col-span-1' : ''}`}>
+  <div className={`bg-slate-50 dark:bg-slate-900 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center text-center ${fullWidth ? 'col-span-2 lg:col-span-1' : ''}`}>
      <Icon name={icon} size={20} className={`${color} mb-2`} />
      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{label}</span>
      <span className="text-xs font-mono font-bold text-slate-900 dark:text-white truncate w-full px-2">{value || 'N/A'}</span>
@@ -3474,6 +3613,7 @@ const SecretArea: React.FC = () => {
   // Master Gift Feature
   const [masterGifts, setMasterGifts] = useState<MasterGiftAccount[]>([]);
   const [showMasterGiftModal, setShowMasterGiftModal] = useState(false);
+  const [showDonateModal, setShowDonateModal] = useState(false);
 
   const intelItems = useMemo(() => {
     const items: IntelItem[] = [];
@@ -3531,23 +3671,39 @@ const SecretArea: React.FC = () => {
   }, [allResources, upcomingGames]);
 
   const recentProducts = useMemo(() => {
-    const recent: ResourceItem[] = [];
-    ['game', 'hypervisor', 'steamtools', 'architect', 'extra'].forEach(cat => {
-        const items = allResources[cat] || [];
-        const catRecent = [...items].slice(0, 10);
-        recent.push(...catRecent);
+    let all: ResourceItem[] = [];
+    ["game", "hypervisor", "steamtools", "architect", "extra"].forEach(cat => {
+        all = all.concat(allResources[cat] || []);
     });
-    
-    // Sort globally by timestamp descending
-    return recent.sort((a, b) => {
-        const dA = new Date(a.dateAdded || 0).getTime();
-        const dB = new Date(b.dateAdded || 0).getTime();
-        if (!isNaN(dA) && !isNaN(dB)) return dB - dA;
-        if (!isNaN(dA)) return -1;
-        if (!isNaN(dB)) return 1;
+    const scoredItems = all.map(item => {
+        let score = 0;
+        let d = 0;
+        if (item.dateAdded) {
+            if (!isNaN(Number(item.dateAdded))) d = Number(item.dateAdded);
+            else d = new Date(item.dateAdded).getTime();
+        }
+        if (!isNaN(d) && d > 0) {
+            const daysOld = (Date.now() - d) / (1000 * 60 * 60 * 24);
+            score += Math.max(0, 100 - (daysOld * 0.5));
+        }
+        if (["game", "hypervisor"].includes(item.category?.toLowerCase())) score += 15;
+
+        if (item.coverImage && !item.coverImage.includes("placehold.co")) score += 10;
+        if (item.ratingPositive && !isNaN(parseInt(item.ratingPositive))) {
+            const p = parseInt(item.ratingPositive);
+            if (p > 90) score += 20;
+            else if (p > 80) score += 10;
+            else if (p > 70) score += 5;
+        }
+        return { item, score, d };
+    });
+    return scoredItems.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        if (!isNaN(a.d) && !isNaN(b.d)) return b.d - a.d;
         return 0;
-    });
+    }).map(s => s.item).slice(0, 20);
   }, [allResources]);
+
   const [showSteamModal, setShowSteamModal] = useState(false);
 
   // Math Game State
@@ -4757,6 +4913,14 @@ const SecretArea: React.FC = () => {
             />
         )}
       </AnimatePresence>
+      <AnimatePresence>
+        {showDonateModal && (
+            <DonateModal 
+                open={showDonateModal} 
+                onClose={() => setShowDonateModal(false)} 
+            />
+        )}
+      </AnimatePresence>
 
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-24 pb-40 relative z-10">
         
@@ -4889,19 +5053,29 @@ const SecretArea: React.FC = () => {
             </button>
             <a id="join-community-btn" href={DISCORD_LINK} target="_blank" rel="noreferrer" className="relative z-[100] cursor-pointer flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden">
                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-               <Icon name="Discord" size={18} className="group-hover:scale-110 transition-transform shrink-0 relative z-10" /> 
-               <span className="relative z-10">Join Community</span>
+               <Icon name="Discord" size={18} className="group-hover:scale-110 transition-transform shrink-0 relative z-10" />
+                <span className="relative z-10">Join Community</span>
             </a>
             <a id="channel-btn" href={TELEGRAM_LINK} target="_blank" rel="noreferrer" className="relative z-[100] cursor-pointer flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-[#229ED9] hover:bg-[#1D85B8] text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden">
                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-               <Icon name="Telegram" size={18} className="group-hover:scale-110 transition-transform shrink-0 relative z-10" /> 
-               <span className="relative z-10 flex items-center gap-2">
+               <Icon name="Telegram" size={18} className="group-hover:scale-110 transition-transform shrink-0 relative z-10" />
+                <span className="relative z-10 flex items-center gap-2">
                    Channel
                    <span className="flex h-2 w-2 relative">
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-white shadow-[0_0_8px_rgba(255,255,255,1)]" style={{ animation: 'pulse 0.8s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}></span>
                    </span>
                </span>
             </a>
+            <button 
+                onClick={(e) => { e.preventDefault(); setShowDonateModal(true); }}
+                className="relative flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md hover:shadow-pink-500/20 active:scale-95 group text-center whitespace-nowrap overflow-hidden z-[100] cursor-pointer"
+            >
+                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <Icon name="Heart" size={18} className="text-white group-hover:scale-110 group-hover:animate-pulse transition-transform shrink-0 relative z-10" /> 
+                <span className="relative z-10 flex items-center gap-1.5">
+                    Support Us
+                </span>
+            </button>
           </div>
         </header>
 
@@ -5147,7 +5321,8 @@ const SecretArea: React.FC = () => {
                             <option value="1">Basic Dual Core (Older Intel/AMD)</option>
                             <option value="2">Standard Quad Core (i3 / Ryzen 3)</option>
                             <option value="3">Solid 6-Core (i5 / Ryzen 5)</option>
-                            <option value="4">High-End 8+ Core (i7/i9 / Ryzen 7/9)</option>
+                            <option value="4">High-End 8+ Core (i7 / Ryzen 7)</option>
+                  <option value="5">Enthusiast (i9 / Ryzen 9)</option>
                           </select>
                         </div>
                         <div className="space-y-1">
@@ -5161,7 +5336,8 @@ const SecretArea: React.FC = () => {
                             <option value="2">Entry Level (GTX 1050 / RX 560)</option>
                             <option value="3">Mid Range (RTX 3060 / RX 6600)</option>
                             <option value="4">High End (RTX 4070 / RX 7800)</option>
-                            <option value="5">Ultra (RTX 4090 / RX 7900 XTX)</option>
+                            <option value="5">Ultra (RTX 4080 / RX 7900 XTX)</option>
+                  <option value="6">Enthusiast / Next-Gen (RTX 5090 / 4090)</option>
                           </select>
                         </div>
                       </div>
@@ -5433,7 +5609,7 @@ const SecretArea: React.FC = () => {
         )}
 
       </div>
-      <Footer />
+      <Footer onSupportClick={() => setShowDonateModal(true)} />
       </motion.div>
       )}
 
@@ -5445,7 +5621,7 @@ const SecretArea: React.FC = () => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 20 }}
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="fixed bottom-[85px] md:bottom-10 left-6 sm:left-10 z-[100] w-12 h-12 rounded-full bg-slate-900/50 dark:bg-slate-100/10 backdrop-blur-md border border-white/20 hover:bg-slate-900/70 dark:hover:bg-slate-100/20 text-white flex items-center justify-center shadow-xl transition-all hover:-translate-y-1"
+            className="fixed bottom-[85px] md:bottom-10 left-6 sm:left-10 z-[90] w-12 h-12 rounded-full bg-slate-900/50 dark:bg-slate-100/10 backdrop-blur-md border border-white/20 hover:bg-slate-900/70 dark:hover:bg-slate-100/20 text-white flex items-center justify-center shadow-xl transition-all hover:-translate-y-1"
           >
             <Icon name="ArrowUp" size={24} />
           </motion.button>
