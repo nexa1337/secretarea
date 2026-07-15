@@ -20,7 +20,7 @@ import {
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxbQKmoUUH4KzLmkAYZMGpoORPDTFYTzqCpnScEFIw5ngQ1cgzvFWU5fq0OXe2M5Ref/exec';
+const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbx7nzBZc_tIhbAUK5OvOzgifGVzaVorzjn5OXNe8ENC0p7Pjia7O-u4WggxjRZipt4v/exec';
 const NOTES_API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxkuv8tLWYFLEcrZxuIjC5Cq-ER0h4Vb2naiePlwxZ0T2mDYRV_2SQpqp1RQZgzqe2h_w/exec';
 
 // --- CHART DATA ---

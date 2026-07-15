@@ -1,0 +1,37 @@
+cat << 'INNER_EOF' > tmp_fakes.txt
+        const hasReplies = seededRandom(seed + 9) > 0.6;
+        const numReplies = hasReplies ? Math.floor(seededRandom(seed + 10) * 3) + 1 : 0;
+        const fakeReplies: CommentReply[] = [];
+        for (let j = 0; j < numReplies; j++) {
+            const rd = new Date(d);
+            rd.setHours(rd.getHours() + Math.floor(seededRandom(seed + 11 + j) * 24) + 1);
+            fakeReplies.push({
+                id: `fake-reply-${itemId}-${i}-${j}`,
+                author: `User_${Math.floor(seededRandom(seed + 12 + j) * 9999)}`,
+                text: ["Totally agree with this!", "Thanks for the heads up.", "Same here lol.", "Interesting point!"][Math.floor(seededRandom(seed + 13 + j) * 4)],
+                timestamp: rd.toISOString(),
+                reactions: {
+                    like: Math.floor(seededRandom(seed + 14 + j) * 10),
+                    dislike: 0,
+                    love: 0
+                }
+            });
+        }
+
+        fakes.push({
+            id: `fake-${itemId}-${i}`,
+            itemId,
+            author: authorStr,
+            text: shuffledTexts[i].text,
+            tags: [AVAILABLE_TAGS[tagIdx]],
+            reactions: {
+                like: Math.floor(seededRandom(seed + 6) * 50) + 5,
+                dislike: Math.floor(seededRandom(seed + 7) * 3),
+                love: Math.floor(seededRandom(seed + 8) * 20) + 1
+            },
+            timestamp: d.toISOString(),
+            replies: fakeReplies
+        });
+INNER_EOF
+sed -i '239,251c\
+'$(cat tmp_fakes.txt | awk '{printf "%s\\n", $0}') components/CommentsSection.tsx

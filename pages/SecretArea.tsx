@@ -10,7 +10,7 @@ import { NetworkDiagnostic } from '../components/NetworkDiagnostic';
 import { FaFaceAngry } from 'react-icons/fa6';
 
 // --- CONFIGURATION ---
-const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyZxjJP3pkFwnDsnmq1I_6Va63Vsmm481NmcN06rRDG5YbeyKipTf0wS_PkxXrJc4DM/exec';
+const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbx7nzBZc_tIhbAUK5OvOzgifGVzaVorzjn5OXNe8ENC0p7Pjia7O-u4WggxjRZipt4v/exec';
 const DISCORD_LINK = 'https://discord.gg/MgqvMyZv2b';
 const TELEGRAM_LINK = 'https://t.me/nexa1337agency';
 const INSTAGRAM_LINK = 'https://instagram.com/nexa1337';

@@ -1,0 +1,484 @@
+     1	import React, { useState, useEffect, useMemo } from 'react';
+     2	import { motion, AnimatePresence } from 'framer-motion';
+     3	import { SiWolframlanguage } from 'react-icons/si';
+     4	import Icon from './Icon';
+     5	
+     6	interface Comment {
+     7	  id: string;
+     8	  itemId: string;
+     9	  author: string;
+    10	  text: string;
+    11	  tags: string[];
+    12	  reactions: {
+    13	    like: number;
+    14	    dislike: number;
+    15	    love: number;
+    16	  };
+    17	  timestamp: string;
+    18	}
+    19	
+    20	const AVAILABLE_TAGS = [
+    21	  "Masterpiece 🏆", "Buggy 🐛", "Hidden Gem 💎", 
+    22	  "Nostalgia 🕰️", "Overrated 📉", "Must Play 🔥",
+    23	  "Great Story 📖", "Hardcore 💀", "Chill ☕"
+    24	];
+    25	
+    26	const NAME_ADJECTIVES = ['Ghost', 'Cyber', 'Dark', 'Elite', 'Ninja', 'Shadow', 'Neo', 'Tech', 'Sniper', 'Agent', 'Dr', 'Kira', 'Alpha', 'Pro', 'Hacker', 'Silent', 'Crazy', 'Mad', 'Toxic', 'Epic', 'Mystic', 'Iron', 'Blood', 'Ice', 'Fire', 'Venom', 'Doom', 'Void', 'Savage', 'Furious', 'Solid', 'Ahmed', 'Youssef', 'Ali', 'Omar', 'Alex', 'Ivan', 'Carlos', 'Kenji', 'Moha', 'Sayed'];
+    27	const NAME_NOUNS = ['Protocol', 'Gamer', 'Knight', 'Guru', 'Zero', 'Sec', 'Pro', 'Wolf', 'Dragon', 'Code', '1337', 'X', '99', 'DZ', 'Maroc', 'Sniper', 'Hunter', 'Killer', 'Slayer', 'Beast', 'Fox', 'Bear', 'Tiger', 'Lion', 'Viper', 'Phantom', 'Wraith', 'Demon', 'Angel', 'Samurai', 'Ronin', 'KSA', 'EG', 'Dev', 'San', 'Matrix', 'Smith', 'Brasil', 'Japan', 'Russian', 'Germany'];
+    28	
+    29	const getFakeTextsForGames = (title: string = 'this game') => [
+    30	  { lang: 'en', text: `Works perfectly! Thanks for the upload.` },
+    31	  { lang: 'ar', text: `شغال 100%، شكرا جزيلا على المجهود` },
+    32	  { lang: 'darija', text: `nadi canadi khouya, lay 7fdek` },
+    33	  { lang: 'fr', text: `Super, installation très facile. Merci!` },
+    34	  { lang: 'es', text: `¡Funciona de maravilla! Saludos desde España.` },
+    35	  { lang: 'ru', text: `Всё работает отлично, спасибо автору!` },
+    36	  { lang: 'zh', text: `非常感谢，下载速度很快，完美运行！` },
+    37	  { lang: 'ja', text: `完璧に動作しました。ありがとうございます！` },
+    38	  { lang: 'ko', text: `잘 작동합니다. 공유해주셔서 감사합니다!` },
+    39	  { lang: 'en', text: `Been looking for ${title} everywhere. You are a lifesaver. 😍` },
+    40	  { lang: 'ar', text: `أسطورة، جاري التحميل والتجربة 🔥` },
+    41	  { lang: 'darija', text: `tbarkellah 3lik a sat, dima top` },
+    42	  { lang: 'en', text: `Just tested ${title} on Windows 11 23H2, running flawlessly without any crashes or bugs. Great packing job!` },
+    43	  { lang: 'en', text: `Installation took a bit longer than expected due to unpacking speed, but it completely works and performance is solid. Recommended.` },
+    44	  { lang: 'en', text: `My antivirus flagged one of the files as a false positive, added it to exclusions and everything is running smooth.` },
+    45	  { lang: 'en', text: `This is the most stable version of ${title} I found online. Can confirm it works perfectly even on my low end machine. 🚀` },
+    46	  { lang: 'en', text: `I faced a missing DLL error initially, but reinstalling vcredist fixed it immediately. Thanks bro! 👊` },
+    47	  { lang: 'ar', text: `شغال بدون أي مشاكل، سرعة التحميل خرافية.` },
+    48	  { lang: 'ar', text: `للي يواجه مشكلة في التثبيت، طفوا الانتي فايروس وتشتتغل معاكم طبيعي، تسلم ايدك على الرفع.` },
+    49	  { lang: 'darija', text: `khedama mzyan. bnesba l drari li makatbghich tkhdm lhm ytiro l windows defender rah kaymskheha` },
+    50	  { lang: 'darija', text: `wa narri tbarkellah 3lik akhouya, hadchi m9wd w madi ma fih tachi mochkil` },
+    51	  { lang: 'es', text: `Probado en Windows 10, y el rendimiento es brutal. Ningún tipo de malware, 100% limpio.` },
+    52	  { lang: 'es', text: `Tuve un pequeño error al inicio, pero ejecutarlo como administrador lo solucionó.` },
+    53	  { lang: 'fr', text: `Testé sur ma machine, aucune perte de FPS. Le crack est très propre, bravo.` },
+    54	  { lang: 'fr', text: `J\'ai dû mettre à jour mes pilotes graphiques mais après ça, que du bonheur. 😎` },
+    55	  { lang: 'ru', text: `Репак шикарный, установился за 10 минут. Никаких лагов и вылетов нет.` },
+    56	  { lang: 'ru', text: `Была проблема с запуском, но нужно было просто обновить DirectX. Автору респект!` },
+    57	  { lang: 'en', text: `If anyone gets a black screen on startup for ${title}, try unchecking the full screen optimization in properties.` },
+    58	  { lang: 'en', text: `Literally the only site I trust for these files. Always top notch quality and fast mirrors. ❤️` },
+    59	  { lang: 'en', text: `Was skeptical at first about the file size for ${title}, but the compression is just insane. Fully verified it with CRC check.` },
+    60	  { lang: 'ar', text: `النسخة ذي فيها كل الإضافات لـ ${title} صح ؟ لاني دورت عليها كثير.` },
+    61	  { lang: 'ar', text: `ما شاء الله عليك، اول مره اشوف موقع يوفر كذا روابط سريعه ومافيها إعلانات مزعجة.` },
+    62	  { lang: 'darija', text: `Chokran bzaaaf 3la lmjhod dyalek, ch7al w ana kan9leb 3liha mcrackya mzyan` },
+    63	  { lang: 'pt', text: `Funcionando perfeitamente irmão! Parabéns pelo trabalho excelente.` },
+    64	  { lang: 'de', text: `Läuft einwandfrei ohne jegliche Probleme. Vielen Dank für die Mühe!` },
+    65	  { lang: 'tr', text: `Sorunsuz çalışıyor, emekleriniz için çok teşekkür ederim.` },
+    66	  { lang: 'en', text: `I absolutely love ${title}! ❤️ Played it all weekend, couldn't stop.` },
+    67	  { lang: 'en', text: `Who designed the boss fights in ${title}? They are ridiculously hard! 🤬` },
+    68	  { lang: 'en', text: `Not gonna lie, the story in ${title} made me cry a little at the end. 😭` },
+    69	  { lang: 'en', text: `Why did the intro take 2 hours? Still a solid 8/10 tho. 😂` },
+    70	  { lang: 'ar', text: `قصة ${title} عبارة عن تحفة فنية بصراحة! أبدعوا فيها بشكل كبير. ❤️` },
+    71	  { lang: 'en', text: `This game is an absolute unit! ${title} lived up to the hype for once. 🙌` },
+    72	  { lang: 'en', text: `Bruh, my PC sounds like a jet engine running ${title}. 😂 but totally worth it. 🛫` },
+    73	  { lang: 'en', text: `Honestly I wasn't expecting much, but ${title} completely blew me away. 10/10` },
+    74	  { lang: 'ar', text: `أخيراً لقيت ${title} برابط مباشر! أنقذتني يا بطل 🥇` },
+    75	  { lang: 'en', text: `The graphics in ${title} are next level. Literally took screenshots every 5 mins 📸` },
+    76	  { lang: 'darija', text: `${title} l3ba mraya a drari, li mzl mjarbhash ydirha tchargi db 🔥🔥` },
+    77	  { lang: 'es', text: `¡${title} es una locura! Los gráficos son espectaculares. 🤯` },
+    78	  { lang: 'fr', text: `J'ai pleuré de joie en trouvant ${title} ici. Merci le Boss ! 👑` },
+    79	  { lang: 'en', text: `I've uninstalled and reinstalled ${title} like 3 times now because I keep coming back to it. Addicting af.` },
+    80	  { lang: 'en', text: `Did anyone else experience framedrops in the city area? It's playable but kinda annoying :/` },
+    81	  { lang: 'en', text: `I hate the ending of ${title} so much... why did they do my boy like that?! 😡` },
+    82	  { lang: 'en', text: `Me before playing ${title}: "It's probably overhyped." Me after 50 hours: "I owe this masterpiece an apology." 🙇‍♂️` },
+    83	  { lang: 'ar', text: `لعبة ${title} جابت لي الضغط والسكر من صعوبتها، بس الممتع إني ما قدرت أوقف لعب 😅` },
+    84	  { lang: 'ar', text: `أحببت كل لحظة في ${title}. شكراً على الرفع الرائع والنسخة الخالية من المشاكل! 💕` },
+    85	  { lang: 'es', text: `Sinceramente, ${title} es el mejor juego que he probado este año. Increíble.` },
+    86	  { lang: 'fr', text: `C'est normal que je bloque sur le même boss dans ${title} depuis 3 heures ? Je vais casser ma manette 🤬` },
+    87	  { lang: 'ru', text: `Атмосфера в ${title} просто невероятная. Играешь и забываешь про реальность. ✨` },
+    88	  { lang: 'pt', text: `Mano, ${title} travou no meu PC da Xuxa, mas no do meu amigo rodou liso. O jogo é bom demais kkkk` },
+    89	  { lang: 'en', text: `Pro tip for ${title}: Save often! The autosave is merciless... lost 2 hours of progress 😭` },
+    90	  { lang: 'en', text: `The OST for ${title} is an absolute banger. Literally listening to it on Spotify right now 🎧🔥` },
+    91	  { lang: 'en', text: `I was having an awful week, and playing ${title} actually made me feel a lot better. Thank you. 💖` },
+    92	  { lang: 'darija', text: `wa layn3al tasilt had l boss lakhr, chwht mn 7yati 😡😂` },
+    93	  { lang: 'en', text: `Wait wait wait... is ${title} actually this good or am I dreaming? The mechanics are so fluid! ✨` }
+    94	];
+    95	
+    96	const getFakeTextsForTools = (title: string = 'this tool') => [
+    97	  { lang: 'en', text: `Works perfectly on my system! Really needed ${title} for my workflow. Thank you! 💻` },
+    98	  { lang: 'ar', text: `تطبيق ممتاز ومفيد جداً. شكراً لك على رفع أحدث نسخة من ${title} وبدون مشاكل.` },
+    99	  { lang: 'darija', text: `nadi lprogram, kan m7ttajo druri f khedmti. lay 7fdk a bro 🙏` },
+   100	  { lang: 'fr', text: `L'installation de ${title} s'est très bien passée. Excellent outil au quotidien.` },
+   101	  { lang: 'es', text: `¡${title} es justo lo que estaba buscando! Funciona muy fluido y no consume recursos.` },
+   102	  { lang: 'ru', text: `Отличная программа, всё активировалось без проблем. Огромное спасибо! 🛠️` },
+   103	  { lang: 'zh', text: `完美兼容我的电脑，非常实用的工具！` },
+   104	  { lang: 'ja', text: `期待通りに機能しました。重宝しています！` },
+   105	  { lang: 'en', text: `Been searching for a clean version of ${title} for weeks. You saved my sanity! 😍` },
+   106	  { lang: 'ar', text: `يا سلام عليك! البرنامج مفعل وجاهز. والله إنك أسطورة 🔥` },
+   107	  { lang: 'darija', text: `khedam 10/10, makrahtch tzidna hta plugins dyalo ila kano. thlay f rasek 👑` },
+   108	  { lang: 'en', text: `Tested ${title} on a fresh Windows 11 install, running flawlessly without any annoying popups. Great repacking!` },
+   109	  { lang: 'en', text: `My antivirus flagged it at first, but I whitelisted the patcher and it fully activated ${title}. Running smooth now.` },
+   110	  { lang: 'en', text: `This is the most stable build of ${title} I've found online. The performance optimization is actually insane. 🚀` },
+   111	  { lang: 'ar', text: `البرنامج شغال بدون أي مشاكل والتفعيل مدى الحياة. أفضل موقع لتحميل البرامج بدون إعلانات مزعجة.` },
+   112	  { lang: 'ar', text: `للي تواجهه مشكلة في تنصيب ${title}، تأكدوا أنكم تقفلون النت وقت التفعيل وتشتغل تمام التمام!` },
+   113	  { lang: 'darija', text: `li bgha ytbto ytfy lwifi w antivirus, rah khedam naddiii a drari.` },
+   114	  { lang: 'es', text: `Rendimiento brutal. Ha mejorado mi productividad un 200%. 100% limpio sin malware.` },
+   115	  { lang: 'fr', text: `Aucun bug rencontré, l'interface de ${title} est vraiment propre et réactive. Je valide. 😎` },
+   116	  { lang: 'ru', text: `Прога просто топ! Установилась за минуту, работает как часы.` },
+   117	  { lang: 'en', text: `I love how lightweight ${title} is compared to the alternatives. Doesn't hog my RAM at all. 🧠` },
+   118	  { lang: 'en', text: `I had a crash on launch initially, but running it as Administrator fixed it immediately. Just a heads up for anyone else!` },
+   119	  { lang: 'ar', text: `ممكن توفير التحديث القادم متى ما نزل؟ صراحة صرت أعتمد عليكم في كل شيء.` },
+   120	  { lang: 'en', text: `If you're hesitating to download ${title}, just do it. It automated half of my daily tasks. 😂` },
+   121	  { lang: 'es', text: `¡Increíble la cantidad de utilidades que tiene esta versión! Muy recomendado. 🤯` },
+   122	  { lang: 'fr', text: `Je pleurais sur mon ancien logiciel, ${title} est tellement plus rapide et moderne. 👏` },
+   123	  { lang: 'pt', text: `Mano, esse app salvou meu dia. Fácil de usar e bem direto ao ponto. Vlw demais! kkk` },
+   124	  { lang: 'en', text: `Pro tip: You can customize the shortcuts in settings to make ${title} even faster for your workflow. 🎧` },
+   125	  { lang: 'en', text: `Literally the only site I trust for these apps. Always top notch quality and secure mirrors. ❤️` },
+   126	  { lang: 'darija', text: `wa fin khesni nrkli la bghit nbdel lougha drari ? lmohim lprogram sda9 nadi ✅` }
+   127	];
+   128	
+   129	const getFakeTextsForSaves = (title: string = 'this file') => [
+   130	  { lang: 'en', text: `This 100% save file for ${title} saved my life! Skipped the grinding. 💯` },
+   131	  { lang: 'ar', text: `تخزينة أسطورية، شكراً لك وفرت علي ساعات من اللعب الممل في ${title} ❤️` },
+   132	  { lang: 'darija', text: `tbarkellah 3lik, fkitina mn l grind. save nadi ✅` },
+   133	  { lang: 'fr', text: `Save à 100% parfaite, tout est débloqué. Merci beaucoup !` },
+   134	  { lang: 'es', text: `¡Esta partida guardada es una maravilla! Todo desbloqueado. 😎` },
+   135	  { lang: 'ru', text: `Отличное сохранение на 100%, всё открыто! Спасибо!` },
+   136	  { lang: 'zh', text: `完美的100%全收集存档，太省心了！` },
+   137	  { lang: 'en', text: `Finally all characters unlocked! Installation was super easy. 🔥` },
+   138	  { lang: 'ar', text: `شباب الطريقة شغالة ومضمونة 100%، شكراً على الرفع.` },
+   139	  { lang: 'darija', text: `nadi lay 7fdk, bghit njerb l mawaslat kharj l khedma, mzyana 👏` },
+   140	  { lang: 'en', text: `Works flawlessly. Put it in my save folder and everything loaded correctly. 🎮` },
+   141	  { lang: 'en', text: `Does this DLC unlocker work for the latest version? Edit: Yes it does! 😍` },
+   142	  { lang: 'en', text: `The language pack fixed my issue! Now playing in my native language. 👍` },
+   143	  { lang: 'ar', text: `ملف التعريب ممتاز جداً ومافيه أي أخطاء، أنصحكم فيه.` },
+   144	  { lang: 'ar', text: `شغال التختيم بكل شيء ماكس! الفلوس، الأسلحة، كل شيء 100%. خيالي 💸` },
+   145	  { lang: 'darija', text: `mod d ltofanatif mzyan, lfer9 kayban f grafikk. sadi9i m3a dak l patch mzyan` },
+   146	  { lang: 'es', text: `Todo full, dinero ilimitado y todos los coches desbloqueados. Rápido y seguro 🚘` },
+   147	  { lang: 'fr', text: `Super fix, le jeu ne crash plus au lancement. Excellent travail ! 🛠️` },
+   148	  { lang: 'ru', text: `Патч помог решить проблему с текстурами. Молодцы.` },
+   149	  { lang: 'en', text: `If you can't find the save folder, it's usually in AppData\\Local. Just drop it there and replace! 📂` },
+   150	  { lang: 'en', text: `I accidentally deleted my save after 60 hours in ${title}... you literally rescued my playthrough. 😭❤️` },
+   151	  { lang: 'ar', text: `تخزينة كاملة مكملة، بس لا تنسون تاخذون نسخة احتياطية لتخزينتكم الأصلية قبل النقل.` },
+   152	  { lang: 'en', text: `The mods and extras included are amazing. Completely changed my experience with ${title} 🙌` },
+   153	  { lang: 'es', text: `Instalé las texturas HD y parece un juego de nueva generación. ¡Increíble! ✨` },
+   154	  { lang: 'fr', text: `Wow, c'est exactement ce qu'il me fallait pour reprendre le jeu sans tout refaire. 🚀` },
+   155	  { lang: 'pt', text: `Save game perfeito, nível máximo e com todos os itens. Show de bola!` },
+   156	  { lang: 'en', text: `Best save file ever! Tested it and got no ban since it's just local data. Awesome. 🛡️` },
+   157	  { lang: 'en', text: `Could you please upload a save file right before the final boss? This 100% one is great though! 🙏` },
+   158	  { lang: 'darija', text: `chokran a khay, rah dlite l patch w l3ba wlat katrta7. top 👍` }
+   159	];
+   160	
+   161	function seededRandom(seed: number) {
+   162	    let t = seed += 0x6D2B79F5;
+   163	    t = Math.imul(t ^ t >>> 15, t | 1);
+   164	    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+   165	    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+   166	}
+   167	
+   168	const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxbQKmoUUH4KzLmkAYZMGpoORPDTFYTzqCpnScEFIw5ngQ1cgzvFWU5fq0OXe2M5Ref/exec';
+   169	
+   170	export const CommentsSection: React.FC<{ itemId: string, itemTitle?: string, itemCategory?: string }> = ({ itemId, itemTitle, itemCategory }) => {
+   171	  const [comments, setComments] = useState<Comment[]>([]);
+   172	  const [newComment, setNewComment] = useState('');
+   173	  const [authorName, setAuthorName] = useState('');
+   174	  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+   175	  const [loading, setLoading] = useState(false);
+   176	  const [fetching, setFetching] = useState(true);
+   177	
+   178	  const fakeComments = useMemo(() => {
+   179	    let hash = 0;
+   180	    for (let i = 0; i < itemId.length; i++) hash = itemId.charCodeAt(i) + ((hash << 5) - hash);
+   181	    
+   182	    const numFakes = Math.floor(seededRandom(hash) * 12) + 5; // 5 to 16 comments
+   183	    const fakes: Comment[] = [];
+   184	    
+   185	    // Determine category texts
+   186	    const isTool = itemCategory === 'architect' || itemId.startsWith('A') || itemId.startsWith('tool-');
+   187	    const isSave = itemCategory === 'extra' || itemId.startsWith('E');
+   188	    
+   189	    let texts = getFakeTextsForGames(itemTitle || 'this game');
+   190	    if (isTool) {
+   191	        texts = getFakeTextsForTools(itemTitle || 'this tool');
+   192	    } else if (isSave) {
+   193	        texts = getFakeTextsForSaves(itemTitle || 'this save');
+   194	    }
+   195	    
+   196	    // Randomize order based on seed but keep it deterministic
+   197	    const shuffledTexts = [...texts].sort((a, b) => seededRandom(hash + a.text.length) - 0.5);
+   198	    
+   199	    // We only create as many fakes as we have unique text templates to avoid repetition
+   200	    const actualNumFakes = Math.min(numFakes, shuffledTexts.length);
+   201	    
+   202	    const usedAuthors = new Set<string>();
+   203	
+   204	    for (let i = 0; i < actualNumFakes; i++) {
+   205	        const seed = hash + i * 100;
+   206	        
+   207	        let authorStr = '';
+   208	        let loopSafe = 0;
+   209	        // Generate unique author
+   210	        do {
+   211	            const tempSeed = seed + loopSafe * 13;
+   212	            const nameAdjIdx = Math.floor(seededRandom(tempSeed) * NAME_ADJECTIVES.length);
+   213	            const nameNounIdx = Math.floor(seededRandom(tempSeed + 1) * NAME_NOUNS.length);
+   214	            const nameSuffix = Math.floor(seededRandom(tempSeed + 2) * 9999);
+   215	            authorStr = `${NAME_ADJECTIVES[nameAdjIdx]}_${NAME_NOUNS[nameNounIdx]}${nameSuffix}`;
+   216	            loopSafe++;
+   217	        } while (usedAuthors.has(authorStr) && loopSafe < 10);
+   218	        usedAuthors.add(authorStr);
+   219	
+   220	        const tagIdx = Math.floor(seededRandom(seed + 4) * AVAILABLE_TAGS.length);
+   221	        
+   222	        const daysAgo = Math.floor(seededRandom(seed + 5) * 30) + 1;
+   223	        const d = new Date();
+   224	        d.setDate(d.getDate() - daysAgo);
+   225	
+   226	        fakes.push({
+   227	            id: `fake-${itemId}-${i}`,
+   228	            itemId,
+   229	            author: authorStr,
+   230	            text: shuffledTexts[i].text,
+   231	            tags: [AVAILABLE_TAGS[tagIdx]],
+   232	            reactions: {
+   233	                like: Math.floor(seededRandom(seed + 6) * 50) + 5,
+   234	                dislike: Math.floor(seededRandom(seed + 7) * 3),
+   235	                love: Math.floor(seededRandom(seed + 8) * 20) + 1
+   236	            },
+   237	            timestamp: d.toISOString()
+   238	        });
+   239	    }
+   240	    
+   241	    return fakes.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+   242	  }, [itemId, itemTitle, itemCategory]);
+   243	
+   244	  // Load comments
+   245	  useEffect(() => {
+   246	    const loadComments = async () => {
+   247	      setFetching(true);
+   248	      let loadedComments: Comment[] = [];
+   249	      try {
+   250	        // Try fetching from Google Sheet
+   251	        const response = await fetch(`${API_ENDPOINT}?action=getComments&itemId=${itemId}`);
+   252	        if (response.ok) {
+   253	          const data = await response.json();
+   254	          if (data && data.comments) {
+   255	            loadedComments = data.comments;
+   256	          }
+   257	        }
+   258	      } catch (error) {
+   259	        // Suppressed warning
+   260	      }
+   261	
+   262	      // Fallback to local storage if script fails or isn't updated
+   263	      if (loadedComments.length === 0) {
+   264	          const localData = localStorage.getItem(`comments_${itemId}`);
+   265	          if (localData) {
+   266	            loadedComments = JSON.parse(localData);
+   267	          }
+   268	      }
+   269	      
+   270	      // Merge real and fake comments, sort by date
+   271	      const allComments = [...loadedComments, ...fakeComments].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+   272	      setComments(allComments);
+   273	      setFetching(false);
+   274	    };
+   275	
+   276	    loadComments();
+   277	  }, [itemId, fakeComments]);
+   278	
+   279	  const toggleTag = (tag: string) => {
+   280	    setSelectedTags(prev => 
+   281	      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag].slice(0, 3) // Max 3 tags
+   282	    );
+   283	  };
+   284	
+   285	  const handleReaction = async (commentId: string, type: 'like' | 'dislike' | 'love') => {
+   286	    // Optimistic update
+   287	    const updatedComments = comments.map(c => {
+   288	      if (c.id === commentId) {
+   289	        return { ...c, reactions: { ...c.reactions, [type]: c.reactions[type] + 1 } };
+   290	      }
+   291	      return c;
+   292	    });
+   293	    setComments(updatedComments);
+   294	    localStorage.setItem(`comments_${itemId}`, JSON.stringify(updatedComments));
+   295	
+   296	    // Try sending to Google Sheet
+   297	    try {
+   298	      await fetch(API_ENDPOINT, {
+   299	        method: 'POST',
+   300	        body: JSON.stringify({ action: 'reactComment', commentId, type }),
+   301	      });
+   302	    } catch (e) {
+   303	      // Ignore errors if script isn't updated
+   304	    }
+   305	  };
+   306	
+   307	  const handleSubmit = async (e: React.FormEvent) => {
+   308	    e.preventDefault();
+   309	    if (!newComment.trim()) return;
+   310	
+   311	    setLoading(true);
+   312	    const commentData: Comment = {
+   313	      id: Date.now().toString(),
+   314	      itemId,
+   315	      author: authorName.trim() || 'Anonymous Wolf',
+   316	      text: newComment.trim(),
+   317	      tags: selectedTags,
+   318	      reactions: { like: 0, dislike: 0, love: 0 },
+   319	      timestamp: new Date().toISOString(),
+   320	    };
+   321	
+   322	    const updatedComments = [commentData, ...comments];
+   323	    setComments(updatedComments);
+   324	    localStorage.setItem(`comments_${itemId}`, JSON.stringify(updatedComments));
+   325	
+   326	    try {
+   327	      await fetch(API_ENDPOINT, {
+   328	        method: 'POST',
+   329	        body: JSON.stringify({ action: 'addComment', comment: commentData }),
+   330	      });
+   331	    } catch (error) {
+   332	      console.warn("Failed to save to Google Sheet, saved locally.");
+   333	    }
+   334	
+   335	    setNewComment('');
+   336	    setSelectedTags([]);
+   337	    setLoading(false);
+   338	  };
+   339	
+   340	  return (
+   341	    <div className="mt-8 border-t border-slate-200 dark:border-slate-800 pt-8">
+   342	      <h3 className="text-xl font-black uppercase tracking-wider text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+   343	        <Icon name="MessageSquare" size={24} className="text-blue-500" /> 
+   344	        Intel Reviews & Chatter
+   345	      </h3>
+   346	
+   347	      {/* Add Comment Form */}
+   348	      <form onSubmit={handleSubmit} className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-4 sm:p-6 border border-slate-200 dark:border-slate-800 mb-8">
+   349	        <div className="flex gap-4 mb-4">
+   350	          <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center shrink-0 border border-slate-300 dark:border-slate-700">
+   351	            <SiWolframlanguage size={20} className="text-slate-700 dark:text-slate-300" />
+   352	          </div>
+   353	          <div className="flex-1">
+   354	            <input 
+   355	              type="text" 
+   356	              placeholder="Your Alias (Optional)..." 
+   357	              value={authorName}
+   358	              onChange={(e) => setAuthorName(e.target.value)}
+   359	              className="w-full bg-transparent border-b border-slate-300 dark:border-slate-700 pb-2 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors mb-4 placeholder:text-slate-400"
+   360	              maxLength={20}
+   361	            />
+   362	            <textarea
+   363	              placeholder="Drop your intel, review, or funny thoughts here..."
+   364	              value={newComment}
+   365	              onChange={(e) => setNewComment(e.target.value)}
+   366	              required
+   367	              rows={3}
+   368	              className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors resize-none"
+   369	            />
+   370	          </div>
+   371	        </div>
+   372	
+   373	        {/* Tags Selection */}
+   374	        <div className="mb-4">
+   375	          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Tag this Intel (Max 3):</p>
+   376	          <div className="flex flex-wrap gap-2">
+   377	            {AVAILABLE_TAGS.map(tag => (
+   378	              <button
+   379	                key={tag}
+   380	                type="button"
+   381	                onClick={() => toggleTag(tag)}
+   382	                className={`px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold transition-all ${
+   383	                  selectedTags.includes(tag)
+   384	                    ? 'bg-blue-500 text-white shadow-md shadow-blue-500/20 scale-105'
+   385	                    : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700'
+   386	                }`}
+   387	              >
+   388	                {tag}
+   389	              </button>
+   390	            ))}
+   391	          </div>
+   392	        </div>
+   393	
+   394	        <div className="flex justify-end">
+   395	          <button 
+   396	            type="submit" 
+   397	            disabled={loading || !newComment.trim()}
+   398	            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-sm uppercase tracking-widest shadow-lg shadow-blue-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+   399	          >
+   400	            {loading ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name="Send" size={16} />}
+   401	            Post Intel
+   402	          </button>
+   403	        </div>
+   404	      </form>
+   405	
+   406	      {/* Comments List */}
+   407	      <div className="space-y-4">
+   408	        {fetching ? (
+   409	          <div className="flex justify-center py-8">
+   410	            <Icon name="Loader" size={24} className="text-blue-500 animate-spin" />
+   411	          </div>
+   412	        ) : comments.length === 0 ? (
+   413	          <div className="text-center py-10 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800">
+   414	            <SiWolframlanguage size={40} className="mx-auto text-slate-300 dark:text-slate-700 mb-3 opacity-50" />
+   415	            <p className="text-sm font-bold text-slate-500">No intel dropped yet. Be the first wolf to howl!</p>
+   416	          </div>
+   417	        ) : (
+   418	          <AnimatePresence>
+   419	            {comments.map((comment) => (
+   420	              <motion.div 
+   421	                key={comment.id}
+   422	                initial={{ opacity: 0, y: 10 }}
+   423	                animate={{ opacity: 1, y: 0 }}
+   424	                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm"
+   425	              >
+   426	                <div className="flex gap-3 sm:gap-4">
+   427	                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center shrink-0 border border-slate-200 dark:border-slate-700 shadow-inner">
+   428	                    <SiWolframlanguage size={20} className="text-slate-800 dark:text-slate-200" />
+   429	                  </div>
+   430	                  <div className="flex-1 min-w-0">
+   431	                    <div className="flex flex-wrap items-baseline justify-between gap-2 mb-1">
+   432	                      <h4 className="font-black text-sm text-slate-900 dark:text-white truncate">
+   433	                        {comment.author}
+   434	                      </h4>
+   435	                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+   436	                        {new Date(comment.timestamp).toLocaleDateString()}
+   437	                      </span>
+   438	                    </div>
+   439	                    
+   440	                    {comment.tags && comment.tags.length > 0 && (
+   441	                      <div className="flex flex-wrap gap-1.5 mb-2">
+   442	                        {comment.tags.map(tag => (
+   443	                          <span key={tag} className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-md text-[9px] font-bold uppercase tracking-wider border border-slate-200 dark:border-slate-700">
+   444	                            {tag}
+   445	                          </span>
+   446	                        ))}
+   447	                      </div>
+   448	                    )}
+   449	
+   450	                    <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words leading-relaxed mb-3">
+   451	                      {comment.text}
+   452	                    </p>
+   453	
+   454	                    {/* Reactions */}
+   455	                    <div className="flex items-center gap-2 sm:gap-3">
+   456	                      <button 
+   457	                        onClick={() => handleReaction(comment.id, 'like')}
+   458	                        className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-400 transition-colors border border-slate-200 dark:border-slate-700/50"
+   459	                      >
+   460	                        👍 <span>{comment.reactions?.like || 0}</span>
+   461	                      </button>
+   462	                      <button 
+   463	                        onClick={() => handleReaction(comment.id, 'dislike')}
+   464	                        className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-400 transition-colors border border-slate-200 dark:border-slate-700/50"
+   465	                      >
+   466	                        👎 <span>{comment.reactions?.dislike || 0}</span>
+   467	                      </button>
+   468	                      <button 
+   469	                        onClick={() => handleReaction(comment.id, 'love')}
+   470	                        className="flex items-center gap-1.5 px-2.5 py-1 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 rounded-lg text-xs font-bold text-rose-600 dark:text-rose-400 transition-colors border border-rose-200 dark:border-rose-500/20"
+   471	                      >
+   472	                        ❤️ <span>{comment.reactions?.love || 0}</span>
+   473	                      </button>
+   474	                    </div>
+   475	                  </div>
+   476	                </div>
+   477	              </motion.div>
+   478	            ))}
+   479	          </AnimatePresence>
+   480	        )}
+   481	      </div>
+   482	    </div>
+   483	  );
+   484	};

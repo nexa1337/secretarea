@@ -2,8 +2,21 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SiWolframlanguage } from 'react-icons/si';
 import Icon from './Icon';
+import { CommentItem } from './CommentItem';
 
-interface Comment {
+export interface CommentReply {
+  id: string;
+  author: string;
+  text: string;
+  timestamp: string;
+  reactions: {
+    like: number;
+    dislike: number;
+    love: number;
+  };
+}
+
+export interface Comment {
   id: string;
   itemId: string;
   author: string;
@@ -15,6 +28,7 @@ interface Comment {
     love: number;
   };
   timestamp: string;
+  replies?: CommentReply[];
 }
 
 const AVAILABLE_TAGS = [
@@ -165,7 +179,7 @@ function seededRandom(seed: number) {
     return ((t ^ t >>> 14) >>> 0) / 4294967296;
 }
 
-const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxbQKmoUUH4KzLmkAYZMGpoORPDTFYTzqCpnScEFIw5ngQ1cgzvFWU5fq0OXe2M5Ref/exec';
+const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbx7nzBZc_tIhbAUK5OvOzgifGVzaVorzjn5OXNe8ENC0p7Pjia7O-u4WggxjRZipt4v/exec';
 
 export const CommentsSection: React.FC<{ itemId: string, itemTitle?: string, itemCategory?: string }> = ({ itemId, itemTitle, itemCategory }) => {
   const [comments, setComments] = useState<Comment[]>([]);
@@ -223,6 +237,70 @@ export const CommentsSection: React.FC<{ itemId: string, itemTitle?: string, ite
         const d = new Date();
         d.setDate(d.getDate() - daysAgo);
 
+        const hasReplies = seededRandom(seed + 9) > 0.6;
+        const numReplies = hasReplies ? Math.floor(seededRandom(seed + 10) * 3) + 1 : 0;
+        const fakeReplies: CommentReply[] = [];
+        
+        let replyBank = [
+            "Totally agree with this!", "Thanks for the heads up.", "Same here lol.", "Interesting point!", 
+            "Appreciate the info bro 🙏", "Exactly what I was looking for, thanks!", "Didn't know that, thanks for sharing.", 
+            "Can confirm this works on my end too.", "Awesome, going to try this out now.", "Good to know! 🔥", 
+            "I had the same issue, glad it's fixed now.", "Was wondering about this, thanks!", "Legit advice right here.", 
+            "tbarkellah 3lik a khouya", "شكراً جزيلاً، جاري التجربة", "Works perfectly for me as well.", 
+            "I was getting errors before but this makes sense.", "Thanks man, you saved me a lot of time.", "Bro this is actually so helpful.", 
+            "Ah I see, that makes a lot of sense now.", "You're an absolute legend for this.", "Glad I scrolled down to read the comments first.", 
+            "Perfect timing, I needed exactly this.", "Any idea if this works on the new update?", "Merci pour l'astuce !", 
+            "¡Gracias por la información!", "This community is the best 😂", "Big if true.", "Nah I don't think that's right...", 
+            "Thanks for clarifying that.", "Oh wow, I completely missed that detail.", "I've been stuck on this for hours, bless you.", 
+            "Wait, really? I gotta check this.", "My antivirus is acting up but I'll trust this.", "Thanks bro, really appreciate it.", 
+            "LFG! Exactly what I needed.", "Good looks. 👊", "Ayo thanks for the heads up.", "Finally a real answer.", "Super helpful, thanks!", "Good catch!",
+            "This is why I love this site.", "You dropped this 👑", "Is this safe?", "I can verify this.", "Facts.", "Fr bro.", "100%", "This actually worked wtf", "Bruh thank you", "I was so confused until I read this",
+            "This was super insightful, appreciate the detail.", "Took me a while to get it but this made it click.", "Can you elaborate on that a bit more?", "Man this saved my whole day.", "Such a goated reply.", "You always have the best tips here.", "I tried doing it another way and failed, this works perfectly.", "Honestly never thought about it like that before."
+        ];
+        
+        if (itemCategory === 'game') {
+            replyBank = [...replyBank, "Does this version include the latest DLC?", "My FPS dropped a bit but it's playable.", "Is this the repack version or full?", "Can I use my old saves with this?", "Multiplayer works perfectly fine guys!"];
+        } else if (itemCategory === 'hypervisor') {
+            replyBank = [...replyBank, "Does this bypass anti-cheat?", "Make sure to disable Secure Boot first.", "My VM is running so much smoother now.", "Did you pass through the GPU successfully?", "Is this detected by Vanguard?"];
+        } else if (itemCategory === 'steamtools' || itemCategory === 'tools') {
+            replyBank = [...replyBank, "This tool is a lifesaver.", "Make sure to run it as administrator.", "Does it work on Windows 11?", "False positive on VirusTotal, it's safe.", "How do I configure the settings?"];
+        } else if (itemCategory === 'savegame' || itemId.startsWith('E')) {
+            replyBank = [...replyBank, "100% completion? Awesome.", "Where do I put the save file?", "My game doesn't recognize the save.", "Thanks, skipping that boring tutorial now.", "Does this unlock all characters?"];
+        }
+        
+        for (let j = 0; j < numReplies; j++) {
+            const rd = new Date(d);
+            rd.setHours(rd.getHours() + Math.floor(seededRandom(seed + 11 + j) * 24) + 1);
+            
+            // Smart author name generation for replies
+            const rSeed = seed + 12 + j;
+            let rAuthorStr = '';
+            let rLoopSafe = 0;
+            do {
+                const tempSeed = rSeed + rLoopSafe * 13;
+                const rNameAdjIdx = Math.floor(seededRandom(tempSeed) * NAME_ADJECTIVES.length);
+                const rNameNounIdx = Math.floor(seededRandom(tempSeed + 1) * NAME_NOUNS.length);
+                const rNameSuffix = Math.floor(seededRandom(tempSeed + 2) * 9999);
+                rAuthorStr = `${NAME_ADJECTIVES[rNameAdjIdx]}_${NAME_NOUNS[rNameNounIdx]}${rNameSuffix}`;
+                rLoopSafe++;
+            } while ((usedAuthors.has(rAuthorStr) || rAuthorStr === authorStr) && rLoopSafe < 10);
+            usedAuthors.add(rAuthorStr);
+
+            const rText = replyBank[Math.floor(seededRandom(seed + 13 + j) * replyBank.length)];
+
+            fakeReplies.push({
+                id: `fake-reply-${itemId}-${i}-${j}`,
+                author: rAuthorStr,
+                text: rText,
+                timestamp: rd.toISOString(),
+                reactions: {
+                    like: Math.floor(seededRandom(seed + 14 + j) * 10),
+                    dislike: 0,
+                    love: 0
+                }
+            });
+        }
+
         fakes.push({
             id: `fake-${itemId}-${i}`,
             itemId,
@@ -234,7 +312,8 @@ export const CommentsSection: React.FC<{ itemId: string, itemTitle?: string, ite
                 dislike: Math.floor(seededRandom(seed + 7) * 3),
                 love: Math.floor(seededRandom(seed + 8) * 20) + 1
             },
-            timestamp: d.toISOString()
+            timestamp: d.toISOString(),
+            replies: fakeReplies
         });
     }
     
@@ -268,8 +347,13 @@ export const CommentsSection: React.FC<{ itemId: string, itemTitle?: string, ite
       }
       
       // Merge real and fake comments, sort by date
-      const allComments = [...loadedComments, ...fakeComments].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-      setComments(allComments);
+      const allComments = [...fakeComments, ...loadedComments];
+      const uniqueComments = Array.from(new Map(allComments.map(c => [c.id, c])).values())
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      const ids = uniqueComments.map(c => c.id);
+      if (new Set(ids).size !== ids.length) console.error('DUPLICATES IN UNIQUE COMMENTS:', ids);
+      setComments(uniqueComments);
+      
       setFetching(false);
     };
 
@@ -282,10 +366,18 @@ export const CommentsSection: React.FC<{ itemId: string, itemTitle?: string, ite
     );
   };
 
-  const handleReaction = async (commentId: string, type: 'like' | 'dislike' | 'love') => {
+  const handleReaction = async (commentId: string, replyId: string | null, type: 'like' | 'dislike' | 'love') => {
     // Optimistic update
     const updatedComments = comments.map(c => {
       if (c.id === commentId) {
+        if (replyId) {
+          const replies = c.replies ? [...c.replies] : [];
+          const rIdx = replies.findIndex(r => r.id === replyId);
+          if (rIdx >= 0) {
+            replies[rIdx] = { ...replies[rIdx], reactions: { ...replies[rIdx].reactions, [type]: replies[rIdx].reactions[type] + 1 } };
+          }
+          return { ...c, replies };
+        }
         return { ...c, reactions: { ...c.reactions, [type]: c.reactions[type] + 1 } };
       }
       return c;
@@ -297,12 +389,45 @@ export const CommentsSection: React.FC<{ itemId: string, itemTitle?: string, ite
     try {
       await fetch(API_ENDPOINT, {
         method: 'POST',
-        body: JSON.stringify({ action: 'reactComment', commentId, type }),
+        body: JSON.stringify({ action: 'reactComment', commentId, replyId, type }),
+        mode: 'no-cors'
       });
     } catch (e) {
       // Ignore errors if script isn't updated
     }
   };
+
+  
+  const handleReplySubmit = async (commentId: string, replyText: string) => {
+    const reply: CommentReply = {
+      id: Date.now().toString(),
+      author: authorName.trim() || 'Anonymous Wolf',
+      text: replyText,
+      timestamp: new Date().toISOString(),
+      reactions: { like: 0, dislike: 0, love: 0 }
+    };
+    
+    const updatedComments = comments.map(c => {
+      if (c.id === commentId) {
+        return { ...c, replies: [...(c.replies || []), reply] };
+      }
+      return c;
+    });
+    
+    setComments(updatedComments);
+    localStorage.setItem(`comments_${itemId}`, JSON.stringify(updatedComments));
+    
+    try {
+      await fetch(API_ENDPOINT, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'addReply', commentId, reply }),
+        mode: 'no-cors'
+      });
+    } catch (e) {
+      // Ignored
+    }
+  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -327,6 +452,7 @@ export const CommentsSection: React.FC<{ itemId: string, itemTitle?: string, ite
       await fetch(API_ENDPOINT, {
         method: 'POST',
         body: JSON.stringify({ action: 'addComment', comment: commentData }),
+        mode: 'no-cors'
       });
     } catch (error) {
       console.warn("Failed to save to Google Sheet, saved locally.");
@@ -338,10 +464,15 @@ export const CommentsSection: React.FC<{ itemId: string, itemTitle?: string, ite
   };
 
   return (
-    <div className="mt-8 border-t border-slate-200 dark:border-slate-800 pt-8">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-50px" }}
+      className="mt-8 border-t border-slate-200 dark:border-slate-800 pt-8"
+    >
       <h3 className="text-xl font-black uppercase tracking-wider text-slate-900 dark:text-white mb-6 flex items-center gap-2">
         <Icon name="MessageSquare" size={24} className="text-blue-500" /> 
-        Intel Reviews & Chatter
+        Join the Conversation
       </h3>
 
       {/* Add Comment Form */}
@@ -416,69 +547,17 @@ export const CommentsSection: React.FC<{ itemId: string, itemTitle?: string, ite
           </div>
         ) : (
           <AnimatePresence>
-            {comments.map((comment) => (
-              <motion.div 
-                key={comment.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm"
-              >
-                <div className="flex gap-3 sm:gap-4">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center shrink-0 border border-slate-200 dark:border-slate-700 shadow-inner">
-                    <SiWolframlanguage size={20} className="text-slate-800 dark:text-slate-200" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-baseline justify-between gap-2 mb-1">
-                      <h4 className="font-black text-sm text-slate-900 dark:text-white truncate">
-                        {comment.author}
-                      </h4>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        {new Date(comment.timestamp).toLocaleDateString()}
-                      </span>
-                    </div>
-                    
-                    {comment.tags && comment.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mb-2">
-                        {comment.tags.map(tag => (
-                          <span key={tag} className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-md text-[9px] font-bold uppercase tracking-wider border border-slate-200 dark:border-slate-700">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words leading-relaxed mb-3">
-                      {comment.text}
-                    </p>
-
-                    {/* Reactions */}
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <button 
-                        onClick={() => handleReaction(comment.id, 'like')}
-                        className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-400 transition-colors border border-slate-200 dark:border-slate-700/50"
-                      >
-                        👍 <span>{comment.reactions?.like || 0}</span>
-                      </button>
-                      <button 
-                        onClick={() => handleReaction(comment.id, 'dislike')}
-                        className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-400 transition-colors border border-slate-200 dark:border-slate-700/50"
-                      >
-                        👎 <span>{comment.reactions?.dislike || 0}</span>
-                      </button>
-                      <button 
-                        onClick={() => handleReaction(comment.id, 'love')}
-                        className="flex items-center gap-1.5 px-2.5 py-1 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 rounded-lg text-xs font-bold text-rose-600 dark:text-rose-400 transition-colors border border-rose-200 dark:border-rose-500/20"
-                      >
-                        ❤️ <span>{comment.reactions?.love || 0}</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
+            {comments.map((comment, index) => (
+              <CommentItem 
+                key={`${comment.id}-${index}`}
+                comment={comment}
+                onReaction={handleReaction}
+                onReplySubmit={handleReplySubmit}
+              />
             ))}
           </AnimatePresence>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };

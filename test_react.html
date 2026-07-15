@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+  // Is there any weird JS quirk where map keys don't work?
+  const allComments = [
+    { id: 'fake-G206-0' },
+    { id: 'fake-G206-0' }
+  ];
+  const uniqueComments = Array.from(new Map(allComments.map(c => [c.id, c])).values());
+  console.log(uniqueComments.length); // 1
+</script>
+</body>
+</html>
