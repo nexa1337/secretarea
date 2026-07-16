@@ -325,13 +325,15 @@ export const CommentsSection: React.FC<{ itemId: string, itemTitle?: string, ite
     const loadComments = async () => {
       setFetching(true);
       let loadedComments: Comment[] = [];
+      let fetchSuccess = false;
       try {
         // Try fetching from Google Sheet
         const response = await fetch(`${API_ENDPOINT}?action=getComments&itemId=${itemId}`);
         if (response.ok) {
           const data = await response.json();
-          if (data && data.comments) {
-            loadedComments = data.comments;
+          if (data) {
+            loadedComments = data.comments || [];
+            fetchSuccess = true;
           }
         }
       } catch (error) {
@@ -339,11 +341,14 @@ export const CommentsSection: React.FC<{ itemId: string, itemTitle?: string, ite
       }
 
       // Fallback to local storage if script fails or isn't updated
-      if (loadedComments.length === 0) {
+      if (!fetchSuccess) {
           const localData = localStorage.getItem(`comments_${itemId}`);
           if (localData) {
             loadedComments = JSON.parse(localData);
           }
+      } else {
+          // Sync local storage with DB state
+          localStorage.setItem(`comments_${itemId}`, JSON.stringify(loadedComments));
       }
       
       // Merge real and fake comments, sort by date

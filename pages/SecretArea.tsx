@@ -1,4 +1,5 @@
 
+import { createPortal } from 'react-dom';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -2907,6 +2908,267 @@ const LatestIntelPanel: React.FC<{ open: boolean; onClose: () => void; items: In
   );
 };
 
+
+const MostPopularRepacksModal: React.FC<{
+    isOpen: boolean,
+    games: ResourceItem[],
+    onClose: () => void,
+    onSelect: (item: ResourceItem) => void
+}> = ({ isOpen, games, onClose, onSelect }) => {
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(20);
+
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth < 640) setItemsPerPage(12);
+            else if (window.innerWidth < 1024) setItemsPerPage(16);
+            else setItemsPerPage(20);
+        };
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const totalPages = Math.ceil(games.length / itemsPerPage);
+    const paginatedGames = games.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+    return createPortal(
+        <AnimatePresence>
+        {isOpen && (
+            <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-0 bg-slate-900/90 backdrop-blur-md"
+        >
+            <motion.div 
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="bg-white dark:bg-slate-900 w-full h-full max-w-none max-h-none rounded-none shadow-2xl flex flex-col overflow-hidden border-none"
+            >
+                <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950 shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+                            <Icon name="Trophy" className="text-yellow-600 dark:text-yellow-500" size={20} />
+                        </div>
+                        <div>
+                            <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Most Popular Repacks</h2>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">All Top {games.length} Games</p>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={onClose}
+                        className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center hover:bg-slate-300 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors"
+                    >
+                        <Icon name="X" size={20} />
+                    </button>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-100/50 dark:bg-slate-950/50">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+                        {paginatedGames.map((game, index) => {
+                            const globalIndex = (currentPage - 1) * itemsPerPage + index;
+                            const isHypervisor = game.category?.toLowerCase() === 'hypervisor';
+                            return (
+                                <motion.div 
+                                    key={game.id}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.05 }}
+                                    className="relative group cursor-pointer"
+                                    onClick={() => onSelect(game)}
+                                >
+                                    <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-slate-200 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md transition-all duration-300 group-hover:-translate-y-2 group-hover:shadow-2xl group-hover:shadow-blue-500/20 group-hover:border-blue-500/50">
+                                        <img 
+                                            src={game.image || game.coverImage || 'https://placehold.co/600x800/0f172a/334155?text=ENCRYPTED'} 
+                                            alt={game.name} 
+                                            className="w-full h-full object-cover transition-all duration-500 group-hover:brightness-110 saturate-100 group-hover:saturate-150"
+                                            onError={(e) => {
+                                                e.currentTarget.src = 'https://placehold.co/600x800/0f172a/334155?text=ENCRYPTED';
+                                            }}
+                                        />
+                                        
+                                        
+                                        <div className="absolute top-2 left-2 w-8 h-8 sm:w-10 sm:h-10 bg-blue-600/90 backdrop-blur-md text-white font-black text-sm sm:text-lg flex items-center justify-center rounded-xl shadow-lg border border-white/20 transform -rotate-6 group-hover:rotate-0 transition-transform">
+                                            #{globalIndex + 1}
+                                        </div>
+
+                                        {isHypervisor && (
+                                            <div className="absolute top-2 right-2 z-10 bg-red-600/90 backdrop-blur-md text-white font-black text-[10px] sm:text-xs px-2 py-1 rounded-lg shadow-lg border border-red-400/30 group-hover:scale-110 transition-transform">
+                                                HV
+                                            </div>
+                                        )}
+                                        
+                                        
+                                    </div>
+                                </motion.div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {totalPages > 1 && (
+                    <div className="p-4 sm:p-6 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-center items-center shrink-0">
+                        <div className="flex flex-wrap justify-center gap-1 sm:gap-2">
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
+                            >
+                                <Icon name="ChevronLeft" size={16} />
+                            </button>
+                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                let pageNum = i + 1;
+                                if (totalPages > 5 && currentPage > 3) {
+                                    pageNum = currentPage - 2 + i;
+                                    if (pageNum > totalPages) pageNum = totalPages - (4 - i);
+                                }
+                                return (
+                                    <button
+                                        key={pageNum}
+                                        onClick={() => setCurrentPage(pageNum)}
+                                        className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold transition-colors ${
+                                            currentPage === pageNum 
+                                                ? 'bg-blue-600 text-white shadow-md' 
+                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                        }`}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                );
+                            })}
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
+                            >
+                                <Icon name="ChevronRight" size={16} />
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </motion.div>
+        </motion.div>
+        )}
+        </AnimatePresence>,
+        document.body
+    );
+};
+
+const MostPopularRepacksSection: React.FC<{ 
+    gameIds: string[], 
+    allResources: Record<string, ResourceItem[]>,
+    onSelect: (item: ResourceItem) => void
+}> = ({ gameIds, allResources, onSelect }) => {
+    
+    const [displayCount, setDisplayCount] = useState(20);
+    const [showAllModal, setShowAllModal] = useState(false);
+
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth < 640) setDisplayCount(8);
+            else if (window.innerWidth < 1024) setDisplayCount(16);
+            else setDisplayCount(20);
+        };
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    // Find games based on IDs
+    const games = useMemo(() => {
+        const allItems = Object.values(allResources).flat();
+        return gameIds.map(id => allItems.find(i => String(i.id).toLowerCase() === String(id).toLowerCase())).filter(Boolean) as ResourceItem[];
+    }, [gameIds, allResources]);
+
+    if (!games || games.length === 0) return null;
+
+    const displayedGames = games.slice(0, displayCount);
+
+    return (
+        <>
+        <div className="mt-12 bg-white/50 dark:bg-slate-900/50 rounded-3xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 md:backdrop-blur-sm relative z-10 w-full overflow-hidden">
+            <div className="flex items-center justify-between mb-8">
+                <div>
+                    <h2 className="text-xl md:text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
+                        <Icon name="Trophy" className="text-yellow-500" /> Most Popular Repacks of the Year
+                    </h2>
+                    <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-2">Community favorite releases</p>
+                </div>
+            </div>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+                {displayedGames.map((game, index) => {
+                    const isHypervisor = game.category?.toLowerCase() === 'hypervisor';
+                    return (
+                        <motion.div 
+                            key={game.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: index * 0.05 }}
+                            className="relative group cursor-pointer"
+                            onClick={() => onSelect(game)}
+                        >
+                            <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-slate-200 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md transition-all duration-300 group-hover:-translate-y-2 group-hover:shadow-2xl group-hover:shadow-blue-500/20 group-hover:border-blue-500/50">
+                                <img 
+                                    src={game.image || game.coverImage || 'https://placehold.co/600x800/0f172a/334155?text=ENCRYPTED'} 
+                                    alt={game.name} 
+                                    className="w-full h-full object-cover transition-all duration-500 group-hover:brightness-110 saturate-100 group-hover:saturate-150"
+                                    onError={(e) => {
+                                        e.currentTarget.src = 'https://placehold.co/600x800/0f172a/334155?text=ENCRYPTED';
+                                    }}
+                                />
+                                
+                                
+                                {/* Dynamic Ranking Number */}
+                                <div className="absolute top-2 left-2 w-8 h-8 sm:w-10 sm:h-10 bg-blue-600/90 backdrop-blur-md text-white font-black text-sm sm:text-lg flex items-center justify-center rounded-xl shadow-lg border border-white/20 transform -rotate-6 group-hover:rotate-0 transition-transform">
+                                    #{index + 1}
+                                </div>
+
+                                {isHypervisor && (
+                                    <div className="absolute top-2 right-2 z-10 bg-red-600/90 backdrop-blur-md text-white font-black text-[10px] sm:text-xs px-2 py-1 rounded-lg shadow-lg border border-red-400/30 group-hover:scale-110 transition-transform">
+                                        HV
+                                    </div>
+                                )}
+                                
+                                
+                            </div>
+                        </motion.div>
+                    );
+                })}
+            </div>
+
+            {games.length > displayCount && (
+                <div className="mt-12 flex justify-center">
+                    <button 
+                        onClick={() => setShowAllModal(true)}
+                        className="group relative px-8 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black uppercase tracking-widest rounded-2xl transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(59,130,246,0.3)] flex items-center gap-3 overflow-hidden"
+                    >
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <span className="relative z-10 flex items-center gap-3 group-hover:text-white transition-colors duration-300">
+                            SEE MORE GAMES 
+                            <Icon name="ArrowRight" size={20} className="transform group-hover:translate-x-1 transition-transform" />
+                        </span>
+                    </button>
+                </div>
+            )}
+        </div>
+
+        <MostPopularRepacksModal 
+            isOpen={showAllModal}
+            games={games} 
+            onClose={() => setShowAllModal(false)} 
+            onSelect={(game) => {
+                setShowAllModal(false);
+                onSelect(game);
+            }} 
+        />
+        </>
+    );
+};
+
 const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
     const [currentPage, setCurrentPage] = useState(0);
     const ITEMS_PER_PAGE = 10;
@@ -3259,6 +3521,7 @@ const SecretArea: React.FC = () => {
   const [allResources, setAllResources] = useState<Record<string, ResourceItem[]>>({ game: [], hypervisor: [], steamtools: [], architect: [], extra: [] });
   const [companyProfiles, setCompanyProfiles] = useState<CompanyProfile[]>([]);
   const [topGames, setTopGames] = useState<TopGame[]>([]);
+  const [popularRepackIds, setPopularRepackIds] = useState<string[]>([]);
   
   const getResolvedDeveloper = (item: ResourceItem) => {
       if (item.developer && item.developer.trim()) return item.developer;
@@ -4102,6 +4365,27 @@ const SecretArea: React.FC = () => {
           setCompanyProfiles([]);
       }
 
+      // Handle Popular Repacks
+      const popularKey = Object.keys(data).find(k => k.toLowerCase().replace(/\s+/g, '').includes('popularrepack') || k.toLowerCase().replace(/\s+/g, '') === 'mostpopular');
+      if (popularKey && Array.isArray(data[popularKey])) {
+          const ids: string[] = [];
+          data[popularKey].forEach((row: any) => {
+             // Search all values in row for something that looks like an ID, or just extract the first column
+             // Sometimes users name columns 'id', 'game', 'hypervisor'
+             Object.values(row).forEach((val: any) => {
+                if (val && typeof val === 'string' && val.trim() !== '') {
+                    // split by comma if they put multiple
+                    val.split(',').forEach((v: string) => ids.push(v.trim()));
+                } else if (val && typeof val === 'number') {
+                    ids.push(String(val));
+                }
+             });
+          });
+          setPopularRepackIds(Array.from(new Set(ids)));
+      } else {
+          setPopularRepackIds([]);
+      }
+
       // Handle Top Games
       const topGamesKey = Object.keys(data).find(k => k.toLowerCase().replace(/\s+/g, '') === 'topgames');
       if (topGamesKey && Array.isArray(data[topGamesKey])) {
@@ -4132,7 +4416,7 @@ const SecretArea: React.FC = () => {
         let idPrefix = '';
         
         if (normalizedKey.includes('hypervisor')) { targetKey = 'hypervisor'; idPrefix = 'H'; }
-        else if (normalizedKey.includes('upcoming') || normalizedKey.includes('steamaccounts') || normalizedKey.includes('mastergift') || normalizedKey.includes('profil') || normalizedKey.includes('topgames')) { return; }
+        else if (normalizedKey.includes('upcoming') || normalizedKey.includes('steamaccounts') || normalizedKey.includes('mastergift') || normalizedKey.includes('profil') || normalizedKey.includes('topgames') || normalizedKey.includes('popularrepack')) { return; }
         else if (normalizedKey.includes('game') && !normalizedKey.includes('savegame')) { targetKey = 'game'; idPrefix = 'G'; }
         else if (normalizedKey.includes('steamtools')) { targetKey = 'steamtools'; idPrefix = 'S'; }
         else if (normalizedKey.includes('architect')) { targetKey = 'architect'; idPrefix = 'A'; }
@@ -5557,6 +5841,13 @@ const SecretArea: React.FC = () => {
           )}
         </div>
 
+        {['game', 'hypervisor', 'steamtools'].includes(activeTab) && (
+            <MostPopularRepacksSection 
+                gameIds={popularRepackIds}
+                allResources={allResources}
+                onSelect={setSelectedResource}
+            />
+        )}
         <div className="mt-8 mb-4 w-full flex justify-center">
             <AdBanner 
                 desktopSrc={AD_CONFIG.banner3.desktop} 
@@ -5628,29 +5919,27 @@ const SecretArea: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-          {showAllProfiles && (
-              <AllProfilesModal 
-                  profiles={companyProfiles}
-                  onClose={() => setShowAllProfiles(false)}
-                  onSelect={(profile) => {
-                      setShowAllProfiles(false);
-                      setSelectedCompanyProfile(profile);
-                  }}
-                  categoryType={['game', 'hypervisor', 'steamtools'].includes(activeTab) ? 'games' : 'tools'}
-              />
-          )}
-      </AnimatePresence>
+      <AllProfilesModal 
+          isOpen={showAllProfiles}
+          profiles={companyProfiles}
+          onClose={() => setShowAllProfiles(false)}
+          onSelect={(profile) => {
+              setShowAllProfiles(false);
+              setSelectedCompanyProfile(profile);
+          }}
+          categoryType={['game', 'hypervisor', 'steamtools'].includes(activeTab) ? 'games' : 'tools'}
+      />
     </div>
   );
 };
 
 const AllProfilesModal: React.FC<{
+    isOpen?: boolean,
     profiles: CompanyProfile[],
     onClose: () => void,
     onSelect: (profile: CompanyProfile) => void,
     categoryType: 'games' | 'tools'
-}> = ({ profiles, onClose, onSelect, categoryType }) => {
+}> = ({ isOpen = true, profiles, onClose, onSelect, categoryType }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const PROFILES_PER_PAGE = 30;
@@ -5684,19 +5973,22 @@ const AllProfilesModal: React.FC<{
         return filteredProfiles.slice(start, start + PROFILES_PER_PAGE);
     }, [filteredProfiles, currentPage]);
 
-    return (
-        <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-4"
-            onClick={onClose}
-        >
+    return createPortal(
+        <AnimatePresence>
+        {isOpen && (
+            <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-0"
+                onClick={onClose}
+            >
+
             <motion.div 
                 initial={{ scale: 0.9, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.9, y: 20 }}
-                className="bg-slate-50 dark:bg-slate-950 w-full h-full max-w-5xl max-h-[90vh] rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col"
+                className="bg-slate-50 dark:bg-slate-950 w-full h-full max-w-none max-h-none rounded-none overflow-hidden shadow-2xl border-none flex flex-col"
                 onClick={e => e.stopPropagation()}
             >
                 <div className="bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900/50 dark:to-indigo-900/50 p-4 sm:p-6 border-b border-blue-200 dark:border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 shrink-0 relative overflow-hidden">
@@ -5803,6 +6095,9 @@ const AllProfilesModal: React.FC<{
                 )}
             </motion.div>
         </motion.div>
+        )}
+        </AnimatePresence>,
+        document.body
     );
 };
 
