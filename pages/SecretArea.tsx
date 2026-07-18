@@ -395,7 +395,7 @@ const SteamAccountsModal: React.FC<{ open: boolean; onClose: () => void; account
                                         <div className="space-y-1">
                                             <label className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-[#8f98a0] uppercase tracking-wider">Password</label>
                                             <div className="flex items-center gap-2 bg-slate-50 dark:bg-[#171a21] p-2 rounded border border-slate-200 dark:border-[#2a475e] group-hover:border-[#66c0f4]/50 transition-colors">
-                                                <span className="text-xs sm:text-sm font-mono text-slate-900 dark:text-white truncate flex-1 select-all">{acc.password}</span>
+                                                <span className="text-xs sm:text-sm font-mono text-slate-900 dark:text-white truncate flex-1 select-none tracking-widest text-lg mt-1">••••••••</span>
                                                 <button 
                                                     onClick={() => handleCopy(acc.password, idx, 'pass')}
                                                     className="text-[#66c0f4] hover:text-blue-600 dark:hover:text-white p-1.5 rounded hover:bg-[#66c0f4]/20 transition-all shrink-0"
@@ -544,7 +544,7 @@ const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: 
                                                     <label className="text-[9px] font-black text-slate-500 dark:text-zinc-500 uppercase tracking-widest pl-1">Password</label>
                                                     <div className="flex items-center gap-2 bg-slate-50 dark:bg-zinc-950 p-2 rounded-lg border border-slate-200 dark:border-zinc-800 group-hover:border-violet-500/30 transition-colors">
                                                         <Icon name="Key" size={14} className="text-zinc-400 shrink-0 ml-1" />
-                                                        <span className="text-xs font-mono text-slate-900 dark:text-zinc-300 truncate flex-1 select-all">{acc.password}</span>
+                                                        <span className="text-xs font-mono text-slate-900 dark:text-zinc-300 truncate flex-1 select-none tracking-widest text-lg mt-1">••••••••</span>
                                                         <button 
                                                             onClick={() => handleCopy(acc.password, actualIndex, 'pass')}
                                                             className="text-violet-500 hover:text-white hover:bg-violet-600 p-1.5 rounded transition-colors shrink-0 flex items-center justify-center w-7 h-7"
