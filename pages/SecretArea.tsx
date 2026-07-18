@@ -20,8 +20,8 @@ const ITEMS_PER_PAGE = 12; // Show 12 items per page for laptop grid (4x3)
 // --- ADVERTISEMENT CONFIGURATION ---
 const AD_CONFIG = {
   banner1: {
-    desktop: "https://blogger.googleusercontent.com/img/a/AVvXsEg95Vnb1q5cwp-i2pRJWxjHixacYYgJXC1iNW9O_J7HpTSR5ksw8WRZS-yEiehfa8uvbQiv3cz17xQt0GW1a2G8F1WL6yuXmxelRJZsgcYEv1l9ISpUgvRiNudBO4bDeWUQLjWb-x6IWOU7lxdYVriWhGQyu9VvRxtBNytqC1wig6mXReJ0HZnC7e0un2Mg",
-    mobile: "https://blogger.googleusercontent.com/img/a/AVvXsEiRbYidxc8Z_POB5AqCuOsPq1LpMXpvmTnNXZpvbpBJ5TpCMDvdiohn1bU3EfivRxaemyHDG_DMaF0lo1RlM4GmmSO58ZjoEg3MRNL8qP8bHItMJlD3mMZsOadMipi2-CVQdmb40V7WtL5UCUDKqSuSbk9zyvFsMNZjDyisLv0oab6PtNC9KD74LoEwjEvq",
+    desktop: "https://blogger.googleusercontent.com/img/a/AVvXsEgCPA6tVcBH3S5v1Z8kuza6RZkU4xgxr8xmDfFTWXVe20XthTejclAyfpzC2XueH50MwmRFDlVIF5ZIRjBZeNqjgokoSxt9yv7DXICKl25yK2xiE5WaAPt5Qe-n80SlQjtByruEyvGpeo4txkhtEEIcjKnjV4iAFygZilgqiEfPxJqnjbGo88quaNiOjku7",
+    mobile: "https://blogger.googleusercontent.com/img/a/AVvXsEg0cECd44EYPreCyyRdRXdrtpVgQ4zhKzzTRdtiusek9QZ6nOVADqxzHsfsdEmEc2uWMAzaWMRsNXcpsI3cAOarcDnfXSrFyDXvfPQbMfsFsdWRVsv0S6ZcNPDc2GsNLQhv2x9K9ftA9bthdBDkYEkCt5styw5GuPQ1R6ig_ao0lDy_8F69e5bhdQ3Px3zo",
     link: "https://nexa1337.github.io/nexa1337"
   },
   banner2: {
@@ -2936,15 +2936,18 @@ const MostPopularRepacksModal: React.FC<{
         <AnimatePresence>
         {isOpen && (
             <motion.div 
+            key="most-popular-repacks-modal"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
             className="fixed inset-0 z-[9999] flex items-center justify-center p-0 bg-slate-900/90 backdrop-blur-md"
         >
             <motion.div 
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ duration: 0.3 }}
                 className="bg-white dark:bg-slate-900 w-full h-full max-w-none max-h-none rounded-none shadow-2xl flex flex-col overflow-hidden border-none"
             >
                 <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950 shrink-0">
