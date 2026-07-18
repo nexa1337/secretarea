@@ -1810,7 +1810,8 @@ const CompanyProfileModal: React.FC<{
   onClose: () => void;
   onItemClick: (item: ResourceItem) => void;
 }> = ({ profile, resources, onClose, onItemClick }) => {
-  const [activeCategory, setActiveCategory] = useState<string>('all');
+  const categories = useMemo(() => Array.from(new Set(resources.map(r => r.category))), [resources]);
+  const [activeCategory, setActiveCategory] = useState<string>(categories[0] || '');
   const [currentPage, setCurrentPage] = useState(1);
   const [imgError, setImgError] = useState(false);
   const itemsPerPage = 24;
@@ -1819,12 +1820,7 @@ const CompanyProfileModal: React.FC<{
     setImgError(false);
   }, [profile.logoUrl]);
 
-  const categories = Array.from(new Set(resources.map(r => r.category)));
-  categories.unshift('all');
-
-  const filteredResources = activeCategory === 'all' 
-      ? resources 
-      : resources.filter(r => r.category === activeCategory);
+  const filteredResources = resources.filter(r => r.category === activeCategory);
 
   const totalPages = Math.ceil(filteredResources.length / itemsPerPage) || 1;
   const currentItems = filteredResources.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -1838,7 +1834,7 @@ const CompanyProfileModal: React.FC<{
     >
       <div className="flex-none p-4 md:p-8 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 md:backdrop-blur-md">
         <div className="flex items-center gap-4 md:gap-6">
-          <div className="w-16 h-16 md:w-24 md:h-24 shrink-0 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex items-center justify-center p-2 relative group">
+          <div className="w-24 h-24 md:w-40 md:h-40 shrink-0 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md overflow-hidden flex items-center justify-center p-2 md:p-4 relative group">
              {!imgError && profile.logoUrl ? (
                <>
                  <img src={profile.logoUrl} alt={profile.name} referrerPolicy="no-referrer" className="w-full h-full object-contain" onError={() => setImgError(true)} />
@@ -1871,51 +1867,53 @@ const CompanyProfileModal: React.FC<{
                     : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-primary-500/50'
                  }`}
               >
-                 {cat === 'all' ? 'All Products' : (cat === 'steamtools' ? 'SteamTools' : cat)}
+                 {cat === 'steamtools' ? 'SteamTools' : cat}
                  <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded ${activeCategory === cat ? 'bg-black/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
-                     {cat === 'all' ? resources.length : resources.filter(r => r.category === cat).length}
+                     {resources.filter(r => r.category === cat).length}
                  </span>
               </button>
            ))}
         </div>
 
         {currentItems.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6 md:gap-8">
             {currentItems.map(item => (
                <div 
                   key={item.id} 
                   onClick={() => onItemClick(item)}
-                  className="group cursor-pointer bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden hover:border-primary-500 dark:hover:border-primary-500 transition-all shadow-sm hover:shadow-xl flex flex-col h-full"
+                  className="group cursor-pointer rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden hover:border-primary-500 dark:hover:border-primary-500 transition-all shadow-sm hover:shadow-xl relative aspect-[9/16]"
                >
-                  <div className="aspect-[9/16] bg-slate-100 dark:bg-slate-800 relative overflow-hidden shrink-0">
-                     <img src={item.coverImage} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"  loading="lazy" />
-                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                     <div className="absolute top-2 inset-x-2 flex justify-between items-start">
-                         <div className="bg-primary-600 text-white px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest shadow-md">
-                             {(item.category || '').toUpperCase()}
-                         </div>
-                         {item.version && (
-                             <div className="bg-slate-900/80 md:backdrop-blur-sm text-slate-200 border border-slate-700 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold shadow-md truncate ml-2">
-                                 {item.version}
+                  <img src={item.coverImage} alt={item.name} className="w-full h-full object-cover"  loading="lazy" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute top-2 inset-x-2 flex justify-between items-start">
+                     <div className="flex items-center gap-1">
+                         {item.category === 'hypervisor' && (
+                             <div className="bg-red-600 text-white px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest shadow-md">
+                                 HV
+                             </div>
+                         )}
+                         {item.category === 'steamtools' && (
+                             <div className="bg-[#171a21] text-[#66c0f4] p-1 rounded shadow-md border border-[#2a475e]">
+                                 <Icon name="BrandSteam" size={14} />
+                             </div>
+                         )}
+                         {item.category === 'game' && (
+                             <div className="bg-white p-0.5 rounded shadow-md w-6 h-6 flex items-center justify-center overflow-hidden">
+                                 <img src="https://fitgirl-repacks.site/wp-content/uploads/2016/08/icon.jpg" alt="FitGirl" className="w-full h-full object-cover rounded-sm" />
+                             </div>
+                         )}
+                         {/* Fallback if category is missing or different */}
+                         {!['hypervisor', 'steamtools', 'game'].includes(item.category) && (
+                             <div className="bg-primary-600 text-white px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest shadow-md">
+                                 {(item.category || '').toUpperCase()}
                              </div>
                          )}
                      </div>
-                  </div>
-                  <div className="p-3 flex-1 flex flex-col">
-                     <h4 className="font-bold text-slate-900 dark:text-white line-clamp-2 text-[11px] md:text-sm tracking-tight leading-tight group-hover:text-primary-500 transition-colors">{item.name}</h4>
-                     
-                     <div className="mt-auto pt-2 flex flex-wrap gap-1">
-                        {item.genres && (
-                           <span className="text-[9px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded truncate max-w-full">
-                               {item.genres.split(',')[0]}
-                           </span>
-                        )}
-                        {!item.genres && item.repackBy && (
-                           <span className="text-[9px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded truncate max-w-full">
-                               {item.repackBy}
-                           </span>
-                        )}
-                     </div>
+                     {item.version && (
+                         <div className="bg-slate-900/80 md:backdrop-blur-sm text-slate-200 border border-slate-700 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold shadow-md truncate ml-2">
+                             {item.version}
+                         </div>
+                     )}
                   </div>
                </div>
             ))}
