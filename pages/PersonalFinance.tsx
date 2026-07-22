@@ -1305,7 +1305,7 @@ const PersonalFinance: React.FC = () => {
                                     <div className="h-64 w-full bg-white dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700/50 flex flex-col" style={{ minHeight: '300px' }}>
                                         <h5 className="text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider mb-4 text-center">Salary Projection (2026-2035) • MAD vs USD</h5>
                                         <div style={{ width: '100%', height: '100%', minHeight: '200px' }}>
-                                            <ResponsiveContainer width="100%" height="100%">
+                                            <ResponsiveContainer width="100%" height="100%" minHeight={1} minWidth={1}>
                                                 <AreaChart data={ARCHVIZ_SALARY_DATA}>
                                                     <defs>
                                                         <linearGradient id="colorInt" x1="0" y1="0" x2="0" y2="1">
@@ -1372,7 +1372,7 @@ const PersonalFinance: React.FC = () => {
                                 <div className="h-64 w-full bg-white dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700/50 flex flex-col" style={{ minHeight: '300px' }}>
                                     <h5 className="text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider mb-4 text-center">Income Growth: Standard vs AI-Augmented ($/Mo)</h5>
                                     <div style={{ width: '100%', height: '100%', minHeight: '200px' }}>
-                                        <ResponsiveContainer width="100%" height="100%">
+                                        <ResponsiveContainer width="100%" height="100%" minHeight={1} minWidth={1}>
                                             <BarChart data={FREELANCE_GROWTH_DATA}>
                                                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                                                 <XAxis dataKey="year" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
@@ -1435,7 +1435,7 @@ const PersonalFinance: React.FC = () => {
                                 <div className="h-64 w-full bg-white dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700/50 flex flex-col" style={{ minHeight: '300px' }}>
                                     <h5 className="text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider mb-4 text-center">The Talent Gap: Global Demand vs. Supply Shortage</h5>
                                     <div style={{ width: '100%', height: '100%', minHeight: '200px' }}>
-                                        <ResponsiveContainer width="100%" height="100%">
+                                        <ResponsiveContainer width="100%" height="100%" minHeight={1} minWidth={1}>
                                             <AreaChart data={CYBERSEC_DEMAND_DATA}>
                                                 <defs>
                                                     <linearGradient id="colorDemand" x1="0" y1="0" x2="0" y2="1">
@@ -1537,7 +1537,7 @@ const PersonalFinance: React.FC = () => {
                                 <div className="h-64 w-full bg-white dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700/50 flex flex-col" style={{ minHeight: '300px' }}>
                                     <h5 className="text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider mb-4 text-center">Business Scaling: The Compound Effect</h5>
                                     <div style={{ width: '100%', height: '100%', minHeight: '200px' }}>
-                                        <ResponsiveContainer width="100%" height="100%">
+                                        <ResponsiveContainer width="100%" height="100%" minHeight={1} minWidth={1}>
                                             <AreaChart data={ONLINE_BIZ_SCALING_DATA}>
                                                 <defs>
                                                     <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">

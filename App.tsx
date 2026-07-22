@@ -6,12 +6,11 @@ import Header from './components/Header';
 import BottomNav from './components/BottomNav';
 import Footer from './components/Footer';
 
-// Lazy loaded pages to improve performance
-const Roadmap = lazy(() => import('./pages/Roadmap'));
-const CategoryDetail = lazy(() => import('./pages/CategoryDetail'));
-const SecretArea = lazy(() => import('./pages/SecretArea'));
-const PersonalFinance = lazy(() => import('./pages/PersonalFinance'));
-const Disclaimer = lazy(() => import('./pages/Disclaimer'));
+import Roadmap from './pages/Roadmap';
+import CategoryDetail from './pages/CategoryDetail';
+import SecretArea from './pages/SecretArea';
+import PersonalFinance from './pages/PersonalFinance';
+import Disclaimer from './pages/Disclaimer';
 
 // Logic to handle initial redirect and scrolling
 const AppBehavior = () => {

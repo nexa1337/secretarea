@@ -6,9 +6,11 @@ import { Link } from 'react-router-dom';
 import { GoogleGenAI } from "@google/genai";
 import Icon from '../components/Icon';
 import { CommentsSection } from '../components/CommentsSection';
+import { BestGameSeriesSection } from '../components/BestGameSeriesSection';
 import { DuaPopup } from '../components/DuaPopup';
 import { NetworkDiagnostic } from '../components/NetworkDiagnostic';
 import { FaFaceAngry } from 'react-icons/fa6';
+import backupData from '../data/backup_resources.json';
 
 // --- CONFIGURATION ---
 const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbx7nzBZc_tIhbAUK5OvOzgifGVzaVorzjn5OXNe8ENC0p7Pjia7O-u4WggxjRZipt4v/exec';
@@ -152,6 +154,13 @@ interface TopGame {
   bannerUrl: string;
   logoUrl: string;
   symbolUrl: string;
+}
+
+interface BestGameSeries {
+  id: string;
+  category: string;
+  images: string[];
+  title: string;
 }
 
 interface UpcomingGame {
@@ -1964,7 +1973,9 @@ const ResourceDetailModal: React.FC<{
   onCompanyClick?: (companyName: string) => void;
   onGenreClick?: (genre: string) => void;
   resolvedDev?: string;
-}> = ({ item, onClose, isHypervisor, stash, toggleStash, onCompanyClick, onGenreClick, resolvedDev }) => {
+  isGuestMode?: boolean;
+  showGuestNotification?: () => void;
+}> = ({ item, onClose, isHypervisor, stash, toggleStash, onCompanyClick, onGenreClick, resolvedDev, isGuestMode, showGuestNotification }) => {
   const [activeImage, setActiveImage] = useState(item.coverImage);
   const [showTrailer, setShowTrailer] = useState(false);
   const [translatedDesc, setTranslatedDesc] = useState<string | null>(null);
@@ -2412,6 +2423,12 @@ const ResourceDetailModal: React.FC<{
                                 href={TELEGRAM_LINK} 
                                 target="_blank" 
                                 rel="noreferrer" 
+                                onClick={(e) => {
+                                    if (isGuestMode) {
+                                        e.preventDefault();
+                                        showGuestNotification?.();
+                                    }
+                                }}
                                 className="col-span-1 md:col-span-2 group relative overflow-hidden bg-gradient-to-r from-[#229ED9] to-[#1D85B8] p-3 sm:p-5 rounded-xl shadow-lg shadow-[#229ED9]/20 hover:shadow-[#229ED9]/40 transition-all hover:-translate-y-1 active:scale-95"
                             >
                                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
@@ -2437,6 +2454,12 @@ const ResourceDetailModal: React.FC<{
                                 target="_blank" 
                                 rel="noreferrer" 
                                 onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (isGuestMode) {
+                                        e.preventDefault();
+                                        showGuestNotification?.();
+                                        return;
+                                    }
                                     if (['game', 'hypervisor'].includes(item.category?.toLowerCase())) {
                                         e.preventDefault();
                                         setShowQBitWarning(true);
@@ -2552,13 +2575,14 @@ const ResourceDetailModal: React.FC<{
       </motion.div>
       <AnimatePresence>
         {showHypervisorGuide && (
-          <HypervisorGuideModal open={showHypervisorGuide} onClose={() => setShowHypervisorGuide(false)} />
+          <HypervisorGuideModal key="hypervisor-guide" open={showHypervisorGuide} onClose={() => setShowHypervisorGuide(false)} />
         )}
         {noteModalContent && (
-          <NoteModal content={noteModalContent} onClose={() => setNoteModalContent(null)} />
+          <NoteModal key="note-modal" content={noteModalContent} onClose={() => setNoteModalContent(null)} />
         )}
         {showQBitWarning && (
           <motion.div
+            key="qbit-warning"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -2604,6 +2628,11 @@ const ResourceDetailModal: React.FC<{
                         rel="noreferrer"
                         onClick={(e) => {
                           e.stopPropagation();
+                          if (isGuestMode) {
+                              e.preventDefault();
+                              showGuestNotification?.();
+                              return;
+                          }
                           setShowQBitWarning(false);
                         }}
                         className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 flex items-center justify-center"
@@ -2638,6 +2667,11 @@ const ResourceDetailModal: React.FC<{
                         rel="noreferrer"
                         onClick={(e) => {
                           e.stopPropagation();
+                          if (isGuestMode) {
+                              e.preventDefault();
+                              showGuestNotification?.();
+                              return;
+                          }
                           setShowQBitWarning(false);
                           setTimeout(() => setQBitSuccess(false), 500);
                         }}
@@ -3511,17 +3545,31 @@ const BestStudiosCarousel: React.FC<{
 // --- MAIN PAGE COMPONENT ---
 
 const SecretArea: React.FC = () => {
-  const [isUnlocked, setIsUnlocked] = useState(() => localStorage.getItem('secret_area_unlocked') === 'true');
+  const [isUnlocked, setIsUnlocked] = useState(() => localStorage.getItem('secret_area_unlocked') === 'true' || localStorage.getItem('nexa_guest_mode') === 'true');
+  const [isGuestMode, setIsGuestMode] = useState(() => localStorage.getItem('nexa_guest_mode') === 'true');
   const [showHackerLoader, setShowHackerLoader] = useState(() => localStorage.getItem('secret_area_unlocked') === 'true');
   const [hackerProgress, setHackerProgress] = useState(0);
   const [terminalLines, setTerminalLines] = useState<string[]>([]);
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [imagesLoading, setImagesLoading] = useState(false);
+  const [imageProgress, setImageProgress] = useState(0);
+  
+  const loadingRef = useRef(loading);
+  useEffect(() => { loadingRef.current = loading; }, [loading]);
+  
+  const imagesLoadingRef = useRef(imagesLoading);
+  useEffect(() => { imagesLoadingRef.current = imagesLoading; }, [imagesLoading]);
+  
+  const imageProgressRef = useRef(imageProgress);
+  useEffect(() => { imageProgressRef.current = imageProgress; }, [imageProgress]);
+
   const [networkStatus, setNetworkStatus] = useState<{ quality: string | null, isTesting: boolean }>({ quality: null, isTesting: false });
   const [allResources, setAllResources] = useState<Record<string, ResourceItem[]>>({ game: [], hypervisor: [], steamtools: [], architect: [], extra: [] });
   const [companyProfiles, setCompanyProfiles] = useState<CompanyProfile[]>([]);
   const [topGames, setTopGames] = useState<TopGame[]>([]);
+  const [bestGameSeries, setBestGameSeries] = useState<BestGameSeries[]>([]);
   const [popularRepackIds, setPopularRepackIds] = useState<string[]>([]);
   
   const getResolvedDeveloper = (item: ResourceItem) => {
@@ -3574,6 +3622,19 @@ const SecretArea: React.FC = () => {
       }
     }
   }, []);
+
+  const showGuestNotification = () => {
+    const notifId = Date.now();
+    setNotifications(prev => [...prev, {
+        id: notifId,
+        title: '🔑 Access Denied - Guest Mode',
+        text: 'Please login with Secret Key To get Full Access. If you don\'t have a Secret Key, contact Admin from TikTok, Instagram, or Email.',
+        time: 'Just now'
+    }]);
+    setTimeout(() => {
+        setNotifications(prev => prev.filter(n => n.id !== notifId));
+    }, 8000);
+  };
 
   const toggleStash = (id: string, e?: React.MouseEvent) => {
     if (e) {
@@ -3681,9 +3742,22 @@ const SecretArea: React.FC = () => {
       } else if (cmd === 'Wolfspace') {
         newHistory.push({ type: 'success', text: 'Access Granted. Decrypting Area...' });
         setIsUnlocked(true);
+        setIsGuestMode(false);
         setShowHackerLoader(true);
         setHackerProgress(0);
         localStorage.setItem('secret_area_unlocked', 'true');
+        localStorage.setItem('nexa_guest_mode', 'false');
+        fetchData();
+        setFailedAttempts(0);
+        setTerminalMode('normal');
+      } else if (lowerCmd === 'guest') {
+        newHistory.push({ type: 'success', text: 'Guest Access Granted. Loading limited preview...' });
+        setIsUnlocked(true);
+        setIsGuestMode(true);
+        setShowHackerLoader(true);
+        setHackerProgress(0);
+        localStorage.setItem('secret_area_unlocked', 'guest');
+        localStorage.setItem('nexa_guest_mode', 'true');
         fetchData();
         setFailedAttempts(0);
         setTerminalMode('normal');
@@ -3717,6 +3791,7 @@ const SecretArea: React.FC = () => {
         newHistory.push({ type: 'info', text: '  [2] COMMS   : Contact Support' });
         newHistory.push({ type: 'info', text: '  [3] AUTH    : Enter Secret Code' });
         newHistory.push({ type: 'info', text: '  [4] NETWORK : Join Telegram' });
+        newHistory.push({ type: 'info', text: '  [5] GUEST   : Login as Guest' });
         newHistory.push({ type: 'info', text: '  clear       : Flush memory' });
         newHistory.push({ type: 'system', text: ' ' });
         newHistory.push({ type: 'success', text: '  💡 TIP: Type a number (e.g. "3") or a command and press ENTER.' });
@@ -3796,6 +3871,17 @@ const SecretArea: React.FC = () => {
         });
       } else if (lowerCmd === '3' || lowerCmd === 'auth') {
         setTerminalMode('password');
+      } else if (lowerCmd === '5') {
+        newHistory.push({ type: 'success', text: 'Guest Access Granted. Loading limited preview...' });
+        setIsUnlocked(true);
+        setIsGuestMode(true);
+        setShowHackerLoader(true);
+        setHackerProgress(0);
+        localStorage.setItem('secret_area_unlocked', 'guest');
+        localStorage.setItem('nexa_guest_mode', 'true');
+        fetchData();
+        setFailedAttempts(0);
+        setTerminalMode('normal');
       } else if (lowerCmd === 'clear') {
         setTerminalHistory([]);
         setTerminalCleared(true);
@@ -3804,9 +3890,20 @@ const SecretArea: React.FC = () => {
       } else if (lowerCmd === 'login wolfspace' || cmd === 'Wolfspace') {
         newHistory.push({ type: 'success', text: 'Access Granted. Decrypting Area...' });
         setIsUnlocked(true);
+        setIsGuestMode(false);
         setShowHackerLoader(true);
         setHackerProgress(0);
         localStorage.setItem('secret_area_unlocked', 'true');
+        localStorage.setItem('nexa_guest_mode', 'false');
+        fetchData();
+      } else if (lowerCmd === 'login guest' || lowerCmd === 'guest') {
+        newHistory.push({ type: 'success', text: 'Guest Access Granted. Loading limited preview...' });
+        setIsUnlocked(true);
+        setIsGuestMode(true);
+        setShowHackerLoader(true);
+        setHackerProgress(0);
+        localStorage.setItem('secret_area_unlocked', 'guest');
+        localStorage.setItem('nexa_guest_mode', 'true');
         fetchData();
       } else {
         newHistory.push({ type: 'error', text: `Command not found: ${cmd}. Type "help" for options.` });
@@ -4010,8 +4107,8 @@ const SecretArea: React.FC = () => {
         "BYPASSING FIREWALL...",
         "ACCESS GRANTED.",
         "DECRYPTING AREA CONTENTS...",
+        "FETCHING CLOUD DATA...",
         "SYNCING ASSETS...",
-        "VERIFYING CHECKSUMS...",
         "FINALIZING..."
       ];
       let lineIndex = 0;
@@ -4020,21 +4117,19 @@ const SecretArea: React.FC = () => {
         setHackerProgress(prev => {
           let nextProgress = prev;
           
-          if (loading && prev >= 90) {
-            nextProgress = 90;
-          } else if (prev >= 100) {
-            clearInterval(interval);
-            setTimeout(() => setShowHackerLoader(false), 1200);
-            nextProgress = 100;
-          } else if (!loading && prev >= 90) {
-            nextProgress = Math.min(100, prev + 5);
-          } else {
-            nextProgress = Math.min(100, prev + Math.floor(Math.random() * 15) + 5);
+          if (loadingRef.current) {
+            nextProgress = Math.min(30, prev + Math.floor(Math.random() * 5) + 2);
+          } else if (imagesLoadingRef.current) {
+            const mappedProgress = 30 + Math.floor(imageProgressRef.current * 0.69);
+            nextProgress = Math.max(prev, mappedProgress);
+          } else if (!loadingRef.current && !imagesLoadingRef.current) {
+            nextProgress = Math.min(100, prev + 15);
           }
 
           if (nextProgress > lineIndex * 12 && lineIndex < lines.length) {
+            const currentLine = lines[lineIndex];
             setTerminalLines(current => {
-              const newLines = [...current, `> ${lines[lineIndex]}`];
+              const newLines = [...current, `> ${currentLine}`];
               return newLines.slice(-4); // Keep only last 4 lines
             });
             lineIndex++;
@@ -4047,13 +4142,19 @@ const SecretArea: React.FC = () => {
             });
             lineIndex++;
           }
+          
+          if (prev >= 100 && lineIndex > lines.length) {
+            clearInterval(interval);
+            setTimeout(() => setShowHackerLoader(false), 1000);
+            return 100;
+          }
 
           return nextProgress;
         });
       }, 150);
       return () => clearInterval(interval);
     }
-  }, [showHackerLoader, loading]);
+  }, [showHackerLoader]);
 
   const handleCloseDisclaimer = () => {
     setShowDisclaimer(false);
@@ -4220,12 +4321,372 @@ const SecretArea: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const processRawData = (data: any) => {
+    const formatPlatformDisplay = (platformStr: string) => {
+      const p = platformStr.toLowerCase().trim();
+      if (p.includes('pc') || p.includes('win')) return 'PC';
+      if (p.includes('ps5')) return 'PS5';
+      if (p.includes('ps4')) return 'PS4';
+      if (p.includes('xbox')) return 'Xbox Series X';
+      if (p.includes('vita')) return 'PS Vita';
+      return platformStr;
+    };
+
+    const getPlatformIcon = (platformStr: string) => {
+      const p = platformStr.toLowerCase().trim();
+      if (p.includes('pc') || p.includes('win')) return 'BrandWindows';
+      if (p.includes('playstation') || p.includes('ps')) return 'BrandPlaystation';
+      if (p.includes('xbox')) return 'BrandXbox';
+      return 'Gamepad2';
+    };
+
+    const upcomingKey = Object.keys(data).find(k => k.toLowerCase() === 'upcoming');
+    if (!upcomingKey) {
+        setIsUpcomingMissing(true);
+        setUpcomingGames([]);
+    } else if (Array.isArray(data[upcomingKey])) {
+       const mappedUpcoming: UpcomingGame[] = data[upcomingKey].map((item: any, index: number) => ({
+           id: `ug-${index}`,
+           title: item.name || item.title || 'Untitled',
+           image: item.image || item.coverImage || 'https://placehold.co/600x800/0f172a/334155?text=ENCRYPTED',
+           platform: formatPlatformDisplay(item.platform || 'TBA'),
+           price: item.price || 'TBA',
+           icon: getPlatformIcon(item.platform || ''),
+           dateAdded: item.date || item.timestamp || item.dateAdded || item.updated || ''
+       }));
+       setUpcomingGames(mappedUpcoming);
+    } else {
+       setUpcomingGames([]);
+    }
+
+    // Handle Upcoming Lists
+    const upcomingListKey = Object.keys(data).find(k => k.toLowerCase() === 'upcominglist');
+    if (upcomingListKey && Array.isArray(data[upcomingListKey])) {
+        const newLists: { [key: string]: string[] } = {
+            game: [],
+            hypervisor: [],
+            steamtools: [],
+            tools: [],
+            savegames: []
+        };
+        data[upcomingListKey].forEach((row: any) => {
+            const rowKeys = Object.keys(row);
+            Object.keys(newLists).forEach(category => {
+                const matchingKey = rowKeys.find(k => k.toLowerCase().replace(/\s+/g, '') === category);
+                if (matchingKey) {
+                    const val = row[matchingKey];
+                    if (val && typeof val === 'string' && val.trim() !== '') {
+                        newLists[category].unshift(val.trim());
+                    }
+                }
+            });
+        });
+        setUpcomingLists(newLists);
+    } else {
+        setUpcomingLists({
+            game: [],
+            hypervisor: [],
+            steamtools: [],
+            tools: [],
+            savegames: []
+        });
+    }
+
+    // Handle Steam Accounts with robust header normalization
+    const steamKey = Object.keys(data).find(k => k.toLowerCase() === 'steamaccounts');
+    if (steamKey && Array.isArray(data[steamKey])) {
+        setSteamAccounts(data[steamKey].map((raw: any) => {
+            const findByPrefix = (prefix: string) => {
+                const key = Object.keys(raw).find(k => k.toLowerCase().trim().startsWith(prefix.toLowerCase()));
+                return key ? raw[key] : undefined;
+            };
+
+            return {
+                username: findByPrefix('username') || '',
+                password: findByPrefix('password') || '',
+                games: findByPrefix('games') || '',
+                status: findByPrefix('status') || 'Online'
+            };
+        }));
+    } else {
+        setSteamAccounts([]);
+    }
+
+    // Handle Master Gift Accounts
+    const masterGiftKey = Object.keys(data).find(k => k.toLowerCase().replace(/\s+/g, '') === 'mastergift');
+    if (masterGiftKey && Array.isArray(data[masterGiftKey])) {
+        setMasterGifts(data[masterGiftKey].map((raw: any) => {
+            const findByPrefix = (prefix: string) => {
+                const key = Object.keys(raw).find(k => k.toLowerCase().trim().startsWith(prefix.toLowerCase()));
+                return key ? raw[key] : undefined;
+            };
+            return {
+                name: findByPrefix('name') || 'Unknown',
+                url: findByPrefix('url') || findByPrefix('link') || '',
+                logo: findByPrefix('logo') || findByPrefix('image') || '',
+                email: findByPrefix('email') || findByPrefix('user') || '',
+                password: findByPrefix('password') || findByPrefix('pass') || '',
+                status: findByPrefix('status') || 'Online'
+            };
+        }));
+    } else {
+        setMasterGifts([]);
+    }
+
+    // Handle Company Profiles
+    const profilKey = Object.keys(data).find(k => {
+        const lowerK = k.toLowerCase().trim();
+        return lowerK === 'profil' || lowerK === 'profile' || lowerK === 'profiles' || lowerK === 'company';
+    });
+    if (profilKey && Array.isArray(data[profilKey])) {
+        const profiles: CompanyProfile[] = data[profilKey].map((row: any, idx: number) => {
+           const getVal = (key: string) => {
+              const normalizedSearchKey = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+              const foundKey = Object.keys(row).find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedSearchKey);
+              return foundKey ? row[foundKey] : '';
+           };
+           return {
+               id: row.id || `profile-${idx}`,
+               name: getVal('name') || getVal('company') || getVal('studio') || getVal('developer') || 'Unknown Company',
+               logoUrl: getVal('logourl') || getVal('logo') || getVal('image') || getVal('icon') || '',
+               description: getVal('description') || getVal('info') || '',
+               gameIds: (getVal('gamesid') || getVal('gameids') || getVal('gameid') || '').toString().split(',').map(s => s.trim()).filter(Boolean),
+               hypervisorIds: (getVal('hypervisionid') || getVal('hypervisorid') || getVal('hypervisorids') || '').toString().split(',').map(s => s.trim()).filter(Boolean),
+               steamtoolsIds: (getVal('steamtoolsid') || getVal('steamtoolsids') || '').toString().split(',').map(s => s.trim()).filter(Boolean),
+               architectIds: (getVal('toolsid') || getVal('architectids') || getVal('architectid') || '').toString().split(',').map(s => s.trim()).filter(Boolean)
+           };
+        });
+        setCompanyProfiles(profiles);
+    } else {
+        setCompanyProfiles([]);
+    }
+
+    // Handle Popular Repacks
+    const popularKey = Object.keys(data).find(k => k.toLowerCase().replace(/\s+/g, '').includes('popularrepack') || k.toLowerCase().replace(/\s+/g, '') === 'mostpopular');
+    if (popularKey && Array.isArray(data[popularKey])) {
+        const ids: string[] = [];
+        data[popularKey].forEach((row: any) => {
+           Object.values(row).forEach((val: any) => {
+              if (val && typeof val === 'string' && val.trim() !== '') {
+                  val.split(',').forEach((v: string) => ids.push(v.trim()));
+              } else if (val && typeof val === 'number') {
+                  ids.push(String(val));
+              }
+           });
+        });
+        setPopularRepackIds(Array.from(new Set(ids)));
+    } else {
+        setPopularRepackIds([]);
+    }
+
+    // Handle Top Games
+    const topGamesKey = Object.keys(data).find(k => k.toLowerCase().replace(/\s+/g, '') === 'topgames');
+    if (topGamesKey && Array.isArray(data[topGamesKey])) {
+        const topGamesList: TopGame[] = data[topGamesKey].map((row: any, idx: number) => {
+           const getVal = (keyStr: string) => {
+              const normalizedSearchKey = keyStr.toLowerCase().replace(/[^a-z0-9]/g, '');
+              const foundKey = Object.keys(row).find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedSearchKey);
+              return foundKey ? row[foundKey] : '';
+           };
+           return {
+               id: row.id || `topgame-${idx}`,
+               rank: Number(getVal('rank') || idx + 1),
+               name: getVal('name') || getVal('gamename') || getVal('title') || 'Unknown Game',
+               bannerUrl: getVal('bannerurl') || getVal('banner') || getVal('image') || '',
+               logoUrl: getVal('logourl') || getVal('logo') || '',
+               symbolUrl: getVal('symbolurl') || getVal('symbol') || getVal('icon') || ''
+           };
+        }).sort((a: TopGame, b: TopGame) => a.rank - b.rank);
+        setTopGames(topGamesList);
+    } else {
+        setTopGames([]);
+    }
+
+    // Handle Best Game Series
+    const bestGameSeriesKey = Object.keys(data).find(k => k.toLowerCase().replace(/\s+/g, '') === 'bestgameseries');
+    if (bestGameSeriesKey && Array.isArray(data[bestGameSeriesKey])) {
+        const seriesList: BestGameSeries[] = data[bestGameSeriesKey].map((row: any, idx: number) => {
+           const getVal = (keyStr: string) => {
+              const normalizedSearchKey = keyStr.toLowerCase().replace(/[^a-z0-9]/g, '');
+              const foundKey = Object.keys(row).find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedSearchKey);
+              return foundKey ? row[foundKey] : '';
+           };
+           
+           const gamesRaw = (getVal('games') || getVal('gamelist') || '').toString().split(/[,\n\|]/).map((s: string) => s.trim()).filter(Boolean);
+           const bestGamesRaw = (getVal('bestgame') || getVal('bestgames') || getVal('best') || '').toString().split(/[,\n\|]/).map((s: string) => s.trim().toLowerCase()).filter(Boolean);
+           
+           const parsedGames = gamesRaw.map((g: string) => {
+               const lowerG = g.toLowerCase();
+               const isExplicitlyBest = lowerG.endsWith('(best)') || lowerG.endsWith('[best]');
+               const cleanName = isExplicitlyBest ? g.substring(0, g.length - 6).trim() : g;
+               
+               return {
+                   name: cleanName,
+                   isBest: isExplicitlyBest || bestGamesRaw.includes(cleanName.toLowerCase()) || bestGamesRaw.includes(g.toLowerCase())
+               };
+           });
+
+           return {
+               id: row.id || `series-${idx}`,
+               category: getVal('categories') || getVal('category') || '',
+               images: (getVal('images') || getVal('image') || '').toString().split(/[,\n\|]/).map((s: string) => s.trim()).filter(Boolean),
+               title: getVal('title') || getVal('name') || '',
+               background: getVal('background') || getVal('bg') || getVal('bgurl') || '',
+               games: parsedGames
+           };
+        });
+        setBestGameSeries(seriesList);
+    } else {
+        setBestGameSeries([]);
+    }
+
+    const transformed: Record<string, ResourceItem[]> = { game: [], hypervisor: [], steamtools: [], architect: [], extra: [] };
+    Object.keys(data).forEach(tabKey => {
+      const normalizedKey = tabKey.toLowerCase();
+      let targetKey = '';
+      let idPrefix = '';
+      
+      if (normalizedKey.includes('hypervisor')) { targetKey = 'hypervisor'; idPrefix = 'H'; }
+      else if (normalizedKey.includes('upcoming') || normalizedKey.includes('steamaccounts') || normalizedKey.includes('mastergift') || normalizedKey.includes('profil') || normalizedKey.includes('topgames') || normalizedKey.includes('popularrepack') || normalizedKey.includes('bestgameseries')) { return; }
+      else if (normalizedKey.includes('game') && !normalizedKey.includes('savegame')) { targetKey = 'game'; idPrefix = 'G'; }
+      else if (normalizedKey.includes('steamtools')) { targetKey = 'steamtools'; idPrefix = 'S'; }
+      else if (normalizedKey.includes('architect')) { targetKey = 'architect'; idPrefix = 'A'; }
+      else if (normalizedKey.includes('extra') || normalizedKey.includes('savegame')) { targetKey = 'extra'; idPrefix = 'E'; }
+
+      if (targetKey && transformed.hasOwnProperty(targetKey)) {
+        const newItems = data[tabKey].map((row: any, idx: number) => {
+          const getVal = (key: string) => {
+              const normalizedSearchKey = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+              const foundKey = Object.keys(row).find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedSearchKey);
+              return foundKey ? row[foundKey] : '';
+          };
+          
+          const reqsStr = getVal('requirements');
+          const reqs = (reqsStr || '').toString().split('|').map((s: string) => {
+            const parts = s.split(':');
+            return { 
+              label: parts[0]?.trim() || 'Info', 
+              value: parts[1]?.trim() || 'N/A', 
+              icon: parts[2]?.trim() || 'Box',
+              link: parts[3]?.trim() || undefined
+            };
+          }).filter((r: any) => r.value && r.value !== 'N/A');
+
+          const steps = (getVal('steps') || '').toString().split('|').map((s: string) => s.trim()).filter((s: string) => s);
+          const gallery = (getVal('gallery') || '').toString().split('|').map((s: string) => s.trim()).filter((s: string) => s && s.startsWith('http'));
+          const toolsParsed = (getVal('tools') || '').toString().split('|').map((s: string) => {
+              const parts = s.split('^');
+              return { name: parts[0]?.trim(), url: parts[1]?.trim() };
+          }).filter((t: any) => t.name && t.url);
+
+          const partsArr: { id: number, link: string, note?: string }[] = [];
+          const mirrorsArr: { id: number, link: string, note?: string }[] = [];
+          for (let i = 1; i <= 20; i++) {
+              let pVal = getVal(`part${i}`);
+              let pNote = getVal(`partNote${i}`) || getVal(`note${i}`);
+              
+              const extractNote = (val: string) => {
+                  if (!val) return { link: '', note: '' };
+                  val = val.trim();
+                  if (val.includes('|')) {
+                      const parts = val.split('|');
+                      return { link: parts[0].trim(), note: parts[1].trim() };
+                  }
+                  
+                  const singleQuoteMatch = val.match(/^(.*?)\s+'([^']+)'\s*$/);
+                  if (singleQuoteMatch) {
+                      return { link: singleQuoteMatch[1].trim(), note: singleQuoteMatch[2].trim() };
+                  }
+                  
+                  const quoteMatch = val.match(/^(.*?)\s+"([^"]+)"\s*$/);
+                  if (quoteMatch) {
+                      return { link: quoteMatch[1].trim(), note: quoteMatch[2].trim() };
+                  }
+
+                  const parenMatch = val.match(/^(.*?)\s+\(([^)]+)\)\s*$/);
+                  if (parenMatch) {
+                      return { link: parenMatch[1].trim(), note: parenMatch[2].trim() };
+                  }
+
+                  return { link: val.trim(), note: '' };
+              };
+
+              if (pVal) {
+                  const extracted = extractNote(pVal);
+                  pVal = extracted.link;
+                  if (extracted.note) pNote = extracted.note;
+              }
+
+              let mVal = getVal(`mirror${i}`);
+              let mNote = getVal(`mirrorNote${i}`);
+
+              if (mVal) {
+                  const extracted = extractNote(mVal);
+                  mVal = extracted.link;
+                  if (extracted.note) mNote = extracted.note;
+              }
+
+              if (pVal) partsArr.push({ id: i, link: pVal, note: pNote });
+              if (mVal) mirrorsArr.push({ id: i, link: mVal, note: mNote });
+          }
+
+          const isPinnedRaw = getVal('pinned');
+          const isFreeRaw = getVal('price') || getVal('isfree') || getVal('free');
+
+          return {
+            id: `${idPrefix}${row.id || (idx + 1)}`,
+            category: targetKey,
+            name: getVal('name') || 'Secure Fragment',
+            version: getVal('version') || 'v1.0',
+            repackSize: getVal('repackSize') || 'N/A',
+            originalSize: getVal('originalSize') || 'N/A',
+            genres: getVal('genres') || '',
+            languages: getVal('languages') || 'ENG',
+            repackBy: getVal('repackBy') || 'NEXA',
+            developer: getVal('developer') || getVal('studio') || getVal('company') || '',
+            coverImage: getVal('coverImage') || 'https://placehold.co/600x800/0f172a/334155?text=ENCRYPTED',
+            galleryImages: gallery,
+            description: getVal('description') || 'No intel available.',
+            gameId: getVal('gameId') || '',
+            ratingPositive: getVal('ratingPositive') || '',
+            ratingNegative: getVal('ratingNegative') || '',
+            dateAdded: getVal('date') || getVal('timestamp') || getVal('dateAdded') || getVal('updated') || getVal('time') || getVal('created') || '',
+            hasDenuvo: String(getVal('denuvo')).toLowerCase() === 'true',
+            hasExternalLauncher: String(getVal('launcher')).toLowerCase() === 'true',
+            systemReqs: reqs,
+            installSteps: steps,
+            isPinned: String(isPinnedRaw).toLowerCase() === 'true' || String(isPinnedRaw).toLowerCase() === 'yes' || String(isPinnedRaw).toLowerCase() === 'on',
+            isFree: String(isFreeRaw).toLowerCase() === 'true' || String(isFreeRaw).toLowerCase() === 'yes' || String(isFreeRaw).toLowerCase() === 'free' || String(isFreeRaw) === '0',
+            toolsNeeded: toolsParsed,
+            links: { 
+              parts: partsArr,
+              mirrors: mirrorsArr,
+              full: getVal('full'), 
+              fullNote: getVal('fullNote') || getVal('note'),
+              tutorial: getVal('tutorial'), 
+              dlc: getVal('dlc'), 
+              trailer: getVal('trailer')
+            }
+          };
+        }).reverse();
+        transformed[targetKey] = [...transformed[targetKey], ...newItems];
+      }
+    });
+    
+    setAllResources(transformed);
+  };
+
   const fetchData = async (silent = false) => {
     if (!isUnlocked) return;
     if (!silent) setLoading(true);
+    if (!silent && showHackerLoader) {
+        setImagesLoading(true);
+        setImageProgress(0);
+    }
     setError(null);
     setIsUpcomingMissing(false);
     setScriptError(false);
+    let dataToPreload = null;
 
     try {
       const response = await fetch(API_ENDPOINT, {
@@ -4244,335 +4705,109 @@ const SecretArea: React.FC = () => {
           throw new Error("Google Script is down or returned invalid data. Please check code.gs deployment.");
       }
       
-      const upcomingKey = Object.keys(data).find(k => k.toLowerCase() === 'upcoming');
-      if (!upcomingKey) {
-          setIsUpcomingMissing(true);
-          setUpcomingGames([]);
-      } else if (Array.isArray(data[upcomingKey])) {
-         const mappedUpcoming: UpcomingGame[] = data[upcomingKey].map((item: any, index: number) => ({
-             id: `ug-${index}`,
-             title: item.name || item.title || 'Untitled',
-             image: item.image || item.coverImage || 'https://placehold.co/600x800/0f172a/334155?text=ENCRYPTED',
-             platform: formatPlatformDisplay(item.platform || 'TBA'),
-             price: item.price || 'TBA',
-             icon: getPlatformIcon(item.platform || ''),
-             dateAdded: item.date || item.timestamp || item.dateAdded || item.updated || ''
-         }));
-         setUpcomingGames(mappedUpcoming);
-      } else {
-         setUpcomingGames([]);
+      processRawData(data);
+      dataToPreload = data;
+      // Cache the loaded data in localStorage
+      try {
+        localStorage.setItem('cached_secret_resources', JSON.stringify(data));
+      } catch (cacheErr) {
+        console.warn("Writing to cache failed:", cacheErr);
       }
-
-      // Handle Upcoming Lists
-      const upcomingListKey = Object.keys(data).find(k => k.toLowerCase() === 'upcominglist');
-      if (upcomingListKey && Array.isArray(data[upcomingListKey])) {
-          const newLists: { [key: string]: string[] } = {
-              game: [],
-              hypervisor: [],
-              steamtools: [],
-              tools: [],
-              savegames: []
-          };
-          data[upcomingListKey].forEach((row: any) => {
-              const rowKeys = Object.keys(row);
-              Object.keys(newLists).forEach(category => {
-                  const matchingKey = rowKeys.find(k => k.toLowerCase().replace(/\s+/g, '') === category);
-                  if (matchingKey) {
-                      const val = row[matchingKey];
-                      if (val && typeof val === 'string' && val.trim() !== '') {
-                          newLists[category].unshift(val.trim());
-                      }
-                  }
-              });
-          });
-          setUpcomingLists(newLists);
-      } else {
-          setUpcomingLists({
-              game: [],
-              hypervisor: [],
-              steamtools: [],
-              tools: [],
-              savegames: []
-          });
-      }
-
-      // Handle Steam Accounts with robust header normalization
-      const steamKey = Object.keys(data).find(k => k.toLowerCase() === 'steamaccounts');
-      if (steamKey && Array.isArray(data[steamKey])) {
-          setSteamAccounts(data[steamKey].map((raw: any) => {
-              // Extract values by checking keys that start with the intended name
-              const findByPrefix = (prefix: string) => {
-                  const key = Object.keys(raw).find(k => k.toLowerCase().trim().startsWith(prefix.toLowerCase()));
-                  return key ? raw[key] : undefined;
-              };
-
-              return {
-                  username: findByPrefix('username') || '',
-                  password: findByPrefix('password') || '',
-                  games: findByPrefix('games') || '',
-                  status: findByPrefix('status') || 'Online'
-              };
-          }));
-      } else {
-          setSteamAccounts([]);
-      }
-
-      // Handle Master Gift Accounts
-      const masterGiftKey = Object.keys(data).find(k => k.toLowerCase().replace(/\s+/g, '') === 'mastergift');
-      if (masterGiftKey && Array.isArray(data[masterGiftKey])) {
-          setMasterGifts(data[masterGiftKey].map((raw: any) => {
-              const findByPrefix = (prefix: string) => {
-                  const key = Object.keys(raw).find(k => k.toLowerCase().trim().startsWith(prefix.toLowerCase()));
-                  return key ? raw[key] : undefined;
-              };
-              return {
-                  name: findByPrefix('name') || 'Unknown',
-                  url: findByPrefix('url') || findByPrefix('link') || '',
-                  logo: findByPrefix('logo') || findByPrefix('image') || '',
-                  email: findByPrefix('email') || findByPrefix('user') || '',
-                  password: findByPrefix('password') || findByPrefix('pass') || '',
-                  status: findByPrefix('status') || 'Online'
-              };
-          }));
-      } else {
-          setMasterGifts([]);
-      }
-
-      // Handle Company Profiles
-      const profilKey = Object.keys(data).find(k => {
-          const lowerK = k.toLowerCase().trim();
-          return lowerK === 'profil' || lowerK === 'profile' || lowerK === 'profiles' || lowerK === 'company';
-      });
-      if (profilKey && Array.isArray(data[profilKey])) {
-          const profiles: CompanyProfile[] = data[profilKey].map((row: any, idx: number) => {
-             const getVal = (key: string) => {
-                const normalizedSearchKey = key.toLowerCase().replace(/[^a-z0-9]/g, '');
-                const foundKey = Object.keys(row).find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedSearchKey);
-                return foundKey ? row[foundKey] : '';
-             };
-             return {
-                 id: row.id || `profile-${idx}`,
-                 name: getVal('name') || getVal('company') || getVal('studio') || getVal('developer') || 'Unknown Company',
-                 logoUrl: getVal('logourl') || getVal('logo') || getVal('image') || getVal('icon') || '',
-                 description: getVal('description') || getVal('info') || '',
-                 gameIds: (getVal('gamesid') || getVal('gameids') || getVal('gameid') || '').toString().split(',').map(s => s.trim()).filter(Boolean),
-                 hypervisorIds: (getVal('hypervisionid') || getVal('hypervisorid') || getVal('hypervisorids') || '').toString().split(',').map(s => s.trim()).filter(Boolean),
-                 steamtoolsIds: (getVal('steamtoolsid') || getVal('steamtoolsids') || '').toString().split(',').map(s => s.trim()).filter(Boolean),
-                 architectIds: (getVal('toolsid') || getVal('architectids') || getVal('architectid') || '').toString().split(',').map(s => s.trim()).filter(Boolean)
-             };
-          });
-          setCompanyProfiles(profiles);
-      } else {
-          setCompanyProfiles([]);
-      }
-
-      // Handle Popular Repacks
-      const popularKey = Object.keys(data).find(k => k.toLowerCase().replace(/\s+/g, '').includes('popularrepack') || k.toLowerCase().replace(/\s+/g, '') === 'mostpopular');
-      if (popularKey && Array.isArray(data[popularKey])) {
-          const ids: string[] = [];
-          data[popularKey].forEach((row: any) => {
-             // Search all values in row for something that looks like an ID, or just extract the first column
-             // Sometimes users name columns 'id', 'game', 'hypervisor'
-             Object.values(row).forEach((val: any) => {
-                if (val && typeof val === 'string' && val.trim() !== '') {
-                    // split by comma if they put multiple
-                    val.split(',').forEach((v: string) => ids.push(v.trim()));
-                } else if (val && typeof val === 'number') {
-                    ids.push(String(val));
-                }
-             });
-          });
-          setPopularRepackIds(Array.from(new Set(ids)));
-      } else {
-          setPopularRepackIds([]);
-      }
-
-      // Handle Top Games
-      const topGamesKey = Object.keys(data).find(k => k.toLowerCase().replace(/\s+/g, '') === 'topgames');
-      if (topGamesKey && Array.isArray(data[topGamesKey])) {
-          const topGamesList: TopGame[] = data[topGamesKey].map((row: any, idx: number) => {
-             const getVal = (keyStr: string) => {
-                const normalizedSearchKey = keyStr.toLowerCase().replace(/[^a-z0-9]/g, '');
-                const foundKey = Object.keys(row).find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedSearchKey);
-                return foundKey ? row[foundKey] : '';
-             };
-             return {
-                 id: row.id || `topgame-${idx}`,
-                 rank: Number(getVal('rank') || idx + 1),
-                 name: getVal('name') || getVal('gamename') || getVal('title') || 'Unknown Game',
-                 bannerUrl: getVal('bannerurl') || getVal('banner') || getVal('image') || '',
-                 logoUrl: getVal('logourl') || getVal('logo') || '',
-                 symbolUrl: getVal('symbolurl') || getVal('symbol') || getVal('icon') || ''
-             };
-          }).sort((a: TopGame, b: TopGame) => a.rank - b.rank);
-          setTopGames(topGamesList);
-      } else {
-          setTopGames([]);
-      }
-
-      const transformed: Record<string, ResourceItem[]> = { game: [], hypervisor: [], steamtools: [], architect: [], extra: [] };
-      Object.keys(data).forEach(tabKey => {
-        const normalizedKey = tabKey.toLowerCase();
-        let targetKey = '';
-        let idPrefix = '';
-        
-        if (normalizedKey.includes('hypervisor')) { targetKey = 'hypervisor'; idPrefix = 'H'; }
-        else if (normalizedKey.includes('upcoming') || normalizedKey.includes('steamaccounts') || normalizedKey.includes('mastergift') || normalizedKey.includes('profil') || normalizedKey.includes('topgames') || normalizedKey.includes('popularrepack')) { return; }
-        else if (normalizedKey.includes('game') && !normalizedKey.includes('savegame')) { targetKey = 'game'; idPrefix = 'G'; }
-        else if (normalizedKey.includes('steamtools')) { targetKey = 'steamtools'; idPrefix = 'S'; }
-        else if (normalizedKey.includes('architect')) { targetKey = 'architect'; idPrefix = 'A'; }
-        else if (normalizedKey.includes('extra') || normalizedKey.includes('savegame')) { targetKey = 'extra'; idPrefix = 'E'; }
-
-        if (targetKey && transformed.hasOwnProperty(targetKey)) {
-          transformed[targetKey] = data[tabKey].map((row: any, idx: number) => {
-            // Robust access: check case-insensitive and ignore non-alphanumeric
-            const getVal = (key: string) => {
-                const normalizedSearchKey = key.toLowerCase().replace(/[^a-z0-9]/g, '');
-                const foundKey = Object.keys(row).find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedSearchKey);
-                return foundKey ? row[foundKey] : '';
-            };
-            
-            const reqsStr = getVal('requirements');
-            const reqs = (reqsStr || '').toString().split('|').map((s: string) => {
-              const parts = s.split(':');
-              return { 
-                label: parts[0]?.trim() || 'Info', 
-                value: parts[1]?.trim() || 'N/A', 
-                icon: parts[2]?.trim() || 'Box',
-                link: parts[3]?.trim() || undefined
-              };
-            }).filter((r: any) => r.value && r.value !== 'N/A');
-
-            const steps = (getVal('steps') || '').toString().split('|').map((s: string) => s.trim()).filter((s: string) => s);
-            const gallery = (getVal('gallery') || '').toString().split('|').map((s: string) => s.trim()).filter((s: string) => s && s.startsWith('http'));
-            const toolsParsed = (getVal('tools') || '').toString().split('|').map((s: string) => {
-                const parts = s.split('^');
-                return { name: parts[0]?.trim(), url: parts[1]?.trim() };
-            }).filter((t: any) => t.name && t.url);
-
-            const partsArr: { id: number, link: string, note?: string }[] = [];
-            const mirrorsArr: { id: number, link: string, note?: string }[] = [];
-            for (let i = 1; i <= 20; i++) {
-                let pVal = getVal(`part${i}`);
-                let pNote = getVal(`partNote${i}`) || getVal(`note${i}`);
-                
-                // Helper to extract note from link string
-                const extractNote = (val: string) => {
-                    if (!val) return { link: '', note: '' };
-                    val = val.trim();
-                    
-                    // Format: Link | Note
-                    if (val.includes('|')) {
-                        const parts = val.split('|');
-                        return { link: parts[0].trim(), note: parts[1].trim() };
-                    }
-                    
-                    // Format: Link 'Note' or Link "Note"
-                    // Added \s* at the end just in case
-                    const singleQuoteMatch = val.match(/^(.*?)\s+'([^']+)'\s*$/);
-                    if (singleQuoteMatch) {
-                        return { link: singleQuoteMatch[1].trim(), note: singleQuoteMatch[2].trim() };
-                    }
-                    
-                    const quoteMatch = val.match(/^(.*?)\s+"([^"]+)"\s*$/);
-                    if (quoteMatch) {
-                        return { link: quoteMatch[1].trim(), note: quoteMatch[2].trim() };
-                    }
-
-                    // Format: Link (Note)
-                    const parenMatch = val.match(/^(.*?)\s+\(([^)]+)\)\s*$/);
-                    if (parenMatch) {
-                        return { link: parenMatch[1].trim(), note: parenMatch[2].trim() };
-                    }
-
-                    return { link: val.trim(), note: '' };
-                };
-
-                if (pVal) {
-                    const extracted = extractNote(pVal);
-                    pVal = extracted.link;
-                    if (extracted.note) pNote = extracted.note;
-                }
-
-                let mVal = getVal(`mirror${i}`);
-                let mNote = getVal(`mirrorNote${i}`);
-
-                if (mVal) {
-                    const extracted = extractNote(mVal);
-                    mVal = extracted.link;
-                    if (extracted.note) mNote = extracted.note;
-                }
-
-                if (pVal) partsArr.push({ id: i, link: pVal, note: pNote });
-                if (mVal) mirrorsArr.push({ id: i, link: mVal, note: mNote });
-            }
-
-            const isPinnedRaw = getVal('pinned');
-            const isFreeRaw = getVal('price') || getVal('isfree') || getVal('free');
-
-            return {
-              id: `${idPrefix}${row.id || (idx + 1)}`,
-              category: targetKey,
-              name: getVal('name') || 'Secure Fragment',
-              version: getVal('version') || 'v1.0',
-              repackSize: getVal('repackSize') || 'N/A',
-              originalSize: getVal('originalSize') || 'N/A',
-              genres: getVal('genres') || '',
-              languages: getVal('languages') || 'ENG',
-              repackBy: getVal('repackBy') || 'NEXA',
-              developer: getVal('developer') || getVal('studio') || getVal('company') || '',
-              coverImage: getVal('coverImage') || 'https://placehold.co/600x800/0f172a/334155?text=ENCRYPTED',
-              galleryImages: gallery,
-              description: getVal('description') || 'No intel available.',
-              gameId: getVal('gameId') || '',
-              ratingPositive: getVal('ratingPositive') || '',
-              ratingNegative: getVal('ratingNegative') || '',
-              dateAdded: getVal('date') || getVal('timestamp') || getVal('dateAdded') || getVal('updated') || getVal('time') || getVal('created') || '',
-              hasDenuvo: String(getVal('denuvo')).toLowerCase() === 'true',
-              hasExternalLauncher: String(getVal('launcher')).toLowerCase() === 'true',
-              systemReqs: reqs,
-              installSteps: steps,
-              isPinned: String(isPinnedRaw).toLowerCase() === 'true' || String(isPinnedRaw).toLowerCase() === 'yes' || String(isPinnedRaw).toLowerCase() === 'on',
-              isFree: String(isFreeRaw).toLowerCase() === 'true' || String(isFreeRaw).toLowerCase() === 'yes' || String(isFreeRaw).toLowerCase() === 'free' || String(isFreeRaw) === '0',
-              toolsNeeded: toolsParsed,
-              links: { 
-                parts: partsArr,
-                mirrors: mirrorsArr,
-                full: getVal('full'), 
-                fullNote: getVal('fullNote') || getVal('note'),
-                tutorial: getVal('tutorial'), 
-                dlc: getVal('dlc'), 
-                trailer: getVal('trailer')
-              }
-            };
-          }).reverse();
-        }
-      });
-      
-      setAllResources(transformed);
     } catch (err: any) {
-      console.warn("Fetch failed, using local offline dummy data. The original Google Sheet is currently unavailable.");
-      setUpcomingGames([]);
-      setUpcomingLists({
-          game: [],
-          hypervisor: [],
-          steamtools: [],
-          tools: [],
-          savegames: []
-      });
-      setSteamAccounts([]);
-      setMasterGifts([]);
-      setCompanyProfiles([]);
-      setAllResources({
-        game: [],
-        hypervisor: [],
-        steamtools: [],
-        architect: [],
-        extra: []
-      });
-      setError("CRITICAL ERROR: Google Apps Script Connection Failed. \n\nReason: The Web App URL is returning an HTML error page instead of JSON data. This usually happens if you created the script at script.google.com (standalone) instead of clicking 'Extensions -> Apps Script' directly inside your Google Sheet! So `getActiveSpreadsheet()` is failing.\n\nHOW TO FIX:\n1. Open your Google Sheet.\n2. Click 'Extensions -> Apps Script'.\n3. Paste your code there.\n4. Deploy as Web App (Execute as: Me, Access: Anyone).\n5. Paste the new URL in the code.");
+      console.warn("Fetch failed, using local offline backup and cache data:", err);
+      let loadedData = null;
+      try {
+        const cached = localStorage.getItem('cached_secret_resources');
+        if (cached) {
+          loadedData = JSON.parse(cached);
+          console.log("Successfully loaded resources from localStorage cache.");
+        }
+      } catch (e) {
+        console.warn("LocalStorage cache read failed:", e);
+      }
+
+      if (!loadedData) {
+        loadedData = backupData;
+        console.log("Successfully fell back to local JSON backup.");
+      }
+
+      if (loadedData) {
+        processRawData(loadedData);
+        dataToPreload = loadedData;
+        
+        // Show subtle notification about offline mode
+        const notifId = Date.now();
+        setNotifications(prev => [...prev, {
+            id: notifId,
+            title: 'Offline Backup Active',
+            text: 'Connection to cloud database is unavailable. Displaying local offline database.',
+            time: 'Just now'
+        }]);
+        setTimeout(() => {
+            setNotifications(prev => prev.filter(n => n.id !== notifId));
+        }, 6000);
+      } else {
+        setError("CRITICAL ERROR: Google Apps Script Connection Failed and no local backup could be found.");
+      }
     } finally {
       setLoading(false);
+      
+      if (!silent && showHackerLoader && dataToPreload) {
+          const urls = new Set<string>();
+          if (Array.isArray(dataToPreload.companyProfiles)) {
+              dataToPreload.companyProfiles.forEach((p: any) => p.logoUrl && urls.add(p.logoUrl));
+          }
+          if (Array.isArray(dataToPreload.topGames)) {
+              dataToPreload.topGames.forEach((g: any) => {
+                  if (g.bannerUrl) urls.add(g.bannerUrl);
+                  if (g.logoUrl) urls.add(g.logoUrl);
+                  if (g.symbolUrl) urls.add(g.symbolUrl);
+              });
+          }
+          if (Array.isArray(dataToPreload.bestGameSeries)) {
+              dataToPreload.bestGameSeries.forEach((g: any) => {
+                  if (Array.isArray(g.images)) g.images.forEach((img: string) => urls.add(img));
+              });
+          }
+          const upcomingKey = Object.keys(dataToPreload).find(k => k.toLowerCase() === 'upcoming');
+          if (upcomingKey && Array.isArray(dataToPreload[upcomingKey])) {
+              dataToPreload[upcomingKey].forEach((ug: any) => {
+                  const img = ug.image || ug.coverImage;
+                  if (img) urls.add(img);
+              });
+          }
+          
+          const uniqueUrls = Array.from(urls).filter(Boolean);
+          if (uniqueUrls.length === 0) {
+              setImagesLoading(false);
+              setImageProgress(100);
+          } else {
+              let loaded = 0;
+              const total = uniqueUrls.length;
+              Promise.all(uniqueUrls.map(url => {
+                  return new Promise(resolve => {
+                      const img = new Image();
+                      img.onload = () => {
+                          loaded++;
+                          setImageProgress(Math.floor((loaded / total) * 100));
+                          resolve(true);
+                      };
+                      img.onerror = () => {
+                          loaded++;
+                          setImageProgress(Math.floor((loaded / total) * 100));
+                          resolve(false);
+                      };
+                      img.src = url;
+                  });
+              })).then(() => {
+                  setImagesLoading(false);
+                  setImageProgress(100);
+              });
+          }
+      } else {
+          setImagesLoading(false);
+          setImageProgress(100);
+      }
     }
   };
 
@@ -4885,13 +5120,43 @@ const SecretArea: React.FC = () => {
                      initial={{ y: 20, opacity: 0 }}
                      animate={{ y: 0, opacity: 1 }}
                      transition={{ duration: 0.5 }}
-                     className="text-center shrink-0"
+                     className="text-center shrink-0 relative flex flex-col items-center justify-center"
                    >
                       <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-1 select-none">N E X A INTERFACE</h2>
                       <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em] flex items-center justify-center gap-2 select-none">
                          <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
                          FORTRESS SECURITY LAYER
                       </p>
+                      <button 
+                        onClick={() => {
+                            setIsUnlocked(true);
+                            setIsGuestMode(true);
+                            setShowHackerLoader(true);
+                            setHackerProgress(0);
+                            localStorage.setItem('secret_area_unlocked', 'guest');
+                            localStorage.setItem('nexa_guest_mode', 'true');
+                            fetchData();
+                        }}
+                        className="absolute right-0 top-0 bottom-0 my-auto h-8 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:text-slate-900 dark:hover:text-white border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 rounded-lg transition-colors hidden sm:flex items-center gap-1.5 bg-white/50 dark:bg-slate-900/50 md:backdrop-blur-sm"
+                      >
+                         <Icon name="UserCircle" size={14} />
+                         Guest Mode
+                      </button>
+                      <button 
+                        onClick={() => {
+                            setIsUnlocked(true);
+                            setIsGuestMode(true);
+                            setShowHackerLoader(true);
+                            setHackerProgress(0);
+                            localStorage.setItem('secret_area_unlocked', 'guest');
+                            localStorage.setItem('nexa_guest_mode', 'true');
+                            fetchData();
+                        }}
+                        className="mt-4 h-8 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:text-slate-900 dark:hover:text-white border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 rounded-lg transition-colors sm:hidden flex items-center justify-center gap-1.5 bg-white/50 dark:bg-slate-900/50 w-full"
+                      >
+                         <Icon name="UserCircle" size={14} />
+                         Login as Guest
+                      </button>
                    </motion.div>
                    
                    <motion.div 
@@ -5027,8 +5292,12 @@ const SecretArea: React.FC = () => {
                   transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                   className="absolute inset-6 bg-primary-500/10 rounded-full blur-md"
                 />
-                <div className="w-20 h-20 bg-white dark:bg-slate-900 border border-primary-500/60 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(14,165,233,0.2)] dark:shadow-[0_0_40px_rgba(14,165,233,0.3)] relative z-10">
-                  <Icon name="ShieldAlert" size={32} className="text-primary-500 dark:text-primary-400 animate-pulse" />
+                <div className="w-20 h-20 bg-white dark:bg-slate-900 border border-primary-500/60 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(14,165,233,0.2)] dark:shadow-[0_0_40px_rgba(14,165,233,0.3)] relative z-10 overflow-hidden">
+                  <img 
+                    src="https://i.pinimg.com/originals/15/3d/b0/153db0b4b514669370f9a2ae83a2216b.gif" 
+                    alt="Running Wolf" 
+                    className="w-16 h-16 object-contain dark:invert"
+                  />
                 </div>
               </div>
 
@@ -5149,6 +5418,8 @@ const SecretArea: React.FC = () => {
               setSelectedResource(null);
             }}
             resolvedDev={getResolvedDeveloper(selectedResource)}
+            isGuestMode={isGuestMode}
+            showGuestNotification={showGuestNotification}
           />
         )}
       </AnimatePresence>
@@ -5212,6 +5483,16 @@ const SecretArea: React.FC = () => {
         <header className="flex flex-col xl:flex-row xl:items-end justify-between gap-8 mb-12 relative z-[9999] pointer-events-auto">
           <div className="space-y-4">
             <div className="flex items-center gap-3 overflow-x-auto no-scrollbar max-w-full pb-1">
+               {isGuestMode && (
+                 <motion.div 
+                   initial={{ opacity: 0, y: -10 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   className="px-3 py-1.5 border rounded-lg flex items-center gap-2.5 shadow-lg whitespace-nowrap shrink-0 relative overflow-hidden bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 shadow-[0_0_15px_rgba(148,163,184,0.3)]"
+                 >
+                    <Icon name="UserCircle" size={14} className="opacity-80" />
+                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider">GUEST MODE</span>
+                 </motion.div>
+               )}
                <motion.div 
                  initial={{ opacity: 0, y: -10 }}
                  animate={{ opacity: 1, y: 0 }}
@@ -5307,7 +5588,11 @@ const SecretArea: React.FC = () => {
             <button 
                 id="btn-free-accounts"
                 type="button"
-                onClick={(e) => { e.preventDefault(); setShowSteamModal(true); }}
+                onClick={(e) => { 
+                    e.preventDefault(); 
+                    if (isGuestMode) { showGuestNotification?.(); return; }
+                    setShowSteamModal(true); 
+                }}
                 className="relative flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden z-[100] cursor-pointer"
             >
                 <Icon name="BrandSteam" size={18} className="group-hover:scale-110 transition-transform shrink-0 relative z-10" /> 
@@ -5900,6 +6185,9 @@ const SecretArea: React.FC = () => {
             </>
         )}
 
+        {bestGameSeries && bestGameSeries.length > 0 && (
+          <BestGameSeriesSection series={bestGameSeries} />
+        )}
       </div>
       <Footer onSupportClick={() => setShowDonateModal(true)} />
       </motion.div>

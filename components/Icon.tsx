@@ -16,7 +16,7 @@ import {
   TbBold, TbItalic, TbList, TbCheckbox, TbGridDots, TbSearch, TbCalculator, TbBulb, TbSparkles, TbRefresh, TbInfoCircle,
   TbTarget, TbEye, TbBookmark, TbRadar, TbTerminal, TbBell, TbHistory, TbFilter, TbMenu2, TbDots,
   TbHash, TbFolder, TbDeviceFloppy, TbChartPie, TbCircleX, TbLogout, TbMessageCircle, TbBuildingMosque,
-  TbCurrencyBitcoin, TbCurrencyEthereum, TbCurrencyMonero, TbCoin, TbWallet
+  TbCurrencyBitcoin, TbCurrencyEthereum, TbCurrencyMonero, TbCoin, TbWallet, TbStar
 } from 'react-icons/tb';
 
 import {
@@ -232,6 +232,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   CurrencyMonero: TbCurrencyMonero,
   Coin: TbCoin,
   Wallet: TbWallet,
+  Star: TbStar,
 };
 
 const Icon: React.FC<IconProps> = ({ name, size = 24, className }) => {
