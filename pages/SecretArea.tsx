@@ -3791,7 +3791,6 @@ const SecretArea: React.FC = () => {
         newHistory.push({ type: 'info', text: '  [2] COMMS   : Contact Support' });
         newHistory.push({ type: 'info', text: '  [3] AUTH    : Enter Secret Code' });
         newHistory.push({ type: 'info', text: '  [4] NETWORK : Join Telegram' });
-        newHistory.push({ type: 'info', text: '  [5] GUEST   : Login as Guest' });
         newHistory.push({ type: 'info', text: '  clear       : Flush memory' });
         newHistory.push({ type: 'system', text: ' ' });
         newHistory.push({ type: 'success', text: '  💡 TIP: Type a number (e.g. "3") or a command and press ENTER.' });
@@ -3871,17 +3870,6 @@ const SecretArea: React.FC = () => {
         });
       } else if (lowerCmd === '3' || lowerCmd === 'auth') {
         setTerminalMode('password');
-      } else if (lowerCmd === '5') {
-        newHistory.push({ type: 'success', text: 'Guest Access Granted. Loading limited preview...' });
-        setIsUnlocked(true);
-        setIsGuestMode(true);
-        setShowHackerLoader(true);
-        setHackerProgress(0);
-        localStorage.setItem('secret_area_unlocked', 'guest');
-        localStorage.setItem('nexa_guest_mode', 'true');
-        fetchData();
-        setFailedAttempts(0);
-        setTerminalMode('normal');
       } else if (lowerCmd === 'clear') {
         setTerminalHistory([]);
         setTerminalCleared(true);
@@ -4322,24 +4310,6 @@ const SecretArea: React.FC = () => {
   }, []);
 
   const processRawData = (data: any) => {
-    const formatPlatformDisplay = (platformStr: string) => {
-      const p = platformStr.toLowerCase().trim();
-      if (p.includes('pc') || p.includes('win')) return 'PC';
-      if (p.includes('ps5')) return 'PS5';
-      if (p.includes('ps4')) return 'PS4';
-      if (p.includes('xbox')) return 'Xbox Series X';
-      if (p.includes('vita')) return 'PS Vita';
-      return platformStr;
-    };
-
-    const getPlatformIcon = (platformStr: string) => {
-      const p = platformStr.toLowerCase().trim();
-      if (p.includes('pc') || p.includes('win')) return 'BrandWindows';
-      if (p.includes('playstation') || p.includes('ps')) return 'BrandPlaystation';
-      if (p.includes('xbox')) return 'BrandXbox';
-      return 'Gamepad2';
-    };
-
     const upcomingKey = Object.keys(data).find(k => k.toLowerCase() === 'upcoming');
     if (!upcomingKey) {
         setIsUpcomingMissing(true);
@@ -4349,7 +4319,7 @@ const SecretArea: React.FC = () => {
            id: `ug-${index}`,
            title: item.name || item.title || 'Untitled',
            image: item.image || item.coverImage || 'https://placehold.co/600x800/0f172a/334155?text=ENCRYPTED',
-           platform: formatPlatformDisplay(item.platform || 'TBA'),
+           platform: item.platform || 'TBA',
            price: item.price || 'TBA',
            icon: getPlatformIcon(item.platform || ''),
            dateAdded: item.date || item.timestamp || item.dateAdded || item.updated || ''
@@ -5127,36 +5097,7 @@ const SecretArea: React.FC = () => {
                          <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
                          FORTRESS SECURITY LAYER
                       </p>
-                      <button 
-                        onClick={() => {
-                            setIsUnlocked(true);
-                            setIsGuestMode(true);
-                            setShowHackerLoader(true);
-                            setHackerProgress(0);
-                            localStorage.setItem('secret_area_unlocked', 'guest');
-                            localStorage.setItem('nexa_guest_mode', 'true');
-                            fetchData();
-                        }}
-                        className="absolute right-0 top-0 bottom-0 my-auto h-8 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:text-slate-900 dark:hover:text-white border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 rounded-lg transition-colors hidden sm:flex items-center gap-1.5 bg-white/50 dark:bg-slate-900/50 md:backdrop-blur-sm"
-                      >
-                         <Icon name="UserCircle" size={14} />
-                         Guest Mode
-                      </button>
-                      <button 
-                        onClick={() => {
-                            setIsUnlocked(true);
-                            setIsGuestMode(true);
-                            setShowHackerLoader(true);
-                            setHackerProgress(0);
-                            localStorage.setItem('secret_area_unlocked', 'guest');
-                            localStorage.setItem('nexa_guest_mode', 'true');
-                            fetchData();
-                        }}
-                        className="mt-4 h-8 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:text-slate-900 dark:hover:text-white border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 rounded-lg transition-colors sm:hidden flex items-center justify-center gap-1.5 bg-white/50 dark:bg-slate-900/50 w-full"
-                      >
-                         <Icon name="UserCircle" size={14} />
-                         Login as Guest
-                      </button>
+
                    </motion.div>
                    
                    <motion.div 

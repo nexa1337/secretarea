@@ -49,14 +49,14 @@ export const BestGameSeriesSection: React.FC<BestGameSeriesSectionProps> = ({ se
           />
         </div>
         <div>
-          <h2 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter flex items-center gap-3 flex-wrap">
+          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter flex items-center gap-2 sm:gap-3 flex-wrap">
             The Best Game Series On PC
             <motion.span 
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               key={series.length}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className="inline-flex items-center justify-center px-3 py-1 rounded-md bg-slate-200 dark:bg-white/10 border border-slate-300 dark:border-white/20 text-slate-800 dark:text-slate-200 text-sm md:text-base font-black shadow-sm"
+              className="inline-flex items-center justify-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-md bg-slate-200 dark:bg-white/10 border border-slate-300 dark:border-white/20 text-slate-800 dark:text-slate-200 text-xs sm:text-sm md:text-base font-black shadow-sm"
             >
               {series.length}
             </motion.span>
@@ -197,10 +197,10 @@ export const BestGameSeriesSection: React.FC<BestGameSeriesSectionProps> = ({ se
                                   className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 pb-2"
                                 >
                                   {currentGames.map((game, idx) => (
-                                    <div key={idx} className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 transition-colors flex items-center justify-between gap-2 sm:gap-3 group/game min-w-0">
-                                      <span className={`text-sm md:text-base leading-tight truncate flex-1 min-w-0 transition-colors duration-300 ${game.isBest ? 'text-slate-900 dark:text-white font-bold' : 'text-slate-600 dark:text-slate-300'}`}>{game.name}</span>
+                                    <div key={idx} className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 transition-colors flex items-start sm:items-center justify-between gap-2 sm:gap-3 group/game min-w-0">
+                                      <span className={`text-sm md:text-base leading-tight flex-1 break-words transition-colors duration-300 ${game.isBest ? 'text-slate-900 dark:text-white font-bold' : 'text-slate-600 dark:text-slate-300'}`}>{game.name}</span>
                                       {game.isBest && (
-                                        <span className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-md bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[9px] sm:text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/30 shrink-0">
+                                        <span className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-md bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[9px] sm:text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/30 shrink-0 mt-0.5 sm:mt-0">
                                           <Icon name="Star" size={12} className="fill-white hidden sm:block" />
                                           <Icon name="Star" size={10} className="fill-white sm:hidden" />
                                           Best
@@ -256,7 +256,7 @@ export const BestGameSeriesSection: React.FC<BestGameSeriesSectionProps> = ({ se
                             alt={`${selectedSeries.title} - Image ${i + 1}`}
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                               e.currentTarget.src = 'https://placehold.co/400x600/1e293b/334155?text=Image+Not+Found';
+                               const p = e.currentTarget.parentElement; if(p) p.style.display = 'none';
                             }}
                           />
                         </motion.div>
