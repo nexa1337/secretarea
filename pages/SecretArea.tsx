@@ -9,7 +9,9 @@ import { CommentsSection } from '../components/CommentsSection';
 import { BestGameSeriesSection } from '../components/BestGameSeriesSection';
 import { DuaPopup } from '../components/DuaPopup';
 import { NetworkDiagnostic } from '../components/NetworkDiagnostic';
-import { FaFaceAngry } from 'react-icons/fa6';
+import MaintenancePage from '../components/MaintenancePage';
+import { LowPolyBackground } from '../components/LowPolyBackground';
+import { FaFaceAngry, FaWolfPackBattalion } from 'react-icons/fa6';
 import backupData from '../data/backup_resources.json';
 
 // --- CONFIGURATION ---
@@ -656,7 +658,7 @@ const DonateModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, o
                     </div>
                     <button 
                         onClick={onClose}
-                        className="p-2 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-xl transition-colors border border-slate-200 dark:border-slate-700 shadow-sm"
+                        className="p-2 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 rounded-xl transition-colors border border-slate-200 dark:border-slate-700 shadow-sm"
                     >
                         <Icon name="X" size={18} />
                     </button>
@@ -679,7 +681,7 @@ const DonateModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, o
                         src="https://trocador.app/anonpay/?ticker_to=xmr&network_to=Mainnet&address=4A1aLQiLKP9MppgCFYHWhM8GNP9eoxEQBQpAWKuiNaD5C2kLmrG2aM9cSK2pncFNNgKCCKbtqNrijAEampjek7SM7BsUFvX&donation=True&name=SecretArea&description=Support+the+website&email=nexa1337agency@gmail.com&bgcolor=00000000" 
                         width="310" 
                         height="350" 
-                        className="bg-white dark:bg-slate-100 rounded-xl"
+                        className="bg-white rounded-xl dark:invert-[.85] dark:hue-rotate-180"
                         style={{ border: 0, opacity: iframeLoaded ? 1 : 0, transition: 'opacity 0.5s ease-in-out' }} 
                         scrolling="no"
                         onLoad={() => setIframeLoaded(true)}
@@ -690,7 +692,7 @@ const DonateModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, o
                             <Icon name="Wallet" size={18} />
                         </div>
                         <div className="text-left flex-1">
-                            <h4 className="text-xs font-bold text-slate-800 dark:text-slate-300 mb-1">No crypto wallet?</h4>
+                            <h4 className="text-xs font-bold text-slate-300 dark:text-slate-300 mb-1">No crypto wallet?</h4>
                             <p className="text-[10px] text-slate-600 dark:text-slate-500 leading-relaxed font-medium">
                                 You can use <a href="https://exodus.com/" target="_blank" rel="noreferrer" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-bold">Exodus</a>, <a href="https://cakewallet.com/" target="_blank" rel="noreferrer" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-bold">Cake Wallet</a>, or another wallet to exchange and send.
                             </p>
@@ -823,7 +825,7 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
                                     <Icon name="AlertTriangle" size={18} className="text-amber-500 shrink-0 mt-0.5" />
                                     <div>
                                         <p className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-1">Already in Area?</p>
-                                        <p className="text-xs text-slate-600 dark:text-slate-400">
+                                        <p className="text-xs text-slate-400">
                                             We found <strong>{duplicateItem.name}</strong> in the {duplicateItem.category} section. Are you sure you want to request it?
                                         </p>
                                     </div>
@@ -1303,7 +1305,7 @@ const UpcomingListsDisplay: React.FC<{ lists: { [key: string]: string[] } }> = (
                             className={`px-3 py-1.5 rounded-md text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all shadow-sm border ${
                                 activeCategory === tab 
                                 ? 'bg-emerald-500 text-white border-emerald-500 scale-105' 
-                                : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
                             }`}
                         >
                             {tab}
@@ -1358,17 +1360,17 @@ const UpcomingListsDisplay: React.FC<{ lists: { [key: string]: string[] } }> = (
                         <button 
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                             disabled={currentPage === 1}
-                            className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         >
                             <Icon name="ChevronLeft" size={20} />
                         </button>
-                        <div className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                        <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">
                             PAGE {currentPage} OF {totalPages}
                         </div>
                         <button 
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                             disabled={currentPage === totalPages}
-                            className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         >
                             <Icon name="ChevronRight" size={20} />
                         </button>
@@ -1399,7 +1401,7 @@ const HypervisorGuideModal: React.FC<{ open: boolean; onClose: () => void }> = (
       >
         <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
           <div className="flex items-center gap-4">
-            <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors font-bold text-sm">
+            <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors font-bold text-sm">
               <Icon name="ArrowLeft" size={16} /> Back to Product
             </button>
             <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
@@ -1411,7 +1413,7 @@ const HypervisorGuideModal: React.FC<{ open: boolean; onClose: () => void }> = (
             <Icon name="X" size={24} />
           </button>
         </div>
-        <div className="p-6 overflow-y-auto flex-1 prose dark:prose-invert max-w-none text-slate-700 dark:text-slate-300">
+        <div className="p-6 overflow-y-auto flex-1 prose dark:prose-invert max-w-none text-slate-300">
           <article id="post-74689" className="post-74689 page type-page status-publish hentry">
             <div className="entry-content space-y-4">
               <p><span style={{ color: 'red' }} className="font-bold">This page is a work-in-progress and will be updated.</span></p>
@@ -1759,7 +1761,7 @@ const SystemChecker: React.FC<{ reqs: {label: string, value: string}[] }> = ({ r
                   {result.messages.map((msg, idx) => {
                     const iconName = msg.startsWith('❌') ? 'XCircle' : msg.startsWith('⚠️') ? 'AlertTriangle' : msg.startsWith('✅') ? 'CheckCircle2' : msg.startsWith('🚀') ? 'Rocket' : msg.startsWith('✨') ? 'Sparkles' : msg.startsWith('🚧') ? 'HardHat' : msg.startsWith('🚨') ? 'AlertOctagon' : 'Info';
                     return (
-                    <div key={idx} className="flex gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <div key={idx} className="flex gap-2 text-sm font-medium text-slate-300">
                       <Icon name={iconName as any} size={16} className={`shrink-0 mt-0.5 ${msg.startsWith('❌') || msg.startsWith('🚨') ? 'text-red-500' : msg.startsWith('⚠️') || msg.startsWith('🚧') ? 'text-yellow-500' : msg.startsWith('✅') || msg.startsWith('✨') || msg.startsWith('🚀') ? 'text-emerald-500' : 'text-slate-500'}`} />
                       <span>{msg.replace(/^(❌|⚠️|✅|🚀|✨|🚧|🚨)\s*/, '')}</span>
                     </div>
@@ -1794,14 +1796,14 @@ const NoteModal: React.FC<{
     >
       <button 
         onClick={onClose} 
-        className="absolute top-4 right-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 p-2 rounded-full transition-all"
+        className="absolute top-4 right-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 p-2 rounded-full transition-all"
       >
         <Icon name="X" size={16} />
       </button>
       <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 pr-8 flex items-center gap-2">
         <Icon name="Info" size={20} className="text-emerald-500" /> Note
       </h3>
-      <div className="text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed max-h-[60vh] overflow-y-auto whitespace-pre-wrap custom-scrollbar">
+      <div className="text-sm text-slate-300 font-medium leading-relaxed max-h-[60vh] overflow-y-auto whitespace-pre-wrap custom-scrollbar">
         {content}
       </div>
       <div className="mt-6 flex justify-end">
@@ -1856,7 +1858,7 @@ const CompanyProfileModal: React.FC<{
           </div>
           <div>
             <h2 className="text-2xl md:text-5xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-1 md:mb-2">{profile.name}</h2>
-            <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 max-w-3xl line-clamp-2 md:line-clamp-none leading-relaxed">{profile.description || 'Welcome to this company\'s profile. Explore their ecosystem of products and releases below.'}</p>
+            <p className="text-xs md:text-sm text-slate-400 max-w-3xl line-clamp-2 md:line-clamp-none leading-relaxed">{profile.description || 'Welcome to this company\'s profile. Explore their ecosystem of products and releases below.'}</p>
           </div>
         </div>
         <button onClick={onClose} className="p-2 md:p-3 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-500 bg-slate-100 dark:bg-slate-900 shrink-0 border border-slate-200 dark:border-slate-700 ml-4">
@@ -1873,7 +1875,7 @@ const CompanyProfileModal: React.FC<{
                  className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors flex items-center gap-2 ${
                     activeCategory === cat 
                     ? 'bg-primary-500 text-white shadow-md shadow-primary-500/20 border border-primary-500' 
-                    : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-primary-500/50'
+                    : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 hover:border-primary-500/50'
                  }`}
               >
                  {cat === 'steamtools' ? 'SteamTools' : cat}
@@ -2070,14 +2072,16 @@ const ResourceDetailModal: React.FC<{
       >
         <button 
           onClick={onClose} 
-          className="absolute top-4 right-4 z-[110] bg-white/60 dark:bg-black/60 hover:bg-red-500 hover:text-white text-slate-500 dark:text-slate-400 p-2.5 rounded-full transition-all md:backdrop-blur-md border border-slate-200 dark:border-white/10 shadow-lg"
+          className="absolute top-4 right-4 z-[110] bg-white/60 dark:bg-black/60 hover:bg-red-500 hover:text-white text-slate-400 p-2.5 rounded-full transition-all md:backdrop-blur-md border border-slate-200 dark:border-white/10 shadow-lg"
         >
              <Icon name="X" size={20} />
         </button>
 
-        <div className="w-full lg:w-[45%] bg-slate-100 dark:bg-black flex flex-col shrink-0 h-[35vh] sm:h-[40vh] md:h-[45vh] lg:h-full border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-800 relative">
-           <div className="flex-1 relative flex items-center justify-center overflow-hidden bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]">
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-slate-200/90 dark:to-slate-900/90 pointer-events-none"></div>
+        <div className="w-full lg:w-[45%] bg-slate-100 dark:bg-[#030712] flex flex-col shrink-0 h-[35vh] sm:h-[40vh] md:h-[45vh] lg:h-full border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-800 relative">
+           <div className="flex-1 relative flex items-center justify-center overflow-hidden">
+              <div className="absolute inset-0 z-0 opacity-40 dark:opacity-60 pointer-events-none bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-200 via-slate-100 to-transparent dark:from-[#0f172a] dark:via-[#030712] dark:to-transparent">
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-slate-200/90 dark:to-slate-900/90 pointer-events-none z-10"></div>
               <AnimatePresence mode="wait">
                 {showTrailer && item.links.trailer ? (
                     <motion.div 
@@ -2164,7 +2168,7 @@ const ResourceDetailModal: React.FC<{
                     className={`shrink-0 p-2 sm:p-3 rounded-xl transition-all ${
                         stash.includes(item.id) 
                         ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                     }`}
                     title={stash.includes(item.id) ? "Remove from Stash" : "Add to Stash"}
                  >
@@ -2255,7 +2259,7 @@ const ResourceDetailModal: React.FC<{
                 ) : (
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                        <StatBox label="Repack Size" value={item.repackSize} icon="Database" color="text-primary-500 dark:text-sky-400" />
-                       <StatBox label="Original Size" value={item.originalSize} icon="Server" color="text-slate-500 dark:text-slate-400" />
+                       <StatBox label="Original Size" value={item.originalSize} icon="Server" color="text-slate-400" />
                        <StatBox label="Languages" value={item.languages} icon="Globe" color="text-emerald-500 dark:text-emerald-400" />
                        <StatBox label="Downloads" value={getFakeDownloads(item.id)} icon="Download" color="text-blue-500 dark:text-blue-400" />
                     </div>
@@ -2290,14 +2294,14 @@ const ResourceDetailModal: React.FC<{
                 )}
 
                 <Section title="Overview" action={
-                        <button onClick={handleTranslate} disabled={isTranslating} className={`flex items-center gap-2 px-3 py-1 rounded-md border text-[10px] font-bold uppercase tracking-wider transition-all ${showArabic ? 'bg-primary-500/20 border-primary-500 text-primary-600 dark:text-sky-400' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}>
+                        <button onClick={handleTranslate} disabled={isTranslating} className={`flex items-center gap-2 px-3 py-1 rounded-md border text-[10px] font-bold uppercase tracking-wider transition-all ${showArabic ? 'bg-primary-500/20 border-primary-500 text-primary-600 dark:text-sky-400' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}>
                             {isTranslating ? (<><Icon name="Cpu" size={12} className="animate-spin" /> Decrypting...</>) : (<><Icon name="Globe" size={12} /> {showArabic ? 'Show Original' : 'Translate AR'}</>)}
                         </button>
                     }>
                    <div className="bg-slate-50 dark:bg-slate-950/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 relative overflow-hidden group">
                      <div className="max-h-[250px] overflow-y-auto custom-scrollbar pr-2">
                         <AnimatePresence mode="wait">
-                            <motion.div key={showArabic ? 'ar' : 'en'} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className={`text-sm md:text-base leading-relaxed whitespace-pre-wrap font-medium ${showArabic ? 'text-right font-sans text-slate-800 dark:text-slate-200' : 'text-slate-700 dark:text-slate-300'}`} dir={showArabic ? 'rtl' : 'ltr'}>
+                            <motion.div key={showArabic ? 'ar' : 'en'} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className={`text-sm md:text-base leading-relaxed whitespace-pre-wrap font-medium ${showArabic ? 'text-right font-sans text-slate-800 dark:text-slate-200' : 'text-slate-300'}`} dir={showArabic ? 'rtl' : 'ltr'}>
                                 {showArabic && translatedDesc ? translatedDesc : item.description}
                             </motion.div>
                         </AnimatePresence>
@@ -2338,9 +2342,9 @@ const ResourceDetailModal: React.FC<{
                                  <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-slate-500 group-hover:text-blue-500 transition-colors">
                                    <Icon name={paramIcon} size={18} />
                                  </div>
-                                 <span className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">{req.label}</span>
+                                 <span className="text-sm font-semibold text-slate-300 uppercase tracking-wider">{req.label}</span>
                                </div>
-                               <span className="text-sm font-mono text-slate-600 dark:text-slate-400 text-left sm:text-right sm:max-w-[60%] leading-relaxed">
+                               <span className="text-sm font-mono text-slate-400 text-left sm:text-right sm:max-w-[60%] leading-relaxed">
                                  {req.value}
                                </span>
                             </motion.div>
@@ -2373,7 +2377,7 @@ const ResourceDetailModal: React.FC<{
 
                 {item.installSteps.length > 0 && (
                    <Section title={isExtra ? "Steps You Need" : "Installation Guide"}>
-                      <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 mt-[-10px]">Follow these steps to safely install and set up your application.</p>
+                      <p className="text-sm text-slate-400 mb-4 mt-[-10px]">Follow these steps to safely install and set up your application.</p>
                       <motion.div 
                         initial="hidden"
                         animate="visible"
@@ -2393,10 +2397,10 @@ const ResourceDetailModal: React.FC<{
                             className="group flex gap-4 p-4 sm:p-5 bg-white dark:bg-slate-900/80 rounded-2xl border border-slate-100 dark:border-slate-800/80 hover:border-blue-300 dark:hover:border-blue-700/50 transition-all hover:shadow-lg hover:-translate-y-0.5 items-start relative overflow-hidden"
                           >
                             <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-blue-400 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                            <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-bold text-sm shrink-0 group-hover:bg-blue-500 group-hover:text-white transition-all shadow-sm group-hover:scale-110">
+                            <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 font-bold text-sm shrink-0 group-hover:bg-blue-500 group-hover:text-white transition-all shadow-sm group-hover:scale-110">
                               {idx + 1}
                             </div>
-                            <span className="text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed pt-1">{step}</span>
+                            <span className="text-sm text-slate-300 font-medium leading-relaxed pt-1">{step}</span>
                           </motion.div>
                         ))}
                       </motion.div>
@@ -2431,7 +2435,7 @@ const ResourceDetailModal: React.FC<{
                                 }}
                                 className="col-span-1 md:col-span-2 group relative overflow-hidden bg-gradient-to-r from-[#229ED9] to-[#1D85B8] p-3 sm:p-5 rounded-xl shadow-lg shadow-[#229ED9]/20 hover:shadow-[#229ED9]/40 transition-all hover:-translate-y-1 active:scale-95"
                             >
-                                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
+                                <div className="absolute inset-0 bg-white/5 opacity-10"></div>
                                 <div className="relative z-10 flex items-center justify-center gap-3 sm:gap-4">
                                     <div className="p-2 bg-white/10 rounded-full md:backdrop-blur-sm relative">
                                         <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 items-center justify-center z-20">
@@ -2467,7 +2471,7 @@ const ResourceDetailModal: React.FC<{
                                 }}
                                 className="col-span-1 md:col-span-2 group relative overflow-hidden bg-gradient-to-r from-primary-600 to-primary-500 p-3 sm:p-5 rounded-xl shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 transition-all hover:-translate-y-1 active:scale-95"
                             >
-                                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
+                                <div className="absolute inset-0 bg-white/5 opacity-10"></div>
                                 {['game', 'hypervisor'].includes(item.category?.toLowerCase()) && (
                                     <div className="absolute top-0 right-0 bg-gradient-to-r from-amber-400 to-orange-500 text-black text-[8px] sm:text-[10px] font-black uppercase tracking-widest px-3 py-1 sm:py-1.5 rounded-bl-xl shadow-[0_0_15px_rgba(245,158,11,0.6)] flex items-center gap-1 z-20 border-l border-b border-yellow-300">
                                         <Icon name="Sparkles" size={12} className="animate-pulse" /> Recommendation
@@ -2617,7 +2621,7 @@ const ResourceDetailModal: React.FC<{
                     </div>
                     <div>
                       <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-3">Wait a minute! 🛑</h3>
-                      <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
+                      <p className="text-sm sm:text-base text-slate-400 font-medium leading-relaxed">
                         To use this method, you need <span className="font-bold text-blue-600 dark:text-blue-400">qBittorrent</span> to download uTorrent files without problems. Do you already have it installed? 🤔
                       </p>
                     </div>
@@ -2645,7 +2649,7 @@ const ResourceDetailModal: React.FC<{
                           window.open('https://www.qbittorrent.org/download', '_blank');
                           setQBitSuccess(true);
                         }}
-                        className="flex-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold py-3 px-4 rounded-xl transition-all border border-slate-200 dark:border-slate-700 flex items-center justify-center"
+                        className="flex-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-300 font-bold py-3 px-4 rounded-xl transition-all border border-slate-200 dark:border-slate-700 flex items-center justify-center"
                       >
                         Not Yet 😅
                       </button>
@@ -2658,7 +2662,7 @@ const ResourceDetailModal: React.FC<{
                     </div>
                     <div>
                       <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-3">Everything is fine! 🎉</h3>
-                      <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 font-medium leading-relaxed mb-6">
+                      <p className="text-sm sm:text-base text-slate-400 font-medium leading-relaxed mb-6">
                         Now you can have it thanks for respect N E X A 1337 Guidelines and instructions, all this for you. 🥳
                       </p>
                       <a 
@@ -2694,7 +2698,7 @@ const ResourceDetailModal: React.FC<{
 const Badge: React.FC<{ text: string; color: 'blue' | 'slate' | 'emerald'; icon: string }> = ({ text, color, icon }) => {
   const colors = {
     blue: 'bg-primary-500/10 text-primary-600 dark:text-sky-400 border-primary-500/20',
-    slate: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700',
+    slate: 'bg-slate-100 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700',
     emerald: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
   };
   return (
@@ -2753,8 +2757,8 @@ const DownloadButton: React.FC<{ label: React.ReactNode; sub: string; href: stri
             )}
          </div>
          <div className="min-w-0 flex-1">
-            <div className="text-[8px] sm:text-[10px] font-bold uppercase tracking-widest opacity-60 mb-0.5 text-slate-500 dark:text-slate-400">{sub}</div>
-            <div className={`text-xs font-bold break-words leading-tight ${secondary ? 'text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white' : 'text-slate-700 dark:text-slate-200 group-hover:text-primary-600 dark:group-hover:text-white'}`}>{label}</div>
+            <div className="text-[8px] sm:text-[10px] font-bold uppercase tracking-widest opacity-60 mb-0.5 text-slate-400">{sub}</div>
+            <div className={`text-xs font-bold break-words leading-tight ${secondary ? 'text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white' : 'text-slate-700 dark:text-slate-200 group-hover:text-primary-600 dark:group-hover:text-white'}`}>{label}</div>
          </div>
          <Icon name="ExternalLink" size={14} className={`shrink-0 w-3 h-3 sm:w-4 sm:h-4 opacity-50 sm:opacity-0 group-hover:opacity-100 transition-opacity ${secondary ? 'text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white' : 'text-slate-400 group-hover:text-primary-600 dark:group-hover:text-white'}`} />
      </div>
@@ -2762,7 +2766,7 @@ const DownloadButton: React.FC<{ label: React.ReactNode; sub: string; href: stri
      
      {note && (
          <div className="relative z-20 mt-2 sm:mt-3 flex items-center justify-between border-t border-slate-200 dark:border-slate-700/50 pt-2">
-            <div className={`text-[9px] sm:text-[10px] font-bold truncate pr-2 flex-1 ${secondary ? 'text-slate-500 dark:text-slate-400' : 'text-emerald-600 dark:text-emerald-500'}`}>
+            <div className={`text-[9px] sm:text-[10px] font-bold truncate pr-2 flex-1 ${secondary ? 'text-slate-400' : 'text-emerald-600 dark:text-emerald-500'}`}>
                 {note.length > 40 ? `${note.substring(0, 40)}...` : note}
             </div>
             {note.length > 40 && onNoteClick && (
@@ -2880,7 +2884,7 @@ const LatestIntelPanel: React.FC<{ open: boolean; onClose: () => void; items: In
                 className={`shrink-0 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
                   filter === cat 
                   ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md' 
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}
               >
                 {cat === 'ARCHITECT' ? 'TOOLS' : cat === 'EXTRA' ? 'SAVEGAME' : cat}
@@ -2989,12 +2993,12 @@ const MostPopularRepacksModal: React.FC<{
                         </div>
                         <div>
                             <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Most Popular Repacks</h2>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">All Top {games.length} Games</p>
+                            <p className="text-xs text-slate-400">All Top {games.length} Games</p>
                         </div>
                     </div>
                     <button 
                         onClick={onClose}
-                        className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center hover:bg-slate-300 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors"
+                        className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-400 flex items-center justify-center hover:bg-slate-300 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors"
                     >
                         <Icon name="X" size={20} />
                     </button>
@@ -3066,7 +3070,7 @@ const MostPopularRepacksModal: React.FC<{
                                         className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold transition-colors ${
                                             currentPage === pageNum 
                                                 ? 'bg-blue-600 text-white shadow-md' 
-                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                                         }`}
                                     >
                                         {pageNum}
@@ -3129,7 +3133,7 @@ const MostPopularRepacksSection: React.FC<{
                     <h2 className="text-xl md:text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
                         <Icon name="Trophy" className="text-yellow-500" /> Most Popular Repacks of the Year
                     </h2>
-                    <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-2">Community favorite releases</p>
+                    <p className="text-xs md:text-sm text-slate-400 mt-2">Community favorite releases</p>
                 </div>
             </div>
             
@@ -3278,7 +3282,7 @@ const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
                         YOU MUST PLAY
                         <span className="h-[2px] w-12 md:w-24 bg-slate-800 dark:bg-slate-200 transition-colors duration-300 opacity-50"></span>
                     </div>
-                    <p className="mt-4 text-[9px] md:text-xs text-slate-500 dark:text-slate-400 font-bold tracking-[0.25em] uppercase transition-colors duration-300">
+                    <p className="mt-4 text-[9px] md:text-xs text-slate-400 font-bold tracking-[0.25em] uppercase transition-colors duration-300">
                         From Fantasy Kingdoms to Chaotic Cities
                     </p>
                 </div>
@@ -3365,7 +3369,7 @@ const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
                     <button 
                         onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
                         disabled={currentPage === 0}
-                        className="p-3 bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 text-slate-800 dark:text-white rounded-full transition-colors flex items-center justify-center shrink-0 border border-slate-300 dark:border-transparent shadow-sm"
+                        className="p-3 bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 text-white dark:text-white rounded-full transition-colors flex items-center justify-center shrink-0 border border-slate-300 dark:border-transparent shadow-sm"
                     >
                         <Icon name="ChevronLeft" size={20} />
                     </button>
@@ -3384,7 +3388,7 @@ const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
                     <button 
                         onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
                         disabled={currentPage === totalPages - 1}
-                        className="p-3 bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 text-slate-800 dark:text-white rounded-full transition-colors flex items-center justify-center shrink-0 border border-slate-300 dark:border-transparent shadow-sm"
+                        className="p-3 bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 text-white dark:text-white rounded-full transition-colors flex items-center justify-center shrink-0 border border-slate-300 dark:border-transparent shadow-sm"
                     >
                         <Icon name="ChevronRight" size={20} />
                     </button>
@@ -3400,12 +3404,6 @@ const BestStudiosCarousel: React.FC<{
     onSeeAll: () => void,
     categoryType: 'games' | 'tools'
 }> = ({ profiles, onSelect, onSeeAll, categoryType }) => {
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [itemsPerView, setItemsPerView] = useState(5);
-    const [isHovered, setIsHovered] = useState(false);
-    const touchStartX = useRef(0);
-    const touchEndX = useRef(0);
-
     const sortedProfiles = useMemo(() => {
         return [...profiles]
             .map(p => {
@@ -3424,119 +3422,67 @@ const BestStudiosCarousel: React.FC<{
             .sort((a, b) => b.totalGames - a.totalGames);
     }, [profiles, categoryType]);
 
-    useEffect(() => {
-        const handleResize = () => {
-            const w = window.innerWidth;
-            if (w < 480) setItemsPerView(2.2); 
-            else if (w < 640) setItemsPerView(3.2); 
-            else if (w < 768) setItemsPerView(4.2); 
-            else if (w < 1024) setItemsPerView(5.2); 
-            else setItemsPerView(6); 
-        };
-        handleResize();
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    if (sortedProfiles.length === 0) return null;
-
-    const maxIndex = Math.max(0, sortedProfiles.length - Math.floor(itemsPerView));
-
-    const handleNext = () => setCurrentIndex(prev => Math.min(prev + 1, maxIndex));
-    const handlePrev = () => setCurrentIndex(prev => Math.max(prev - 1, 0));
-
-    const handleTouchStart = (e: React.TouchEvent) => {
-        touchStartX.current = e.targetTouches[0].clientX;
-        touchEndX.current = e.targetTouches[0].clientX;
-    };
-
-    const handleTouchMove = (e: React.TouchEvent) => {
-        touchEndX.current = e.targetTouches[0].clientX;
-    };
-
-    const handleTouchEnd = () => {
-        if (touchStartX.current - touchEndX.current > 50) handleNext();
-        if (touchStartX.current - touchEndX.current < -50) handlePrev();
-    };
+    const displayProfiles = sortedProfiles.slice(0, 6);
+    
+    if (displayProfiles.length === 0) return null;
 
     return (
-        <div className="mt-12 bg-white/50 dark:bg-slate-900/50 rounded-3xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 md:backdrop-blur-sm relative z-10 w-full overflow-hidden">
-            <div className="flex items-center justify-between mb-6">
+        <div className="mt-16 w-full relative z-10">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4 px-2">
                 <div>
-                    <h2 className="text-lg md:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
-                        <Icon name="Briefcase" className="text-blue-500" /> {categoryType === 'games' ? 'Best Studios' : 'Best Company'}
+                    <h2 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center border border-blue-200 dark:border-blue-500/30">
+                            <Icon name="Briefcase" size={20} className="text-blue-600 dark:text-blue-400" />
+                        </div>
+                        {categoryType === 'games' ? 'Top Studios' : 'Top Tech Companies'}
                     </h2>
-                    <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1">Top developers by released items</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 font-medium">Leading developers by released items</p>
                 </div>
                 <button 
                     onClick={onSeeAll}
-                    className="shrink-0 text-xs sm:text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2 transition-all px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-500/20"
+                    className="cursor-pointer shrink-0 group text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
-                    <span>VIEW ALL</span> <Icon name="ArrowRight" size={16} />
+                    View Directory <Icon name="ArrowRight" size={16} className="group-hover:translate-x-1 transition-transform" />
                 </button>
             </div>
             
-            <div 
-                className="relative group w-full"
-                onMouseEnter={() => setIsHovered(true)}
-                onMouseLeave={() => setIsHovered(false)}
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-            >
-                <div className="overflow-hidden w-full relative">
-                    <motion.div 
-                        className="flex will-change-transform pb-4"
-                        animate={{ x: `-${currentIndex * (100 / itemsPerView)}%` }}
-                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+                {displayProfiles.map((profile, i) => (
+                    <div 
+                        key={profile.id}
+                        onClick={() => onSelect(profile)}
+                        className="group relative bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-slate-800/60 rounded-3xl p-5 md:p-6 overflow-hidden cursor-pointer hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300"
                     >
-                        {sortedProfiles.map((profile) => (
-                            <div 
-                                key={profile.id}
-                                style={{ width: `${100 / itemsPerView}%` }}
-                                className="flex-shrink-0 px-2"
-                            >
-                                <div 
-                                    onClick={() => onSelect(profile)}
-                                    className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-4 cursor-pointer hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/10 transition-all h-full group/studio"
-                                >
-                                    <div className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 bg-slate-50 dark:bg-slate-900 rounded-2xl flex items-center justify-center p-3 border border-slate-100 dark:border-slate-800 group-hover/studio:border-blue-500/30 group-hover/studio:bg-blue-50 dark:group-hover/studio:bg-blue-900/20 overflow-hidden shrink-0 transition-all shadow-inner">
-                                        {profile.logoUrl ? (
-                                            <img src={profile.logoUrl} alt={profile.name} className="w-full h-full object-contain filter group-hover/studio:brightness-110 transition-all" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = '<span class="font-black text-lg sm:text-xl text-slate-400 group-hover/studio:text-blue-500 transition-colors">' + profile.name.substring(0, 2).toUpperCase() + '</span>'; }} />
-                                        ) : (
-                                            <span className="font-black text-lg sm:text-xl text-slate-400 group-hover/studio:text-blue-500 transition-colors">{profile.name.substring(0, 2).toUpperCase()}</span>
-                                        )}
-                                    </div>
-                                    <div className="text-center w-full">
-                                        <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-1 group-hover/studio:text-blue-500 transition-colors" title={profile.name}>{profile.name}</h3>
-                                        <span className="inline-block mt-2 px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 text-[9px] sm:text-[10px] font-black uppercase tracking-wider rounded border border-blue-200 dark:border-blue-500/30 group-hover/studio:shadow-sm">
-                                            {profile.totalGames} {profile.totalGames === 1 ? 'Item' : 'Items'}
-                                        </span>
-                                    </div>
-                                </div>
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-500/5 to-transparent rounded-bl-full pointer-events-none transition-opacity opacity-0 group-hover:opacity-100" />
+                        
+                        <div className="flex items-start justify-between mb-6">
+                            <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-slate-50 dark:bg-slate-900/80 flex items-center justify-center p-3 border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden group-hover:scale-105 transition-transform duration-300">
+                                {profile.logoUrl ? (
+                                    <img src={profile.logoUrl} alt={profile.name} className="w-full h-full object-contain filter group-hover:brightness-110 transition-all cursor-pointer" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement.innerHTML = '<span class="font-black text-xl text-slate-400 group-hover:text-blue-500 transition-colors cursor-pointer">' + profile.name.substring(0, 2).toUpperCase() + '</span>'; }} />
+                                ) : (
+                                    <span className="font-black text-xl text-slate-400 group-hover:text-blue-500 transition-colors cursor-pointer">{profile.name.substring(0, 2).toUpperCase()}</span>
+                                )}
                             </div>
-                        ))}
-                    </motion.div>
-                </div>
-
-                <div className="absolute top-1/2 -translate-y-1/2 -left-3 sm:-left-4 z-30 opacity-100 transition-opacity duration-300">
-                    <button 
-                        onClick={handlePrev} 
-                        disabled={currentIndex === 0}
-                        className="p-1 sm:p-2 sm:p-2.5 rounded-full bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xl hover:scale-110 transition-transform disabled:opacity-0 disabled:scale-100 border border-slate-200 dark:border-slate-700"
-                    >
-                        <Icon name="ChevronLeft" size={20} />
-                    </button>
-                </div>
-                <div className="absolute top-1/2 -translate-y-1/2 -right-3 sm:-right-4 z-30 opacity-100 transition-opacity duration-300">
-                    <button 
-                        onClick={handleNext} 
-                        disabled={currentIndex >= maxIndex}
-                        className="p-1 sm:p-2 sm:p-2.5 rounded-full bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xl hover:scale-110 transition-transform disabled:opacity-0 disabled:scale-100 border border-slate-200 dark:border-slate-700"
-                    >
-                        <Icon name="ChevronRight" size={20} />
-                    </button>
-                </div>
+                            <div className="flex flex-col items-end">
+                                <span className="text-xl md:text-2xl font-black text-slate-900 dark:text-white">
+                                    {profile.totalGames}
+                                </span>
+                                <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">
+                                    {profile.totalGames === 1 ? 'Item' : 'Items'}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 className="font-bold text-base md:text-lg text-slate-900 dark:text-white line-clamp-1 group-hover:text-blue-500 transition-colors">
+                                {profile.name}
+                            </h3>
+                            <div className="flex items-center gap-1.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-blue-500 text-xs font-semibold">
+                                View Profile <Icon name="ArrowRight" size={12} />
+                            </div>
+                        </div>
+                    </div>
+                ))}
             </div>
         </div>
     );
@@ -3610,6 +3556,7 @@ const SecretArea: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'game' | 'hypervisor' | 'steamtools' | 'architect' | 'extra' | 'stash'>('game');
   const [searchQuery, setSearchQuery] = useState('');
   const [stash, setStash] = useState<string[]>([]);
+  const [animateStashTab, setAnimateStashTab] = useState(false);
   const [showAllProfiles, setShowAllProfiles] = useState(false);
 
   useEffect(() => {
@@ -3642,8 +3589,13 @@ const SecretArea: React.FC = () => {
       e.preventDefault();
     }
     setStash(prev => {
-      const newStash = prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id];
+      const isAdding = !prev.includes(id);
+      const newStash = isAdding ? [...prev, id] : prev.filter(i => i !== id);
       localStorage.setItem('myStash', JSON.stringify(newStash));
+      if (isAdding) {
+         setAnimateStashTab(true);
+         setTimeout(() => setAnimateStashTab(false), 500);
+      }
       return newStash;
     });
   };
@@ -3669,6 +3621,7 @@ const SecretArea: React.FC = () => {
   const [scriptError, setScriptError] = useState(false);
   const [requestModalInitialTitle, setRequestModalInitialTitle] = useState('');
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [maintenanceConfig, setMaintenanceConfig] = useState<{active: boolean, endTime: string | null, message: string} | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -4116,18 +4069,12 @@ const SecretArea: React.FC = () => {
 
           if (nextProgress > lineIndex * 12 && lineIndex < lines.length) {
             const currentLine = lines[lineIndex];
-            setTerminalLines(current => {
-              const newLines = [...current, `> ${currentLine}`];
-              return newLines.slice(-4); // Keep only last 4 lines
-            });
+            setTerminalLines(current => [...current, `> ${currentLine}`]);
             lineIndex++;
           }
           
           if (nextProgress === 100 && lineIndex === lines.length) {
-            setTerminalLines(current => {
-              const newLines = [...current, "> SYNC COMPLETE. WELCOME."];
-              return newLines.slice(-4);
-            });
+            setTerminalLines(current => [...current, "> SYNC COMPLETE. WELCOME."]);
             lineIndex++;
           }
           
@@ -4310,6 +4257,24 @@ const SecretArea: React.FC = () => {
   }, []);
 
   const processRawData = (data: any) => {
+    const maintenanceKey = Object.keys(data).find(k => k.toLowerCase() === 'maintenance');
+    if (maintenanceKey && Array.isArray(data[maintenanceKey]) && data[maintenanceKey].length > 0) {
+        const config = data[maintenanceKey][0];
+        const isActiveStr = String(config.active || '').toLowerCase().trim();
+        if (isActiveStr === 'true' || isActiveStr === 'yes' || isActiveStr === '1' || config.active === true) {
+            setMaintenanceConfig({
+                active: true,
+                endTime: config.time || config.endTime || config.date || null,
+                message: config.message || "Our website is under temporary maintenance, we will be back soon :)"
+            });
+            // Don't return early so we still process the rest of the data just in case, but the UI will render maintenance mode
+        } else {
+            setMaintenanceConfig(null);
+        }
+    } else {
+        setMaintenanceConfig(null);
+    }
+
     const upcomingKey = Object.keys(data).find(k => k.toLowerCase() === 'upcoming');
     if (!upcomingKey) {
         setIsUpcomingMissing(true);
@@ -4647,7 +4612,6 @@ const SecretArea: React.FC = () => {
   };
 
   const fetchData = async (silent = false) => {
-    if (!isUnlocked) return;
     if (!silent) setLoading(true);
     if (!silent && showHackerLoader) {
         setImagesLoading(true);
@@ -4754,7 +4718,8 @@ const SecretArea: React.FC = () => {
           } else {
               let loaded = 0;
               const total = uniqueUrls.length;
-              Promise.all(uniqueUrls.map(url => {
+              
+              const loadPromises = Promise.all(uniqueUrls.map(url => {
                   return new Promise(resolve => {
                       const img = new Image();
                       img.onload = () => {
@@ -4769,7 +4734,12 @@ const SecretArea: React.FC = () => {
                       };
                       img.src = url;
                   });
-              })).then(() => {
+              }));
+
+              // Maximum 3 seconds for image preloading
+              const timeoutPromise = new Promise(resolve => setTimeout(resolve, 3000));
+              
+              Promise.race([loadPromises, timeoutPromise]).then(() => {
                   setImagesLoading(false);
                   setImageProgress(100);
               });
@@ -4836,6 +4806,8 @@ const SecretArea: React.FC = () => {
   useEffect(() => { 
       if (isUnlocked) {
           fetchData(); 
+      } else {
+          fetchData(true);
       }
   }, [isUnlocked]);
   useEffect(() => { setCurrentPage(1); }, [activeTab, searchQuery]);
@@ -4947,31 +4919,38 @@ const SecretArea: React.FC = () => {
     }
   };
 
+  if (maintenanceConfig?.active) {
+    // Admin bypass: append ?bypass=nexa to the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const isBypass = urlParams.get('bypass') === 'nexa';
+    
+    if (!isBypass) {
+        return <MaintenancePage endTime={maintenanceConfig.endTime} message={maintenanceConfig.message} />;
+    }
+  }
+
   if (!isUnlocked) {
     return (
-      <div className="w-full h-screen fixed inset-0 z-[200] bg-slate-50 dark:bg-slate-950 overflow-y-auto font-sans transition-colors duration-300">
-        <div className="min-h-full w-full flex items-center justify-center p-4 py-8 relative">
+      <div className={`w-full h-screen fixed inset-0 z-[200] bg-slate-50 dark:bg-slate-950 font-sans transition-colors duration-300 ${showMathGame ? 'overflow-y-auto' : 'overflow-hidden flex items-center justify-center p-4'}`}>
           <div className="fixed inset-0 z-0 pointer-events-none">
              {bgImage && (
-                <div 
-                  className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30 dark:opacity-40"
-                  style={{ backgroundImage: `url(${bgImage})` }} 
-                />
+                <div
+                   className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30 dark:opacity-40"
+                  style={{ backgroundImage: `url(${bgImage})` }}
+                 />
              )}
              <div className="absolute inset-0 bg-slate-50/70 dark:bg-slate-950/70 md:backdrop-blur-[2px]"></div>
-             <div 
-               className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary-500/10 dark:bg-primary-900/20 rounded-full md:blur-[120px] blur-[80px]"
+             <div
+                className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary-500/10 dark:bg-primary-900/20 rounded-full md:blur-[120px] blur-[80px]"
              />
-             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03]"></div>
           </div>
-
-          <motion.div 
+        <div className={`relative z-10 w-full ${showMathGame ? 'flex justify-center min-h-full items-center p-4 py-8' : 'max-w-2xl flex flex-col items-center'}`}>
+          <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }} 
             animate={{ opacity: 1, scale: 1, y: 0 }} 
-            className="w-[95%] sm:w-[85%] md:w-[75%] lg:w-[60%] xl:w-[50%] max-w-5xl relative z-10"
+            className={showMathGame ? "w-[95%] sm:w-[85%] md:w-[75%] lg:w-[60%] xl:w-[50%] max-w-5xl relative z-10" : "w-full bg-slate-900/90 dark:bg-black/40 backdrop-blur-md border border-slate-700/50 dark:border-slate-700/50 rounded-xl overflow-hidden shadow-2xl flex flex-col relative"}
           >
-          <div className="bg-white/90 dark:bg-slate-900/90 md:backdrop-blur-2xl rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.1)] dark:shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden relative group">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1 bg-gradient-to-r from-transparent via-primary-500 to-transparent opacity-50 group-hover:opacity-100 transition-opacity"></div>
+          <div className={`relative group ${showMathGame ? 'overflow-hidden bg-white/90 dark:bg-slate-900/90 md:backdrop-blur-2xl rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.1)] dark:shadow-[0_0_50px_rgba(0,0,0,0.5)]' : 'w-full flex flex-col overflow-hidden'}`}>
             
             {showMathGame ? (
                 <div className="p-6 sm:p-8 md:p-10 space-y-4 sm:space-y-6 text-center relative overflow-hidden">
@@ -5060,7 +5039,7 @@ const SecretArea: React.FC = () => {
                     {mathStatus === 'won' && (
                         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="space-y-6 relative z-10">
                             <div className="text-emerald-500 flex justify-center"><Icon name="CheckCircle" size={48} /></div>
-                            <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 px-4">
+                            <p className="text-xs sm:text-sm font-bold text-slate-300 px-4">
                                 "Intelligence confirmed. Welcome to the inner circle."
                             </p>
                             <div className="bg-emerald-500/10 border border-emerald-500/30 p-4 rounded-xl">
@@ -5082,57 +5061,29 @@ const SecretArea: React.FC = () => {
                     )}
                 </div>
             ) : (
-                <div className="p-4 sm:p-8 md:p-10 flex flex-col gap-4 relative overflow-hidden h-full min-h-[500px]">
-                   {/* Grid Background Effect */}
-                   <div className="absolute inset-0 bg-[linear-gradient(rgba(14,165,233,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(14,165,233,0.03)_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none -z-10"></div>
-                   
-                   <motion.div 
-                     initial={{ y: 20, opacity: 0 }}
-                     animate={{ y: 0, opacity: 1 }}
-                     transition={{ duration: 0.5 }}
-                     className="text-center shrink-0 relative flex flex-col items-center justify-center"
-                   >
-                      <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-1 select-none">N E X A INTERFACE</h2>
-                      <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em] flex items-center justify-center gap-2 select-none">
-                         <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-                         FORTRESS SECURITY LAYER
-                      </p>
-
-                   </motion.div>
-                   
-                   <motion.div 
-                     initial={{ scale: 0.95, opacity: 0 }}
-                     animate={{ scale: 1, opacity: 1 }}
-                     transition={{ duration: 0.6, delay: 0.1, type: "spring", stiffness: 100 }}
-                     className="bg-black/5 dark:bg-black/40 md:backdrop-blur-md rounded-xl border border-slate-300 dark:border-slate-800 overflow-hidden flex flex-col flex-1 shadow-2xl relative group min-h-[300px]"
-                   >
-                      <div className="absolute inset-0 bg-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-                      <div className="bg-[#2E3440] dark:bg-[#20242D] px-3 py-2 flex items-center gap-3 border-b border-[#4C566A] dark:border-[#3B4252] shrink-0 relative z-10">
-                        <div className="flex gap-1.5 p-1">
-                          <Icon name="Terminal" size={14} className="text-[#D8DEE9]" />
+                <div className="flex flex-col relative overflow-hidden w-full h-[450px]">
+                      
+                      <div className="h-10 bg-slate-800/80 dark:bg-[#0f172a]/50 backdrop-blur-sm border-b border-slate-700/50 dark:border-slate-800/50 flex items-center px-4 justify-between relative z-10 shrink-0">
+                        <div className="flex gap-2">
+                          <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                          <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                          <div className="w-3 h-3 rounded-full bg-green-500"></div>
                         </div>
-                        <div className="flex-1 text-center text-xs font-sans text-[#E5E9F0] dark:text-[#E5E9F0] py-1">
-                          guest@nexa1337.com: ~
+                        <div className="flex items-center gap-2">
+                            <div className="relative w-4 h-4 flex items-center justify-center">
+                                <FaWolfPackBattalion size={14} className="text-white dark:text-white relative z-10" />
+                            </div>
+                            <div className="text-xs font-semibold text-slate-300 dark:text-slate-300 lowercase tracking-widest font-mono">guest@nexa1337:~/root</div>
                         </div>
-                        <div className="flex gap-1.5 p-1 group">
-                          <Icon name="X" size={14} className="text-[#D8DEE9] hover:text-[#BF616A] cursor-pointer transition-colors" />
-                        </div>
+                        <div className="w-12"></div>
                       </div>
                       <div 
-                        className="flex-1 p-4 overflow-y-auto font-mono text-[12px] sm:text-[13px] custom-scrollbar relative z-10 text-[#D8DEE9]" 
-                        style={{ 
-                          backgroundImage: "linear-gradient(rgba(10, 10, 12, 0.45), rgba(10, 10, 12, 0.55)), url('https://guide-images.cdn.ifixit.com/igi/yIjDodkoTxh26KQx.full')",
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center',
-                          backgroundRepeat: 'no-repeat',
-                          backgroundColor: '#121212',
-                          textShadow: '0 1px 2px rgba(0,0,0,0.95), 0 0 4px rgba(0,0,0,0.7)'
-                        }}
+                        className="flex-1 min-h-0 p-4 md:p-6 overflow-y-auto font-mono text-[12px] sm:text-[13px] custom-scrollbar relative z-10 text-[#D8DEE9]" 
                         onClick={() => document.getElementById('terminal-input')?.focus()}
                       >
                         {!terminalCleared && (
                           <div className="mb-4">
-                             <span className="text-[#89B4FA] font-bold">┌──(</span><span className="text-[#E5E9F0] font-bold">guest㉿nexa1337.com</span><span className="text-[#89B4FA] font-bold">)-[</span><span className="text-[#E5E9F0] font-bold">~</span><span className="text-[#89B4FA] font-bold">]</span><br/>
+                             <span className="text-[#89B4FA] font-bold">┌──(</span><span className="text-[#E5E9F0] font-bold">guest㉿nexa1337</span><span className="text-[#89B4FA] font-bold">)-[</span><span className="text-[#E5E9F0] font-bold">~</span><span className="text-[#89B4FA] font-bold">]</span><br/>
                              <span className="text-[#89B4FA] font-bold">└─$</span> <span className="text-[#A6E3A1]">N E X A OS - System Online</span>
                           </div>
                         )}
@@ -5184,7 +5135,6 @@ const SecretArea: React.FC = () => {
                         </form>
                         <div ref={terminalEndRef} />
                       </div>
-                   </motion.div>
                 </div>
             )}
           </div>
@@ -5195,107 +5145,92 @@ const SecretArea: React.FC = () => {
   }
 
   return (
-    <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-200 selection:bg-primary-500/30 transition-colors duration-300 overflow-x-hidden">
-      
+    <div className="w-full min-h-screen bg-slate-50 dark:bg-[#030712] font-sans text-slate-800 dark:text-slate-200 selection:bg-primary-500/30 transition-colors duration-300 overflow-x-hidden relative">
+      <div className="fixed inset-0 z-0 opacity-40 dark:opacity-60 pointer-events-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-200 via-slate-50 to-slate-50 dark:from-slate-900 dark:via-[#030712] dark:to-[#030712]">
+      </div>
+
       <AnimatePresence>
         {showHackerLoader && (
           <motion.div
             initial={{ opacity: 1 }}
             exit={{ opacity: 0, transition: { duration: 0.8, ease: "easeInOut" } }}
-            className="fixed inset-0 z-[9999] bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 overflow-hidden transition-colors duration-300"
+            className="fixed inset-0 z-[9999] bg-slate-50 dark:bg-[#020617] flex flex-col items-center justify-center p-4 overflow-hidden transition-colors duration-300"
           >
-            {/* Modern Background Elements */}
+            {/* Simple Background */}
             <div className="absolute inset-0 z-0 pointer-events-none">
-               <div 
-                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary-500/10 rounded-full md:blur-[120px] blur-[80px]"
-               />
-               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03] dark:opacity-[0.05]"></div>
                
-               {/* Grid overlay */}
-               <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.03)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_80%_80%_at_50%_50%,#000_20%,transparent_100%)]"></div>
+               <div className="absolute inset-0 bg-slate-50/70 dark:bg-[#020617]/80 md:backdrop-blur-[2px]" />
+               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-400/10 dark:bg-cyan-900/10 rounded-full blur-[100px]" />
             </div>
             
-            <div className="relative z-10 w-full max-w-lg flex flex-col items-center">
-              {/* Logo / Icon */}
-              <div className="relative mb-10 w-32 h-32 flex items-center justify-center">
-                <motion.div 
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                  className="absolute inset-0 border border-dashed border-primary-500/40 rounded-full"
-                />
-                <motion.div 
-                  animate={{ rotate: -360 }}
-                  transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                  className="absolute inset-3 border border-indigo-500/30 rounded-full"
-                />
-                <motion.div 
-                  animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                  className="absolute inset-6 bg-primary-500/10 rounded-full blur-md"
-                />
-                <div className="w-20 h-20 bg-white dark:bg-slate-900 border border-primary-500/60 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(14,165,233,0.2)] dark:shadow-[0_0_40px_rgba(14,165,233,0.3)] relative z-10 overflow-hidden">
-                  <img 
-                    src="https://i.pinimg.com/originals/15/3d/b0/153db0b4b514669370f9a2ae83a2216b.gif" 
-                    alt="Running Wolf" 
-                    className="w-16 h-16 object-contain dark:invert"
-                  />
-                </div>
-              </div>
-
-              <h2 className="text-slate-900 dark:text-white text-2xl md:text-3xl font-black tracking-[0.3em] uppercase mb-4 text-center relative">
-                <span className="relative z-10">Secret Area</span>
-                <motion.span 
-                  animate={{ opacity: [0, 1, 0], x: [-5, 5, -5] }}
-                  transition={{ duration: 0.2, repeat: Infinity, repeatType: "mirror" }}
-                  className="absolute inset-0 text-primary-500 opacity-30 dark:opacity-50 blur-[2px] -z-10"
-                >
-                  Secret Area
-                </motion.span>
-              </h2>
-              
-              {/* Terminal Output */}
-              <div className="w-full bg-slate-100/80 dark:bg-black/50 border border-primary-500/20 rounded-lg p-4 mb-8 h-32 flex flex-col justify-end overflow-hidden relative md:backdrop-blur-sm">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary-500/50 to-transparent opacity-50"></div>
-                {terminalLines.map((line, i) => (
-                  <motion.div 
-                    key={i}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="text-primary-600 dark:text-primary-400 font-mono text-xs md:text-sm mb-1"
-                  >
-                    {line}
-                  </motion.div>
-                ))}
-                <motion.div 
-                  animate={{ opacity: [0, 1, 0] }}
-                  transition={{ duration: 0.8, repeat: Infinity }}
-                  className="w-2 h-4 bg-primary-500 mt-1"
-                />
-              </div>
-              
-              {/* Progress Bar */}
-              <div className="w-full relative">
-                <div className="w-full h-2 bg-slate-200 dark:bg-slate-800/80 rounded-full overflow-hidden relative border border-slate-300 dark:border-slate-700/50 md:backdrop-blur-sm">
-                  <motion.div 
-                    className="absolute top-0 left-0 h-full bg-gradient-to-r from-indigo-600 via-primary-500 to-cyan-400"
-                    initial={{ width: "0%" }}
-                    animate={{ width: `${hackerProgress}%` }}
-                    transition={{ duration: 0.1 }}
-                  />
-                  {/* Glare effect on progress bar */}
-                  <motion.div 
-                    className="absolute top-0 bottom-0 w-20 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                    animate={{ left: ["-20%", "120%"] }}
-                    transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                  />
-                </div>
+            <div className="relative z-10 w-full max-w-2xl flex flex-col items-center">
+              {/* Terminal Window */}
+              <div className="w-full bg-slate-900/90 dark:bg-black/40 backdrop-blur-md border border-slate-700/50 dark:border-slate-700/50 rounded-xl overflow-hidden shadow-2xl flex flex-col relative">
+                {/* Background Image inside terminal */}
                 
-                <div className="w-full flex justify-between mt-4 text-slate-500 dark:text-slate-400 font-mono text-[10px] md:text-xs uppercase tracking-widest">
-                  <span className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-ping"></span>
-                    SYSTEM SYNCHRONIZATION ACTIVE
-                  </span>
-                  <span className="text-primary-600 dark:text-primary-400 font-bold">{hackerProgress}%</span>
+                
+                {/* Mac OS Window Header */}
+                <div className="h-10 bg-slate-800/80 dark:bg-[#0f172a]/50 backdrop-blur-sm border-b border-slate-700/50 dark:border-slate-800/50 flex items-center px-4 justify-between relative z-10">
+                  <div className="flex gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                     <div className="relative w-4 h-4 flex items-center justify-center">
+                        <FaWolfPackBattalion size={14} className="text-white dark:text-white relative z-10" />
+                        <FaWolfPackBattalion size={14} className="text-red-500 absolute inset-0 z-0 opacity-70 animate-[glitch_2s_infinite]" style={{ clipPath: 'polygon(0 0, 100% 0, 100% 45%, 0 45%)', transform: 'translate(-1px, 1px)' }} />
+                        <FaWolfPackBattalion size={14} className="text-cyan-500 absolute inset-0 z-0 opacity-70 animate-[glitch_3s_infinite_reverse]" style={{ clipPath: 'polygon(0 55%, 100% 55%, 100% 100%, 0 100%)', transform: 'translate(1px, -1px)' }} />
+                     </div>
+                     <div className="text-xs font-semibold text-slate-300 dark:text-slate-300 lowercase tracking-widest font-mono">guest@nexa1337:~/root</div>
+                  </div>
+                  <div className="w-12"></div>
+                </div>
+
+                {/* Content */}
+                <div className="p-6 md:p-10 flex flex-col items-center relative overflow-hidden h-[410px] z-10">
+                  <h2 className="text-xl md:text-2xl font-black tracking-[0.2em] uppercase mb-10 text-white dark:text-white text-center">
+                    Secret Area
+                  </h2>
+
+                  {/* Scrolling Checklist */}
+                  <div className="w-full max-w-md h-40 overflow-hidden relative flex flex-col justify-end" style={{ maskImage: "linear-gradient(to bottom, transparent, black 30%, black)", WebkitMaskImage: "linear-gradient(to bottom, transparent, black 30%, black)" }}>
+                    <div className="flex flex-col gap-3 w-full justify-end pb-2">
+                      {terminalLines.slice(-5).map((line, i, arr) => {
+                        const isLatest = i === arr.length - 1;
+                        return (
+                          <motion.div
+                            key={line + i}
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className={`flex items-center gap-4 ${isLatest ? 'text-cyan-400' : 'text-slate-400'}`}
+                          >
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 shrink-0 ${isLatest ? 'border-cyan-400 bg-white/20 dark:bg-black/20 backdrop-blur-sm' : 'border-slate-600 bg-white/10 dark:bg-black/10 backdrop-blur-sm'}`}>
+                              {!isLatest && <Icon name="Check" size={12} className="text-slate-400" />}
+                              {isLatest && <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}><Icon name="Loader2" size={12} className="text-cyan-400" /></motion.div>}
+                            </div>
+                            <span className="font-mono text-[11px] sm:text-xs truncate font-medium drop-shadow-sm">{line}</span>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="w-full max-w-md mt-8">
+                    <div className="flex justify-between text-[10px] sm:text-xs font-bold mb-3 text-slate-300 uppercase tracking-widest drop-shadow-sm">
+                      <span>Status: Loading..</span>
+                      <span className="text-cyan-400">{hackerProgress}%</span>
+                    </div>
+                    <div className="w-full h-2.5 bg-white/20 dark:bg-black/40 backdrop-blur-sm rounded-full overflow-hidden border border-slate-300/50 dark:border-slate-700/50">
+                      <motion.div
+                        className="h-full bg-gradient-to-r from-cyan-500 to-emerald-400"
+                        initial={{ width: "0%" }}
+                        animate={{ width: `${hackerProgress}%` }}
+                        transition={{ duration: 0.1 }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -5428,7 +5363,7 @@ const SecretArea: React.FC = () => {
                  <motion.div 
                    initial={{ opacity: 0, y: -10 }}
                    animate={{ opacity: 1, y: 0 }}
-                   className="px-3 py-1.5 border rounded-lg flex items-center gap-2.5 shadow-lg whitespace-nowrap shrink-0 relative overflow-hidden bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 shadow-[0_0_15px_rgba(148,163,184,0.3)]"
+                   className="px-3 py-1.5 border rounded-lg flex items-center gap-2.5 shadow-lg whitespace-nowrap shrink-0 relative overflow-hidden bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-300 shadow-[0_0_15px_rgba(148,163,184,0.3)]"
                  >
                     <Icon name="UserCircle" size={14} className="opacity-80" />
                     <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider">GUEST MODE</span>
@@ -5521,7 +5456,7 @@ const SecretArea: React.FC = () => {
                 Area
               </motion.span>
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 max-w-xl text-sm md:text-base font-medium leading-relaxed border-l-2 border-slate-300 dark:border-slate-800 pl-4">
+            <p className="text-slate-400 max-w-xl text-sm md:text-base font-medium leading-relaxed border-l-2 border-slate-300 dark:border-slate-800 pl-4">
               Everything you need, from games to tools, collected from trusted sources and presented in a clean experience ad-free.
             </p>
           </div>
@@ -5705,6 +5640,11 @@ const SecretArea: React.FC = () => {
                                 <>
                                   <Icon name="Bookmark" size={14} className={activeTab === 'stash' ? 'text-primary-500' : ''} />
                                   MY STASH
+                                  {stash.length > 0 && (
+                                    <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold transition-colors ${animateStashTab ? 'bg-primary-500 text-white animate-pulse' : 'bg-slate-200 dark:bg-slate-700 text-slate-300'}`}>
+                                      {stash.length}
+                                    </span>
+                                  )}
                                 </>
                               ) : tab}
                             </span>
@@ -5712,10 +5652,10 @@ const SecretArea: React.FC = () => {
                         ))}
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0 overflow-x-auto no-scrollbar min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto shrink-0 mt-2 lg:mt-0">
                           <button 
                             onClick={() => setShowIntelPanel(true)}
-                            className="relative flex items-center justify-center p-3 sm:p-3.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-all shrink-0"
+                            className="relative flex items-center justify-center p-3 sm:p-3.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-300 rounded-xl transition-all flex-1 sm:flex-none"
                             title="Latest Intel (Live Changelog)"
                           >
                             <Icon name="Radar" size={20} className="animate-pulse text-primary-500" />
@@ -5724,7 +5664,7 @@ const SecretArea: React.FC = () => {
 
                           <button 
                             onClick={() => setShowGlobalFilter(!showGlobalFilter)}
-                            className={`flex items-center justify-center p-3 sm:p-3.5 rounded-xl transition-all shrink-0 border ${globalSpecs.isActive ? 'bg-primary-500 text-white border-primary-500 shadow-lg shadow-primary-500/20' : 'bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-transparent'}`}
+                            className={`flex items-center justify-center p-3 sm:p-3.5 rounded-xl transition-all border flex-1 sm:flex-none ${globalSpecs.isActive ? 'bg-primary-500 text-white border-primary-500 shadow-lg shadow-primary-500/20' : 'bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-300 border-transparent'}`}
                             title="Global System Filter"
                           >
                             <Icon name="Cpu" size={20} />
@@ -5732,7 +5672,7 @@ const SecretArea: React.FC = () => {
 
                           <button 
                             onClick={() => fetchData()}
-                            className="flex items-center justify-center p-3 sm:p-3.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-all shrink-0"
+                            className="flex items-center justify-center p-3 sm:p-3.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-300 rounded-xl transition-all flex-1 sm:flex-none"
                             title="Reload Data"
                           >
                             <Icon name="RefreshCw" size={20} className={loading ? "animate-spin" : ""} />
@@ -5743,13 +5683,12 @@ const SecretArea: React.FC = () => {
                                 setRequestModalInitialTitle(searchQuery);
                                 setShowRequestModal(true);
                             }}
-                            className="flex items-center gap-2 px-3 sm:px-4 py-3 sm:py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all shrink-0 whitespace-nowrap"
+                            className="flex items-center justify-center gap-2 px-3 sm:px-4 py-3 sm:py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all w-full sm:w-auto sm:flex-1 lg:flex-none"
                             title="Request a game or tool not listed here"
                           >
                             <Icon name="Plus" size={20} />
-                            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">
-                                <span className="inline sm:hidden">Request</span>
-                                <span className="hidden sm:inline">Request Item</span>
+                            <span className="text-xs sm:text-xs font-bold uppercase tracking-wider">
+                                Request Item
                             </span>
                           </button>
                       </div>
@@ -6019,7 +5958,7 @@ const SecretArea: React.FC = () => {
                     <button 
                       onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                       disabled={currentPage === 1}
-                      className="p-2 sm:p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-30 transition-all hover:bg-slate-200 dark:hover:bg-slate-700 shrink-0"
+                      className="p-2 sm:p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-30 transition-all hover:bg-slate-200 dark:hover:bg-slate-700 shrink-0"
                     >
                       <Icon name="ChevronLeft" size={20} />
                     </button>
@@ -6054,13 +5993,10 @@ const SecretArea: React.FC = () => {
                     <button 
                       onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                       disabled={currentPage === totalPages}
-                      className="p-2 sm:p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-30 transition-all hover:bg-slate-200 dark:hover:bg-slate-700 shrink-0"
+                      className="p-2 sm:p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-30 transition-all hover:bg-slate-200 dark:hover:bg-slate-700 shrink-0"
                     >
                       <Icon name="ChevronRight" size={20} />
                     </button>
-                  </div>
-                  <div className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">
-                    Sector {currentPage} / {totalPages}
                   </div>
                 </div>
               )}
@@ -6283,7 +6219,7 @@ const AllProfilesModal: React.FC<{
                         <div className="flex flex-col items-center justify-center h-full text-center p-8">
                             <Icon name="SearchX" size={48} className="text-slate-400 dark:text-slate-600 mb-4" />
                             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No Profiles Found</h3>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm">Try adjusting your search criteria.</p>
+                            <p className="text-slate-400 text-sm">Try adjusting your search criteria.</p>
                         </div>
                     )}
                 </div>

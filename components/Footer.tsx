@@ -29,7 +29,7 @@ const Footer: React.FC = () => {
 
   return (
     <>
-      <footer className="w-full py-8 text-center text-slate-500 dark:text-slate-400 text-sm pb-24 md:pb-8 flex flex-col items-center">
+      <footer className="w-full py-8 text-center text-slate-600 dark:text-slate-300 text-sm pb-24 md:pb-8 flex flex-col items-center">
         <div className="flex flex-wrap justify-center gap-4 mb-6">
           <a href="#" className="flex items-center gap-3 px-4 py-2 border border-[#00a2ed]/40 hover:border-[#00a2ed] rounded-lg text-[#00a2ed] bg-[#00a2ed]/5 hover:bg-[#00a2ed]/10 transition-all">
             <WindowsLogo />
@@ -48,7 +48,7 @@ const Footer: React.FC = () => {
           </a>
         </div>
 
-        <div className="flex flex-wrap items-center justify-center gap-6 mb-4 font-medium">
+        <div className="flex flex-wrap items-center justify-center gap-6 mb-4 font-semibold text-slate-700 dark:text-slate-200">
           <Link to="/" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Secret Area</Link>
           <Link to="/personal-space" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Personal Space</Link>
           <Link to="/roadmap" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Roadmap</Link>
