@@ -41,7 +41,7 @@ export const CommentItem: React.FC<CommentItemProps> = ({ comment, onReaction, o
             <h4 className="font-black text-sm text-slate-900 dark:text-white truncate">
               {comment.author}
             </h4>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
               {new Date(comment.timestamp).toLocaleDateString()}
             </span>
           </div>
@@ -68,7 +68,7 @@ export const CommentItem: React.FC<CommentItemProps> = ({ comment, onReaction, o
             {hasReplies && (
               <button 
                 onClick={() => setShowReplies(!showReplies)} 
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 text-[10px] font-bold uppercase tracking-wider transition-colors ml-auto flex items-center gap-1"
+                className="text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase tracking-wider transition-colors ml-auto flex items-center gap-1"
               >
                 {showReplies ? <Icon name="ChevronUp" size={14}/> : <Icon name="ChevronDown" size={14}/>}
                 {comment.replies!.length} {comment.replies!.length === 1 ? 'Reply' : 'Replies'}
@@ -119,7 +119,7 @@ export const CommentItem: React.FC<CommentItemProps> = ({ comment, onReaction, o
                       <h5 className="font-black text-xs text-slate-800 dark:text-slate-200 truncate">
                         {reply.author}
                       </h5>
-                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                      <span className="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                         {new Date(reply.timestamp).toLocaleDateString()}
                       </span>
                     </div>

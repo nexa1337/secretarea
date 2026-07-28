@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { FaTelegram, FaDiscord, FaWolfPackBattalion } from 'react-icons/fa6';
+import { FaTelegram, FaDiscord, FaReddit, FaWolfPackBattalion } from 'react-icons/fa6';
 import { LowPolyBackground } from './LowPolyBackground';
 
 interface MaintenanceProps {
@@ -78,7 +78,7 @@ const MaintenancePage: React.FC<MaintenanceProps> = ({ endTime, message }) => {
           {pad(val)}
         </span>
       </div>
-      <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 transition-colors duration-300">
+      <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-700 dark:text-slate-500 dark:text-slate-400 transition-colors duration-300">
         {label}
       </span>
     </div>
@@ -117,7 +117,7 @@ const MaintenancePage: React.FC<MaintenanceProps> = ({ endTime, message }) => {
         <h1 className="text-xl sm:text-3xl md:text-5xl lg:text-6xl font-light text-slate-900 dark:text-white mb-4 tracking-tight transition-colors duration-300 whitespace-nowrap">
           We're Under <span className="font-bold">Maintenance</span>
         </h1>
-        <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 mb-12 max-w-lg mx-auto leading-relaxed transition-colors duration-300">
+        <p className="text-sm sm:text-base text-slate-700 dark:text-slate-500 dark:text-slate-400 mb-12 max-w-lg mx-auto leading-relaxed transition-colors duration-300">
           {message}
         </p>
 
@@ -133,6 +133,7 @@ const MaintenancePage: React.FC<MaintenanceProps> = ({ endTime, message }) => {
         <div className="mt-8 flex items-center justify-center gap-4 relative z-20">
            <a href="https://t.me/nexa1337agency" target="_blank" rel="noopener noreferrer" className="w-12 h-12 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-all hover:scale-110 shadow-lg shadow-slate-200 dark:shadow-slate-900/50"><FaTelegram size={22} /></a>
            <a href="https://discord.com/invite/MgqvMyZv2b" target="_blank" rel="noopener noreferrer" className="w-12 h-12 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-all hover:scale-110 shadow-lg shadow-slate-200 dark:shadow-slate-900/50"><FaDiscord size={22} /></a>
+           <a href="https://www.reddit.com/r/SecretArea1337" target="_blank" rel="noopener noreferrer" className="w-12 h-12 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-all hover:scale-110 shadow-lg shadow-slate-200 dark:shadow-slate-900/50"><FaReddit size={22} /></a>
         </div>
       </motion.div>
 

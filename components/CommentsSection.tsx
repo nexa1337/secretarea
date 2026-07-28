@@ -492,7 +492,7 @@ export const CommentsSection: React.FC<{ itemId: string, itemTitle?: string, ite
               placeholder="Your Alias (Optional)..." 
               value={authorName}
               onChange={(e) => setAuthorName(e.target.value)}
-              className="w-full bg-transparent border-b border-slate-300 dark:border-slate-700 pb-2 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors mb-4 placeholder:text-slate-400"
+              className="w-full bg-transparent border-b border-slate-300 dark:border-slate-700 pb-2 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors mb-4 placeholder:text-slate-600 dark:text-slate-400"
               maxLength={20}
             />
             <textarea
@@ -508,7 +508,7 @@ export const CommentsSection: React.FC<{ itemId: string, itemTitle?: string, ite
 
         {/* Tags Selection */}
         <div className="mb-4">
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Tag this Intel (Max 3):</p>
+          <p className="text-xs font-bold text-slate-700 dark:text-slate-500 uppercase tracking-wider mb-2">Tag this Intel (Max 3):</p>
           <div className="flex flex-wrap gap-2">
             {AVAILABLE_TAGS.map(tag => (
               <button
@@ -547,8 +547,8 @@ export const CommentsSection: React.FC<{ itemId: string, itemTitle?: string, ite
           </div>
         ) : comments.length === 0 ? (
           <div className="text-center py-10 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800">
-            <SiWolframlanguage size={40} className="mx-auto text-slate-300 dark:text-slate-700 mb-3 opacity-50" />
-            <p className="text-sm font-bold text-slate-500">No intel dropped yet. Be the first wolf to howl!</p>
+            <SiWolframlanguage size={40} className="mx-auto text-slate-700 dark:text-slate-300 dark:text-slate-700 mb-3 opacity-50" />
+            <p className="text-sm font-bold text-slate-700 dark:text-slate-500">No intel dropped yet. Be the first wolf to howl!</p>
           </div>
         ) : (
           <AnimatePresence>

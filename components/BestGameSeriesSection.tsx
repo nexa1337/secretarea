@@ -61,7 +61,7 @@ export const BestGameSeriesSection: React.FC<BestGameSeriesSectionProps> = ({ se
               {series.length}
             </motion.span>
           </h2>
-          <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 font-medium mt-1">
+          <p className="text-xs md:text-sm text-slate-700 dark:text-slate-500 dark:text-slate-400 font-medium mt-1">
             Explore the most iconic and critically acclaimed gaming franchises of all time.
           </p>
         </div>
@@ -114,7 +114,7 @@ export const BestGameSeriesSection: React.FC<BestGameSeriesSectionProps> = ({ se
           >
             <Icon name="ChevronLeft" size={24} />
           </button>
-          <div className="text-sm font-bold text-slate-500 dark:text-slate-400">
+          <div className="text-sm font-bold text-slate-700 dark:text-slate-500 dark:text-slate-400">
             {seriesPage + 1} / {totalSeriesPages}
           </div>
           <button 
@@ -176,7 +176,7 @@ export const BestGameSeriesSection: React.FC<BestGameSeriesSectionProps> = ({ se
                           <Icon name="List" size={18} className="text-indigo-500 dark:text-indigo-400" />
                           Games in Series
                         </h4>
-                        <Icon name={showGamesList ? "ChevronUp" : "ChevronDown"} size={20} className="text-slate-500 dark:text-slate-400" />
+                        <Icon name={showGamesList ? "ChevronUp" : "ChevronDown"} size={20} className="text-slate-700 dark:text-slate-500 dark:text-slate-400" />
                       </button>
                       <AnimatePresence>
                         {showGamesList && (
@@ -213,7 +213,7 @@ export const BestGameSeriesSection: React.FC<BestGameSeriesSectionProps> = ({ se
 
                               {totalPages > 1 && (
                                 <div className="flex items-center justify-between mt-3 px-1 pb-2">
-                                  <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                  <div className="text-xs font-semibold text-slate-700 dark:text-slate-500 dark:text-slate-400">
                                     Page {gamePage + 1} of {totalPages}
                                   </div>
                                   <div className="flex gap-2">
@@ -262,7 +262,7 @@ export const BestGameSeriesSection: React.FC<BestGameSeriesSectionProps> = ({ se
                         </motion.div>
                       ))}
                       {selectedSeries.images.length === 0 && (
-                        <div className="col-span-full py-12 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
+                        <div className="col-span-full py-12 flex flex-col items-center justify-center text-slate-600 dark:text-slate-400 dark:text-slate-500">
                           <Icon name="Image" size={48} className="mb-4 opacity-50" />
                           <p>No additional images available for this series.</p>
                         </div>

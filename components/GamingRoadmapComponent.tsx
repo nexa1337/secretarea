@@ -39,7 +39,7 @@ const CustomNode = ({ data }: any) => {
           {data.item.title[data.lang]}
         </h4>
         {data.item.subtitle && (
-          <p className={`text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed font-medium ${data.isRTL ? 'font-arabic' : ''}`}>
+          <p className={`text-[9px] sm:text-[10px] text-slate-700 dark:text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed font-medium ${data.isRTL ? 'font-arabic' : ''}`}>
             {data.item.subtitle[data.lang]}
           </p>
         )}
@@ -129,7 +129,7 @@ const GamingRoadmapComponent: React.FC = () => {
               className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
                 lang === l 
                   ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' 
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-700/50'
+                  : 'text-slate-700 dark:text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-700/50'
               }`}
             >
               {l === 'fr' ? 'FR' : l === 'en' ? 'EN' : 'عربي'}
@@ -196,7 +196,7 @@ const GamingRoadmapComponent: React.FC = () => {
                         {selectedNode.title[lang]}
                       </h3>
                       {selectedNode.subtitle && (
-                        <p className={`text-sm sm:text-base text-slate-500 dark:text-slate-400 mt-2 font-normal ${isRTL ? 'font-arabic' : ''}`}>
+                        <p className={`text-sm sm:text-base text-slate-700 dark:text-slate-500 dark:text-slate-400 mt-2 font-normal ${isRTL ? 'font-arabic' : ''}`}>
                           {selectedNode.subtitle[lang]}
                         </p>
                       )}
@@ -204,7 +204,7 @@ const GamingRoadmapComponent: React.FC = () => {
                   </div>
                   <button 
                     onClick={closePopup}
-                    className="p-3 bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 transition-all hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 shrink-0"
+                    className="p-3 bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-500 dark:text-slate-400 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 transition-all hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 shrink-0"
                     aria-label="Close"
                   >
                     <Icon name="X" size={20} />
@@ -270,7 +270,7 @@ const GamingRoadmapComponent: React.FC = () => {
                       <div className="grid gap-4 sm:grid-cols-2">
                         {selectedNode.tools[lang].map((tool, i) => (
                           <div key={i} className="flex flex-col p-4 sm:p-5 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-800">
-                            <span className="text-[10px] sm:text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">{tool.usage}</span>
+                            <span className="text-[10px] sm:text-xs font-medium text-slate-600 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">{tool.usage}</span>
                             <span className="text-sm sm:text-base font-normal text-slate-800 dark:text-slate-200">{tool.recommended}</span>
                           </div>
                         ))}

@@ -29,7 +29,7 @@ const Footer: React.FC = () => {
 
   return (
     <>
-      <footer className="w-full py-8 text-center text-slate-600 dark:text-slate-300 text-sm pb-24 md:pb-8 flex flex-col items-center">
+      <footer className="w-full py-8 text-center text-slate-800 dark:text-slate-300 text-sm pb-24 md:pb-8 flex flex-col items-center">
         <div className="flex flex-wrap justify-center gap-4 mb-6">
           <a href="#" className="flex items-center gap-3 px-4 py-2 border border-[#00a2ed]/40 hover:border-[#00a2ed] rounded-lg text-[#00a2ed] bg-[#00a2ed]/5 hover:bg-[#00a2ed]/10 transition-all">
             <WindowsLogo />
@@ -48,7 +48,7 @@ const Footer: React.FC = () => {
           </a>
         </div>
 
-        <div className="flex flex-wrap items-center justify-center gap-6 mb-4 font-semibold text-slate-700 dark:text-slate-200">
+        <div className="flex flex-wrap items-center justify-center gap-6 mb-4 font-semibold text-slate-900 dark:text-slate-200">
           <Link to="/" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Secret Area</Link>
           <Link to="/personal-space" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Personal Space</Link>
           <Link to="/roadmap" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Roadmap</Link>
@@ -56,10 +56,10 @@ const Footer: React.FC = () => {
         </div>
         <div className="flex flex-col sm:flex-row items-center justify-between w-full max-w-[1600px] mx-auto px-8 sm:px-12 md:px-24 mt-8 pb-4">
           <p className="text-center sm:text-left mb-4 sm:mb-0 ml-0 sm:ml-12 md:ml-20">
-            © 2026 <span className="font-bold text-slate-700 dark:text-slate-300">SecretArea</span>. All rights reserved.
+            © 2026 <span className="font-bold text-slate-900 dark:text-slate-300">SecretArea</span>. All rights reserved.
           </p>
           <p className="text-center sm:text-right mr-0 sm:mr-12 md:mr-20">
-            Built by : <button onClick={() => setIsPopupOpen(true)} className="font-bold text-slate-700 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">N E X A 1337</button>
+            Built by : <button onClick={() => setIsPopupOpen(true)} className="font-bold text-slate-900 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">N E X A 1337</button>
           </p>
         </div>
       </footer>
@@ -82,7 +82,7 @@ const Footer: React.FC = () => {
             >
               <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white">N E X A 1337 Ecosystem</h3>
-                <button onClick={() => setIsPopupOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                <button onClick={() => setIsPopupOpen(false)} className="text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
                   <Icon name="X" size={24} />
                 </button>
               </div>
@@ -99,7 +99,7 @@ const Footer: React.FC = () => {
                       <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm group-hover:text-primary-600 dark:group-hover:text-primary-400">
                         <Icon name="ExternalLink" size={18} />
                       </div>
-                      <span className="font-bold text-slate-700 dark:text-slate-200 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{link.name}</span>
+                      <span className="font-bold text-slate-900 dark:text-slate-200 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{link.name}</span>
                     </div>
                     <div className="flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 rounded-full">
                       <Icon name="Activity" size={14} />

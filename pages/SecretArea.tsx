@@ -18,6 +18,7 @@ import backupData from '../data/backup_resources.json';
 const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbx7nzBZc_tIhbAUK5OvOzgifGVzaVorzjn5OXNe8ENC0p7Pjia7O-u4WggxjRZipt4v/exec';
 const DISCORD_LINK = 'https://discord.gg/MgqvMyZv2b';
 const TELEGRAM_LINK = 'https://t.me/nexa1337agency';
+const REDDIT_LINK = 'https://www.reddit.com/r/SecretArea1337';
 const INSTAGRAM_LINK = 'https://instagram.com/nexa1337';
 const ITEMS_PER_PAGE = 12; // Show 12 items per page for laptop grid (4x3)
 
@@ -285,7 +286,7 @@ const DisclaimerModal: React.FC<{ open: boolean; onClose: () => void }> = ({ ope
                   className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
                     lang === l 
                     ? 'bg-red-500 text-white shadow-lg shadow-red-500/30' 
-                    : 'bg-white dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700'
+                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700'
                   }`}
                 >
                   {DISCLAIMER_CONTENT[l].label}
@@ -301,7 +302,7 @@ const DisclaimerModal: React.FC<{ open: boolean; onClose: () => void }> = ({ ope
               <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight" dir={content.dir || 'ltr'}>
                 {content.title}
               </h2>
-              <p className="text-sm md:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-medium whitespace-pre-line" dir={content.dir || 'ltr'}>
+              <p className="text-sm md:text-base text-slate-900 dark:text-slate-200 leading-relaxed font-medium whitespace-pre-line" dir={content.dir || 'ltr'}>
                 {content.text}
               </p>
            </div>
@@ -363,7 +364,7 @@ const SteamAccountsModal: React.FC<{ open: boolean; onClose: () => void; account
                 {/* List */}
                 <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1 custom-scrollbar bg-slate-50 dark:bg-[#171a21]">
                     {accounts.length === 0 ? (
-                        <div className="text-center py-10 text-slate-500">
+                        <div className="text-center py-10 text-slate-900 dark:text-slate-300">
                             <Icon name="Ghost" size={40} className="mx-auto mb-3 opacity-50"/>
                             <p>No accounts available right now. Check back later!</p>
                         </div>
@@ -391,7 +392,7 @@ const SteamAccountsModal: React.FC<{ open: boolean; onClose: () => void; account
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
                                         <div className="space-y-1">
-                                            <label className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-[#8f98a0] uppercase tracking-wider">Username</label>
+                                            <label className="text-[9px] sm:text-[10px] font-bold text-slate-900 dark:text-slate-400 uppercase tracking-wider">Username</label>
                                             <div className="flex items-center gap-2 bg-slate-50 dark:bg-[#171a21] p-2 rounded border border-slate-200 dark:border-[#2a475e] group-hover:border-[#66c0f4]/50 transition-colors">
                                                 <span className="text-xs sm:text-sm font-mono text-slate-900 dark:text-white truncate flex-1 select-all">{acc.username}</span>
                                                 <button 
@@ -404,7 +405,7 @@ const SteamAccountsModal: React.FC<{ open: boolean; onClose: () => void; account
                                             </div>
                                         </div>
                                         <div className="space-y-1">
-                                            <label className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-[#8f98a0] uppercase tracking-wider">Password</label>
+                                            <label className="text-[9px] sm:text-[10px] font-bold text-slate-900 dark:text-slate-400 uppercase tracking-wider">Password</label>
                                             <div className="flex items-center gap-2 bg-slate-50 dark:bg-[#171a21] p-2 rounded border border-slate-200 dark:border-[#2a475e] group-hover:border-[#66c0f4]/50 transition-colors">
                                                 <span className="text-xs sm:text-sm font-mono text-slate-900 dark:text-white truncate flex-1 select-none tracking-widest text-lg mt-1">••••••••</span>
                                                 <button 
@@ -421,9 +422,9 @@ const SteamAccountsModal: React.FC<{ open: boolean; onClose: () => void; account
                                     {acc.games && (
                                         <div className="pt-3 border-t border-slate-100 dark:border-[#2a475e]/50">
                                             <div className="flex items-start gap-2">
-                                                <Icon name="DeviceGamepad2" size={16} className="text-slate-400 dark:text-[#8f98a0] mt-0.5 shrink-0" />
+                                                <Icon name="DeviceGamepad2" size={16} className="text-slate-800 dark:text-slate-400 mt-0.5 shrink-0" />
                                                 <p className="text-[10px] sm:text-xs text-slate-600 dark:text-[#c5c3c0] leading-relaxed line-clamp-2 sm:line-clamp-none">
-                                                    <span className="text-slate-500 dark:text-[#8f98a0] font-bold">Includes: </span>
+                                                    <span className="text-slate-900 dark:text-slate-400 font-bold">Includes: </span>
                                                     {acc.games}
                                                 </p>
                                             </div>
@@ -436,7 +437,7 @@ const SteamAccountsModal: React.FC<{ open: boolean; onClose: () => void; account
                 </div>
                 
                 <div className="p-3 sm:p-4 bg-slate-100 dark:bg-[#171a21] border-t border-slate-200 dark:border-[#2a475e] text-center shrink-0">
-                    <p className="text-[9px] sm:text-[10px] text-slate-500 dark:text-[#8f98a0]">
+                    <p className="text-[9px] sm:text-[10px] text-slate-900 dark:text-slate-400">
                         Please do not change passwords. These are community accounts.
                     </p>
                 </div>
@@ -496,10 +497,10 @@ const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: 
                     {accounts.length === 0 ? (
                         <div className="text-center py-10 flex flex-col items-center justify-center h-full">
                             <div className="w-20 h-20 bg-slate-200 dark:bg-zinc-900 rounded-full flex items-center justify-center mb-4 border border-slate-300 dark:border-zinc-800">
-                                <Icon name="Gift" size={40} className="text-slate-400 dark:text-zinc-600 opacity-50"/>
+                                <Icon name="Gift" size={40} className="text-slate-600 dark:text-slate-300 dark:text-zinc-600 opacity-50"/>
                             </div>
                             <h4 className="text-lg font-bold text-slate-800 dark:text-zinc-300 mb-2">No Gifts Right Now</h4>
-                            <p className="text-sm text-slate-500 dark:text-zinc-500">We continuously restock new premium accounts. Check back later!</p>
+                            <p className="text-sm text-slate-900 dark:text-slate-300 dark:text-zinc-500">We continuously restock new premium accounts. Check back later!</p>
                         </div>
                     ) : (
                         <div className="flex flex-col h-full">
@@ -538,7 +539,7 @@ const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: 
 
                                             <div className="space-y-3 mt-auto">
                                                 <div className="space-y-1">
-                                                    <label className="text-[9px] font-black text-slate-500 dark:text-zinc-500 uppercase tracking-widest pl-1">Email / Username</label>
+                                                    <label className="text-[9px] font-black text-slate-900 dark:text-slate-300 dark:text-zinc-500 uppercase tracking-widest pl-1">Email / Username</label>
                                                     <div className="flex items-center gap-2 bg-slate-50 dark:bg-zinc-950 p-2 rounded-lg border border-slate-200 dark:border-zinc-800 group-hover:border-violet-500/30 transition-colors">
                                                         <Icon name="Mail" size={14} className="text-zinc-400 shrink-0 ml-1" />
                                                         <span className="text-xs font-mono text-slate-900 dark:text-zinc-300 truncate flex-1 select-all">{acc.email}</span>
@@ -552,7 +553,7 @@ const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: 
                                                     </div>
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-[9px] font-black text-slate-500 dark:text-zinc-500 uppercase tracking-widest pl-1">Password</label>
+                                                    <label className="text-[9px] font-black text-slate-900 dark:text-slate-300 dark:text-zinc-500 uppercase tracking-widest pl-1">Password</label>
                                                     <div className="flex items-center gap-2 bg-slate-50 dark:bg-zinc-950 p-2 rounded-lg border border-slate-200 dark:border-zinc-800 group-hover:border-violet-500/30 transition-colors">
                                                         <Icon name="Key" size={14} className="text-zinc-400 shrink-0 ml-1" />
                                                         <span className="text-xs font-mono text-slate-900 dark:text-zinc-300 truncate flex-1 select-none tracking-widest text-lg mt-1">••••••••</span>
@@ -574,7 +575,7 @@ const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: 
                             {/* Pagination Controls */}
                             {totalPages > 1 && (
                                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-slate-200 dark:border-zinc-800">
-                                    <div className="text-xs text-slate-500 dark:text-zinc-400 font-semibold">
+                                    <div className="text-xs text-slate-900 dark:text-slate-300 dark:text-zinc-400 font-semibold">
                                         Showing <span className="font-bold text-violet-500">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> to <span className="font-bold text-violet-500">{Math.min(currentPage * ITEMS_PER_PAGE, accounts.length)}</span> of <span className="font-bold text-violet-500">{accounts.length}</span> gifts
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -615,7 +616,7 @@ const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: 
                 </div>
                 
                 <div className="p-3 sm:p-4 bg-slate-100 dark:bg-zinc-900 border-t border-slate-200 dark:border-zinc-800 text-center shrink-0">
-                    <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-semibold flex items-center justify-center gap-2">
+                    <p className="text-[10px] text-slate-900 dark:text-slate-300 dark:text-zinc-400 font-semibold flex items-center justify-center gap-2">
                         <Icon name="Info" size={12} className="text-violet-500" /> 
                         These accounts belong to the community. Please don't change the passwords!
                     </p>
@@ -653,12 +654,12 @@ const DonateModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, o
                         </div>
                         <div>
                             <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">Support Us</h2>
-                            <p className="text-xs text-slate-500 font-medium mt-0.5">Keep the servers alive</p>
+                            <p className="text-xs text-slate-900 dark:text-slate-300 font-medium mt-0.5">Keep the servers alive</p>
                         </div>
                     </div>
                     <button 
                         onClick={onClose}
-                        className="p-2 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 rounded-xl transition-colors border border-slate-200 dark:border-slate-700 shadow-sm"
+                        className="p-2 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl transition-colors border border-slate-200 dark:border-slate-700 shadow-sm"
                     >
                         <Icon name="X" size={18} />
                     </button>
@@ -674,7 +675,7 @@ const DonateModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, o
                             >
                                 <Icon name="Loader2" size={24} />
                             </motion.div>
-                            <p className="text-xs font-bold text-slate-400 animate-pulse uppercase tracking-widest">Loading Gateway</p>
+                            <p className="text-xs font-bold text-slate-600 dark:text-slate-300 animate-pulse uppercase tracking-widest">Loading Gateway</p>
                         </div>
                     )}
                     <iframe 
@@ -692,7 +693,7 @@ const DonateModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, o
                             <Icon name="Wallet" size={18} />
                         </div>
                         <div className="text-left flex-1">
-                            <h4 className="text-xs font-bold text-slate-300 dark:text-slate-300 mb-1">No crypto wallet?</h4>
+                            <h4 className="text-xs font-bold text-slate-900 dark:text-slate-300 mb-1">No crypto wallet?</h4>
                             <p className="text-[10px] text-slate-600 dark:text-slate-500 leading-relaxed font-medium">
                                 You can use <a href="https://exodus.com/" target="_blank" rel="noreferrer" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-bold">Exodus</a>, <a href="https://cakewallet.com/" target="_blank" rel="noreferrer" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-bold">Cake Wallet</a>, or another wallet to exchange and send.
                             </p>
@@ -802,7 +803,7 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
                 <div className="overflow-y-auto p-6 space-y-4">
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Item Title *</label>
+                            <label className="block text-xs font-bold text-slate-900 dark:text-slate-300 uppercase tracking-wide mb-1">Item Title *</label>
                             <input 
                                 type="text" 
                                 required 
@@ -825,7 +826,7 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
                                     <Icon name="AlertTriangle" size={18} className="text-amber-500 shrink-0 mt-0.5" />
                                     <div>
                                         <p className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-1">Already in Area?</p>
-                                        <p className="text-xs text-slate-400">
+                                        <p className="text-xs text-slate-600 dark:text-slate-300">
                                             We found <strong>{duplicateItem.name}</strong> in the {duplicateItem.category} section. Are you sure you want to request it?
                                         </p>
                                     </div>
@@ -834,7 +835,7 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
                         </AnimatePresence>
 
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Section</label>
+                            <label className="block text-xs font-bold text-slate-900 dark:text-slate-300 uppercase tracking-wide mb-1">Section</label>
                             <select 
                                 className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors"
                                 value={formData.category}
@@ -853,7 +854,7 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
                             )}
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Image URL (Optional)</label>
+                            <label className="block text-xs font-bold text-slate-900 dark:text-slate-300 uppercase tracking-wide mb-1">Image URL (Optional)</label>
                             <input 
                                 type="url" 
                                 className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors"
@@ -863,7 +864,7 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Message to Admin (Optional)</label>
+                            <label className="block text-xs font-bold text-slate-900 dark:text-slate-300 uppercase tracking-wide mb-1">Message to Admin (Optional)</label>
                             <textarea 
                                 rows={3}
                                 className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors resize-none"
@@ -888,18 +889,21 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
     );
 };
 const Footer: React.FC<{ onSupportClick?: () => void }> = ({ onSupportClick }) => (
-  <footer className="w-full mt-2 pt-2 pb-8 flex justify-center items-center gap-4 relative z-20">
-     <a id="join-community-btn" href={DISCORD_LINK} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#5865F2] hover:shadow-lg hover:shadow-[#5865F2]/20 transition-all border border-slate-200 dark:border-slate-800">
+  <footer className="w-full mt-2 pt-2 pb-8 flex justify-center items-center gap-3 sm:gap-4 md:gap-6 flex-wrap relative z-20 px-4">
+     <a id="join-community-btn" href={DISCORD_LINK} target="_blank" rel="noreferrer" className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-white hover:bg-[#5865F2] hover:shadow-lg hover:shadow-[#5865F2]/20 transition-all border border-slate-200 dark:border-slate-800">
         <Icon name="Discord" size={20} />
      </a>
-     <a id="telegram-btn" href={TELEGRAM_LINK} target="_blank" rel="noreferrer" className="relative w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#229ED9] hover:shadow-lg hover:shadow-[#229ED9]/20 transition-all border border-slate-200 dark:border-slate-800">
+     <a id="telegram-btn" href={TELEGRAM_LINK} target="_blank" rel="noreferrer" className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-white hover:bg-[#229ED9] hover:shadow-lg hover:shadow-[#229ED9]/20 transition-all border border-slate-200 dark:border-slate-800">
         <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 items-center justify-center z-20">
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]" style={{ animation: 'pulse 0.8s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}></span>
         </span>
         <Icon name="Telegram" size={20} />
      </a>
+     <a id="reddit-btn" href={REDDIT_LINK} target="_blank" rel="noreferrer" className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-white hover:bg-[#FF4500] hover:shadow-lg hover:shadow-[#FF4500]/20 transition-all border border-slate-200 dark:border-slate-800">
+        <Icon name="Reddit" size={22} />
+     </a>
      {onSupportClick && (
-         <button onClick={onSupportClick} className="relative w-12 h-12 rounded-full bg-gradient-to-tr from-pink-500 to-rose-500 flex items-center justify-center text-white hover:scale-110 hover:shadow-lg hover:shadow-pink-500/30 transition-all border border-pink-400 group">
+         <button onClick={onSupportClick} className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-tr from-pink-500 to-rose-500 flex items-center justify-center text-white hover:scale-110 hover:shadow-lg hover:shadow-pink-500/30 transition-all border border-pink-400 group">
             <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"></div>
             <Icon name="Heart" size={20} className="group-hover:animate-pulse" />
          </button>
@@ -997,7 +1001,7 @@ const GameCarousel: React.FC<{ games: UpcomingGame[], loading: boolean, errorSta
 
     if (loading && games.length === 0) {
         return (
-            <div className="w-full h-40 flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-900 text-slate-400 rounded-2xl">
+            <div className="w-full h-40 flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 rounded-2xl">
                 <Icon name="Database" size={32} className="mb-2 opacity-50 animate-pulse" />
                 <span className="text-xs font-bold uppercase tracking-widest">Syncing Data...</span>
             </div>
@@ -1006,7 +1010,7 @@ const GameCarousel: React.FC<{ games: UpcomingGame[], loading: boolean, errorSta
 
     if (games.length === 0) {
         return (
-            <div className="w-full h-40 flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-900 text-slate-400 rounded-2xl">
+            <div className="w-full h-40 flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 rounded-2xl">
                 <Icon name="Ghost" size={32} className="mb-2 opacity-50" />
                 <span className="text-xs font-bold uppercase tracking-widest">No Upcoming Games Found</span>
             </div>
@@ -1146,7 +1150,7 @@ const RecentProductsCarousel: React.FC<{
 
     if (loading && items.length === 0) {
         return (
-            <div className="w-full h-40 flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-900 text-slate-400 rounded-2xl">
+            <div className="w-full h-40 flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 rounded-2xl">
                 <Icon name="Database" size={32} className="mb-2 opacity-50 animate-pulse" />
                 <span className="text-xs font-bold uppercase tracking-widest">Loading Recent Products...</span>
             </div>
@@ -1216,7 +1220,7 @@ const RecentProductsCarousel: React.FC<{
                                         {item.name}
                                     </h3>
                                     <div className="mt-1 flex justify-between items-center">
-                                        <span className="font-mono font-bold text-slate-300 text-[10px] drop-shadow-md bg-black/40 px-1.5 rounded">
+                                        <span className="font-mono font-bold text-white text-[10px] drop-shadow-md bg-black/40 px-1.5 rounded">
                                             {item.version}
                                         </span>
                                     </div>
@@ -1292,7 +1296,7 @@ const UpcomingListsDisplay: React.FC<{ lists: { [key: string]: string[] } }> = (
                 <h3 className="text-2xl md:text-3xl font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest mb-2 flex flex-wrap items-center gap-2 sm:gap-3">
                     UPCOMING <span className="text-emerald-500 dark:text-emerald-400">RELEASES</span>
                 </h3>
-                <div className="flex items-center gap-4 text-xs font-bold text-slate-400 dark:text-slate-500 mb-6 sm:mb-8 uppercase tracking-widest">
+                <div className="flex items-center gap-4 text-xs font-bold text-slate-800 dark:text-slate-500 mb-6 sm:mb-8 uppercase tracking-widest">
                     <span>{new Date().toLocaleDateString('en-GB', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</span>
                 </div>
 
@@ -1305,7 +1309,7 @@ const UpcomingListsDisplay: React.FC<{ lists: { [key: string]: string[] } }> = (
                             className={`px-3 py-1.5 rounded-md text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all shadow-sm border ${
                                 activeCategory === tab 
                                 ? 'bg-emerald-500 text-white border-emerald-500 scale-105' 
-                                : 'bg-slate-100 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
                             }`}
                         >
                             {tab}
@@ -1319,7 +1323,7 @@ const UpcomingListsDisplay: React.FC<{ lists: { [key: string]: string[] } }> = (
                         <motion.div 
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            className="text-slate-400 dark:text-slate-600 text-sm italic py-8"
+                            className="text-slate-800 dark:text-slate-600 text-sm italic py-8"
                         >
                             No upcoming {activeCategory} listed.
                         </motion.div>
@@ -1360,17 +1364,17 @@ const UpcomingListsDisplay: React.FC<{ lists: { [key: string]: string[] } }> = (
                         <button 
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                             disabled={currentPage === 1}
-                            className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         >
                             <Icon name="ChevronLeft" size={20} />
                         </button>
-                        <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">
+                        <div className="text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest">
                             PAGE {currentPage} OF {totalPages}
                         </div>
                         <button 
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                             disabled={currentPage === totalPages}
-                            className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         >
                             <Icon name="ChevronRight" size={20} />
                         </button>
@@ -1401,7 +1405,7 @@ const HypervisorGuideModal: React.FC<{ open: boolean; onClose: () => void }> = (
       >
         <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
           <div className="flex items-center gap-4">
-            <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors font-bold text-sm">
+            <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors font-bold text-sm">
               <Icon name="ArrowLeft" size={16} /> Back to Product
             </button>
             <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
@@ -1409,11 +1413,11 @@ const HypervisorGuideModal: React.FC<{ open: boolean; onClose: () => void }> = (
               Hypervisor Guide
             </h2>
           </div>
-          <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="p-2 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
+          <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="p-2 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
             <Icon name="X" size={24} />
           </button>
         </div>
-        <div className="p-6 overflow-y-auto flex-1 prose dark:prose-invert max-w-none text-slate-300">
+        <div className="p-6 overflow-y-auto flex-1 prose dark:prose-invert max-w-none text-slate-900 dark:text-slate-200">
           <article id="post-74689" className="post-74689 page type-page status-publish hentry">
             <div className="entry-content space-y-4">
               <p><span style={{ color: 'red' }} className="font-bold">This page is a work-in-progress and will be updated.</span></p>
@@ -1675,7 +1679,7 @@ const SystemChecker: React.FC<{ reqs: {label: string, value: string}[] }> = ({ r
           </div>
           <span className="font-bold text-slate-900 dark:text-white">Can I Run It? (Smart Check)</span>
         </div>
-        <Icon name={isOpen ? "ChevronUp" : "ChevronDown"} size={20} className="text-slate-500" />
+        <Icon name={isOpen ? "ChevronUp" : "ChevronDown"} size={20} className="text-slate-900 dark:text-slate-300" />
       </button>
 
       <AnimatePresence>
@@ -1688,7 +1692,7 @@ const SystemChecker: React.FC<{ reqs: {label: string, value: string}[] }> = ({ r
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase">Operating System</label>
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">Operating System</label>
                 <select 
                   value={userSpecs.os}
                   onChange={(e) => setUserSpecs({...userSpecs, os: e.target.value})}
@@ -1701,7 +1705,7 @@ const SystemChecker: React.FC<{ reqs: {label: string, value: string}[] }> = ({ r
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase">RAM (GB)</label>
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">RAM (GB)</label>
                 <select 
                   value={userSpecs.ram}
                   onChange={(e) => setUserSpecs({...userSpecs, ram: parseInt(e.target.value)})}
@@ -1715,7 +1719,7 @@ const SystemChecker: React.FC<{ reqs: {label: string, value: string}[] }> = ({ r
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase">Processor (CPU)</label>
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">Processor (CPU)</label>
                 <select 
                   value={userSpecs.cpuTier}
                   onChange={(e) => setUserSpecs({...userSpecs, cpuTier: parseInt(e.target.value)})}
@@ -1729,7 +1733,7 @@ const SystemChecker: React.FC<{ reqs: {label: string, value: string}[] }> = ({ r
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase">Graphics (GPU)</label>
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">Graphics (GPU)</label>
                 <select 
                   value={userSpecs.gpuTier}
                   onChange={(e) => setUserSpecs({...userSpecs, gpuTier: parseInt(e.target.value)})}
@@ -1761,8 +1765,8 @@ const SystemChecker: React.FC<{ reqs: {label: string, value: string}[] }> = ({ r
                   {result.messages.map((msg, idx) => {
                     const iconName = msg.startsWith('❌') ? 'XCircle' : msg.startsWith('⚠️') ? 'AlertTriangle' : msg.startsWith('✅') ? 'CheckCircle2' : msg.startsWith('🚀') ? 'Rocket' : msg.startsWith('✨') ? 'Sparkles' : msg.startsWith('🚧') ? 'HardHat' : msg.startsWith('🚨') ? 'AlertOctagon' : 'Info';
                     return (
-                    <div key={idx} className="flex gap-2 text-sm font-medium text-slate-300">
-                      <Icon name={iconName as any} size={16} className={`shrink-0 mt-0.5 ${msg.startsWith('❌') || msg.startsWith('🚨') ? 'text-red-500' : msg.startsWith('⚠️') || msg.startsWith('🚧') ? 'text-yellow-500' : msg.startsWith('✅') || msg.startsWith('✨') || msg.startsWith('🚀') ? 'text-emerald-500' : 'text-slate-500'}`} />
+                    <div key={idx} className="flex gap-2 text-sm font-medium text-slate-900 dark:text-slate-200">
+                      <Icon name={iconName as any} size={16} className={`shrink-0 mt-0.5 ${msg.startsWith('❌') || msg.startsWith('🚨') ? 'text-red-500' : msg.startsWith('⚠️') || msg.startsWith('🚧') ? 'text-yellow-500' : msg.startsWith('✅') || msg.startsWith('✨') || msg.startsWith('🚀') ? 'text-emerald-500' : 'text-slate-700 dark:text-slate-500'}`} />
                       <span>{msg.replace(/^(❌|⚠️|✅|🚀|✨|🚧|🚨)\s*/, '')}</span>
                     </div>
                   )})}
@@ -1796,14 +1800,14 @@ const NoteModal: React.FC<{
     >
       <button 
         onClick={onClose} 
-        className="absolute top-4 right-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 p-2 rounded-full transition-all"
+        className="absolute top-4 right-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 p-2 rounded-full transition-all"
       >
         <Icon name="X" size={16} />
       </button>
       <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 pr-8 flex items-center gap-2">
         <Icon name="Info" size={20} className="text-emerald-500" /> Note
       </h3>
-      <div className="text-sm text-slate-300 font-medium leading-relaxed max-h-[60vh] overflow-y-auto whitespace-pre-wrap custom-scrollbar">
+      <div className="text-sm text-slate-900 dark:text-slate-200 font-medium leading-relaxed max-h-[60vh] overflow-y-auto whitespace-pre-wrap custom-scrollbar">
         {content}
       </div>
       <div className="mt-6 flex justify-end">
@@ -1852,16 +1856,16 @@ const CompanyProfileModal: React.FC<{
                </>
              ) : (
                 <div className="absolute inset-0 flex items-center justify-center bg-slate-100 dark:bg-slate-800">
-                   <Icon name="Briefcase" size={32} className="text-slate-300 dark:text-slate-600" />
+                   <Icon name="Briefcase" size={32} className="text-slate-900 dark:text-slate-600" />
                 </div>
              )}
           </div>
           <div>
             <h2 className="text-2xl md:text-5xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-1 md:mb-2">{profile.name}</h2>
-            <p className="text-xs md:text-sm text-slate-400 max-w-3xl line-clamp-2 md:line-clamp-none leading-relaxed">{profile.description || 'Welcome to this company\'s profile. Explore their ecosystem of products and releases below.'}</p>
+            <p className="text-xs md:text-sm text-slate-600 dark:text-slate-300 max-w-3xl line-clamp-2 md:line-clamp-none leading-relaxed">{profile.description || 'Welcome to this company\'s profile. Explore their ecosystem of products and releases below.'}</p>
           </div>
         </div>
-        <button onClick={onClose} className="p-2 md:p-3 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-500 bg-slate-100 dark:bg-slate-900 shrink-0 border border-slate-200 dark:border-slate-700 ml-4">
+        <button onClick={onClose} className="p-2 md:p-3 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-900 dark:text-slate-300 bg-slate-100 dark:bg-slate-900 shrink-0 border border-slate-200 dark:border-slate-700 ml-4">
            <Icon name="X" size={24} />
         </button>
       </div>
@@ -1875,11 +1879,11 @@ const CompanyProfileModal: React.FC<{
                  className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors flex items-center gap-2 ${
                     activeCategory === cat 
                     ? 'bg-primary-500 text-white shadow-md shadow-primary-500/20 border border-primary-500' 
-                    : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 hover:border-primary-500/50'
+                    : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-primary-500/50'
                  }`}
               >
                  {cat === 'steamtools' ? 'SteamTools' : cat}
-                 <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded ${activeCategory === cat ? 'bg-black/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
+                 <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded ${activeCategory === cat ? 'bg-black/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-500'}`}>
                      {resources.filter(r => r.category === cat).length}
                  </span>
               </button>
@@ -1930,9 +1934,9 @@ const CompanyProfileModal: React.FC<{
             ))}
           </div>
         ) : (
-          <div className="h-64 flex flex-col items-center justify-center text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl bg-white/50 dark:bg-slate-900/50">
+          <div className="h-64 flex flex-col items-center justify-center text-slate-600 dark:text-slate-300 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl bg-white/50 dark:bg-slate-900/50">
              <Icon name="SearchX" size={48} className="mb-4 opacity-30" />
-             <span className="text-sm font-bold uppercase tracking-widest text-slate-500">No products found in this category</span>
+             <span className="text-sm font-bold uppercase tracking-widest text-slate-900 dark:text-slate-300">No products found in this category</span>
           </div>
         )}
         
@@ -1948,7 +1952,7 @@ const CompanyProfileModal: React.FC<{
                      <button
                          key={page}
                          onClick={() => setCurrentPage(page)}
-                         className={`w-10 h-10 rounded-lg text-xs font-bold transition-colors shrink-0 ${currentPage === page ? 'bg-primary-500 text-white shadow-md' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-primary-500/50 text-slate-600 dark:text-slate-300'}`}
+                         className={`w-10 h-10 rounded-lg text-xs font-bold transition-colors shrink-0 ${currentPage === page ? 'bg-primary-500 text-white shadow-md' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-primary-500/50 text-slate-900 dark:text-slate-200'}`}
                      >
                          {page}
                      </button>
@@ -2049,11 +2053,11 @@ const ResourceDetailModal: React.FC<{
   const isSteamTool = item.category === 'steamtools';
   const isExtra = item.category === 'extra';
   const scoreConfig = (item.ratingPositive) ? ((score) => {
-    if (isNaN(score)) return { emoji: '🤔', color: 'text-slate-500', bg: 'bg-slate-100 dark:bg-slate-800', border: 'border-slate-200 dark:border-slate-700', wrapper: 'bg-slate-50 dark:bg-slate-900' };
+    if (isNaN(score)) return { emoji: '🤔', color: 'text-slate-700 dark:text-slate-500', bg: 'bg-slate-100 dark:bg-slate-800', border: 'border-slate-200 dark:border-slate-700', wrapper: 'bg-slate-50 dark:bg-slate-900' };
     if (score > 50) return { emoji: '😎', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-500/20', border: 'border-emerald-500/10', wrapper: 'bg-emerald-500/5' };
     if (score === 50) return { emoji: '😐', color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-500/20', border: 'border-orange-500/10', wrapper: 'bg-orange-500/5' };
     return { emoji: '😕', color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-500/20', border: 'border-red-500/10', wrapper: 'bg-red-500/5' };
-  })(parseInt((item.ratingPositive || '').toString().replace(/[^0-9]/g, ''))) : { emoji: '🤔', color: 'text-slate-500', bg: 'bg-slate-100 dark:bg-slate-800', border: 'border-slate-200 dark:border-slate-700', wrapper: 'bg-slate-50 dark:bg-slate-900' };
+  })(parseInt((item.ratingPositive || '').toString().replace(/[^0-9]/g, ''))) : { emoji: '🤔', color: 'text-slate-700 dark:text-slate-500', bg: 'bg-slate-100 dark:bg-slate-800', border: 'border-slate-200 dark:border-slate-700', wrapper: 'bg-slate-50 dark:bg-slate-900' };
 
   return (
     <motion.div 
@@ -2072,7 +2076,7 @@ const ResourceDetailModal: React.FC<{
       >
         <button 
           onClick={onClose} 
-          className="absolute top-4 right-4 z-[110] bg-white/60 dark:bg-black/60 hover:bg-red-500 hover:text-white text-slate-400 p-2.5 rounded-full transition-all md:backdrop-blur-md border border-slate-200 dark:border-white/10 shadow-lg"
+          className="absolute top-4 right-4 z-[110] bg-white/60 dark:bg-black/60 hover:bg-red-500 hover:text-white text-slate-600 dark:text-slate-300 p-2.5 rounded-full transition-all md:backdrop-blur-md border border-slate-200 dark:border-white/10 shadow-lg"
         >
              <Icon name="X" size={20} />
         </button>
@@ -2157,7 +2161,7 @@ const ResourceDetailModal: React.FC<{
                    <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white leading-none tracking-tight uppercase italic">{item.name}</h2>
                    <button
                      onClick={handleCopyLink}
-                     className="text-slate-400 hover:text-blue-500 transition-colors bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 p-1.5 sm:p-2 rounded-lg"
+                     className="text-slate-600 dark:text-slate-300 hover:text-blue-500 transition-colors bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 p-1.5 sm:p-2 rounded-lg"
                      title="Copy Share Link"
                    >
                      <Icon name={isCopied ? "Check" : "Link"} size={18} className={`sm:w-5 sm:h-5 ${isCopied ? "text-emerald-500" : ""}`} />
@@ -2168,7 +2172,7 @@ const ResourceDetailModal: React.FC<{
                     className={`shrink-0 p-2 sm:p-3 rounded-xl transition-all ${
                         stash.includes(item.id) 
                         ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                     }`}
                     title={stash.includes(item.id) ? "Remove from Stash" : "Add to Stash"}
                  >
@@ -2194,7 +2198,7 @@ const ResourceDetailModal: React.FC<{
                                 ) : (
                                     <span>{trimmedGenre}</span>
                                 )}
-                                {idx < arr.length - 1 && <span className="text-slate-400 dark:text-slate-600 ml-1">,</span>}
+                                {idx < arr.length - 1 && <span className="text-slate-800 dark:text-slate-600 ml-1">,</span>}
                             </span>
                         );
                     })}
@@ -2220,7 +2224,7 @@ const ResourceDetailModal: React.FC<{
                 {isSteamTool ? (
                     <div className="bg-slate-100 dark:bg-slate-950 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
                         <div className="flex justify-between items-center mb-4 border-b border-slate-200 dark:border-slate-800 pb-2">
-                            <h4 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                            <h4 className="text-xs font-black text-slate-900 dark:text-slate-300 uppercase tracking-[0.2em] flex items-center gap-2">
                                 <Icon name="BrandSteam" size={16} /> Community Score
                             </h4>
                             <span className="text-[10px] font-bold bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 px-2 py-0.5 rounded-full">
@@ -2259,7 +2263,7 @@ const ResourceDetailModal: React.FC<{
                 ) : (
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                        <StatBox label="Repack Size" value={item.repackSize} icon="Database" color="text-primary-500 dark:text-sky-400" />
-                       <StatBox label="Original Size" value={item.originalSize} icon="Server" color="text-slate-400" />
+                       <StatBox label="Original Size" value={item.originalSize} icon="Server" color="text-slate-600 dark:text-slate-300" />
                        <StatBox label="Languages" value={item.languages} icon="Globe" color="text-emerald-500 dark:text-emerald-400" />
                        <StatBox label="Downloads" value={getFakeDownloads(item.id)} icon="Download" color="text-blue-500 dark:text-blue-400" />
                     </div>
@@ -2294,14 +2298,14 @@ const ResourceDetailModal: React.FC<{
                 )}
 
                 <Section title="Overview" action={
-                        <button onClick={handleTranslate} disabled={isTranslating} className={`flex items-center gap-2 px-3 py-1 rounded-md border text-[10px] font-bold uppercase tracking-wider transition-all ${showArabic ? 'bg-primary-500/20 border-primary-500 text-primary-600 dark:text-sky-400' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}>
+                        <button onClick={handleTranslate} disabled={isTranslating} className={`flex items-center gap-2 px-3 py-1 rounded-md border text-[10px] font-bold uppercase tracking-wider transition-all ${showArabic ? 'bg-primary-500/20 border-primary-500 text-primary-600 dark:text-sky-400' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>
                             {isTranslating ? (<><Icon name="Cpu" size={12} className="animate-spin" /> Decrypting...</>) : (<><Icon name="Globe" size={12} /> {showArabic ? 'Show Original' : 'Translate AR'}</>)}
                         </button>
                     }>
                    <div className="bg-slate-50 dark:bg-slate-950/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 relative overflow-hidden group">
                      <div className="max-h-[250px] overflow-y-auto custom-scrollbar pr-2">
                         <AnimatePresence mode="wait">
-                            <motion.div key={showArabic ? 'ar' : 'en'} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className={`text-sm md:text-base leading-relaxed whitespace-pre-wrap font-medium ${showArabic ? 'text-right font-sans text-slate-800 dark:text-slate-200' : 'text-slate-300'}`} dir={showArabic ? 'rtl' : 'ltr'}>
+                            <motion.div key={showArabic ? 'ar' : 'en'} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className={`text-sm md:text-base leading-relaxed whitespace-pre-wrap font-medium ${showArabic ? 'text-right font-sans text-slate-800 dark:text-slate-200' : 'text-slate-900 dark:text-slate-200'}`} dir={showArabic ? 'rtl' : 'ltr'}>
                                 {showArabic && translatedDesc ? translatedDesc : item.description}
                             </motion.div>
                         </AnimatePresence>
@@ -2339,12 +2343,12 @@ const ResourceDetailModal: React.FC<{
                               className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl hover:border-slate-300 dark:hover:border-slate-700 transition-all hover:shadow-sm"
                             >
                                <div className="flex items-center gap-3 shrink-0 mb-2 sm:mb-0">
-                                 <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-slate-500 group-hover:text-blue-500 transition-colors">
+                                 <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-slate-900 dark:text-slate-300 group-hover:text-blue-500 transition-colors">
                                    <Icon name={paramIcon} size={18} />
                                  </div>
-                                 <span className="text-sm font-semibold text-slate-300 uppercase tracking-wider">{req.label}</span>
+                                 <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 uppercase tracking-wider">{req.label}</span>
                                </div>
-                               <span className="text-sm font-mono text-slate-400 text-left sm:text-right sm:max-w-[60%] leading-relaxed">
+                               <span className="text-sm font-mono text-slate-600 dark:text-slate-300 text-left sm:text-right sm:max-w-[60%] leading-relaxed">
                                  {req.value}
                                </span>
                             </motion.div>
@@ -2377,7 +2381,7 @@ const ResourceDetailModal: React.FC<{
 
                 {item.installSteps.length > 0 && (
                    <Section title={isExtra ? "Steps You Need" : "Installation Guide"}>
-                      <p className="text-sm text-slate-400 mb-4 mt-[-10px]">Follow these steps to safely install and set up your application.</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-300 mb-4 mt-[-10px]">Follow these steps to safely install and set up your application.</p>
                       <motion.div 
                         initial="hidden"
                         animate="visible"
@@ -2397,10 +2401,10 @@ const ResourceDetailModal: React.FC<{
                             className="group flex gap-4 p-4 sm:p-5 bg-white dark:bg-slate-900/80 rounded-2xl border border-slate-100 dark:border-slate-800/80 hover:border-blue-300 dark:hover:border-blue-700/50 transition-all hover:shadow-lg hover:-translate-y-0.5 items-start relative overflow-hidden"
                           >
                             <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-blue-400 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                            <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 font-bold text-sm shrink-0 group-hover:bg-blue-500 group-hover:text-white transition-all shadow-sm group-hover:scale-110">
+                            <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-sm shrink-0 group-hover:bg-blue-500 group-hover:text-white transition-all shadow-sm group-hover:scale-110">
                               {idx + 1}
                             </div>
-                            <span className="text-sm text-slate-300 font-medium leading-relaxed pt-1">{step}</span>
+                            <span className="text-sm text-slate-900 dark:text-slate-200 font-medium leading-relaxed pt-1">{step}</span>
                           </motion.div>
                         ))}
                       </motion.div>
@@ -2536,8 +2540,8 @@ const ResourceDetailModal: React.FC<{
                         ))}
                         {item.links.parts.length === 0 && !item.links.full && (
                             <div className="col-span-1 md:col-span-2 p-6 bg-slate-100 dark:bg-slate-950 rounded-xl border border-dashed border-slate-300 dark:border-slate-800 text-center">
-                                <Icon name="Loader" size={24} className="animate-spin mx-auto mb-2 text-slate-400" />
-                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Awaiting Encryption Keys...</p>
+                                <Icon name="Loader" size={24} className="animate-spin mx-auto mb-2 text-slate-600 dark:text-slate-300" />
+                                <p className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase tracking-widest">Awaiting Encryption Keys...</p>
                             </div>
                         )}
                         {item.links.mirrors.map(mirror => (
@@ -2608,7 +2612,7 @@ const ResourceDetailModal: React.FC<{
                   e.stopPropagation();
                   setShowQBitWarning(false);
                 }}
-                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-full transition-colors z-10"
+                className="absolute top-4 right-4 p-2 text-slate-600 dark:text-slate-300 hover:text-slate-600 dark:hover:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-full transition-colors z-10"
                 aria-label="Close"
               >
                 <Icon name="X" size={20} />
@@ -2621,7 +2625,7 @@ const ResourceDetailModal: React.FC<{
                     </div>
                     <div>
                       <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-3">Wait a minute! 🛑</h3>
-                      <p className="text-sm sm:text-base text-slate-400 font-medium leading-relaxed">
+                      <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
                         To use this method, you need <span className="font-bold text-blue-600 dark:text-blue-400">qBittorrent</span> to download uTorrent files without problems. Do you already have it installed? 🤔
                       </p>
                     </div>
@@ -2649,7 +2653,7 @@ const ResourceDetailModal: React.FC<{
                           window.open('https://www.qbittorrent.org/download', '_blank');
                           setQBitSuccess(true);
                         }}
-                        className="flex-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-300 font-bold py-3 px-4 rounded-xl transition-all border border-slate-200 dark:border-slate-700 flex items-center justify-center"
+                        className="flex-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-200 font-bold py-3 px-4 rounded-xl transition-all border border-slate-200 dark:border-slate-700 flex items-center justify-center"
                       >
                         Not Yet 😅
                       </button>
@@ -2662,7 +2666,7 @@ const ResourceDetailModal: React.FC<{
                     </div>
                     <div>
                       <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-3">Everything is fine! 🎉</h3>
-                      <p className="text-sm sm:text-base text-slate-400 font-medium leading-relaxed mb-6">
+                      <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 font-medium leading-relaxed mb-6">
                         Now you can have it thanks for respect N E X A 1337 Guidelines and instructions, all this for you. 🥳
                       </p>
                       <a 
@@ -2698,7 +2702,7 @@ const ResourceDetailModal: React.FC<{
 const Badge: React.FC<{ text: string; color: 'blue' | 'slate' | 'emerald'; icon: string }> = ({ text, color, icon }) => {
   const colors = {
     blue: 'bg-primary-500/10 text-primary-600 dark:text-sky-400 border-primary-500/20',
-    slate: 'bg-slate-100 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700',
+    slate: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700',
     emerald: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
   };
   return (
@@ -2711,7 +2715,7 @@ const Badge: React.FC<{ text: string; color: 'blue' | 'slate' | 'emerald'; icon:
 const StatBox: React.FC<{ label: string; value: string; icon: string; color: string; fullWidth?: boolean }> = ({ label, value, icon, color, fullWidth }) => (
   <div className={`bg-slate-50 dark:bg-slate-900 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center text-center ${fullWidth ? 'col-span-2 lg:col-span-1' : ''}`}>
      <Icon name={icon} size={20} className={`${color} mb-2`} />
-     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{label}</span>
+     <span className="text-[10px] font-bold text-slate-900 dark:text-slate-300 uppercase tracking-widest mb-1">{label}</span>
      <span className="text-xs font-mono font-bold text-slate-900 dark:text-white truncate w-full px-2">{value || 'N/A'}</span>
   </div>
 );
@@ -2719,7 +2723,7 @@ const StatBox: React.FC<{ label: string; value: string; icon: string; color: str
 const Section: React.FC<{ title: string; children: React.ReactNode; action?: React.ReactNode }> = ({ title, children, action }) => (
   <div className="space-y-4">
      <div className="flex items-center justify-between pr-1">
-        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2 pl-1">
+        <h3 className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase tracking-[0.2em] flex items-center gap-2 pl-1">
             <span className="w-1.5 h-1.5 bg-primary-500 rounded-full"></span> {title}
         </h3>
         {action}
@@ -2749,7 +2753,7 @@ const Thumbnail: React.FC<{ src: string; isActive: boolean; onClick: () => void 
 const DownloadButton: React.FC<{ label: React.ReactNode; sub: string; href: string; icon: string; customIconUrl?: string; secondary?: boolean; note?: string; onNoteClick?: (note: string) => void }> = ({ label, sub, href, icon, customIconUrl, secondary, note, onNoteClick }) => (
   <div className={`relative group flex flex-col p-2 sm:p-4 rounded-xl border transition-all active:scale-95 hover:-translate-y-1 ${secondary ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 hover:border-primary-500/50'}`}>
      <div className="flex items-center gap-2 sm:gap-4 flex-1">
-         <div className={`p-1.5 sm:p-2.5 rounded-lg shrink-0 transition-colors ${secondary ? 'bg-slate-100 dark:bg-slate-950 text-slate-500 group-hover:text-slate-800 dark:group-hover:text-slate-300' : 'bg-slate-200 dark:bg-slate-900 text-primary-600 dark:text-primary-500 group-hover:text-white group-hover:bg-primary-500'}`}>
+         <div className={`p-1.5 sm:p-2.5 rounded-lg shrink-0 transition-colors ${secondary ? 'bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-500 group-hover:text-slate-800 dark:group-hover:text-slate-900 dark:text-slate-200' : 'bg-slate-200 dark:bg-slate-900 text-primary-600 dark:text-primary-500 group-hover:text-white group-hover:bg-primary-500'}`}>
             {customIconUrl ? (
                <img src={customIconUrl} alt="icon" referrerPolicy="no-referrer" className="w-4 h-4 sm:w-5 sm:h-5 object-contain"  loading="lazy" />
             ) : (
@@ -2757,22 +2761,22 @@ const DownloadButton: React.FC<{ label: React.ReactNode; sub: string; href: stri
             )}
          </div>
          <div className="min-w-0 flex-1">
-            <div className="text-[8px] sm:text-[10px] font-bold uppercase tracking-widest opacity-60 mb-0.5 text-slate-400">{sub}</div>
-            <div className={`text-xs font-bold break-words leading-tight ${secondary ? 'text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white' : 'text-slate-700 dark:text-slate-200 group-hover:text-primary-600 dark:group-hover:text-white'}`}>{label}</div>
+            <div className="text-[8px] sm:text-[10px] font-bold uppercase tracking-widest opacity-60 mb-0.5 text-slate-600 dark:text-slate-300">{sub}</div>
+            <div className={`text-xs font-bold break-words leading-tight ${secondary ? 'text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white' : 'text-slate-700 dark:text-slate-200 group-hover:text-primary-600 dark:group-hover:text-white'}`}>{label}</div>
          </div>
-         <Icon name="ExternalLink" size={14} className={`shrink-0 w-3 h-3 sm:w-4 sm:h-4 opacity-50 sm:opacity-0 group-hover:opacity-100 transition-opacity ${secondary ? 'text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white' : 'text-slate-400 group-hover:text-primary-600 dark:group-hover:text-white'}`} />
+         <Icon name="ExternalLink" size={14} className={`shrink-0 w-3 h-3 sm:w-4 sm:h-4 opacity-50 sm:opacity-0 group-hover:opacity-100 transition-opacity ${secondary ? 'text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white' : 'text-slate-600 dark:text-slate-300 group-hover:text-primary-600 dark:group-hover:text-white'}`} />
      </div>
      <a href={href} target="_blank" rel="noreferrer" className="absolute inset-0 z-10" aria-label={label}></a>
      
      {note && (
          <div className="relative z-20 mt-2 sm:mt-3 flex items-center justify-between border-t border-slate-200 dark:border-slate-700/50 pt-2">
-            <div className={`text-[9px] sm:text-[10px] font-bold truncate pr-2 flex-1 ${secondary ? 'text-slate-400' : 'text-emerald-600 dark:text-emerald-500'}`}>
+            <div className={`text-[9px] sm:text-[10px] font-bold truncate pr-2 flex-1 ${secondary ? 'text-slate-600 dark:text-slate-300' : 'text-emerald-600 dark:text-emerald-500'}`}>
                 {note.length > 40 ? `${note.substring(0, 40)}...` : note}
             </div>
             {note.length > 40 && onNoteClick && (
                 <button 
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); onNoteClick(note); }}
-                    className={`flex items-center gap-1 shrink-0 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 sm:px-2 sm:py-1 rounded transition-colors cursor-pointer ${secondary ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700' : 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-500/30'}`}
+                    className={`flex items-center gap-1 shrink-0 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 sm:px-2 sm:py-1 rounded transition-colors cursor-pointer ${secondary ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700' : 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-500/30'}`}
                 >
                     <Icon name="Info" size={12} className="w-3 h-3" />
                     <span>Read</span>
@@ -2868,10 +2872,10 @@ const LatestIntelPanel: React.FC<{ open: boolean; onClose: () => void; items: In
               </div>
               <div>
                 <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-widest">Latest Intel</h2>
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Live Changelog Feed</p>
+                <p className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase tracking-wider">Live Changelog Feed</p>
               </div>
             </div>
-            <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 transition-colors">
+            <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-300 transition-colors">
               <Icon name="X" size={20} />
             </button>
           </div>
@@ -2884,7 +2888,7 @@ const LatestIntelPanel: React.FC<{ open: boolean; onClose: () => void; items: In
                 className={`shrink-0 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
                   filter === cat 
                   ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md' 
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}
               >
                 {cat === 'ARCHITECT' ? 'TOOLS' : cat === 'EXTRA' ? 'SAVEGAME' : cat}
@@ -2906,17 +2910,17 @@ const LatestIntelPanel: React.FC<{ open: boolean; onClose: () => void; items: In
                 <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700/50 hover:border-primary-500/50 transition-colors group">
                   <div className="flex items-start justify-between gap-4 mb-2">
                     <div className="flex items-center gap-2">
-                      <Icon name={getCategoryIcon(item.category)} size={14} className="text-slate-400" />
+                      <Icon name={getCategoryIcon(item.category)} size={14} className="text-slate-600 dark:text-slate-300" />
                       <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${getTypeColor(item.type)}`}>
                         {item.type}
                       </span>
                       {item.version && (
-                        <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-200 dark:bg-slate-700 px-1.5 rounded">
+                        <span className="text-[10px] font-mono font-bold text-slate-900 dark:text-slate-300 bg-slate-200 dark:bg-slate-700 px-1.5 rounded">
                           {item.version}
                         </span>
                       )}
                     </div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">
+                    <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider shrink-0">
                       {formatTimeAgo(item.timestamp)}
                     </span>
                   </div>
@@ -2924,7 +2928,7 @@ const LatestIntelPanel: React.FC<{ open: boolean; onClose: () => void; items: In
                   <h3 className="text-sm font-black text-slate-900 dark:text-white mb-1 group-hover:text-primary-500 transition-colors">
                     {item.title}
                   </h3>
-                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+                  <p className="text-xs text-slate-900 dark:text-slate-200 leading-relaxed font-medium">
                     {item.description}
                   </p>
                 </div>
@@ -2933,8 +2937,8 @@ const LatestIntelPanel: React.FC<{ open: boolean; onClose: () => void; items: In
             
             {filteredIntel.length === 0 && (
               <div className="text-center py-10">
-                <Icon name="Ghost" size={48} className="mx-auto text-slate-300 dark:text-slate-700 mb-4" />
-                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">No intel found</p>
+                <Icon name="Ghost" size={48} className="mx-auto text-slate-900 dark:text-slate-700 mb-4" />
+                <p className="text-sm font-bold text-slate-900 dark:text-slate-300 uppercase tracking-widest">No intel found</p>
               </div>
             )}
           </div>
@@ -2993,12 +2997,12 @@ const MostPopularRepacksModal: React.FC<{
                         </div>
                         <div>
                             <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Most Popular Repacks</h2>
-                            <p className="text-xs text-slate-400">All Top {games.length} Games</p>
+                            <p className="text-xs text-slate-600 dark:text-slate-300">All Top {games.length} Games</p>
                         </div>
                     </div>
                     <button 
                         onClick={onClose}
-                        className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-400 flex items-center justify-center hover:bg-slate-300 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors"
+                        className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-300 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors"
                     >
                         <Icon name="X" size={20} />
                     </button>
@@ -3053,7 +3057,7 @@ const MostPopularRepacksModal: React.FC<{
                             <button
                                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                 disabled={currentPage === 1}
-                                className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
+                                className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
                             >
                                 <Icon name="ChevronLeft" size={16} />
                             </button>
@@ -3070,7 +3074,7 @@ const MostPopularRepacksModal: React.FC<{
                                         className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold transition-colors ${
                                             currentPage === pageNum 
                                                 ? 'bg-blue-600 text-white shadow-md' 
-                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                                         }`}
                                     >
                                         {pageNum}
@@ -3080,7 +3084,7 @@ const MostPopularRepacksModal: React.FC<{
                             <button
                                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                 disabled={currentPage === totalPages}
-                                className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
+                                className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
                             >
                                 <Icon name="ChevronRight" size={16} />
                             </button>
@@ -3133,7 +3137,7 @@ const MostPopularRepacksSection: React.FC<{
                     <h2 className="text-xl md:text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
                         <Icon name="Trophy" className="text-yellow-500" /> Most Popular Repacks of the Year
                     </h2>
-                    <p className="text-xs md:text-sm text-slate-400 mt-2">Community favorite releases</p>
+                    <p className="text-xs md:text-sm text-slate-600 dark:text-slate-300 mt-2">Community favorite releases</p>
                 </div>
             </div>
             
@@ -3282,7 +3286,7 @@ const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
                         YOU MUST PLAY
                         <span className="h-[2px] w-12 md:w-24 bg-slate-800 dark:bg-slate-200 transition-colors duration-300 opacity-50"></span>
                     </div>
-                    <p className="mt-4 text-[9px] md:text-xs text-slate-400 font-bold tracking-[0.25em] uppercase transition-colors duration-300">
+                    <p className="mt-4 text-[9px] md:text-xs text-slate-600 dark:text-slate-400 font-bold tracking-[0.25em] uppercase transition-colors duration-300">
                         From Fantasy Kingdoms to Chaotic Cities
                     </p>
                 </div>
@@ -3369,7 +3373,7 @@ const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
                     <button 
                         onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
                         disabled={currentPage === 0}
-                        className="p-3 bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 text-white dark:text-white rounded-full transition-colors flex items-center justify-center shrink-0 border border-slate-300 dark:border-transparent shadow-sm"
+                        className="p-3 bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 text-slate-800 dark:text-white rounded-full transition-colors flex items-center justify-center shrink-0 border border-slate-300 dark:border-transparent shadow-sm"
                     >
                         <Icon name="ChevronLeft" size={20} />
                     </button>
@@ -3388,7 +3392,7 @@ const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
                     <button 
                         onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
                         disabled={currentPage === totalPages - 1}
-                        className="p-3 bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 text-white dark:text-white rounded-full transition-colors flex items-center justify-center shrink-0 border border-slate-300 dark:border-transparent shadow-sm"
+                        className="p-3 bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 text-slate-800 dark:text-white rounded-full transition-colors flex items-center justify-center shrink-0 border border-slate-300 dark:border-transparent shadow-sm"
                     >
                         <Icon name="ChevronRight" size={20} />
                     </button>
@@ -3436,11 +3440,11 @@ const BestStudiosCarousel: React.FC<{
                         </div>
                         {categoryType === 'games' ? 'Top Studios' : 'Top Tech Companies'}
                     </h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 font-medium">Leading developers by released items</p>
+                    <p className="text-sm text-slate-700 dark:text-slate-300 mt-2 font-medium">Leading developers by released items</p>
                 </div>
                 <button 
                     onClick={onSeeAll}
-                    className="cursor-pointer shrink-0 group text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    className="cursor-pointer shrink-0 group text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-slate-200 flex items-center gap-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
                     View Directory <Icon name="ArrowRight" size={16} className="group-hover:translate-x-1 transition-transform" />
                 </button>
@@ -3458,16 +3462,16 @@ const BestStudiosCarousel: React.FC<{
                         <div className="flex items-start justify-between mb-6">
                             <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-slate-50 dark:bg-slate-900/80 flex items-center justify-center p-3 border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden group-hover:scale-105 transition-transform duration-300">
                                 {profile.logoUrl ? (
-                                    <img src={profile.logoUrl} alt={profile.name} className="w-full h-full object-contain filter group-hover:brightness-110 transition-all cursor-pointer" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement.innerHTML = '<span class="font-black text-xl text-slate-400 group-hover:text-blue-500 transition-colors cursor-pointer">' + profile.name.substring(0, 2).toUpperCase() + '</span>'; }} />
+                                    <img src={profile.logoUrl} alt={profile.name} className="w-full h-full object-contain filter group-hover:brightness-110 transition-all cursor-pointer" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement.innerHTML = '<span class="font-black text-xl text-slate-600 dark:text-slate-300 group-hover:text-blue-500 transition-colors cursor-pointer">' + profile.name.substring(0, 2).toUpperCase() + '</span>'; }} />
                                 ) : (
-                                    <span className="font-black text-xl text-slate-400 group-hover:text-blue-500 transition-colors cursor-pointer">{profile.name.substring(0, 2).toUpperCase()}</span>
+                                    <span className="font-black text-xl text-slate-600 dark:text-slate-300 group-hover:text-blue-500 transition-colors cursor-pointer">{profile.name.substring(0, 2).toUpperCase()}</span>
                                 )}
                             </div>
                             <div className="flex flex-col items-end">
                                 <span className="text-xl md:text-2xl font-black text-slate-900 dark:text-white">
                                     {profile.totalGames}
                                 </span>
-                                <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">
+                                <span className="text-[10px] md:text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest">
                                     {profile.totalGames === 1 ? 'Item' : 'Items'}
                                 </span>
                             </div>
@@ -3493,7 +3497,7 @@ const BestStudiosCarousel: React.FC<{
 const SecretArea: React.FC = () => {
   const [isUnlocked, setIsUnlocked] = useState(() => localStorage.getItem('secret_area_unlocked') === 'true' || localStorage.getItem('nexa_guest_mode') === 'true');
   const [isGuestMode, setIsGuestMode] = useState(() => localStorage.getItem('nexa_guest_mode') === 'true');
-  const [showHackerLoader, setShowHackerLoader] = useState(() => localStorage.getItem('secret_area_unlocked') === 'true');
+  const [showHackerLoader, setShowHackerLoader] = useState(() => localStorage.getItem('secret_area_unlocked') === 'true' || localStorage.getItem('nexa_guest_mode') === 'true');
   const [hackerProgress, setHackerProgress] = useState(0);
   const [terminalLines, setTerminalLines] = useState<string[]>([]);
   const [password, setPassword] = useState('');
@@ -3621,7 +3625,28 @@ const SecretArea: React.FC = () => {
   const [scriptError, setScriptError] = useState(false);
   const [requestModalInitialTitle, setRequestModalInitialTitle] = useState('');
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [maintenanceConfig, setMaintenanceConfig] = useState<{active: boolean, endTime: string | null, message: string} | null>(null);
+  const [maintenanceConfig, setMaintenanceConfig] = useState<{active: boolean, endTime: string | null, message: string} | null | undefined>(() => {
+    try {
+        const cached = localStorage.getItem('cached_secret_resources');
+        if (cached) {
+            const data = JSON.parse(cached);
+            const maintenanceKey = Object.keys(data).find(k => k.toLowerCase() === 'maintenance');
+            if (maintenanceKey && Array.isArray(data[maintenanceKey]) && data[maintenanceKey].length > 0) {
+                const config = data[maintenanceKey][0];
+                const isActiveStr = String(config.active || '').toLowerCase().trim();
+                if (isActiveStr === 'true' || isActiveStr === 'yes' || isActiveStr === '1' || config.active === true) {
+                    return {
+                        active: true,
+                        endTime: config.time || config.endTime || config.date || null,
+                        message: config.message || "Our website is under temporary maintenance, we will be back soon :)"
+                    };
+                }
+            }
+            return null;
+        }
+    } catch (e) {}
+    return undefined;
+  });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -3816,6 +3841,22 @@ const SecretArea: React.FC = () => {
                   className="text-blue-400 hover:text-blue-300 underline underline-offset-2 font-bold"
                 >
                   Discord Server
+                </a>
+              </div>
+              <div className="flex items-center space-x-2.5">
+                <img 
+                  src="https://vectorseek.com/wp-content/uploads/2023/12/Reddit-New-2023-Icon-Logo-Vector.svg-.png" 
+                  alt="Reddit" 
+                  referrerPolicy="no-referrer" 
+                  className="w-5 h-5 object-contain" 
+                 loading="lazy" />
+                <a 
+                  href="https://www.reddit.com/r/SecretArea1337" 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="text-blue-400 hover:text-blue-300 underline underline-offset-2 font-bold"
+                >
+                  Reddit Community
                 </a>
               </div>
             </div>
@@ -4682,6 +4723,7 @@ const SecretArea: React.FC = () => {
         }, 6000);
       } else {
         setError("CRITICAL ERROR: Google Apps Script Connection Failed and no local backup could be found.");
+        setMaintenanceConfig(null);
       }
     } finally {
       setLoading(false);
@@ -4919,6 +4961,14 @@ const SecretArea: React.FC = () => {
     }
   };
 
+  if (maintenanceConfig === undefined) {
+      return (
+          <div className="w-full h-screen fixed inset-0 z-[200] bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+              <div className="animate-spin text-slate-900 dark:text-slate-300"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg></div>
+          </div>
+      );
+  }
+
   if (maintenanceConfig?.active) {
     // Admin bypass: append ?bypass=nexa to the URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -4965,7 +5015,7 @@ const SecretArea: React.FC = () => {
                         </div>
                     </div>
 
-                    <button onClick={() => setShowMathGame(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors z-20">
+                    <button onClick={() => setShowMathGame(false)} className="absolute top-4 right-4 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-200 transition-colors z-20">
                         <Icon name="X" size={24} />
                     </button>
                     
@@ -4974,7 +5024,7 @@ const SecretArea: React.FC = () => {
                             <Icon name="Cpu" size={32} className="text-blue-500 animate-pulse" />
                         </div>
                         <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-1">Security Challenge</h2>
-                        <p className="text-slate-500 text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em]">Advanced Protocol</p>
+                        <p className="text-slate-900 dark:text-slate-300 text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em]">Advanced Protocol</p>
                     </div>
 
                     {mathStatus === 'locked' && (
@@ -4982,12 +5032,12 @@ const SecretArea: React.FC = () => {
                             <div className="text-red-500 flex justify-center animate-pulse"><Icon name="Skull" size={64} /></div>
                             <div className="bg-red-500/10 border border-red-500/30 p-6 rounded-xl">
                                 <h3 className="text-lg font-black text-red-500 uppercase mb-2">System Locked</h3>
-                                <p className="text-xs sm:text-sm font-bold text-slate-300 uppercase leading-relaxed">
+                                <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 uppercase leading-relaxed">
                                     you are a loser contact admin to request secret key
                                 </p>
                             </div>
                             <div className="flex flex-col items-center gap-2">
-                                <span className="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Retry Available In</span>
+                                <span className="text-[10px] uppercase font-bold text-slate-900 dark:text-slate-300 tracking-widest">Retry Available In</span>
                                 {mathLockoutTime && <LockoutTimer targetTime={mathLockoutTime} />}
                             </div>
                         </motion.div>
@@ -5014,7 +5064,7 @@ const SecretArea: React.FC = () => {
                             </div>
                             
                             <div className="flex items-center justify-between px-2">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Input Answer</span>
+                                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest">Input Answer</span>
                                 <span className={`text-[10px] font-bold uppercase tracking-widest ${attemptsLeft === 1 ? 'text-red-500 animate-pulse' : 'text-blue-500'}`}>
                                     {attemptsLeft} Attempts Left
                                 </span>
@@ -5039,7 +5089,7 @@ const SecretArea: React.FC = () => {
                     {mathStatus === 'won' && (
                         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="space-y-6 relative z-10">
                             <div className="text-emerald-500 flex justify-center"><Icon name="CheckCircle" size={48} /></div>
-                            <p className="text-xs sm:text-sm font-bold text-slate-300 px-4">
+                            <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-200 px-4">
                                 "Intelligence confirmed. Welcome to the inner circle."
                             </p>
                             <div className="bg-emerald-500/10 border border-emerald-500/30 p-4 rounded-xl">
@@ -5056,12 +5106,17 @@ const SecretArea: React.FC = () => {
                         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="py-10 relative z-10">
                             <div className="text-red-500 flex justify-center mb-4"><Icon name="AlertTriangle" size={48} /></div>
                             <h3 className="text-xl font-black text-red-500 uppercase">Incorrect</h3>
-                            <p className="text-xs font-bold text-slate-500 mt-2">Calculation Error. Be careful.</p>
+                            <p className="text-xs font-bold text-slate-900 dark:text-slate-300 mt-2">Calculation Error. Be careful.</p>
                         </motion.div>
                     )}
                 </div>
             ) : (
                 <div className="flex flex-col relative overflow-hidden w-full h-[450px]">
+                      {/* Background Image inside terminal */}
+                      <div className="absolute inset-0 z-0 pointer-events-none">
+                        <img src="https://images2.alphacoders.com/135/1355120.jpeg" alt="Terminal Background" className="w-full h-full object-cover opacity-20 dark:opacity-30 mix-blend-overlay" />
+                        <div className="absolute inset-0 bg-slate-900/80 dark:bg-black/60 backdrop-blur-[1px]"></div>
+                      </div>
                       
                       <div className="h-10 bg-slate-800/80 dark:bg-[#0f172a]/50 backdrop-blur-sm border-b border-slate-700/50 dark:border-slate-800/50 flex items-center px-4 justify-between relative z-10 shrink-0">
                         <div className="flex gap-2">
@@ -5073,7 +5128,7 @@ const SecretArea: React.FC = () => {
                             <div className="relative w-4 h-4 flex items-center justify-center">
                                 <FaWolfPackBattalion size={14} className="text-white dark:text-white relative z-10" />
                             </div>
-                            <div className="text-xs font-semibold text-slate-300 dark:text-slate-300 lowercase tracking-widest font-mono">guest@nexa1337:~/root</div>
+                            <div className="text-xs font-semibold text-slate-300 lowercase tracking-widest font-mono">guest@nexa1337:~/root</div>
                         </div>
                         <div className="w-12"></div>
                       </div>
@@ -5167,6 +5222,10 @@ const SecretArea: React.FC = () => {
               {/* Terminal Window */}
               <div className="w-full bg-slate-900/90 dark:bg-black/40 backdrop-blur-md border border-slate-700/50 dark:border-slate-700/50 rounded-xl overflow-hidden shadow-2xl flex flex-col relative">
                 {/* Background Image inside terminal */}
+                <div className="absolute inset-0 z-0 pointer-events-none">
+                  <img src="https://images2.alphacoders.com/135/1355120.jpeg" alt="Terminal Background" className="w-full h-full object-cover opacity-20 dark:opacity-30 mix-blend-overlay" />
+                  <div className="absolute inset-0 bg-slate-900/80 dark:bg-black/60 backdrop-blur-[1px]"></div>
+                </div>
                 
                 
                 {/* Mac OS Window Header */}
@@ -5182,7 +5241,7 @@ const SecretArea: React.FC = () => {
                         <FaWolfPackBattalion size={14} className="text-red-500 absolute inset-0 z-0 opacity-70 animate-[glitch_2s_infinite]" style={{ clipPath: 'polygon(0 0, 100% 0, 100% 45%, 0 45%)', transform: 'translate(-1px, 1px)' }} />
                         <FaWolfPackBattalion size={14} className="text-cyan-500 absolute inset-0 z-0 opacity-70 animate-[glitch_3s_infinite_reverse]" style={{ clipPath: 'polygon(0 55%, 100% 55%, 100% 100%, 0 100%)', transform: 'translate(1px, -1px)' }} />
                      </div>
-                     <div className="text-xs font-semibold text-slate-300 dark:text-slate-300 lowercase tracking-widest font-mono">guest@nexa1337:~/root</div>
+                     <div className="text-xs font-semibold text-slate-300 lowercase tracking-widest font-mono">guest@nexa1337:~/root</div>
                   </div>
                   <div className="w-12"></div>
                 </div>
@@ -5203,10 +5262,10 @@ const SecretArea: React.FC = () => {
                             key={line + i}
                             initial={{ opacity: 0, y: 15 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className={`flex items-center gap-4 ${isLatest ? 'text-cyan-400' : 'text-slate-400'}`}
+                            className={`flex items-center gap-4 ${isLatest ? 'text-cyan-400' : 'text-slate-300'}`}
                           >
                             <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 shrink-0 ${isLatest ? 'border-cyan-400 bg-white/20 dark:bg-black/20 backdrop-blur-sm' : 'border-slate-600 bg-white/10 dark:bg-black/10 backdrop-blur-sm'}`}>
-                              {!isLatest && <Icon name="Check" size={12} className="text-slate-400" />}
+                              {!isLatest && <Icon name="Check" size={12} className="text-slate-300" />}
                               {isLatest && <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}><Icon name="Loader2" size={12} className="text-cyan-400" /></motion.div>}
                             </div>
                             <span className="font-mono text-[11px] sm:text-xs truncate font-medium drop-shadow-sm">{line}</span>
@@ -5218,7 +5277,7 @@ const SecretArea: React.FC = () => {
 
                   {/* Progress Bar */}
                   <div className="w-full max-w-md mt-8">
-                    <div className="flex justify-between text-[10px] sm:text-xs font-bold mb-3 text-slate-300 uppercase tracking-widest drop-shadow-sm">
+                    <div className="flex justify-between text-[10px] sm:text-xs font-bold mb-3 text-slate-200 uppercase tracking-widest drop-shadow-sm">
                       <span>Status: Loading..</span>
                       <span className="text-cyan-400">{hackerProgress}%</span>
                     </div>
@@ -5262,9 +5321,9 @@ const SecretArea: React.FC = () => {
                     <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-baseline mb-1">
                             <h4 className="font-bold text-xs text-slate-900 dark:text-white truncate">{n.title}</h4>
-                            <span className="text-[9px] text-slate-400">{n.time}</span>
+                            <span className="text-[9px] text-slate-600 dark:text-slate-300">{n.time}</span>
                         </div>
-                        <p className="text-[10px] text-slate-600 dark:text-slate-300 leading-snug whitespace-pre-line font-medium">
+                        <p className="text-[10px] text-slate-900 dark:text-slate-200 leading-snug whitespace-pre-line font-medium">
                             {n.text}
                         </p>
                     </div>
@@ -5356,14 +5415,14 @@ const SecretArea: React.FC = () => {
 
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-24 pb-40 relative z-10">
         
-        <header className="flex flex-col xl:flex-row xl:items-end justify-between gap-8 mb-12 relative z-[9999] pointer-events-auto">
+        <header className="flex flex-col gap-6 lg:gap-8 mb-12 relative z-[9999] pointer-events-auto">
           <div className="space-y-4">
             <div className="flex items-center gap-3 overflow-x-auto no-scrollbar max-w-full pb-1">
                {isGuestMode && (
                  <motion.div 
                    initial={{ opacity: 0, y: -10 }}
                    animate={{ opacity: 1, y: 0 }}
-                   className="px-3 py-1.5 border rounded-lg flex items-center gap-2.5 shadow-lg whitespace-nowrap shrink-0 relative overflow-hidden bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-300 shadow-[0_0_15px_rgba(148,163,184,0.3)]"
+                   className="px-3 py-1.5 border rounded-lg flex items-center gap-2.5 shadow-lg whitespace-nowrap shrink-0 relative overflow-hidden bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-200 shadow-[0_0_15px_rgba(148,163,184,0.3)]"
                  >
                     <Icon name="UserCircle" size={14} className="opacity-80" />
                     <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider">GUEST MODE</span>
@@ -5456,11 +5515,11 @@ const SecretArea: React.FC = () => {
                 Area
               </motion.span>
             </h1>
-            <p className="text-slate-400 max-w-xl text-sm md:text-base font-medium leading-relaxed border-l-2 border-slate-300 dark:border-slate-800 pl-4">
+            <p className="text-slate-600 dark:text-slate-300 max-w-xl text-sm md:text-base font-medium leading-relaxed border-l-2 border-slate-300 dark:border-slate-800 pl-4">
               Everything you need, from games to tools, collected from trusted sources and presented in a clean experience ad-free.
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-row items-center justify-start xl:justify-end gap-3 w-full xl:w-auto shrink-0 mt-6 xl:mt-0 xl:max-w-[75%] relative z-[90]">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap items-center gap-3 w-full mt-2 relative z-[90]">
             <button 
                 id="btn-free-accounts"
                 type="button"
@@ -5469,7 +5528,7 @@ const SecretArea: React.FC = () => {
                     if (isGuestMode) { showGuestNotification?.(); return; }
                     setShowSteamModal(true); 
                 }}
-                className="relative flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden z-[100] cursor-pointer"
+                className="relative w-full md:w-auto flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden z-[100] cursor-pointer"
             >
                 <Icon name="BrandSteam" size={18} className="group-hover:scale-110 transition-transform shrink-0 relative z-10" /> 
                 <span className="relative z-10 flex items-center gap-1.5">
@@ -5485,7 +5544,7 @@ const SecretArea: React.FC = () => {
                 id="btn-master-gift"
                 type="button"
                 onClick={(e) => { e.preventDefault(); setShowMasterGiftModal(true); }}
-                className="relative flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden z-[100] cursor-pointer"
+                className="relative w-full md:w-auto flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden z-[100] cursor-pointer"
             >
                 <Icon name="Gift" size={18} className="text-yellow-300 group-hover:scale-110 transition-transform shrink-0 relative z-10" /> 
                 <span className="relative z-10 flex items-center gap-1.5">
@@ -5497,12 +5556,12 @@ const SecretArea: React.FC = () => {
                     )}
                 </span>
             </button>
-            <a id="join-community-btn" href={DISCORD_LINK} target="_blank" rel="noreferrer" className="relative z-[100] cursor-pointer flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden">
+            <a id="join-community-btn" href={DISCORD_LINK} target="_blank" rel="noreferrer" className="relative z-[100] cursor-pointer w-full md:w-auto flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden">
                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                <Icon name="Discord" size={18} className="group-hover:scale-110 transition-transform shrink-0 relative z-10" />
                 <span className="relative z-10">Join Community</span>
             </a>
-            <a id="channel-btn" href={TELEGRAM_LINK} target="_blank" rel="noreferrer" className="relative z-[100] cursor-pointer flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-[#229ED9] hover:bg-[#1D85B8] text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden">
+            <a id="channel-btn" href={TELEGRAM_LINK} target="_blank" rel="noreferrer" className="relative z-[100] cursor-pointer w-full md:w-auto flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-[#229ED9] hover:bg-[#1D85B8] text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden">
                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                <Icon name="Telegram" size={18} className="group-hover:scale-110 transition-transform shrink-0 relative z-10" />
                 <span className="relative z-10 flex items-center gap-2">
@@ -5512,9 +5571,16 @@ const SecretArea: React.FC = () => {
                    </span>
                </span>
             </a>
+            <a id="subreddit-btn" href={REDDIT_LINK} target="_blank" rel="noreferrer" className="relative z-[100] cursor-pointer w-full md:w-auto flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-[#FF4500] hover:bg-[#E03D00] text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden">
+               <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+               <Icon name="Reddit" size={18} className="group-hover:scale-110 transition-transform shrink-0 relative z-10" />
+                <span className="relative z-10 flex items-center gap-2">
+                   Join Community
+               </span>
+            </a>
             <button 
                 onClick={(e) => { e.preventDefault(); setShowDonateModal(true); }}
-                className="relative flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md hover:shadow-pink-500/20 active:scale-95 group text-center whitespace-nowrap overflow-hidden z-[100] cursor-pointer"
+                className="relative w-full md:w-auto flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md hover:shadow-pink-500/20 active:scale-95 group text-center whitespace-nowrap overflow-hidden z-[100] cursor-pointer"
             >
                 <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <Icon name="Heart" size={18} className="text-white group-hover:scale-110 group-hover:animate-pulse transition-transform shrink-0 relative z-10" /> 
@@ -5550,7 +5616,7 @@ const SecretArea: React.FC = () => {
                         className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all whitespace-nowrap cursor-pointer z-[100] ${
                             upcomingPlatform === p 
                             ? 'bg-slate-800 dark:bg-slate-700 text-white shadow-sm' 
-                            : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-300'
+                            : 'text-slate-700 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-900 dark:text-slate-200'
                         }`}
                     >
                         {p}
@@ -5619,7 +5685,7 @@ const SecretArea: React.FC = () => {
                           <button 
                               key={tab}
                               onClick={() => setActiveTab(tab as any)}
-                              className={`shrink-0 relative px-4 py-2.5 sm:px-6 md:px-8 sm:py-3 rounded-lg font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all z-10 flex items-center justify-center ${activeTab === tab ? 'text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-300'}`}
+                              className={`shrink-0 relative px-4 py-2.5 sm:px-6 md:px-8 sm:py-3 rounded-lg font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all z-10 flex items-center justify-center ${activeTab === tab ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-900 dark:text-slate-200'}`}
                           >
                             {activeTab === tab && (
                               <motion.div layoutId="activeTab" className="absolute inset-0 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700" transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />
@@ -5641,7 +5707,7 @@ const SecretArea: React.FC = () => {
                                   <Icon name="Bookmark" size={14} className={activeTab === 'stash' ? 'text-primary-500' : ''} />
                                   MY STASH
                                   {stash.length > 0 && (
-                                    <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold transition-colors ${animateStashTab ? 'bg-primary-500 text-white animate-pulse' : 'bg-slate-200 dark:bg-slate-700 text-slate-300'}`}>
+                                    <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold transition-colors ${animateStashTab ? 'bg-primary-500 text-white animate-pulse' : 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-200'}`}>
                                       {stash.length}
                                     </span>
                                   )}
@@ -5655,7 +5721,7 @@ const SecretArea: React.FC = () => {
                       <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto shrink-0 mt-2 lg:mt-0">
                           <button 
                             onClick={() => setShowIntelPanel(true)}
-                            className="relative flex items-center justify-center p-3 sm:p-3.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-300 rounded-xl transition-all flex-1 sm:flex-none"
+                            className="relative flex items-center justify-center p-3 sm:p-3.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-200 rounded-xl transition-all flex-1 sm:flex-none"
                             title="Latest Intel (Live Changelog)"
                           >
                             <Icon name="Radar" size={20} className="animate-pulse text-primary-500" />
@@ -5664,7 +5730,7 @@ const SecretArea: React.FC = () => {
 
                           <button 
                             onClick={() => setShowGlobalFilter(!showGlobalFilter)}
-                            className={`flex items-center justify-center p-3 sm:p-3.5 rounded-xl transition-all border flex-1 sm:flex-none ${globalSpecs.isActive ? 'bg-primary-500 text-white border-primary-500 shadow-lg shadow-primary-500/20' : 'bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-300 border-transparent'}`}
+                            className={`flex items-center justify-center p-3 sm:p-3.5 rounded-xl transition-all border flex-1 sm:flex-none ${globalSpecs.isActive ? 'bg-primary-500 text-white border-primary-500 shadow-lg shadow-primary-500/20' : 'bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-200 border-transparent'}`}
                             title="Global System Filter"
                           >
                             <Icon name="Cpu" size={20} />
@@ -5672,7 +5738,7 @@ const SecretArea: React.FC = () => {
 
                           <button 
                             onClick={() => fetchData()}
-                            className="flex items-center justify-center p-3 sm:p-3.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-300 rounded-xl transition-all flex-1 sm:flex-none"
+                            className="flex items-center justify-center p-3 sm:p-3.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-200 rounded-xl transition-all flex-1 sm:flex-none"
                             title="Reload Data"
                           >
                             <Icon name="RefreshCw" size={20} className={loading ? "animate-spin" : ""} />
@@ -5683,7 +5749,7 @@ const SecretArea: React.FC = () => {
                                 setRequestModalInitialTitle(searchQuery);
                                 setShowRequestModal(true);
                             }}
-                            className="flex items-center justify-center gap-2 px-3 sm:px-4 py-3 sm:py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all w-full sm:w-auto sm:flex-1 lg:flex-none"
+                            className="flex items-center justify-center gap-2 px-3 sm:px-4 py-3 sm:py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all w-full sm:w-auto sm:w-full md:w-auto"
                             title="Request a game or tool not listed here"
                           >
                             <Icon name="Plus" size={20} />
@@ -5695,7 +5761,7 @@ const SecretArea: React.FC = () => {
                   </div>
 
                   <div className="relative w-full group">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-500 transition-colors">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-300 group-focus-within:text-primary-500 transition-colors">
                       <Icon name="Search" size={18} />
                     </div>
                     <input 
@@ -5703,7 +5769,7 @@ const SecretArea: React.FC = () => {
                       value={searchQuery} 
                       onChange={e => setSearchQuery(e.target.value)} 
                       placeholder={`SEARCH ${activeTab.toUpperCase()}...`} 
-                      className="w-full pl-12 pr-4 py-3 sm:py-3.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/20 text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all truncate"
+                      className="w-full pl-12 pr-4 py-3 sm:py-3.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/20 text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider placeholder:text-slate-300 dark:placeholder:text-slate-600 transition-all truncate"
                     />
                   </div>
               </div>
@@ -5724,7 +5790,7 @@ const SecretArea: React.FC = () => {
                           Global "Can I Run It?" Filter
                         </h3>
                         <label className="flex items-center gap-2 cursor-pointer self-start sm:self-auto">
-                          <span className="text-xs font-bold text-slate-500 uppercase">Enable Filter</span>
+                          <span className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">Enable Filter</span>
                           <div className="relative">
                             <input type="checkbox" className="sr-only" checked={globalSpecs.isActive} onChange={(e) => setGlobalSpecs({...globalSpecs, isActive: e.target.checked})} />
                             <div className={`block w-10 h-6 rounded-full transition-colors ${globalSpecs.isActive ? 'bg-primary-500' : 'bg-slate-300 dark:bg-slate-600'}`}></div>
@@ -5735,7 +5801,7 @@ const SecretArea: React.FC = () => {
                       
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div className="space-y-1">
-                          <label className="text-xs font-bold text-slate-500 uppercase">OS</label>
+                          <label className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">OS</label>
                           <select 
                             value={globalSpecs.os}
                             onChange={(e) => setGlobalSpecs({...globalSpecs, os: e.target.value})}
@@ -5748,7 +5814,7 @@ const SecretArea: React.FC = () => {
                           </select>
                         </div>
                         <div className="space-y-1">
-                          <label className="text-xs font-bold text-slate-500 uppercase">RAM (GB)</label>
+                          <label className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">RAM (GB)</label>
                           <select 
                             value={globalSpecs.ram}
                             onChange={(e) => setGlobalSpecs({...globalSpecs, ram: parseInt(e.target.value)})}
@@ -5762,7 +5828,7 @@ const SecretArea: React.FC = () => {
                           </select>
                         </div>
                         <div className="space-y-1">
-                          <label className="text-xs font-bold text-slate-500 uppercase">CPU</label>
+                          <label className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">CPU</label>
                           <select 
                             value={globalSpecs.cpuTier}
                             onChange={(e) => setGlobalSpecs({...globalSpecs, cpuTier: parseInt(e.target.value)})}
@@ -5776,7 +5842,7 @@ const SecretArea: React.FC = () => {
                           </select>
                         </div>
                         <div className="space-y-1">
-                          <label className="text-xs font-bold text-slate-500 uppercase">GPU</label>
+                          <label className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">GPU</label>
                           <select 
                             value={globalSpecs.gpuTier}
                             onChange={(e) => setGlobalSpecs({...globalSpecs, gpuTier: parseInt(e.target.value)})}
@@ -5800,17 +5866,17 @@ const SecretArea: React.FC = () => {
 
         <div className="min-h-[50vh]">
           {loading ? (
-            <div className="flex flex-col items-center justify-center h-[50vh] text-slate-500">
+            <div className="flex flex-col items-center justify-center h-[50vh] text-slate-900 dark:text-slate-300">
                <div className="w-16 h-16 border-4 border-slate-200 dark:border-slate-800 border-t-primary-500 rounded-full animate-spin mb-6"></div>
                <p className="font-mono text-xs uppercase tracking-[0.2em] animate-pulse">Decrypting Data Stream...</p>
             </div>
           ) : filteredData.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-[50vh] text-slate-500">
+            <div className="flex flex-col items-center justify-center h-[50vh] text-slate-900 dark:text-slate-300">
                <div className="p-6 bg-white dark:bg-slate-900 rounded-full mb-6 shadow-sm">
                  <Icon name="Database" size={40} className="opacity-20" />
                </div>
                <h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight mb-1">No Data Found</h3>
-               <p className="text-slate-500 text-xs mb-6">Try adjusting your search or category.</p>
+               <p className="text-slate-900 dark:text-slate-300 text-xs mb-6">Try adjusting your search or category.</p>
                <button 
                  onClick={() => {
                     setRequestModalInitialTitle(searchQuery);
@@ -5958,7 +6024,7 @@ const SecretArea: React.FC = () => {
                     <button 
                       onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                       disabled={currentPage === 1}
-                      className="p-2 sm:p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-30 transition-all hover:bg-slate-200 dark:hover:bg-slate-700 shrink-0"
+                      className="p-2 sm:p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white disabled:opacity-30 transition-all hover:bg-slate-200 dark:hover:bg-slate-700 shrink-0"
                     >
                       <Icon name="ChevronLeft" size={20} />
                     </button>
@@ -5979,12 +6045,12 @@ const SecretArea: React.FC = () => {
                                 <button
                                   key={idx}
                                   onClick={() => setCurrentPage(page)}
-                                  className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl font-bold text-[10px] sm:text-xs transition-all shrink-0 ${currentPage === page ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/50' : 'bg-slate-50 dark:bg-slate-950 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'}`}
+                                  className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl font-bold text-[10px] sm:text-xs transition-all shrink-0 ${currentPage === page ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/50' : 'bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'}`}
                                 >
                                   {page}
                                 </button>
                             ) : (
-                                <span key={idx} className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-slate-400 text-xs font-bold select-none shrink-0">...</span>
+                                <span key={idx} className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-slate-600 dark:text-slate-300 text-xs font-bold select-none shrink-0">...</span>
                             )
                           ));
                       })()}
@@ -5993,7 +6059,7 @@ const SecretArea: React.FC = () => {
                     <button 
                       onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                       disabled={currentPage === totalPages}
-                      className="p-2 sm:p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-30 transition-all hover:bg-slate-200 dark:hover:bg-slate-700 shrink-0"
+                      className="p-2 sm:p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white disabled:opacity-30 transition-all hover:bg-slate-200 dark:hover:bg-slate-700 shrink-0"
                     >
                       <Icon name="ChevronRight" size={20} />
                     </button>
@@ -6173,7 +6239,7 @@ const AllProfilesModal: React.FC<{
 
                     <div className="relative z-10 flex items-center gap-3 w-full sm:w-auto">
                         <div className="relative flex-1 sm:w-64">
-                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-300">
                               <Icon name="Search" size={16} />
                             </div>
                             <input 
@@ -6181,7 +6247,7 @@ const AllProfilesModal: React.FC<{
                               value={searchQuery} 
                               onChange={e => setSearchQuery(e.target.value)} 
                               placeholder="SEARCH PROFILES..." 
-                              className="w-full pl-10 pr-4 py-2.5 bg-white/60 dark:bg-black/40 border border-slate-300 dark:border-slate-700/50 rounded-xl focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider placeholder:text-slate-500 transition-all"
+                              className="w-full pl-10 pr-4 py-2.5 bg-white/60 dark:bg-black/40 border border-slate-300 dark:border-slate-700/50 rounded-xl focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider placeholder:text-slate-700 dark:text-slate-500 transition-all"
                             />
                         </div>
                         <button onClick={onClose} className="p-2.5 bg-white/60 dark:bg-black/40 hover:bg-white dark:hover:bg-black/60 rounded-xl transition-colors text-slate-700 dark:text-white border border-slate-300 dark:border-slate-700/50 hover:border-slate-400 dark:hover:border-slate-500 shadow">
@@ -6201,9 +6267,9 @@ const AllProfilesModal: React.FC<{
                                 >
                                     <div className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 bg-slate-50 dark:bg-slate-950 rounded-2xl flex items-center justify-center p-3 border border-slate-100 dark:border-slate-800 group-hover/studio:border-blue-500/30 group-hover/studio:bg-blue-50 dark:group-hover/studio:bg-blue-900/20 overflow-hidden shrink-0 transition-all shadow-inner">
                                         {profile.logoUrl ? (
-                                            <img src={profile.logoUrl} alt={profile.name} className="w-full h-full object-contain filter group-hover/studio:brightness-110 transition-all" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = '<span class="font-black text-lg sm:text-xl text-slate-400 dark:text-slate-500 group-hover/studio:text-blue-500 dark:group-hover/studio:text-blue-400 transition-colors">' + profile.name.substring(0, 2).toUpperCase() + '</span>'; }} />
+                                            <img src={profile.logoUrl} alt={profile.name} className="w-full h-full object-contain filter group-hover/studio:brightness-110 transition-all" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = '<span class="font-black text-lg sm:text-xl text-slate-800 dark:text-slate-500 group-hover/studio:text-blue-500 dark:group-hover/studio:text-blue-400 transition-colors">' + profile.name.substring(0, 2).toUpperCase() + '</span>'; }} />
                                         ) : (
-                                            <span className="font-black text-lg sm:text-xl text-slate-400 dark:text-slate-500 group-hover/studio:text-blue-500 dark:group-hover/studio:text-blue-400 transition-colors">{profile.name.substring(0, 2).toUpperCase()}</span>
+                                            <span className="font-black text-lg sm:text-xl text-slate-800 dark:text-slate-500 group-hover/studio:text-blue-500 dark:group-hover/studio:text-blue-400 transition-colors">{profile.name.substring(0, 2).toUpperCase()}</span>
                                         )}
                                     </div>
                                     <div className="text-center w-full">
@@ -6217,9 +6283,9 @@ const AllProfilesModal: React.FC<{
                         </div>
                     ) : (
                         <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                            <Icon name="SearchX" size={48} className="text-slate-400 dark:text-slate-600 mb-4" />
+                            <Icon name="SearchX" size={48} className="text-slate-800 dark:text-slate-600 mb-4" />
                             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No Profiles Found</h3>
-                            <p className="text-slate-400 text-sm">Try adjusting your search criteria.</p>
+                            <p className="text-slate-600 dark:text-slate-300 text-sm">Try adjusting your search criteria.</p>
                         </div>
                     )}
                 </div>
@@ -6230,7 +6296,7 @@ const AllProfilesModal: React.FC<{
                             <button
                                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                 disabled={currentPage === 1}
-                                className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
+                                className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
                             >
                                 <Icon name="ChevronLeft" size={16} />
                             </button>
@@ -6242,7 +6308,7 @@ const AllProfilesModal: React.FC<{
                                     className={`w-8 h-8 rounded-lg text-xs font-bold transition-colors ${
                                         currentPage === page 
                                         ? 'bg-blue-600 text-white shadow shadow-blue-500/20' 
-                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
+                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
                                     }`}
                                 >
                                     {page}
@@ -6252,7 +6318,7 @@ const AllProfilesModal: React.FC<{
                             <button
                                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                 disabled={currentPage === totalPages}
-                                className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
+                                className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
                             >
                                 <Icon name="ChevronRight" size={16} />
                             </button>

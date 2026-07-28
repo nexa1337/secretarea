@@ -118,7 +118,7 @@ export const DuaPopup: React.FC = () => {
                     
                     <button 
                         onClick={() => setIsVisible(false)}
-                        className="absolute top-3 right-3 p-1.5 rounded-full bg-slate-100/50 dark:bg-slate-800/50 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors hover:bg-slate-200 dark:hover:bg-slate-700 z-10"
+                        className="absolute top-3 right-3 p-1.5 rounded-full bg-slate-100/50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors hover:bg-slate-200 dark:hover:bg-slate-700 z-10"
                     >
                         <Icon name="X" size={14} />
                     </button>
@@ -128,7 +128,7 @@ export const DuaPopup: React.FC = () => {
                             localStorage.setItem('duaPopupDisabled', 'true');
                             setIsVisible(false);
                         }}
-                        className="absolute top-3 left-3 px-2 py-1 rounded bg-slate-100/50 dark:bg-slate-800/50 text-[10px] text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors hover:bg-slate-200 dark:hover:bg-slate-700 z-10"
+                        className="absolute top-3 left-3 px-2 py-1 rounded bg-slate-100/50 dark:bg-slate-800/50 text-[10px] text-slate-700 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors hover:bg-slate-200 dark:hover:bg-slate-700 z-10"
                     >
                         Don't show again
                     </button>
@@ -152,7 +152,7 @@ export const DuaPopup: React.FC = () => {
                                     {currentDua.source}
                                 </span>
                             </div>
-                            <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium pb-1 flex items-center gap-1.5 justify-center mt-1">
+                            <div className="text-[10px] sm:text-xs text-slate-700 dark:text-slate-500 dark:text-slate-400 font-medium pb-1 flex items-center gap-1.5 justify-center mt-1">
                                 <Icon name="Sparkles" size={12} className="text-amber-500" />
                                 {currentDua.benefit}
                             </div>

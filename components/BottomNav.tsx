@@ -33,7 +33,7 @@ const BottomNav: React.FC = () => {
                   className={`flex flex-col items-center justify-center w-full h-full transition-colors group ${
                     showMoreMobile 
                       ? 'text-primary-600 dark:text-nexa-accent' 
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                      : 'text-slate-700 dark:text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                   }`}
                 >
                   <Icon name={item.iconName} size={24} className={showMoreMobile ? 'animate-bounce-subtle' : ''} />
@@ -64,7 +64,7 @@ const BottomNav: React.FC = () => {
                 className={`flex flex-col items-center justify-center w-full h-full transition-colors group ${
                   isActive 
                     ? 'text-primary-600 dark:text-nexa-accent' 
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                    : 'text-slate-700 dark:text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
               >
                 <Icon name={item.iconName} size={24} className={isActive ? 'animate-bounce-subtle' : ''} />
@@ -101,10 +101,10 @@ const BottomNav: React.FC = () => {
                         </div>
                         <div className="flex flex-col">
                             <span className="text-slate-900 dark:text-white font-extrabold text-[13px] tracking-tight">N E X A 1337</span>
-                            <span className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">342K clicks</span>
+                            <span className="text-slate-700 dark:text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">342K clicks</span>
                         </div>
                     </div>
-                    <Icon name="ExternalLink" size={14} className="text-slate-300 dark:text-slate-500 group-hover:text-blue-500 transition-colors" />
+                    <Icon name="ExternalLink" size={14} className="text-slate-700 dark:text-slate-300 dark:text-slate-500 group-hover:text-blue-500 transition-colors" />
                 </a>
 
                 <a href="https://nexa1337.github.io/secretarea" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm transition-all group">
@@ -114,10 +114,10 @@ const BottomNav: React.FC = () => {
                         </div>
                         <div className="flex flex-col">
                             <span className="text-slate-900 dark:text-white font-extrabold text-[13px] tracking-tight">N E X A 1337 - Secret Area</span>
-                            <span className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">215K clicks</span>
+                            <span className="text-slate-700 dark:text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">215K clicks</span>
                         </div>
                     </div>
-                    <Icon name="ExternalLink" size={14} className="text-slate-300 dark:text-slate-500 group-hover:text-indigo-500 transition-colors" />
+                    <Icon name="ExternalLink" size={14} className="text-slate-700 dark:text-slate-300 dark:text-slate-500 group-hover:text-indigo-500 transition-colors" />
                 </a>
 
                 <a href="https://nexa1337.github.io/tool/" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm transition-all group">
@@ -127,10 +127,10 @@ const BottomNav: React.FC = () => {
                         </div>
                         <div className="flex flex-col">
                             <span className="text-slate-900 dark:text-white font-extrabold text-[13px] tracking-tight">N E X A 1337 - Tool</span>
-                            <span className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">189K clicks</span>
+                            <span className="text-slate-700 dark:text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">189K clicks</span>
                         </div>
                     </div>
-                    <Icon name="ExternalLink" size={14} className="text-slate-300 dark:text-slate-500 group-hover:text-emerald-500 transition-colors" />
+                    <Icon name="ExternalLink" size={14} className="text-slate-700 dark:text-slate-300 dark:text-slate-500 group-hover:text-emerald-500 transition-colors" />
                 </a>
 
                 <a href="https://nexa1337.github.io/toolv2/" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-slate-900 dark:bg-slate-950 active:scale-[0.98] rounded-2xl border border-purple-500/20 shadow-lg transition-all group overflow-hidden relative">
@@ -146,7 +146,7 @@ const BottomNav: React.FC = () => {
                             </span>
                         </div>
                     </div>
-                    <Icon name="ExternalLink" size={14} className="text-slate-500 relative z-10 group-hover:text-purple-400 transition-colors" />
+                    <Icon name="ExternalLink" size={14} className="text-slate-700 dark:text-slate-500 relative z-10 group-hover:text-purple-400 transition-colors" />
                 </a>
 
                 <a href="https://school-lime-psi.vercel.app/" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm transition-all group">
@@ -156,10 +156,10 @@ const BottomNav: React.FC = () => {
                         </div>
                         <div className="flex flex-col">
                             <span className="text-slate-900 dark:text-white font-extrabold text-[13px] tracking-tight">N E X A 1337 - School</span>
-                            <span className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">54K clicks</span>
+                            <span className="text-slate-700 dark:text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">54K clicks</span>
                         </div>
                     </div>
-                    <Icon name="ExternalLink" size={14} className="text-slate-300 dark:text-slate-500 group-hover:text-amber-500 transition-colors" />
+                    <Icon name="ExternalLink" size={14} className="text-slate-700 dark:text-slate-300 dark:text-slate-500 group-hover:text-amber-500 transition-colors" />
                 </a>
 
                 <a href="https://digitalstore-iota-five.vercel.app/" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm transition-all group">
@@ -169,10 +169,10 @@ const BottomNav: React.FC = () => {
                         </div>
                         <div className="flex flex-col">
                             <span className="text-slate-900 dark:text-white font-extrabold text-[13px] tracking-tight">N E X A 1337 - Digital Store</span>
-                            <span className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">Products & More</span>
+                            <span className="text-slate-700 dark:text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">Products & More</span>
                         </div>
                     </div>
-                    <Icon name="ExternalLink" size={14} className="text-slate-300 dark:text-slate-500 group-hover:text-rose-500 transition-colors" />
+                    <Icon name="ExternalLink" size={14} className="text-slate-700 dark:text-slate-300 dark:text-slate-500 group-hover:text-rose-500 transition-colors" />
                 </a>
              </div>
 

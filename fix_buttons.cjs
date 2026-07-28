@@ -1,34 +1,19 @@
 const fs = require('fs');
-let code = fs.readFileSync('pages/SecretArea.tsx', 'utf8');
+let content = fs.readFileSync('pages/SecretArea.tsx', 'utf-8');
 
-code = code.replace(
-  'className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-row items-center justify-start xl:justify-end gap-3 w-full xl:w-auto shrink-0 mt-6 xl:mt-0 xl:max-w-[75%]"',
-  'className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-row items-center justify-start xl:justify-end gap-3 w-full xl:w-auto shrink-0 mt-6 xl:mt-0 xl:max-w-[75%] relative z-[100]"'
-);
+// The current container
+const currentStr = 'className="flex flex-wrap items-center justify-start xl:justify-end gap-2 sm:gap-3 w-full mt-6 xl:mt-0 relative z-[90]"';
+const newStr = 'className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:flex xl:flex-wrap items-center justify-center xl:justify-end gap-2 sm:gap-3 w-full mt-6 xl:mt-0 relative z-[90]"';
 
-code = code.replace(
-  'onClick={() => setShowSteamModal(true)}',
-  'id="free-accounts-btn"\n                onClick={() => setShowSteamModal(true)}'
-);
+content = content.replace(currentStr, newStr);
 
-code = code.replace(
-  'onClick={() => setShowMasterGiftModal(true)}',
-  'id="master-gift-btn"\n                onClick={() => setShowMasterGiftModal(true)}'
-);
+// We need to change the buttons' `flex-1 lg:flex-none` to just `flex-1` or remove `lg:flex-none`.
+// In a grid, `flex-1 lg:flex-none` might make them shrink on lg if it were flex, but in grid it's ignored mostly.
+// But on xl screens, they will be in a flex container. `lg:flex-none` means on xl they are flex-none.
+// If we want them to wrap nicely on xl without squishing, `flex-1` is better, or `xl:flex-none` and let them size naturally.
+// Let's replace `flex-1 lg:flex-none` with `w-full xl:w-auto xl:flex-none` just to be safe, but they already have `flex-1 lg:flex-none`.
+// Actually, let's replace `flex-1 lg:flex-none` with `w-full xl:w-auto` for all 6 buttons.
+content = content.replace(/flex-1 lg:flex-none/g, "w-full xl:w-auto");
 
-code = code.replace(
-  'href={DISCORD_LINK}',
-  'id="join-community-btn" href={DISCORD_LINK}'
-);
-
-code = code.replace(
-  'href={TELEGRAM_LINK}',
-  'id="telegram-btn" href={TELEGRAM_LINK}'
-);
-
-code = code.replace(
-  'className="flex gap-2 bg-white dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800 overflow-x-auto no-scrollbar"',
-  'className="flex gap-2 bg-white dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800 overflow-x-auto no-scrollbar relative z-[100]"'
-);
-
-fs.writeFileSync('pages/SecretArea.tsx', code);
+fs.writeFileSync('pages/SecretArea.tsx', content);
+console.log("Fixed button responsiveness");
