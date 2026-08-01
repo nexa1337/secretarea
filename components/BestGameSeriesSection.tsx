@@ -83,7 +83,7 @@ export const BestGameSeriesSection: React.FC<BestGameSeriesSectionProps> = ({ se
               }
               return (
               <motion.div
-                key={item.id || index}
+                key={`${item.id}-${index}`}
                 onClick={() => {
                   setSelectedSeries(item);
                   setShowGamesList(false);

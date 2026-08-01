@@ -1032,9 +1032,9 @@ const GameCarousel: React.FC<{ games: UpcomingGame[], loading: boolean, errorSta
                     animate={{ x: `-${currentIndex * (100 / itemsPerView)}%` }}
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 >
-                    {games.map((game) => (
+                    {games.map((game, idx) => (
                         <div 
-                            key={game.id}
+                            key={`${game.id}-${idx}`}
                             style={{ width: `${100 / itemsPerView}%` }}
                             className="flex-shrink-0 p-1"
                         >
@@ -1892,9 +1892,9 @@ const CompanyProfileModal: React.FC<{
 
         {currentItems.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6 md:gap-8">
-            {currentItems.map(item => (
+            {currentItems.map((item, idx) => (
                <div 
-                  key={item.id} 
+                  key={`${item.id}-${idx}`} 
                   onClick={() => onItemClick(item)}
                   className="group cursor-pointer rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden hover:border-primary-500 dark:hover:border-primary-500 transition-all shadow-sm hover:shadow-xl relative aspect-[9/16]"
                >
@@ -2899,7 +2899,7 @@ const LatestIntelPanel: React.FC<{ open: boolean; onClose: () => void; items: In
           <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
             {filteredIntel.map((item, index) => (
               <motion.div 
-                key={item.id}
+                key={`${item.id}-${index}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
@@ -2970,7 +2970,8 @@ const MostPopularRepacksModal: React.FC<{
     }, []);
 
     const totalPages = Math.ceil(games.length / itemsPerPage);
-    const paginatedGames = games.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    const validCurrentPage = Math.min(Math.max(1, currentPage), Math.max(1, totalPages));
+    const paginatedGames = games.slice((validCurrentPage - 1) * itemsPerPage, validCurrentPage * itemsPerPage);
 
     return createPortal(
         <AnimatePresence>
@@ -3011,11 +3012,11 @@ const MostPopularRepacksModal: React.FC<{
                 <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-100/50 dark:bg-slate-950/50">
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
                         {paginatedGames.map((game, index) => {
-                            const globalIndex = (currentPage - 1) * itemsPerPage + index;
+                            const globalIndex = (validCurrentPage - 1) * itemsPerPage + index;
                             const isHypervisor = game.category?.toLowerCase() === 'hypervisor';
                             return (
                                 <motion.div 
-                                    key={game.id}
+                                    key={`${game.id}-${globalIndex}`}
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: index * 0.05 }}
@@ -3033,9 +3034,6 @@ const MostPopularRepacksModal: React.FC<{
                                         />
                                         
                                         
-                                        <div className="absolute top-2 left-2 w-8 h-8 sm:w-10 sm:h-10 bg-blue-600/90 backdrop-blur-md text-white font-black text-sm sm:text-lg flex items-center justify-center rounded-xl shadow-lg border border-white/20 transform -rotate-6 group-hover:rotate-0 transition-transform">
-                                            #{globalIndex + 1}
-                                        </div>
 
                                         {isHypervisor && (
                                             <div className="absolute top-2 right-2 z-10 bg-red-600/90 backdrop-blur-md text-white font-black text-[10px] sm:text-xs px-2 py-1 rounded-lg shadow-lg border border-red-400/30 group-hover:scale-110 transition-transform">
@@ -3056,34 +3054,34 @@ const MostPopularRepacksModal: React.FC<{
                         <div className="flex flex-wrap justify-center gap-1 sm:gap-2">
                             <button
                                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                disabled={currentPage === 1}
+                                disabled={validCurrentPage === 1}
                                 className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
                             >
                                 <Icon name="ChevronLeft" size={16} />
                             </button>
-                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                let pageNum = i + 1;
-                                if (totalPages > 5 && currentPage > 3) {
-                                    pageNum = currentPage - 2 + i;
-                                    if (pageNum > totalPages) pageNum = totalPages - (4 - i);
+                            {(() => {
+                                const maxVisible = Math.min(5, totalPages);
+                                let startPage = Math.max(1, validCurrentPage - Math.floor(maxVisible / 2));
+                                if (startPage + maxVisible - 1 > totalPages) {
+                                    startPage = Math.max(1, totalPages - maxVisible + 1);
                                 }
-                                return (
+                                return Array.from({ length: maxVisible }, (_, i) => startPage + i).map(pageNum => (
                                     <button
                                         key={pageNum}
                                         onClick={() => setCurrentPage(pageNum)}
                                         className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold transition-colors ${
-                                            currentPage === pageNum 
+                                            validCurrentPage === pageNum 
                                                 ? 'bg-blue-600 text-white shadow-md' 
                                                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                                         }`}
                                     >
                                         {pageNum}
                                     </button>
-                                );
-                            })}
+                                ));
+                            })()}
                             <button
                                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                disabled={currentPage === totalPages}
+                                disabled={validCurrentPage === totalPages}
                                 className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
                             >
                                 <Icon name="ChevronRight" size={16} />
@@ -3146,7 +3144,7 @@ const MostPopularRepacksSection: React.FC<{
                     const isHypervisor = game.category?.toLowerCase() === 'hypervisor';
                     return (
                         <motion.div 
-                            key={game.id}
+                            key={`${game.id}-${index}`}
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
@@ -3165,10 +3163,6 @@ const MostPopularRepacksSection: React.FC<{
                                 />
                                 
                                 
-                                {/* Dynamic Ranking Number */}
-                                <div className="absolute top-2 left-2 w-8 h-8 sm:w-10 sm:h-10 bg-blue-600/90 backdrop-blur-md text-white font-black text-sm sm:text-lg flex items-center justify-center rounded-xl shadow-lg border border-white/20 transform -rotate-6 group-hover:rotate-0 transition-transform">
-                                    #{index + 1}
-                                </div>
 
                                 {isHypervisor && (
                                     <div className="absolute top-2 right-2 z-10 bg-red-600/90 backdrop-blur-md text-white font-black text-[10px] sm:text-xs px-2 py-1 rounded-lg shadow-lg border border-red-400/30 group-hover:scale-110 transition-transform">
@@ -3311,7 +3305,7 @@ const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
                             const c1 = neonColors[idx % neonColors.length];
                             
                             return (
-                                <div key={game.id} className="relative group flex items-stretch border-b border-slate-300 dark:border-white/10 last:border-b-0 overflow-hidden min-h-[90px] sm:min-h-[110px] md:min-h-[130px] transition-all hover:brightness-105 dark:hover:brightness-125 bg-white sm:bg-transparent dark:bg-black/60 dark:md:backdrop-blur-md">
+                                <div key={`${game.id}-${idx}`} className="relative group flex items-stretch border-b border-slate-300 dark:border-white/10 last:border-b-0 overflow-hidden min-h-[90px] sm:min-h-[110px] md:min-h-[130px] transition-all hover:brightness-105 dark:hover:brightness-125 bg-white sm:bg-transparent dark:bg-black/60 dark:md:backdrop-blur-md">
                                     {/* Number Box on the left */}
                                     <div className="w-[70px] md:w-[120px] shrink-0 flex items-center justify-center bg-slate-100 dark:bg-[#050505] relative z-20 border-r border-slate-300 dark:border-white/5 shadow-none dark:shadow-[5px_0_15px_rgba(0,0,0,0.5)] transition-colors duration-300">
                                         <span 
@@ -5898,7 +5892,7 @@ const SecretArea: React.FC = () => {
                       return (
                       <motion.div 
                           layout
-                          key={item.id}
+                          key={`${item.id}-${idx}`}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: idx * 0.05 }}
