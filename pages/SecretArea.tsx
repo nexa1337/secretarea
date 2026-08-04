@@ -4444,7 +4444,7 @@ const SecretArea: React.FC = () => {
               }
            });
         });
-        setPopularRepackIds(Array.from(new Set(ids)));
+        setPopularRepackIds(Array.from(new Set(ids)).reverse());
     } else {
         setPopularRepackIds([]);
     }
@@ -5944,8 +5944,11 @@ const SecretArea: React.FC = () => {
                                     {item.repackSize}
                                 </div>
                             )}
-                            <div className={`absolute top-3 ${item.isPinned && !compStatus ? 'left-12' : 'left-3'} px-2 py-1 bg-primary-600 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg transition-all`}>
-                              {item.id}
+                            <div className={`absolute top-3 ${item.isPinned && !compStatus ? 'left-12' : 'left-3'} px-2 py-1 bg-primary-600 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg transition-all flex items-center gap-1`}>
+                              <span>{item.id}</span>
+                              {popularRepackIds.map(id => String(id).toLowerCase()).includes(String(item.id).toLowerCase()) && (
+                                  <Icon name="Star" size={10} className="text-yellow-400 fill-yellow-400" />
+                              )}
                             </div>
                             {item.category === 'hypervisor' && (
                                 <div className={`absolute top-10 ${compStatus ? 'left-3' : 'right-3'} z-20`}>
