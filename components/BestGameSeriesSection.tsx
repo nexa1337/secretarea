@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Icon from './Icon';
+import { useLanguage } from '../src/contexts/LanguageContext';
 
 interface GameItem {
   name: string;
@@ -22,6 +23,7 @@ interface BestGameSeriesSectionProps {
 }
 
 export const BestGameSeriesSection: React.FC<BestGameSeriesSectionProps> = ({ series }) => {
+  const { t, dir } = useLanguage();
   const [selectedSeries, setSelectedSeries] = useState<BestGameSeries | null>(null);
   const [showGamesList, setShowGamesList] = useState(false);
   const [gamePage, setGamePage] = useState(0);
@@ -39,7 +41,7 @@ export const BestGameSeriesSection: React.FC<BestGameSeriesSectionProps> = ({ se
   const paddedSeries = [...currentSeries, ...Array(Math.max(0, SERIES_PER_PAGE - currentSeries.length)).fill(null)];
 
   return (
-    <div className="mt-16 mb-8 w-full relative">
+    <div className="mt-16 mb-8 w-full relative" dir={dir}>
       <div className="flex items-center gap-3 mb-6 px-4 md:px-8 max-w-7xl mx-auto">
         <div className="p-2 bg-slate-200/50 dark:bg-white/10 rounded-xl border border-slate-300 dark:border-white/20 shrink-0">
           <img 
@@ -50,7 +52,7 @@ export const BestGameSeriesSection: React.FC<BestGameSeriesSectionProps> = ({ se
         </div>
         <div>
           <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter flex items-center gap-2 sm:gap-3 flex-wrap">
-            The Best Game Series On PC
+            {t("The Best Game Series On PC")}
             <motion.span 
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -62,7 +64,7 @@ export const BestGameSeriesSection: React.FC<BestGameSeriesSectionProps> = ({ se
             </motion.span>
           </h2>
           <p className="text-xs md:text-sm text-slate-700 dark:text-slate-500 dark:text-slate-400 font-medium mt-1">
-            Explore the most iconic and critically acclaimed gaming franchises of all time.
+            {t("Explore the most iconic and critically acclaimed gaming franchises of all time.")}
           </p>
         </div>
       </div>
@@ -79,7 +81,7 @@ export const BestGameSeriesSection: React.FC<BestGameSeriesSectionProps> = ({ se
           >
             {paddedSeries.map((item, index) => {
               if (!item) {
-                return <div key={`empty-${index}`} className="flex-[1] min-w-0 border-r border-slate-900/20 dark:border-white/10 last:border-none opacity-0 pointer-events-none max-w-[200px] sm:max-w-[266px] lg:max-w-[333px]" />;
+                return <div key={`empty-${index}`} className="flex-[1] min-w-0 border-e border-slate-900/20 dark:border-white/10 last:border-none opacity-0 pointer-events-none max-w-[200px] sm:max-w-[266px] lg:max-w-[333px]" />;
               }
               return (
               <motion.div
@@ -89,7 +91,7 @@ export const BestGameSeriesSection: React.FC<BestGameSeriesSectionProps> = ({ se
                   setShowGamesList(false);
                   setGamePage(0);
                 }}
-                className="relative overflow-hidden cursor-pointer border-r border-slate-900/20 dark:border-white/10 last:border-none flex-[1] min-w-0 transition-[flex] duration-500 ease-out hover:flex-[20] max-w-[200px] sm:max-w-[266px] lg:max-w-[333px]"
+                className="relative overflow-hidden cursor-pointer border-e border-slate-900/20 dark:border-white/10 last:border-none flex-[1] min-w-0 transition-[flex] duration-500 ease-out hover:flex-[20] max-w-[200px] sm:max-w-[266px] lg:max-w-[333px]"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -134,7 +136,7 @@ export const BestGameSeriesSection: React.FC<BestGameSeriesSectionProps> = ({ se
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/95 dark:bg-black/95 p-0 backdrop-blur-xl transition-colors duration-300"
+              dir={dir} className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/95 dark:bg-black/95 p-0 backdrop-blur-xl transition-colors duration-300"
               onClick={() => setSelectedSeries(null)}
             >
               <motion.div 
@@ -153,7 +155,7 @@ export const BestGameSeriesSection: React.FC<BestGameSeriesSectionProps> = ({ se
                 )}
                 
                 <div className="flex items-start sm:items-center justify-between p-4 sm:p-6 sm:pb-4 shrink-0 bg-white/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-white/5 sticky top-0 z-20 backdrop-blur-md transition-colors duration-300">
-                  <div className="pr-4 relative z-10">
+                  <div className="pe-4 relative z-10">
                     <h3 className="text-xl sm:text-2xl md:text-4xl font-black text-slate-900 dark:text-white transition-colors duration-300">{selectedSeries.title}</h3>
                     <p className="text-indigo-600 dark:text-indigo-400 font-bold tracking-widest uppercase text-xs sm:text-sm mt-1 transition-colors duration-300">{selectedSeries.category}</p>
                   </div>
@@ -174,7 +176,7 @@ export const BestGameSeriesSection: React.FC<BestGameSeriesSectionProps> = ({ se
                       >
                         <h4 className="text-slate-900 dark:text-white font-bold flex items-center gap-2 transition-colors duration-300">
                           <Icon name="List" size={18} className="text-indigo-500 dark:text-indigo-400" />
-                          Games in Series
+                          {t('Games in Series')}
                         </h4>
                         <Icon name={showGamesList ? "ChevronUp" : "ChevronDown"} size={20} className="text-slate-700 dark:text-slate-500 dark:text-slate-400" />
                       </button>
@@ -214,7 +216,7 @@ export const BestGameSeriesSection: React.FC<BestGameSeriesSectionProps> = ({ se
                               {totalPages > 1 && (
                                 <div className="flex items-center justify-between mt-3 px-1 pb-2">
                                   <div className="text-xs font-semibold text-slate-700 dark:text-slate-500 dark:text-slate-400">
-                                    Page {gamePage + 1} of {totalPages}
+                                    {t('PAGE')} {gamePage + 1} {t('OF')} {totalPages}
                                   </div>
                                   <div className="flex gap-2">
                                     <button 
@@ -264,7 +266,7 @@ export const BestGameSeriesSection: React.FC<BestGameSeriesSectionProps> = ({ se
                       {selectedSeries.images.length === 0 && (
                         <div className="col-span-full py-12 flex flex-col items-center justify-center text-slate-600 dark:text-slate-400 dark:text-slate-500">
                           <Icon name="Image" size={48} className="mb-4 opacity-50" />
-                          <p>No additional images available for this series.</p>
+                          <p>{t('No additional images available for this series.')}</p>
                         </div>
                       )}
                     </div>

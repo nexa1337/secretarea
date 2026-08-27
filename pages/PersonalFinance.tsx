@@ -1,3 +1,4 @@
+import { useLanguage } from '../src/contexts/LanguageContext';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -238,6 +239,7 @@ const getSmartIcon = (name: string) => {
 
 // --- COMPONENT ---
 const PersonalFinance: React.FC = () => {
+  const { t } = useLanguage();
   const [locked, setLocked] = useState(() => sessionStorage.getItem('admin_unlocked') !== 'true');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [password, setPassword] = useState('');
@@ -917,7 +919,7 @@ const PersonalFinance: React.FC = () => {
                     exit={{ scale: 0.9, opacity: 0 }}
                     className="bg-white dark:bg-[#0a0a0a] border border-slate-200 dark:border-amber-500/30 p-8 rounded-3xl max-w-md w-full relative z-10 shadow-xl dark:shadow-2xl dark:shadow-amber-900/40"
                 >
-                    <button onClick={() => { setShowAuthModal(false); setPendingTab(null); }} className="absolute top-4 right-4 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
+                    <button onClick={() => { setShowAuthModal(false); setPendingTab(null); }} className="absolute top-4 end-4 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
                         <Icon name="X" size={24} />
                     </button>
                     <div className="text-center mb-8">
@@ -982,7 +984,7 @@ const PersonalFinance: React.FC = () => {
             
             {/* 1. PHASE SYSTEM BANNER */}
             <div className={`w-full p-4 rounded-3xl border relative overflow-hidden shadow-lg ${phase.bg} bg-opacity-10 border-${phase.color}-500/30`}>
-                <div className={`absolute top-0 right-0 p-6 opacity-20 ${phase.text}`}><Icon name={phase.icon} size={80} /></div>
+                <div className={`absolute top-0 end-0 p-6 opacity-20 ${phase.text}`}><Icon name={phase.icon} size={80} /></div>
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-1">
                         <span className={`px-3 py-1 rounded-full bg-${phase.color}-500 text-white text-[10px] font-black uppercase tracking-widest`}>Current Phase</span>
@@ -1020,7 +1022,7 @@ const PersonalFinance: React.FC = () => {
                   <div className="flex flex-col lg:flex-row gap-8 items-center">
                       <div className="w-full lg:w-1/3">
                           <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2 block">Custom Amount</label>
-                          <div className="relative"><input type="number" value={salary} onChange={(e) => setSalary(Number(e.target.value))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-6 py-4 text-3xl font-black text-slate-900 dark:text-white focus:border-amber-500 outline-none transition-colors font-mono"/><span className="absolute right-6 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">MAD</span></div>
+                          <div className="relative"><input type="number" value={salary} onChange={(e) => setSalary(Number(e.target.value))} className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-6 py-4 text-3xl font-black text-slate-900 dark:text-white focus:border-amber-500 outline-none transition-colors font-mono"/><span className="absolute end-6 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">MAD</span></div>
                       </div>
                       <div className="w-full lg:w-2/3 space-y-4">
                           <div className="h-4 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex shadow-inner">
@@ -1045,7 +1047,7 @@ const PersonalFinance: React.FC = () => {
                       <div className="text-xs font-bold text-slate-500 uppercase">Current Emergency Savings:</div>
                       <div className="relative w-32">
                           <input type="number" value={totalSaved} onChange={(e) => setTotalSaved(Number(e.target.value))} className="w-full bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1 text-xs font-mono font-bold" />
-                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">DH</span>
+                          <span className="absolute end-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">DH</span>
                       </div>
                   </div>
               </div>
@@ -1074,9 +1076,9 @@ const PersonalFinance: React.FC = () => {
                                     value={calcCost} 
                                     onChange={(e) => setCalcCost(e.target.value === '' ? '' : Number(e.target.value))} 
                                     placeholder="e.g. 90000"
-                                    className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-2xl pl-4 pr-24 py-4 text-2xl font-black text-slate-900 dark:text-white focus:border-indigo-500 outline-none transition-colors font-mono"
+                                    className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-2xl ps-4 pe-24 py-4 text-2xl font-black text-slate-900 dark:text-white focus:border-indigo-500 outline-none transition-colors font-mono"
                                 />
-                                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex bg-white dark:bg-slate-800 rounded-xl p-1 border border-slate-200 dark:border-slate-700">
+                                <div className="absolute end-2 top-1/2 -translate-y-1/2 flex bg-white dark:bg-slate-800 rounded-xl p-1 border border-slate-200 dark:border-slate-700">
                                     {['MAD', 'USD', 'EUR'].map(c => (
                                         <button 
                                             key={c}
@@ -1100,7 +1102,7 @@ const PersonalFinance: React.FC = () => {
                                     placeholder="e.g. 2000"
                                     className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-4 text-2xl font-black text-slate-900 dark:text-white focus:border-indigo-500 outline-none transition-colors font-mono"
                                 />
-                                <span className="absolute right-6 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">{calcCurrency} / Month</span>
+                                <span className="absolute end-6 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">{calcCurrency} / Month</span>
                             </div>
                         </div>
                     </div>
@@ -1118,8 +1120,8 @@ const PersonalFinance: React.FC = () => {
                                     ({calculatorResult.years} Years)
                                 </div>
                                 
-                                <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-indigo-100 dark:border-indigo-900/30 text-left relative overflow-hidden space-y-3">
-                                    <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
+                                <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-indigo-100 dark:border-indigo-900/30 text-start relative overflow-hidden space-y-3">
+                                    <div className="absolute top-0 start-0 w-1 h-full bg-indigo-500"></div>
                                     
                                     {/* Standard Advice */}
                                     <div className="flex gap-3">
@@ -1174,8 +1176,8 @@ const PersonalFinance: React.FC = () => {
             {/* 4. EXPENSES & STRATEGY */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6">
-                <div className="flex items-center justify-between mb-4"><h3 className="text-slate-900 dark:text-white font-bold flex items-center gap-2"><Icon name="CreditCard" className="text-emerald-500"/> Expenses & Subs</h3><div className="text-right"><span className="block text-[10px] font-bold text-slate-400 uppercase">Monthly Cost</span><span className="text-lg font-black text-slate-900 dark:text-white">{totalExpensesCost} DH</span></div></div>
-                <div className="space-y-3">{expenses.map((exp) => (<div key={exp.id} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${exp.paid ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-900/30' : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700'}`}><div className="flex items-center gap-3 flex-1"><button onClick={() => updateExpense(exp.id, 'paid', !exp.paid)} className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors shrink-0 ${exp.paid ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-300 hover:border-emerald-500 hover:text-emerald-500'}`}><Icon name={exp.paid ? "Check" : exp.icon} size={16} /></button><div className="flex flex-col min-w-0"><span className={`font-bold text-xs sm:text-sm truncate ${exp.paid ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>{exp.label}</span><span className="text-[10px] text-slate-400 uppercase tracking-wider">{exp.category}</span></div></div><div className="flex items-center gap-2 ml-2"><div className="relative"><input type="number" value={exp.cost} onChange={(e) => updateExpense(exp.id, 'cost', Number(e.target.value))} className={`w-20 bg-white dark:bg-slate-900 border rounded-lg px-2 py-1 text-right text-xs font-mono font-bold outline-none focus:border-blue-500 transition-all ${exp.paid ? 'text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/50' : 'text-slate-900 dark:text-white border-slate-200 dark:border-slate-700'}`} /></div></div></div>))}</div>
+                <div className="flex items-center justify-between mb-4"><h3 className="text-slate-900 dark:text-white font-bold flex items-center gap-2"><Icon name="CreditCard" className="text-emerald-500"/> Expenses & Subs</h3><div className="text-end"><span className="block text-[10px] font-bold text-slate-400 uppercase">Monthly Cost</span><span className="text-lg font-black text-slate-900 dark:text-white">{totalExpensesCost} DH</span></div></div>
+                <div className="space-y-3">{expenses.map((exp) => (<div key={exp.id} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${exp.paid ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-900/30' : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700'}`}><div className="flex items-center gap-3 flex-1"><button onClick={() => updateExpense(exp.id, 'paid', !exp.paid)} className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors shrink-0 ${exp.paid ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-300 hover:border-emerald-500 hover:text-emerald-500'}`}><Icon name={exp.paid ? "Check" : exp.icon} size={16} /></button><div className="flex flex-col min-w-0"><span className={`font-bold text-xs sm:text-sm truncate ${exp.paid ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>{exp.label}</span><span className="text-[10px] text-slate-400 uppercase tracking-wider">{exp.category}</span></div></div><div className="flex items-center gap-2 ms-2"><div className="relative"><input type="number" value={exp.cost} onChange={(e) => updateExpense(exp.id, 'cost', Number(e.target.value))} className={`w-20 bg-white dark:bg-slate-900 border rounded-lg px-2 py-1 text-end text-xs font-mono font-bold outline-none focus:border-blue-500 transition-all ${exp.paid ? 'text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/50' : 'text-slate-900 dark:text-white border-slate-200 dark:border-slate-700'}`} /></div></div></div>))}</div>
                 <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center text-xs"><span className="text-slate-500 dark:text-slate-400 font-medium">{paidExpensesCost} DH Paid</span><span className={`font-bold ${totalExpensesCost > (salary * (dist.personal/100)) ? 'text-red-500' : 'text-emerald-500'}`}>{Math.round((totalExpensesCost / (salary * (dist.personal/100))) * 100)}% of Personal Fund</span></div>
               </div>
               <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 relative overflow-hidden flex flex-col">
@@ -1219,7 +1221,7 @@ const PersonalFinance: React.FC = () => {
 
                 {/* Moroccan Advisor */}
                 <div className="bg-amber-50 dark:bg-gradient-to-br dark:from-slate-900 dark:to-slate-800 text-slate-900 dark:text-white rounded-3xl p-6 relative overflow-hidden flex flex-col justify-center border border-amber-200 dark:border-slate-700 shadow-sm">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 text-amber-500 dark:text-white"><Icon name="Bot" size={64} /></div>
+                    <div className="absolute top-0 end-0 p-4 opacity-10 text-amber-500 dark:text-white"><Icon name="Bot" size={64} /></div>
                     <div className="relative z-10">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="w-10 h-10 bg-white dark:bg-white/10 rounded-full flex items-center justify-center text-xl shadow-md border border-amber-100 dark:border-transparent text-amber-500">
@@ -1231,7 +1233,7 @@ const PersonalFinance: React.FC = () => {
                             </div>
                         </div>
                         <div className="bg-white dark:bg-white/10 md:backdrop-blur-sm p-4 rounded-xl border border-amber-100 dark:border-white/10 mb-4 relative shadow-sm">
-                            <Icon name="Quote" size={24} className="absolute -top-3 -left-2 text-amber-500 dark:text-amber-400 bg-amber-50 dark:bg-slate-900 rounded-full p-1 border border-amber-100 dark:border-slate-700" />
+                            <Icon name="Quote" size={24} className="absolute -top-3 -start-2 text-amber-500 dark:text-amber-400 bg-amber-50 dark:bg-slate-900 rounded-full p-1 border border-amber-100 dark:border-slate-700" />
                             <p className="text-sm font-medium italic leading-relaxed pt-2 text-slate-700 dark:text-slate-200">"{dailyTip.text}"</p>
                         </div>
                         <div className="flex justify-between items-center text-[10px] text-slate-500 dark:text-slate-400 font-medium">
@@ -1252,8 +1254,8 @@ const PersonalFinance: React.FC = () => {
             
             {/* MASTER MIND VISUALIZATION */}
             <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-3xl p-4 md:p-8 relative overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800">
-                <div className="absolute top-0 right-0 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-blue-600/5 dark:bg-blue-600/10 rounded-full blur-[80px] md:blur-[120px] -mr-20 -mt-20 pointer-events-none"></div>
-                <div className="absolute bottom-0 left-0 w-[200px] md:w-[400px] h-[200px] md:h-[400px] bg-purple-600/5 dark:bg-purple-600/10 rounded-full blur-[60px] md:blur-[100px] -ml-20 -mb-20 pointer-events-none"></div>
+                <div className="absolute top-0 end-0 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-blue-600/5 dark:bg-blue-600/10 rounded-full blur-[80px] md:blur-[120px] -me-20 -mt-20 pointer-events-none"></div>
+                <div className="absolute bottom-0 start-0 w-[200px] md:w-[400px] h-[200px] md:h-[400px] bg-purple-600/5 dark:bg-purple-600/10 rounded-full blur-[60px] md:blur-[100px] -ms-20 -mb-20 pointer-events-none"></div>
                 
                 <div className="relative z-10">
                     <div className="text-center mb-12 md:mb-16">
@@ -1279,9 +1281,9 @@ const PersonalFinance: React.FC = () => {
 
                             <div className="space-y-8">
                                 {/* Offline Work Details */}
-                                <div className="relative pl-6 border-l-2 border-blue-500/30">
-                                    <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-blue-500 border-4 border-white dark:border-slate-900 shadow-lg shadow-blue-500/50"></div>
-                                    <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Offline Work <span className="text-sm font-normal text-slate-500 dark:text-slate-400 ml-2">(ArchViz Expert)</span></h4>
+                                <div className="relative ps-6 border-s-2 border-blue-500/30">
+                                    <div className="absolute -start-[9px] top-0 w-4 h-4 rounded-full bg-blue-500 border-4 border-white dark:border-slate-900 shadow-lg shadow-blue-500/50"></div>
+                                    <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Offline Work <span className="text-sm font-normal text-slate-500 dark:text-slate-400 ms-2">(ArchViz Expert)</span></h4>
                                     
                                     <div className="grid grid-cols-2 gap-2 mb-4">
                                         {['3Ds Max', 'Revit', 'V-Ray', 'Unreal Engine 5'].map((skill, i) => (
@@ -1390,7 +1392,7 @@ const PersonalFinance: React.FC = () => {
 
                                 {/* AI ADVICE SECTION */}
                                 <div className="bg-white dark:bg-slate-900/50 rounded-xl p-5 border border-slate-200 dark:border-slate-700/50 relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 p-4 opacity-5"><Icon name="Bot" size={48} /></div>
+                                    <div className="absolute top-0 end-0 p-4 opacity-5"><Icon name="Bot" size={48} /></div>
                                     <h5 className="text-sm font-bold text-cyan-600 dark:text-cyan-400 mb-3 flex items-center gap-2">
                                         <Icon name="Zap" size={16} /> AI & The Future of Dev
                                     </h5>
@@ -1401,12 +1403,12 @@ const PersonalFinance: React.FC = () => {
                                         <p>
                                             <strong className="text-slate-900 dark:text-white">How to integrate AI?</strong> Don't let it think for you. Use it to:
                                         </p>
-                                        <ul className="list-disc pl-4 space-y-1 text-slate-500 dark:text-slate-400">
+                                        <ul className="list-disc ps-4 space-y-1 text-slate-500 dark:text-slate-400">
                                             <li>Generate boilerplate code & unit tests instantly.</li>
                                             <li>Explain complex legacy code or new libraries.</li>
                                             <li>Debug errors by pasting logs (it's faster than StackOverflow).</li>
                                         </ul>
-                                        <p className="text-cyan-600 dark:text-cyan-300/80 italic border-l-2 border-cyan-500/30 pl-3 mt-2">
+                                        <p className="text-cyan-600 dark:text-cyan-300/80 italic border-s-2 border-cyan-500/30 ps-3 mt-2">
                                             "Treat AI as a junior developer that types at lightspeed but needs your senior guidance."
                                         </p>
                                     </div>
@@ -1463,7 +1465,7 @@ const PersonalFinance: React.FC = () => {
 
                                 {/* EXPERT PATH & FUTURE OUTLOOK */}
                                 <div className="bg-white dark:bg-slate-900/50 rounded-xl p-5 border border-slate-200 dark:border-slate-700/50 relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 p-4 opacity-5"><Icon name="Shield" size={48} /></div>
+                                    <div className="absolute top-0 end-0 p-4 opacity-5"><Icon name="Shield" size={48} /></div>
                                     
                                     <div className="mb-6">
                                         <h5 className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-2 flex items-center gap-2">
@@ -1560,7 +1562,7 @@ const PersonalFinance: React.FC = () => {
 
                                 {/* BUSINESS OWNER BLUEPRINT */}
                                 <div className="bg-white dark:bg-slate-900/50 rounded-xl p-5 border border-slate-200 dark:border-slate-700/50 relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 p-4 opacity-5"><Icon name="Briefcase" size={48} /></div>
+                                    <div className="absolute top-0 end-0 p-4 opacity-5"><Icon name="Briefcase" size={48} /></div>
                                     
                                     <h5 className="text-sm font-bold text-orange-600 dark:text-orange-400 mb-4 flex items-center gap-2">
                                         <Icon name="Target" size={16} /> Business Owner's Blueprint
@@ -1583,7 +1585,7 @@ const PersonalFinance: React.FC = () => {
                                         {/* Soft Skills */}
                                         <div>
                                             <span className="text-[10px] uppercase font-bold text-slate-500 block mb-2">Owner Mindset (The "Who")</span>
-                                            <ul className="text-xs text-slate-600 dark:text-slate-300 space-y-1 list-disc pl-4">
+                                            <ul className="text-xs text-slate-600 dark:text-slate-300 space-y-1 list-disc ps-4">
                                                 <li><strong className="text-slate-900 dark:text-white">Delegation:</strong> Stop being the "technician." Hire freelancers for tasks &lt; $20/hr.</li>
                                                 <li><strong className="text-slate-900 dark:text-white">Sales:</strong> Learn to sell the <em>result</em>, not the product. (Psychology &gt; Logic).</li>
                                                 <li><strong className="text-slate-900 dark:text-white">Resilience:</strong> The chart goes up, but day-to-day is volatile. Emotional stability is key.</li>
@@ -1610,11 +1612,11 @@ const PersonalFinance: React.FC = () => {
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <Icon name="FileText" className="text-slate-400"/> Quick Notes
-                        {isSavingNote && <span className="text-xs text-blue-500 font-normal animate-pulse ml-2">Syncing to Cloud...</span>}
+                        {isSavingNote && <span className="text-xs text-blue-500 font-normal animate-pulse ms-2">Syncing to Cloud...</span>}
                     </h3>
                     <div className="relative w-full max-w-[200px]">
-                        <Icon name="Search" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                        <input type="text" placeholder="Search notes..." value={noteSearch} onChange={(e) => setNoteSearch(e.target.value)} className="w-full pl-9 pr-4 py-2 bg-slate-100 dark:bg-slate-900 border border-transparent focus:border-blue-500 rounded-xl outline-none text-xs font-bold text-slate-900 dark:text-white placeholder:text-slate-400 transition-all" />
+                        <Icon name="Search" size={14} className="absolute start-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input type="text" placeholder="Search notes..." value={noteSearch} onChange={(e) => setNoteSearch(e.target.value)} className="w-full ps-9 pe-4 py-2 bg-slate-100 dark:bg-slate-900 border border-transparent focus:border-blue-500 rounded-xl outline-none text-xs font-bold text-slate-900 dark:text-white placeholder:text-slate-400 transition-all" />
                     </div>
                 </div>
                 <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 mb-8 shadow-sm">
@@ -1709,7 +1711,7 @@ const PersonalFinance: React.FC = () => {
                             >
                                 <button 
                                     onClick={() => setSelectedNote(null)}
-                                    className="absolute top-4 right-4 p-2 bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 rounded-full transition-colors"
+                                    className="absolute top-4 end-4 p-2 bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 rounded-full transition-colors"
                                 >
                                     <Icon name="X" size={20} className="text-slate-900 dark:text-white" />
                                 </button>
@@ -1756,7 +1758,7 @@ const PersonalFinance: React.FC = () => {
             {/* 1. Smart Market Dashboard */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-gradient-to-br from-emerald-900 to-slate-900 p-6 rounded-3xl border border-emerald-500/30 relative overflow-hidden">
-                    <div className="absolute right-0 top-0 p-4 opacity-10"><Icon name="Wallet" size={64} /></div>
+                    <div className="absolute end-0 top-0 p-4 opacity-10"><Icon name="Wallet" size={64} /></div>
                     <h3 className="text-emerald-400 text-xs font-bold uppercase tracking-widest mb-1">Total Assets (Bought)</h3>
                     <div className="text-3xl font-black text-white">{marketStats.totalAssetValue.toLocaleString()} <span className="text-xs font-normal opacity-50">DH</span></div>
                     <div className="mt-2 text-[10px] text-slate-400 font-medium">{marketStats.boughtItems} Items Acquired</div>
@@ -1809,9 +1811,9 @@ const PersonalFinance: React.FC = () => {
                                 placeholder="Price" 
                                 value={newItem.price}
                                 onChange={(e) => setNewItem({...newItem, price: e.target.value})}
-                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-emerald-500 text-sm font-bold pl-8"
+                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-emerald-500 text-sm font-bold ps-8"
                             />
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">DH</span>
+                            <span className="absolute start-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">DH</span>
                         </div>
                     </div>
                     <div className="flex flex-col md:flex-row gap-4">
@@ -1918,7 +1920,7 @@ const FundCard = ({ label, percent, total, color, bg, border, icon, expenses }: 
 
   return (
     <div className={`p-4 rounded-2xl border ${bg} ${border} relative overflow-hidden flex flex-col justify-between h-full group hover:shadow-md transition-all`}>
-      <div className={`absolute top-2 right-2 opacity-20 ${color} group-hover:scale-110 transition-transform`}>
+      <div className={`absolute top-2 end-2 opacity-20 ${color} group-hover:scale-110 transition-transform`}>
         <Icon name={icon} size={32} />
       </div>
       <div>
@@ -1933,10 +1935,10 @@ const FundCard = ({ label, percent, total, color, bg, border, icon, expenses }: 
       <div className="mt-3 w-full bg-slate-200 dark:bg-black/20 h-1.5 rounded-full overflow-hidden relative">
         <div className={`h-full ${color.replace('text-', 'bg-')}`} style={{ width: `${percent}%` }}></div>
         {expenses !== undefined && (
-            <div className="absolute top-0 left-0 h-full bg-red-500/50" style={{ width: `${Math.min((expenses/total)*100, 100)}%` }}></div>
+            <div className="absolute top-0 start-0 h-full bg-red-500/50" style={{ width: `${Math.min((expenses/total)*100, 100)}%` }}></div>
         )}
       </div>
-      <div className="mt-1.5 text-[10px] text-right text-slate-500 dark:text-slate-400 font-mono">{percent}%</div>
+      <div className="mt-1.5 text-[10px] text-end text-slate-500 dark:text-slate-400 font-mono">{percent}%</div>
     </div>
   );
 };
@@ -1981,7 +1983,7 @@ const WishCard: React.FC<WishCardProps> = ({ item, onToggle, onDelete, monthlySa
             className={`p-4 rounded-2xl border transition-all relative group overflow-hidden ${isBought ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-500/20' : `bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700 shadow-sm hover:shadow-md`}`}
         >
             {/* Fund Source Indicator Strip */}
-            {!isBought && <div className={`absolute top-0 left-4 right-4 h-0.5 bg-current opacity-30 ${fColor}`}></div>}
+            {!isBought && <div className={`absolute top-0 start-4 end-4 h-0.5 bg-current opacity-30 ${fColor}`}></div>}
 
             <div className="flex justify-between items-start mb-3 relative z-10 pt-2">
                 <div className="flex items-center gap-3">
@@ -1998,7 +2000,7 @@ const WishCard: React.FC<WishCardProps> = ({ item, onToggle, onDelete, monthlySa
                         )}
                     </div>
                 </div>
-                <div className="text-right">
+                <div className="text-end">
                     <div className="font-mono font-black text-sm text-slate-900 dark:text-white">{item.price > 0 ? `${item.price.toLocaleString()} DH` : 'TBD'}</div>
                     {!isBought && item.price > 0 && (
                         <div className="text-[10px] font-bold text-slate-400 mt-0.5" title={`Based on ${fLabel} allocation`}>

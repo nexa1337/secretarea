@@ -1,3 +1,4 @@
+import { useLanguage } from '../src/contexts/LanguageContext';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -7,6 +8,7 @@ interface QualityStatus {
 }
 
 export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStatus) => void }> = ({ onStatusChange }) => {
+  const { t } = useLanguage();
   const [ping, setPing] = useState<number>(0);
   const [jitter, setJitter] = useState<number>(0);
   const [downloadSpeed, setDownloadSpeed] = useState<number>(0);
@@ -636,8 +638,8 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
           onClick={() => setIsVisible(!isVisible)}
           className="flex items-center gap-2 bg-gradient-to-b from-white to-stone-50 dark:from-[#2a2a2a] dark:to-[#1f1f1f] hover:from-stone-50 hover:to-stone-100 dark:hover:from-[#333] dark:hover:to-[#252525] text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-[#444] px-6 py-3 rounded-full text-xs font-bold tracking-widest uppercase transition-all shadow-sm hover:shadow active:scale-95"
         >
-          {isVisible ? 'Hide Telemetry View' : 'Show Telemetry View'}
-          <span className="relative flex h-2.5 w-2.5 ml-1">
+          {isVisible ? t('Hide Telemetry View') : t('Show Telemetry View')}
+          <span className="relative flex h-2.5 w-2.5 ms-1">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00ff00] opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#00ff00]"></span>
           </span>
@@ -648,7 +650,7 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
       <div className="w-full mt-4 max-w-full flex flex-col lg:flex-row bg-white dark:bg-[#1e1e1e] border border-stone-200 dark:border-stone-800 rounded-2xl lg:rounded-3xl overflow-hidden shadow-xl dark:shadow-2xl font-sans text-stone-900 dark:text-stone-100 h-auto lg:min-h-[600px] animate-in fade-in slide-in-from-top-4 duration-500">
         
         {/* Left Sidebar / Real-time Data */}
-        <div className="w-full lg:w-[320px] xl:w-[360px] bg-stone-50 dark:bg-[#252525] flex flex-col border-b lg:border-b-0 lg:border-r border-stone-200 dark:border-[#333] shrink-0 p-4 lg:p-6 shadow-inner relative overflow-y-auto overflow-x-hidden custom-scrollbar">
+        <div className="w-full lg:w-[320px] xl:w-[360px] bg-stone-50 dark:bg-[#252525] flex flex-col border-b lg:border-b-0 lg:border-e border-stone-200 dark:border-[#333] shrink-0 p-4 lg:p-6 shadow-inner relative overflow-y-auto overflow-x-hidden custom-scrollbar">
 
           <div className="text-center mb-4 mt-2 relative z-10">
             <h2 className="text-lg lg:text-xl font-bold tracking-tight text-stone-900 dark:text-white flex items-center justify-center gap-2">
@@ -656,7 +658,7 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00ff00] opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-[#00ff00]"></span>
               </span>
-              LIVE TELEMETRY
+              {t('LIVE TELEMETRY')}
             </h2>
             <div className="text-stone-500 dark:text-[#888] text-[10px] lg:text-xs font-mono mt-1 font-semibold uppercase tracking-widest">{testPhase}</div>
           </div>

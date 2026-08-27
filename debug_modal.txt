@@ -1,0 +1,171 @@
+                  </div>
+
+              </div>
+          </div>
+          </div>
+          <div className="max-w-7xl mx-auto w-full px-4 sm:px-8 pb-8">
+{/* Comments Section */}
+          <CommentsSection itemId={item.id} itemTitle={item.title || item.name} itemCategory={item.category} />
+  </div>
+  
+  {/* Modals for Trailer and Notes */}
+  <AnimatePresence>
+      {showHypervisorGuide && (
+          <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[300] bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
+              onClick={() => setShowHypervisorGuide(false)}
+          >
+              <motion.div 
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.9, opacity: 0 }}
+                  className="w-full max-w-4xl max-h-[90vh] bg-[#0B1120] rounded-2xl overflow-hidden shadow-2xl relative border border-slate-800 flex flex-col"
+                  onClick={e => e.stopPropagation()}
+              >
+                  {/* Header */}
+                  <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-[#0F172A] shrink-0">
+                     <div className="flex items-center gap-4">
+                        <button onClick={() => setShowHypervisorGuide(false)} className="flex items-center gap-2 text-sm font-bold text-slate-300 hover:text-white bg-slate-800/50 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors">
+                           <Icon name="ArrowLeft" size={16} /> Back to Product
+                        </button>
+                        <div className="flex items-center gap-2 text-white font-black text-lg tracking-widest uppercase">
+                           <Icon name="ShieldAlert" size={24} className="text-red-500" />
+                           HYPERVISOR GUIDE
+                        </div>
+                     </div>
+                     <button onClick={() => setShowHypervisorGuide(false)} className="p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors">
+                        <Icon name="X" size={20} />
+                     </button>
+                  </div>
+                  {/* Content */}
+                  <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar text-slate-300 text-sm leading-relaxed space-y-6">
+                      <p className="text-red-500 font-bold">This page is a work-in-progress and will be updated.</p>
+                      <p>This article is partially based on RessourectoR's (admin of cs.rin.ru site) article:</p>
+                      <p><a href="https://cs.rin.ru/forum/viewtopic.php?f=10&t=156407" target="_blank" rel="noopener" className="text-blue-400 hover:text-blue-300 underline text-base">https://cs.rin.ru/forum/viewtopic.php?f=10&t=156407</a></p>
+                      <p>I highly recommend to open and read it at least one time. It's more complex than this page and covers more security topics.</p>
+                      
+                      <h3 className="text-xl font-bold text-white mt-8 mb-4">What are Hypervisor Cracks?</h3>
+                      <p>Denuvo Hypervisor Crack or Bypass refers to advanced techniques that leverage virtualization at a very low level (often using a custom or modified hypervisor) to interfere with how the protection monitors the system. Denuvo relies heavily on integrity checks, timing analysis, and detection of debugging or emulation environments. A hypervisor-based approach allows an attacker to sit "under" the operating system, transparently controlling CPU behavior, intercepting instructions, and masking signs of analysis without modifying the protected executable directly.</p>
+                      <p>Instead of patching the game binary, the hypervisor can emulate or alter specific CPU instructions, fake timing results, or hide breakpoints and memory changes, effectively tricking Denuvo into believing everything is running on a normal, untampered system. This makes the protection much harder to detect or react to, since its checks are being handled outside its visibility. These methods are extremely complex and are typically explored by highly skilled reverse engineers, as they require deep knowledge of CPU virtualization, kernel internals, and anti-tamper mechanisms.</p>
+                      <p>Officially, only signed drivers can work at such low level. Due to the piracy nature of Denuvo Hypervisor drivers, they will never receive Microsoft-approved certificate. And that's why to use such "cracks" you need to make certain modifications to your system security settings, listed below. Please note, that those changes are intended to be made temporary, for the course of your gameplay session and then should be reverted after you quit the game.</p>
+                      
+                      <h3 className="text-xl font-bold text-white mt-8 mb-4">Windows virtualization-based security components</h3>
+                      <p>On modern systems with Secure Boot, TPM 2.0 and hardware-assisted virtualization capabilities, Windows 10 and 11 enable, mostly* by default, various security solutions via Virtualization-based Security (VBS). VBS is an umbrella term for using a bare-metal hypervisor, the Windows hypervisor, to create isolated virtual spaces that are safe from even a fully compromised OS, in which these security components run and monitor the OS or store confidential information.</p>
+                      <p>The following Windows components are such security solutions:</p>
+                      <ul className="list-disc pl-6 space-y-2">
+                        <li><a href="https://learn.microsoft.com/en-us/windows/security/hardware-security/enable-virtualization-based-protection-of-code-integrity" target="_blank" rel="noopener" className="text-blue-400 hover:text-blue-300">Memory Integrity (HVCI)</a>: Runs checks to detect malicious or at least unexpected modifications of Windows kernel code and restricts suspicious kernel memory allocations.</li>
+                        <li><a href="https://learn.microsoft.com/en-us/windows-hardware/design/device-experiences/oem-credential-guard" target="_blank" rel="noopener" className="text-blue-400 hover:text-blue-300">Credential Guard</a>: Stores access credentials, such as passwords, authentication data, biometric data etc. in an isolated environment.</li>
+                        <li><a href="https://learn.microsoft.com/en-us/windows-hardware/design/device-experiences/windows-hello" target="_blank" rel="noopener" className="text-blue-400 hover:text-blue-300">Windows Hello</a>: Allows you to log in with convenient methods like a short PIN, facial recognition or fingerprint scan.</li>
+                        <li><a href="https://learn.microsoft.com/en-us/windows/security/hardware-security/how-hardware-based-root-of-trust-helps-protect-windows" target="_blank" rel="noopener" className="text-blue-400 hover:text-blue-300">System Guard (Secure Launch)</a>: An advanced system hardening framework that protects the OS boot process and System Management Mode.</li>
+                      </ul>
+                      <p className="text-sm italic text-slate-400">* Even though hardware and boot requirements are met, Windows sometimes seems to fail at enabling features that are supposed to be enabled automatically, such as VBS and memority integrity.</p>
+                      
+                      <div className="font-bold text-slate-200 mt-4 space-y-4">
+                        <p>Without the Windows hypervisor, none of these security features can be used. By design, the hypervisor cannot be disabled directly. Instead, all the above features that want to utilize VBS signal that it needs to be enabled, which then loads the hypervisor. Therefore, we must disable all those features to prevent the Windows hypervisor from being loaded.</p>
+                        <p>A boot option that prevents Hyper-V from loading the hypervisor also needs to be added.</p>
+                      </div>
+
+                      <h3 className="text-xl font-bold text-white mt-8 mb-4">I want to play that new Denuvo-protected game, is it safe to disable all this and use a hypervisor crack?</h3>
+                      <p>There is no simple answer. This is RessourectoR's personal take as someone with 10 years of experience in security-focused system administration and only a casual interest in gaming.</p>
+                      <p>It's true that the most common threats are info stealer malware from fake download buttons, ransomware that encrypts your files or joining a DDoS botnet. It's supposed such malware is usually not interested in higher privilege escalation or hardware sabotage, if it can already access what it needs. It's also true that the best protection against such malware is a good ad blocker, staying on trusted sites and user education.</p>
+                      <p>More experienced PC users develop a false sense of security from seeing how successfully they avoid malware infection by "being smart". They argue that they don't need all these restrictive, patronizing security features and AVs that just annoy with false positives, because their malware-free track record "proves" that they know better. They also argue that more advanced threats are not aimed at home users, but corporate networks and too unlikely to care about. Especially relevant for gamers: Virtualization can reduce system performance and whether that is noticeable or not is also a point of contention.</p>
+                      <p className="font-bold text-white">Whether that game is worth the risks is something you will ultimately have to decide for yourself.</p>
+
+                      <h3 className="text-xl font-bold text-white mt-8 mb-4">What's inside those cracks?</h3>
+                      <p>Basically, every modern Hypervisor bypass/crack consists of two parts:</p>
+                      <ol className="list-decimal pl-6 space-y-4">
+                        <li>
+                           <p className="font-bold text-white">VBS.cmd: special command-line script, which checks your existing settings and modify them to make your system prepared for HV-cracks.</p>
+                           <p className="mt-2">This script is universal for all HV-games and is developed separately, it doesn't depend on actual game cracks. You can download the latest version below:</p>
+                           <div className="bg-[#9aff612e] border border-[#159311] rounded-xl p-5 my-4">
+                              <a href="https://paste.fitgirl-repacks.site/?cd32d8e86fa5112d#Fi2WAtgoW9pp4VGEQVXqMH73bHpeMSTGmd1WYiX6j9yN" target="_blank" rel="noopener" className="text-emerald-400 hover:text-emerald-300 font-bold underline">Current version: v1.9 (Updated on July 22, 2026)</a>
+                              <p className="mt-4 text-emerald-100/70">Changes log available on the original page.</p>
+                           </div>
+                        </li>
+                        <li>
+                           <p className="font-bold text-white">The Crack/Bypass itself</p>
+                           <p className="mt-2">Consists of EXEs/DLLs, which does the actual Denuvo bypassing + other additional DLLs, like Goldberg Steam emulator to get past the underlying Steam protection.</p>
+                           <p>Those files work only for specific game versions, for which they were made. They won't work on different game version or other games.</p>
+                        </li>
+                      </ol>
+
+                      <h3 className="text-xl font-bold text-white mt-8 mb-4">Other Software Updates</h3>
+                      <div className="bg-[#9aff612e] border border-[#159311] rounded-xl p-5 my-4">
+                         <a href="https://paste.fitgirl-repacks.site/?7bb76c6f568d3725#G68jW7TWoMwDHUxBXhP4ttUX7Eeky9yCPPVHHtTs9aKj" target="_blank" rel="noopener" className="text-emerald-400 hover:text-emerald-300 font-bold underline">Updated hypervisor-launcher.exe v1.3.1</a>
+                         <p className="mt-2 text-emerald-50">Solves the PC restart issue on some systems, mostly on Intels. This a mirror from this official GitHub page.</p>
+                      </div>
+
+                      <h3 className="text-xl font-bold text-white mt-8 mb-4">Pre-requirements</h3>
+                      <p>Your CPU must support one of two virtualization techniques: VT-x for Intel and AMD-V (SVM) for AMD.</p>
+                      <p>Google if CPU model supports virtualization to know if you can play HV-games.</p>
+                      <p>Before proceeding with HV cracks, check your BIOS for enabling those technologies.</p>
+
+                      <h3 className="text-xl font-bold text-white mt-8 mb-4">Do I need to disable Secure Boot or use EfiGuard?</h3>
+                      <p>No. Current HV bypasses do not require those changes.</p>
+                  </div>
+              </motion.div>
+          </motion.div>
+      )}
+  <AnimatePresence>
+      {showTrailer && item.links.trailer && (
+          <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[300] bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
+              onClick={() => setShowTrailer(false)}
+          >
+              <motion.div 
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.9, opacity: 0 }}
+                  className="w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl relative border border-slate-800"
+                  onClick={e => e.stopPropagation()}
+              >
+                  <button 
+                      onClick={() => setShowTrailer(false)}
+                      className="absolute top-4 right-4 z-10 w-10 h-10 bg-black/50 hover:bg-primary-500 text-white rounded-full flex items-center justify-center backdrop-blur-md transition-colors border border-white/10"
+                  >
+                      <Icon name="X" size={20} />
+                  </button>
+                  <iframe 
+                      className="w-full h-full"
+                      src={getYoutubeEmbedUrl(item.links.trailer) || ''} 
+                      title="YouTube video player" 
+                      frameBorder="0" 
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                      allowFullScreen
+                  ></iframe>
+              </motion.div>
+          </motion.div>
+      )}
+      
+      {torrentWarningLink && (
+        <TorrentWarningModal link={torrentWarningLink} onClose={() => setTorrentWarningLink(null)} />
+      )}
+      {noteModalContent && (
+          <NoteModal content={noteModalContent} onClose={() => setNoteModalContent(null)} />
+      )}
+  </AnimatePresence>
+</motion.div>
+  );
+};
+
+
+
+
+const DownloadButton: React.FC<{
+  label: string;
+  sub: string;
+  href: string;
+  icon: string;
+  imageUrl?: string;
+  secondary?: boolean;
+  note?: string;
+  badge?: string;
+  onNoteClick?: (note: string) => void;
+  onClick?: (e: React.MouseEvent) => void;
+}> = ({ label, sub, href, icon, imageUrl, secondary, note, badge, onNoteClick, onClick }) => {

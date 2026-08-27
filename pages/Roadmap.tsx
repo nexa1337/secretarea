@@ -1,3 +1,4 @@
+import { useLanguage } from '../src/contexts/LanguageContext';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,6 +26,7 @@ const getIconColors = (color: string) => {
 };
 
 const Roadmap: React.FC = () => {
+  const { t } = useLanguage();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   return (
@@ -35,7 +37,7 @@ const Roadmap: React.FC = () => {
         <div className="absolute inset-0 pointer-events-none -z-10 opacity-[0.03] dark:opacity-[0.05]" 
              style={{ backgroundImage: 'linear-gradient(to right, #808080 1px, transparent 1px), linear-gradient(to bottom, #808080 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
-        <div className="mb-24 text-left relative z-10">
+        <div className="mb-24 text-start relative z-10">
           <motion.div 
             initial={{ opacity: 0, width: 0 }}
             animate={{ opacity: 1, width: '40px' }}
@@ -62,7 +64,7 @@ const Roadmap: React.FC = () => {
 
         <div className="relative z-10 flex flex-col w-full">
           {/* Vertical connection line */}
-          <div className="absolute left-[29px] md:left-[39px] top-12 bottom-12 w-px bg-gradient-to-b from-transparent via-slate-200 dark:via-slate-800 to-transparent -z-10 hidden sm:block" />
+          <div className="absolute start-[29px] md:start-[39px] top-12 bottom-12 w-px bg-gradient-to-b from-transparent via-slate-200 dark:via-slate-800 to-transparent -z-10 hidden sm:block" />
 
           {CATEGORIES.map((category, index) => {
             const isHovered = hoveredIndex === index;

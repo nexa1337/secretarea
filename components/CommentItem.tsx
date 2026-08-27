@@ -1,3 +1,4 @@
+import { useLanguage } from '../src/contexts/LanguageContext';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SiWolframlanguage } from 'react-icons/si';
@@ -11,6 +12,7 @@ interface CommentItemProps {
 }
 
 export const CommentItem: React.FC<CommentItemProps> = ({ comment, onReaction, onReplySubmit }) => {
+  const { dir, t } = useLanguage();
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [showReplies, setShowReplies] = useState(true);
@@ -61,17 +63,15 @@ export const CommentItem: React.FC<CommentItemProps> = ({ comment, onReaction, o
           
           {/* Reactions & Actions */}
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <button onClick={() => setShowReplyForm(!showReplyForm)} className="text-blue-500 hover:text-blue-600 font-bold text-xs uppercase tracking-widest px-2 py-1 transition-colors">
-              Reply
-            </button>
+            <button onClick={() => setShowReplyForm(!showReplyForm)} className="text-blue-500 hover:text-blue-600 font-bold text-xs uppercase tracking-widest px-2 py-1 transition-colors">{t('Reply')}</button>
             
             {hasReplies && (
               <button 
                 onClick={() => setShowReplies(!showReplies)} 
-                className="text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase tracking-wider transition-colors ml-auto flex items-center gap-1"
+                className="text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase tracking-wider transition-colors ms-auto flex items-center gap-1"
               >
                 {showReplies ? <Icon name="ChevronUp" size={14}/> : <Icon name="ChevronDown" size={14}/>}
-                {comment.replies!.length} {comment.replies!.length === 1 ? 'Reply' : 'Replies'}
+                {comment.replies!.length} {comment.replies!.length === 1 ? t('Reply') : t('Replies')}
               </button>
             )}
           </div>
@@ -79,7 +79,7 @@ export const CommentItem: React.FC<CommentItemProps> = ({ comment, onReaction, o
       </div>
 
       {showReplyForm && (
-        <form onSubmit={handleReplySubmit} className="mt-4 ml-12 sm:ml-14 mb-4">
+        <form onSubmit={handleReplySubmit} className="mt-4 ms-12 sm:ms-14 mb-4">
           <div className="flex gap-2">
             <input 
               type="text" 
@@ -89,9 +89,7 @@ export const CommentItem: React.FC<CommentItemProps> = ({ comment, onReaction, o
               className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors"
               autoFocus
             />
-            <button type="submit" disabled={!replyText.trim()} className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl px-4 font-bold text-sm disabled:opacity-50 transition-colors">
-              Post
-            </button>
+            <button type="submit" disabled={!replyText.trim()} className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl px-4 font-bold text-sm disabled:opacity-50 transition-colors">{t('Post')}</button>
           </div>
         </form>
       )}
@@ -103,12 +101,12 @@ export const CommentItem: React.FC<CommentItemProps> = ({ comment, onReaction, o
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="ml-5 sm:ml-5 pl-7 sm:pl-9 border-l-2 border-slate-200 dark:border-slate-800 mt-2 space-y-4 pt-2"
+            className="ms-5 sm:ms-5 ps-7 sm:ps-9 border-s-2 border-slate-200 dark:border-slate-800 mt-2 space-y-4 pt-2"
           >
             {comment.replies!.map((reply, idx) => (
               <div key={reply.id} className="relative">
                 {/* Horizontal connector line */}
-                <div className="absolute -left-7 sm:-left-9 top-4 w-5 sm:w-7 h-[2px] bg-slate-200 dark:bg-slate-800"></div>
+                <div className="absolute -start-7 sm:-start-9 top-4 w-5 sm:w-7 h-[2px] bg-slate-200 dark:bg-slate-800"></div>
                 
                 <div className="flex gap-2 sm:gap-3">
                   <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 border border-slate-200 dark:border-slate-700 z-10">

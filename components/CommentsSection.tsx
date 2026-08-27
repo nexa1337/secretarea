@@ -1,3 +1,4 @@
+import { useLanguage } from '../src/contexts/LanguageContext';
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SiWolframlanguage } from 'react-icons/si';
@@ -182,6 +183,7 @@ function seededRandom(seed: number) {
 const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbx7nzBZc_tIhbAUK5OvOzgifGVzaVorzjn5OXNe8ENC0p7Pjia7O-u4WggxjRZipt4v/exec';
 
 export const CommentsSection: React.FC<{ itemId: string, itemTitle?: string, itemCategory?: string }> = ({ itemId, itemTitle, itemCategory }) => {
+  const { dir, t } = useLanguage();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [authorName, setAuthorName] = useState('');
@@ -476,9 +478,7 @@ export const CommentsSection: React.FC<{ itemId: string, itemTitle?: string, ite
       className="mt-8 border-t border-slate-200 dark:border-slate-800 pt-8"
     >
       <h3 className="text-xl font-black uppercase tracking-wider text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-        <Icon name="MessageSquare" size={24} className="text-blue-500" /> 
-        Join the Conversation
-      </h3>
+        <Icon name="MessageSquare" size={24} className="text-blue-500" /> {t('Join the Conversation')} </h3>
 
       {/* Add Comment Form */}
       <form onSubmit={handleSubmit} className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-4 sm:p-6 border border-slate-200 dark:border-slate-800 mb-8">
@@ -489,14 +489,14 @@ export const CommentsSection: React.FC<{ itemId: string, itemTitle?: string, ite
           <div className="flex-1">
             <input 
               type="text" 
-              placeholder="Your Alias (Optional)..." 
+              placeholder={t("Your Alias (Optional)...")} 
               value={authorName}
               onChange={(e) => setAuthorName(e.target.value)}
               className="w-full bg-transparent border-b border-slate-300 dark:border-slate-700 pb-2 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors mb-4 placeholder:text-slate-600 dark:text-slate-400"
               maxLength={20}
             />
             <textarea
-              placeholder="Drop your intel, review, or funny thoughts here..."
+              placeholder={t("Drop your intel, review, or funny thoughts here...")}
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               required
@@ -534,7 +534,7 @@ export const CommentsSection: React.FC<{ itemId: string, itemTitle?: string, ite
             className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-sm uppercase tracking-widest shadow-lg shadow-blue-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {loading ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name="Send" size={16} />}
-            Post Intel
+            {t('Post Intel')}
           </button>
         </div>
       </form>

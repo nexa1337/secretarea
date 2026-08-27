@@ -1,7 +1,9 @@
+import { useLanguage } from '../src/contexts/LanguageContext';
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 const Disclaimer: React.FC = () => {
+  const { t } = useLanguage();
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -44,7 +46,7 @@ const Disclaimer: React.FC = () => {
               </section>
 
               <section>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 uppercase tracking-wider">User Responsibility</h2>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 uppercase tracking-wider">{t('User Responsibility')}</h2>
                 <p className="mb-2">Visitors are solely responsible for their actions and for how they use any information made available through this website.</p>
                 <p className="mb-2">Users must ensure that their activities comply with all applicable local, national, and international laws, regulations, license agreements, and terms of service.</p>
                 <p>N E X A 1337 assumes no responsibility for misuse of information found on this website.</p>
@@ -61,7 +63,7 @@ const Disclaimer: React.FC = () => {
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 uppercase tracking-wider">No Warranties</h2>
                 <p className="mb-4">All information provided on this website is offered on an "AS IS" and "AS AVAILABLE" basis without warranties of any kind, whether express or implied.</p>
                 <p className="mb-2">N E X A 1337 makes no guarantees regarding:</p>
-                <ul className="list-disc pl-5 mb-4 space-y-1">
+                <ul className="list-disc ps-5 mb-4 space-y-1">
                   <li>Accuracy of information</li>
                   <li>Availability of content</li>
                   <li>Reliability of external resources</li>
@@ -75,7 +77,7 @@ const Disclaimer: React.FC = () => {
               <section>
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 uppercase tracking-wider">Limitation of Liability</h2>
                 <p className="mb-4">To the maximum extent permitted by applicable law, N E X A 1337 and its owners, administrators, contributors, and affiliates shall not be liable for any direct, indirect, incidental, consequential, special, or punitive damages arising from:</p>
-                <ul className="list-disc pl-5 mb-4 space-y-1">
+                <ul className="list-disc ps-5 mb-4 space-y-1">
                   <li>Use of the website</li>
                   <li>Inability to access the website</li>
                   <li>Errors or omissions in content</li>

@@ -1,17 +1,24 @@
 
 import { createPortal } from 'react-dom';
+import { Helmet } from 'react-helmet-async';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLanguage } from '../src/contexts/LanguageContext';
+import { GPU_DATA, CPU_DATA, getGpuTier, getCpuTier } from '../src/data/systemSpecs';
 import { Link } from 'react-router-dom';
 import { GoogleGenAI } from "@google/genai";
 import Icon from '../components/Icon';
+import HeroSlider from '../components/HeroSlider';
+import AnimatedGenreHero from '../components/AnimatedGenreHero';
+
 import { CommentsSection } from '../components/CommentsSection';
 import { BestGameSeriesSection } from '../components/BestGameSeriesSection';
 import { DuaPopup } from '../components/DuaPopup';
 import { NetworkDiagnostic } from '../components/NetworkDiagnostic';
 import MaintenancePage from '../components/MaintenancePage';
+import HardwareCompatibility from "../components/HardwareCompatibility";
 import { LowPolyBackground } from '../components/LowPolyBackground';
-import { FaFaceAngry, FaWolfPackBattalion } from 'react-icons/fa6';
+import { FaFaceAngry } from 'react-icons/fa6';
 import backupData from '../data/backup_resources.json';
 
 // --- CONFIGURATION ---
@@ -102,7 +109,22 @@ interface Requirement {
   link?: string;
 }
 
+
+type IntelCategory = 'GAME' | 'HYPERVISOR' | 'STEAMTOOLS' | 'ARCHITECT' | 'EXTRA' | 'UPCOMING';
+
+interface IntelItem {
+  id: string;
+  title: string;
+  description: string;
+  timestamp: string;
+  category: IntelCategory;
+  type: 'UPDATE' | 'NEW';
+  version?: string;
+}
+
 interface ResourceItem {
+  title?: string;
+  image?: string;
   id: string;
   category: string;
   name: string;
@@ -122,14 +144,15 @@ interface ResourceItem {
   dateAdded?: string;
   hasDenuvo?: boolean;
   hasExternalLauncher?: boolean;
-  systemReqs: Requirement[];
-  installSteps: string[];
-  isPinned: boolean;
+  systemReqs?: Requirement[];
+  installSteps?: string[];
+  isPinned?: boolean;
   isFree: boolean;
-  toolsNeeded: { name: string; url: string }[];
+  toolsNeeded?: { name: string; url: string }[];
   links: {
     parts: { id: number, link: string, note?: string }[];
     mirrors: { id: number, link: string, note?: string }[];
+    ankerParts: { id: number, link: string, note?: string }[];
     full?: string;
     fullNote?: string;
     tutorial?: string; 
@@ -203,6 +226,16 @@ const getFakeDownloads = (id: string) => {
     return total > 1000 ? (total / 1000).toFixed(1) + 'K' : total.toString();
 };
 
+const getFakeLikes = (id: string) => {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
+    const base = Math.abs(hash) % 8000 + 500; // 500 to 8500
+    const daysSince = Math.floor((Date.now() - new Date('2024-01-01').getTime()) / (1000 * 60 * 60 * 24));
+    const dailyGrowth = Math.abs(hash) % 5 + 1;
+    const total = base + (daysSince * dailyGrowth);
+    return total > 1000 ? (total / 1000).toFixed(1) + 'K' : total.toString();
+};
+
 const getYoutubeEmbedUrl = (url: string) => {
   if (!url) return null;
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -229,6 +262,7 @@ const getPlatformIcon = (platform: string): string => {
 
 // Countdown Component for Lockout
 const LockoutTimer: React.FC<{ targetTime: number }> = ({ targetTime }) => {
+    const { dir, t } = useLanguage();
     const [timeLeft, setTimeLeft] = useState('');
 
     useEffect(() => {
@@ -259,7 +293,8 @@ const LockoutTimer: React.FC<{ targetTime: number }> = ({ targetTime }) => {
 };
 
 const DisclaimerModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
-  const [lang, setLang] = useState<keyof typeof DISCLAIMER_CONTENT>('EN');
+  const [lang, setLang] = useState<keyof typeof DISCLAIMER_CONTENT>("EN");
+  const { dir, t } = useLanguage();
   
   if (!open) return null;
 
@@ -270,7 +305,7 @@ const DisclaimerModal: React.FC<{ open: boolean; onClose: () => void }> = ({ ope
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-4"
+      dir={dir} className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-4"
     >
       <motion.div 
         initial={{ scale: 0.9, y: 20 }}
@@ -322,6 +357,7 @@ const DisclaimerModal: React.FC<{ open: boolean; onClose: () => void }> = ({ ope
 
 // STEAM ACCOUNTS MODAL
 const SteamAccountsModal: React.FC<{ open: boolean; onClose: () => void; accounts: SteamAccount[] }> = ({ open, onClose, accounts }) => {
+    const { dir, t } = useLanguage();
     const [copiedIndex, setCopiedIndex] = useState<{idx: number, type: 'user' | 'pass'} | null>(null);
 
     const handleCopy = (text: string, idx: number, type: 'user' | 'pass') => {
@@ -335,7 +371,7 @@ const SteamAccountsModal: React.FC<{ open: boolean; onClose: () => void; account
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-2 sm:p-4"
+            dir={dir} className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-2 sm:p-4"
             onClick={onClose}
         >
             <motion.div 
@@ -346,14 +382,14 @@ const SteamAccountsModal: React.FC<{ open: boolean; onClose: () => void; account
             >
                 {/* Steam Header */}
                 <div className="bg-gradient-to-r from-[#171a21] to-[#1b2838] p-4 sm:p-6 border-b border-[#2a475e] flex justify-between items-center relative overflow-hidden shrink-0">
-                    <div className="absolute inset-0 bg-[url('https://community.cloudflare.steamstatic.com/public/shared/images/header/globalheader_logo.png')] bg-no-repeat bg-right-bottom opacity-10 bg-contain pointer-events-none"></div>
+                    <div className="absolute inset-0 bg-[url('https://community.cloudflare.steamstatic.com/public/shared/images/header/globalheader_logo.png')] bg-no-repeat bg-end-bottom opacity-10 bg-contain pointer-events-none"></div>
                     <div className="relative z-10">
                         <h3 className="text-lg sm:text-xl font-black uppercase tracking-wider text-white flex items-center gap-3">
                             <Icon name="BrandSteam" size={24} className="text-[#66c0f4] sm:w-7 sm:h-7" /> 
-                            <span className="truncate">Free Accounts</span>
+                            <span className="truncate">{t('Free Accounts')}</span>
                         </h3>
                         <p className="text-[#c5c3c0] text-[10px] sm:text-xs font-bold mt-1">
-                            Updated Daily • <span className="text-[#66c0f4]">{accounts.length} Available</span>
+                            {t('Updated Daily')} • <span className="text-[#66c0f4]">{accounts.length} {t('Available')}</span>
                         </p>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors text-[#c5c3c0] hover:text-white relative z-10 shrink-0">
@@ -366,7 +402,7 @@ const SteamAccountsModal: React.FC<{ open: boolean; onClose: () => void; account
                     {accounts.length === 0 ? (
                         <div className="text-center py-10 text-slate-900 dark:text-slate-300">
                             <Icon name="Ghost" size={40} className="mx-auto mb-3 opacity-50"/>
-                            <p>No accounts available right now. Check back later!</p>
+                            <p>{t('No accounts available right now. Check back later!')}</p>
                         </div>
                     ) : (
                         accounts.map((acc, idx) => {
@@ -384,7 +420,7 @@ const SteamAccountsModal: React.FC<{ open: boolean; onClose: () => void; account
                                         <div className={`text-[9px] sm:text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider border ${
                                             isOffline 
                                             ? 'bg-red-500/10 text-red-500 dark:text-red-400 border-red-500/20' 
-                                            : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                                            : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-700 dark:text-emerald-400 border-emerald-500/20'
                                         }`}>
                                             {statusRaw || 'ONLINE'}
                                         </div>
@@ -392,28 +428,28 @@ const SteamAccountsModal: React.FC<{ open: boolean; onClose: () => void; account
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
                                         <div className="space-y-1">
-                                            <label className="text-[9px] sm:text-[10px] font-bold text-slate-900 dark:text-slate-400 uppercase tracking-wider">Username</label>
+                                            <label className="text-[9px] sm:text-[10px] font-bold text-slate-900 dark:text-slate-400 uppercase tracking-wider">{t('Username')}</label>
                                             <div className="flex items-center gap-2 bg-slate-50 dark:bg-[#171a21] p-2 rounded border border-slate-200 dark:border-[#2a475e] group-hover:border-[#66c0f4]/50 transition-colors">
                                                 <span className="text-xs sm:text-sm font-mono text-slate-900 dark:text-white truncate flex-1 select-all">{acc.username}</span>
                                                 <button 
                                                     onClick={() => handleCopy(acc.username, idx, 'user')}
                                                     className="text-[#66c0f4] hover:text-blue-600 dark:hover:text-white p-1.5 rounded hover:bg-[#66c0f4]/20 transition-all shrink-0"
-                                                    title="Copy Username"
+                                                    title={t("Copy Username")}
                                                 >
-                                                    {copiedIndex?.idx === idx && copiedIndex.type === 'user' ? <Icon name="Check" size={14} className="text-emerald-500 dark:text-emerald-400" /> : <Icon name="Copy" size={14} />}
+                                                    {copiedIndex?.idx === idx && copiedIndex.type === 'user' ? <Icon name="Check" size={14} className="text-emerald-900 dark:text-emerald-500 dark:text-emerald-700 dark:text-emerald-400" /> : <Icon name="Copy" size={14} />}
                                                 </button>
                                             </div>
                                         </div>
                                         <div className="space-y-1">
-                                            <label className="text-[9px] sm:text-[10px] font-bold text-slate-900 dark:text-slate-400 uppercase tracking-wider">Password</label>
+                                            <label className="text-[9px] sm:text-[10px] font-bold text-slate-900 dark:text-slate-400 uppercase tracking-wider">{t('Password')}</label>
                                             <div className="flex items-center gap-2 bg-slate-50 dark:bg-[#171a21] p-2 rounded border border-slate-200 dark:border-[#2a475e] group-hover:border-[#66c0f4]/50 transition-colors">
                                                 <span className="text-xs sm:text-sm font-mono text-slate-900 dark:text-white truncate flex-1 select-none tracking-widest text-lg mt-1">••••••••</span>
                                                 <button 
                                                     onClick={() => handleCopy(acc.password, idx, 'pass')}
                                                     className="text-[#66c0f4] hover:text-blue-600 dark:hover:text-white p-1.5 rounded hover:bg-[#66c0f4]/20 transition-all shrink-0"
-                                                    title="Copy Password"
+                                                    title={t('Copy Password')}
                                                 >
-                                                    {copiedIndex?.idx === idx && copiedIndex.type === 'pass' ? <Icon name="Check" size={14} className="text-emerald-500 dark:text-emerald-400" /> : <Icon name="Copy" size={14} />}
+                                                    {copiedIndex?.idx === idx && copiedIndex.type === 'pass' ? <Icon name="Check" size={14} className="text-emerald-900 dark:text-emerald-500 dark:text-emerald-700 dark:text-emerald-400" /> : <Icon name="Copy" size={14} />}
                                                 </button>
                                             </div>
                                         </div>
@@ -422,9 +458,9 @@ const SteamAccountsModal: React.FC<{ open: boolean; onClose: () => void; account
                                     {acc.games && (
                                         <div className="pt-3 border-t border-slate-100 dark:border-[#2a475e]/50">
                                             <div className="flex items-start gap-2">
-                                                <Icon name="DeviceGamepad2" size={16} className="text-slate-800 dark:text-slate-400 mt-0.5 shrink-0" />
+                                                <Icon name="Gamepad" size={16} className="text-slate-800 dark:text-slate-400 mt-0.5 shrink-0" />
                                                 <p className="text-[10px] sm:text-xs text-slate-600 dark:text-[#c5c3c0] leading-relaxed line-clamp-2 sm:line-clamp-none">
-                                                    <span className="text-slate-900 dark:text-slate-400 font-bold">Includes: </span>
+                                                    <span className="text-slate-900 dark:text-slate-400 font-bold">{t('Includes:')} </span>
                                                     {acc.games}
                                                 </p>
                                             </div>
@@ -438,7 +474,7 @@ const SteamAccountsModal: React.FC<{ open: boolean; onClose: () => void; account
                 
                 <div className="p-3 sm:p-4 bg-slate-100 dark:bg-[#171a21] border-t border-slate-200 dark:border-[#2a475e] text-center shrink-0">
                     <p className="text-[9px] sm:text-[10px] text-slate-900 dark:text-slate-400">
-                        Please do not change passwords. These are community accounts.
+                        {t('Please do not change passwords. These are community accounts.')}
                     </p>
                 </div>
             </motion.div>
@@ -448,6 +484,7 @@ const SteamAccountsModal: React.FC<{ open: boolean; onClose: () => void; account
 
 // MASTER GIFT MODAL
 const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: MasterGiftAccount[] }> = ({ open, onClose, accounts }) => {
+    const { dir, t } = useLanguage();
     const [copiedIndex, setCopiedIndex] = useState<{idx: number, type: 'email' | 'pass'} | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 4; // Show 4 items per page for Master Gift
@@ -466,7 +503,7 @@ const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-2 sm:p-4"
+            dir={dir} className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-2 sm:p-4"
             onClick={onClose}
         >
             <motion.div 
@@ -481,10 +518,10 @@ const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: 
                     <div className="relative z-10">
                         <h3 className="text-lg sm:text-2xl font-black uppercase tracking-wider text-white flex items-center gap-3">
                             <Icon name="Gift" size={28} className="text-yellow-400 sm:w-8 sm:h-8 animate-pulse" /> 
-                            <span className="truncate">Master Gift</span>
+                            <span className="truncate">{t('Master Gift')}</span>
                         </h3>
                         <p className="text-violet-100 text-[10px] sm:text-sm font-bold mt-1">
-                            Exclusive Premium Accounts • <span className="text-yellow-400">{accounts.length} Available</span>
+                            {t('Exclusive Premium Accounts')} • <span className="text-yellow-400">{accounts.length} {t('Available')}</span>
                         </p>
                     </div>
                     <button onClick={onClose} className="p-2 bg-black/20 hover:bg-black/40 rounded-full transition-colors text-white relative z-10 shrink-0 shadow">
@@ -499,8 +536,8 @@ const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: 
                             <div className="w-20 h-20 bg-slate-200 dark:bg-zinc-900 rounded-full flex items-center justify-center mb-4 border border-slate-300 dark:border-zinc-800">
                                 <Icon name="Gift" size={40} className="text-slate-600 dark:text-slate-300 dark:text-zinc-600 opacity-50"/>
                             </div>
-                            <h4 className="text-lg font-bold text-slate-800 dark:text-zinc-300 mb-2">No Gifts Right Now</h4>
-                            <p className="text-sm text-slate-900 dark:text-slate-300 dark:text-zinc-500">We continuously restock new premium accounts. Check back later!</p>
+                            <h4 className="text-lg font-bold text-slate-800 dark:text-zinc-300 mb-2">{t('No Gifts Right Now')}</h4>
+                            <p className="text-sm text-slate-900 dark:text-slate-300 dark:text-zinc-500">{t('We continuously restock new premium accounts. Check back later!')}</p>
                         </div>
                     ) : (
                         <div className="flex flex-col h-full">
@@ -515,7 +552,7 @@ const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: 
                                                 <div className="flex items-center gap-3">
                                                     {acc.logo ? (
                                                         <div className="w-10 h-10 rounded-xl overflow-hidden bg-zinc-800 shrink-0 border border-zinc-700 shadow flex items-center justify-center">
-                                                            <img src={acc.logo} alt={acc.name} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = '<span class="text-xs font-bold text-zinc-500 uppercase">' + acc.name.substring(0, 2) + '</span>'; }} />
+                                                            <img src={acc.logo} alt={acc.name} className="w-full h-full object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = '<span class="text-xs font-bold text-zinc-500 uppercase">' + acc.name.substring(0, 2) + '</span>'; }} />
                                                         </div>
                                                     ) : (
                                                         <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-xs shrink-0 shadow">
@@ -524,14 +561,14 @@ const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: 
                                                     )}
                                                     <div>
                                                         <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white capitalize tracking-tight line-clamp-1">{acc.name}</h4>
-                                                        {acc.url && <a href={acc.url} target="_blank" rel="noreferrer" className="text-[10px] text-violet-500 hover:text-violet-400 hover:underline flex items-center gap-1 font-semibold w-fit"><Icon name="ExternalLink" size={10} /> Visit Service</a>}
+                                                        {acc.url && <a href={acc.url} target="_blank" rel="noreferrer" className="text-[10px] text-violet-500 hover:text-violet-400 hover:underline flex items-center gap-1 font-semibold w-fit"><Icon name="ExternalLink" size={10} /> {t('Visit Service')}</a>}
                                                     </div>
                                                 </div>
                                                 {/* Status Badge */}
                                                 <div className={`text-[9px] sm:text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider border shrink-0 ${
                                                     isOffline 
                                                     ? 'bg-red-500/10 text-red-500 border-red-500/20' 
-                                                    : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                                                    : 'bg-emerald-500/10 text-emerald-900 dark:text-emerald-500 border-emerald-500/20'
                                                 }`}>
                                                     {statusRaw}
                                                 </div>
@@ -539,30 +576,30 @@ const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: 
 
                                             <div className="space-y-3 mt-auto">
                                                 <div className="space-y-1">
-                                                    <label className="text-[9px] font-black text-slate-900 dark:text-slate-300 dark:text-zinc-500 uppercase tracking-widest pl-1">Email / Username</label>
+                                                    <label className="text-[9px] font-black text-slate-900 dark:text-slate-300 dark:text-zinc-500 uppercase tracking-widest ps-1">{t('Email / Username')}</label>
                                                     <div className="flex items-center gap-2 bg-slate-50 dark:bg-zinc-950 p-2 rounded-lg border border-slate-200 dark:border-zinc-800 group-hover:border-violet-500/30 transition-colors">
-                                                        <Icon name="Mail" size={14} className="text-zinc-400 shrink-0 ml-1" />
+                                                        <Icon name="Mail" size={14} className="text-zinc-400 shrink-0 ms-1" />
                                                         <span className="text-xs font-mono text-slate-900 dark:text-zinc-300 truncate flex-1 select-all">{acc.email}</span>
                                                         <button 
                                                             onClick={() => handleCopy(acc.email, actualIndex, 'email')}
                                                             className="text-violet-500 hover:text-white hover:bg-violet-600 p-1.5 rounded transition-colors shrink-0 flex items-center justify-center w-7 h-7"
-                                                            title="Copy Email"
+                                                            title={t("Copy Email")}
                                                         >
-                                                            {copiedIndex?.idx === actualIndex && copiedIndex.type === 'email' ? <Icon name="Check" size={14} className="text-emerald-500" /> : <Icon name="Copy" size={14} />}
+                                                            {copiedIndex?.idx === actualIndex && copiedIndex.type === 'email' ? <Icon name="Check" size={14} className="text-emerald-900 dark:text-emerald-500" /> : <Icon name="Copy" size={14} />}
                                                         </button>
                                                     </div>
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-[9px] font-black text-slate-900 dark:text-slate-300 dark:text-zinc-500 uppercase tracking-widest pl-1">Password</label>
+                                                    <label className="text-[9px] font-black text-slate-900 dark:text-slate-300 dark:text-zinc-500 uppercase tracking-widest ps-1">{t('Password')}</label>
                                                     <div className="flex items-center gap-2 bg-slate-50 dark:bg-zinc-950 p-2 rounded-lg border border-slate-200 dark:border-zinc-800 group-hover:border-violet-500/30 transition-colors">
-                                                        <Icon name="Key" size={14} className="text-zinc-400 shrink-0 ml-1" />
+                                                        <Icon name="Key" size={14} className="text-zinc-400 shrink-0 ms-1" />
                                                         <span className="text-xs font-mono text-slate-900 dark:text-zinc-300 truncate flex-1 select-none tracking-widest text-lg mt-1">••••••••</span>
                                                         <button 
                                                             onClick={() => handleCopy(acc.password, actualIndex, 'pass')}
                                                             className="text-violet-500 hover:text-white hover:bg-violet-600 p-1.5 rounded transition-colors shrink-0 flex items-center justify-center w-7 h-7"
-                                                            title="Copy Password"
+                                                            title={t('Copy Password')}
                                                         >
-                                                            {copiedIndex?.idx === actualIndex && copiedIndex.type === 'pass' ? <Icon name="Check" size={14} className="text-emerald-500" /> : <Icon name="Copy" size={14} />}
+                                                            {copiedIndex?.idx === actualIndex && copiedIndex.type === 'pass' ? <Icon name="Check" size={14} className="text-emerald-900 dark:text-emerald-500" /> : <Icon name="Copy" size={14} />}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -576,7 +613,7 @@ const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: 
                             {totalPages > 1 && (
                                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-slate-200 dark:border-zinc-800">
                                     <div className="text-xs text-slate-900 dark:text-slate-300 dark:text-zinc-400 font-semibold">
-                                        Showing <span className="font-bold text-violet-500">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> to <span className="font-bold text-violet-500">{Math.min(currentPage * ITEMS_PER_PAGE, accounts.length)}</span> of <span className="font-bold text-violet-500">{accounts.length}</span> gifts
+                                        {t('Showing')} <span className="font-bold text-violet-500">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> {t('to')} <span className="font-bold text-violet-500">{Math.min(currentPage * ITEMS_PER_PAGE, accounts.length)}</span> {t('of')} <span className="font-bold text-violet-500">{accounts.length}</span> {t('gifts')}
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <button 
@@ -584,7 +621,7 @@ const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: 
                                             disabled={currentPage === 1}
                                             className="px-4 py-2 rounded-lg bg-slate-100/50 dark:bg-zinc-900/50 hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 disabled:opacity-50 disabled:cursor-not-allowed border border-slate-200 dark:border-zinc-800 transition-colors text-xs font-bold uppercase tracking-wider flex items-center gap-2"
                                         >
-                                            <Icon name="ChevronLeft" size={14} /> Prev
+                                            <Icon name="ChevronLeft" size={14} className="rtl:rotate-180" /> Prev
                                         </button>
                                         <div className="flex items-center gap-1">
                                             {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
@@ -606,7 +643,7 @@ const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: 
                                             disabled={currentPage === totalPages}
                                             className="px-4 py-2 rounded-lg bg-slate-100/50 dark:bg-zinc-900/50 hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 disabled:opacity-50 disabled:cursor-not-allowed border border-slate-200 dark:border-zinc-800 transition-colors text-xs font-bold uppercase tracking-wider flex items-center gap-2"
                                         >
-                                            Next <Icon name="ChevronRight" size={14} />
+                                            Next <Icon name="ChevronRight" size={14} className="rtl:rotate-180" />
                                         </button>
                                     </div>
                                 </div>
@@ -627,7 +664,7 @@ const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: 
 };
 
 // DONATE MODAL
-const DonateModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
+const DonateModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => { const { dir, t } = useLanguage();
     const [iframeLoaded, setIframeLoaded] = useState(false);
 
     if (!open) return null;
@@ -637,7 +674,7 @@ const DonateModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, o
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+            dir={dir} className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
             onClick={onClose}
         >
             <motion.div 
@@ -653,8 +690,8 @@ const DonateModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, o
                             <Icon name="Heart" size={20} />
                         </div>
                         <div>
-                            <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">Support Us</h2>
-                            <p className="text-xs text-slate-900 dark:text-slate-300 font-medium mt-0.5">Keep the servers alive</p>
+                            <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">{t('Support Us')}</h2>
+                            <p className="text-xs text-slate-900 dark:text-slate-300 font-medium mt-0.5">{t('Keep the servers alive')}</p>
                         </div>
                     </div>
                     <button 
@@ -675,7 +712,7 @@ const DonateModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, o
                             >
                                 <Icon name="Loader2" size={24} />
                             </motion.div>
-                            <p className="text-xs font-bold text-slate-600 dark:text-slate-300 animate-pulse uppercase tracking-widest">Loading Gateway</p>
+                            <p className="text-xs font-bold text-slate-600 dark:text-slate-300 animate-pulse uppercase tracking-widest">{t('Loading Gateway')}</p>
                         </div>
                     )}
                     <iframe 
@@ -692,10 +729,10 @@ const DonateModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, o
                         <div className="p-2 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-xl shrink-0">
                             <Icon name="Wallet" size={18} />
                         </div>
-                        <div className="text-left flex-1">
-                            <h4 className="text-xs font-bold text-slate-900 dark:text-slate-300 mb-1">No crypto wallet?</h4>
+                        <div className="text-start flex-1">
+                            <h4 className="text-xs font-bold text-slate-900 dark:text-slate-300 mb-1">{t('No crypto wallet?')}</h4>
                             <p className="text-[10px] text-slate-600 dark:text-slate-500 leading-relaxed font-medium">
-                                You can use <a href="https://exodus.com/" target="_blank" rel="noreferrer" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-bold">Exodus</a>, <a href="https://cakewallet.com/" target="_blank" rel="noreferrer" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-bold">Cake Wallet</a>, or another wallet to exchange and send.
+                                {t('You can use ')}<a href="https://exodus.com/" target="_blank" rel="noreferrer" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-bold">Exodus</a>, <a href="https://cakewallet.com/" target="_blank" rel="noreferrer" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-bold">Cake Wallet</a>, or another wallet to exchange and send.
                             </p>
                         </div>
                     </div>
@@ -707,6 +744,7 @@ const DonateModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, o
 
 // REQUEST MODAL
 const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (data: any) => Promise<void>; initialTitle?: string; allResources?: Record<string, ResourceItem[]> }> = ({ open, onClose, onSubmit, initialTitle = '', allResources = {} }) => {
+    const { dir, t } = useLanguage();
     const [formData, setFormData] = useState({ title: initialTitle, category: 'Game', image: '', message: '' });
     const [loading, setLoading] = useState(false);
     const [duplicateItem, setDuplicateItem] = useState<ResourceItem | null>(null);
@@ -784,7 +822,7 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-4"
+            dir={dir} className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-4"
         >
             <motion.div 
                 initial={{ scale: 0.9, y: 20 }}
@@ -793,7 +831,7 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
             >
                 <div className="bg-slate-50 dark:bg-slate-950 p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center shrink-0">
                     <h3 className="text-lg font-black uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-                        <Icon name="Plus" size={20} className="text-blue-500" /> Request Item
+                        <Icon name="Plus" size={20} className="text-blue-500" /> {t('Request Item')}
                     </h3>
                     <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors">
                         <Icon name="X" size={18} />
@@ -803,7 +841,7 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
                 <div className="overflow-y-auto p-6 space-y-4">
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label className="block text-xs font-bold text-slate-900 dark:text-slate-300 uppercase tracking-wide mb-1">Item Title *</label>
+                            <label className="block text-xs font-bold text-slate-900 dark:text-slate-300 uppercase tracking-wide mb-1">{t('Item Title *')}</label>
                             <input 
                                 type="text" 
                                 required 
@@ -825,9 +863,9 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
                                 >
                                     <Icon name="AlertTriangle" size={18} className="text-amber-500 shrink-0 mt-0.5" />
                                     <div>
-                                        <p className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-1">Already in Area?</p>
+                                        <p className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-1">{t('Already in Area?')}</p>
                                         <p className="text-xs text-slate-600 dark:text-slate-300">
-                                            We found <strong>{duplicateItem.name}</strong> in the {duplicateItem.category} section. Are you sure you want to request it?
+                                            {t('We found a similar item in that section. Are you sure you want to request it?')}
                                         </p>
                                     </div>
                                 </motion.div>
@@ -835,7 +873,7 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
                         </AnimatePresence>
 
                         <div>
-                            <label className="block text-xs font-bold text-slate-900 dark:text-slate-300 uppercase tracking-wide mb-1">Section</label>
+                            <label className="block text-xs font-bold text-slate-900 dark:text-slate-300 uppercase tracking-wide mb-1">{t('Section')}</label>
                             <select 
                                 className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors"
                                 value={formData.category}
@@ -849,12 +887,12 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
                             </select>
                             {autoCategorized && formData.title.length > 2 && (
                                 <p className="text-[10px] text-blue-500 mt-1.5 flex items-center gap-1 font-bold uppercase tracking-wider">
-                                    <Icon name="Wand2" size={10} /> Auto-categorized based on title
+                                    <Icon name="Sparkles" size={10} /> {t('Auto-categorized based on title')}
                                 </p>
                             )}
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-slate-900 dark:text-slate-300 uppercase tracking-wide mb-1">Image URL (Optional)</label>
+                            <label className="block text-xs font-bold text-slate-900 dark:text-slate-300 uppercase tracking-wide mb-1">{t('Image URL (Optional)')}</label>
                             <input 
                                 type="url" 
                                 className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors"
@@ -864,11 +902,11 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-slate-900 dark:text-slate-300 uppercase tracking-wide mb-1">Message to Admin (Optional)</label>
+                            <label className="block text-xs font-bold text-slate-900 dark:text-slate-300 uppercase tracking-wide mb-1">{t('Message to Admin (Optional)')}</label>
                             <textarea 
                                 rows={3}
                                 className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors resize-none"
-                                placeholder="Any specific version or details?"
+                                placeholder={t('Any specific version or details?')}
                                 value={formData.message}
                                 onChange={(e) => setFormData({...formData, message: e.target.value})}
                             ></textarea>
@@ -880,7 +918,7 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
                             className="w-full py-4 mt-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-xl font-bold text-sm uppercase tracking-widest shadow-lg shadow-blue-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                             {loading ? <Icon name="Loader" size={18} className="animate-spin" /> : <Icon name="Send" size={18} />}
-                            {loading ? 'Transmitting...' : 'Send Request'}
+                            {loading ? t('Transmitting...') : t('Send Request')}
                         </button>
                     </form>
                 </div>
@@ -894,7 +932,7 @@ const Footer: React.FC<{ onSupportClick?: () => void }> = ({ onSupportClick }) =
         <Icon name="Discord" size={20} />
      </a>
      <a id="telegram-btn" href={TELEGRAM_LINK} target="_blank" rel="noreferrer" className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-white hover:bg-[#229ED9] hover:shadow-lg hover:shadow-[#229ED9]/20 transition-all border border-slate-200 dark:border-slate-800">
-        <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 items-center justify-center z-20">
+        <span className="absolute -top-0.5 -end-0.5 flex h-2.5 w-2.5 items-center justify-center z-20">
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]" style={{ animation: 'pulse 0.8s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}></span>
         </span>
         <Icon name="Telegram" size={20} />
@@ -910,25 +948,30 @@ const Footer: React.FC<{ onSupportClick?: () => void }> = ({ onSupportClick }) =
      )}
   </footer>
 );
-const AdBanner: React.FC<{ desktopSrc: string, mobileSrc: string, link: string, className?: string }> = ({ desktopSrc, mobileSrc, link, className }) => (
-  <a href={link} target="_blank" rel="noreferrer" className={`relative block w-full max-w-[320px] md:max-w-[970px] mx-auto aspect-[32/10] md:aspect-[97/25] group overflow-hidden rounded-2xl transition-all duration-500 bg-slate-100 dark:bg-slate-900/50 ${className || ''}`}>
+const AdBanner: React.FC<{ desktopSrc: string, mobileSrc: string, link: string, className?: string }> = ({ desktopSrc, mobileSrc, link, className }) => {
+  const { dir, t } = useLanguage();
+  return (
+    <a dir={dir} href={link} target="_blank" rel="noreferrer" className={`relative block w-full max-w-[320px] md:max-w-[970px] mx-auto aspect-[32/10] md:aspect-[97/25] group overflow-hidden rounded-2xl transition-all duration-500 bg-slate-100 dark:bg-slate-900/50 ${className || ''}`}>
     {/* Animated glow effect behind the image */}
     <div className="absolute inset-0 bg-gradient-to-r from-primary-500/0 via-primary-500/20 to-primary-500/0 opacity-0 group-hover:opacity-100 -translate-x-full group-hover:translate-x-full transition-all duration-1000 ease-in-out -skew-x-12 z-10 pointer-events-none" />
     
     {/* Sponsored Badge */}
-    <div className="absolute top-2 right-2 md:top-3 md:right-3 z-20 flex items-center gap-1.5 bg-black/40 backdrop-blur-md text-white/90 px-2 py-1 rounded-md border border-white/10 text-[9px] md:text-[10px] font-medium tracking-wide transition-all duration-300 group-hover:bg-black/60 shadow-sm">
+    <div className="absolute top-2 end-2 md:top-3 md:end-3 z-20 flex items-center gap-1.5 bg-black/40 backdrop-blur-md text-white/90 px-2 py-1 rounded-md border border-white/10 text-[9px] md:text-[10px] font-medium tracking-wide transition-all duration-300 group-hover:bg-black/60 shadow-sm">
         <Icon name="Info" size={12} className="text-white/70" />
-        <span>Sponsored</span>
+        <span>{t('Sponsored')}</span>
     </div>
 
     <picture className="w-full h-full block">
         <source media="(min-width: 768px)" srcSet={desktopSrc} />
-        <img src={mobileSrc} alt="Advertisement" className="w-full h-full object-cover transform group-hover:scale-105 md:group-hover:scale-[1.02] transition-transform duration-700" loading="lazy" />
+        <img src={mobileSrc} alt="Advertisement" className="w-full h-full object-contain transform group-hover:scale-105 md:group-hover:scale-[1.02] transition-transform duration-700" loading="lazy" />
     </picture>
+  
   </a>
-);
+  );
+};
 
 const GameCarousel: React.FC<{ games: UpcomingGame[], loading: boolean, errorState: { missing: boolean, script: boolean } }> = ({ games, loading, errorState }) => {
+    const { dir, t } = useLanguage();
     const [currentIndex, setCurrentIndex] = useState(0);
     const [itemsPerView, setItemsPerView] = useState(5);
     const [isHovered, setIsHovered] = useState(false);
@@ -993,8 +1036,8 @@ const GameCarousel: React.FC<{ games: UpcomingGame[], loading: boolean, errorSta
         return (
             <div className="w-full h-40 flex flex-col items-center justify-center bg-red-50 dark:bg-red-900/10 text-red-500 rounded-2xl border border-red-200 dark:border-red-900/30">
                 <Icon name="Bug" size={32} className="mb-2" />
-                <span className="text-xs font-bold uppercase tracking-widest">{errorState.script ? "Script Error" : "Backend Mismatch"}</span>
-                <span className="text-[10px] mt-1 opacity-70">{errorState.script ? "Invalid API response." : "'upcoming' tab not found."}</span>
+                <span className="text-xs font-bold uppercase tracking-widest">{errorState.script ? t('Script Error') : t('Backend Mismatch')}</span>
+                <span className="text-[10px] mt-1 opacity-70">{errorState.script ? t('Invalid API response.') : t('upcoming tab not found.')}</span>
             </div>
         );
     }
@@ -1003,7 +1046,7 @@ const GameCarousel: React.FC<{ games: UpcomingGame[], loading: boolean, errorSta
         return (
             <div className="w-full h-40 flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 rounded-2xl">
                 <Icon name="Database" size={32} className="mb-2 opacity-50 animate-pulse" />
-                <span className="text-xs font-bold uppercase tracking-widest">Syncing Data...</span>
+                <span className="text-xs font-bold uppercase tracking-widest">{t('Syncing Data...')}</span>
             </div>
         );
     }
@@ -1012,7 +1055,7 @@ const GameCarousel: React.FC<{ games: UpcomingGame[], loading: boolean, errorSta
         return (
             <div className="w-full h-40 flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 rounded-2xl">
                 <Icon name="Ghost" size={32} className="mb-2 opacity-50" />
-                <span className="text-xs font-bold uppercase tracking-widest">No Upcoming Games Found</span>
+                <span className="text-xs font-bold uppercase tracking-widest">{t('No Upcoming Games Found')}</span>
             </div>
         );
     }
@@ -1029,7 +1072,7 @@ const GameCarousel: React.FC<{ games: UpcomingGame[], loading: boolean, errorSta
             <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
                 <motion.div 
                     className="flex"
-                    animate={{ x: `-${currentIndex * (100 / itemsPerView)}%` }}
+                    animate={{ x: dir === 'rtl' ? `${currentIndex * (100 / itemsPerView)}%` : `-${currentIndex * (100 / itemsPerView)}%` }}
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 >
                     {games.map((game, idx) => (
@@ -1042,11 +1085,11 @@ const GameCarousel: React.FC<{ games: UpcomingGame[], loading: boolean, errorSta
                                 <img 
                                     src={game.image} 
                                     alt={game.title} 
-                                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-110"
+                                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700"
                                     loading="lazy"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover/card:opacity-90 transition-opacity"></div>
-                                <div className="absolute bottom-0 left-0 right-0 p-3 z-20">
+                                <div className="absolute bottom-0 start-0 end-0 p-3 z-20">
                                     <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/20 md:backdrop-blur-md border border-white/10 mb-1.5 max-w-full">
                                         <Icon name={game.icon} size={10} className="text-white shrink-0" />
                                         <span className="text-[8px] font-bold text-white uppercase tracking-wider truncate">
@@ -1057,7 +1100,7 @@ const GameCarousel: React.FC<{ games: UpcomingGame[], loading: boolean, errorSta
                                         {game.title}
                                     </h3>
                                     <div className="mt-1 flex justify-between items-center">
-                                        <span className="font-mono font-bold text-emerald-400 text-[10px] drop-shadow-md bg-black/40 px-1.5 rounded">
+                                        <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400 text-[10px] drop-shadow-md bg-black/40 px-1.5 rounded">
                                             {game.price}
                                         </span>
                                     </div>
@@ -1067,184 +1110,581 @@ const GameCarousel: React.FC<{ games: UpcomingGame[], loading: boolean, errorSta
                     ))}
                 </motion.div>
             </div>
-            <div className="absolute top-1/2 -translate-y-1/2 left-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block">
+            <div className="absolute top-1/2 -translate-y-1/2 start-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block">
                 <button onClick={handlePrev} className="p-2 rounded-full bg-white/90 dark:bg-black/90 text-slate-900 dark:text-white shadow-lg hover:scale-110 transition-transform">
-                    <Icon name="ChevronLeft" size={20} />
+                    <Icon name="ChevronLeft" size={20} className="rtl:rotate-180" />
                 </button>
             </div>
-            <div className="absolute top-1/2 -translate-y-1/2 right-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block">
+            <div className="absolute top-1/2 -translate-y-1/2 end-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block">
                 <button onClick={handleNext} className="p-2 rounded-full bg-white/90 dark:bg-black/90 text-slate-900 dark:text-white shadow-lg hover:scale-110 transition-transform">
-                    <Icon name="ChevronRight" size={20} />
+                    <Icon name="ChevronRight" size={20} className="rtl:rotate-180" />
                 </button>
             </div>
         </div>
     );
 };
 
-const RecentProductsCarousel: React.FC<{ 
-    items: ResourceItem[], 
-    loading: boolean, 
+const RecentProductsCarousel: React.FC<{
+    items: ResourceItem[],
+    loading: boolean,
     onSelect: (item: ResourceItem) => void,
     stash: string[],
     toggleStash: (id: string, e?: React.MouseEvent) => void
 }> = ({ items, loading, onSelect, stash, toggleStash }) => {
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [itemsPerView, setItemsPerView] = useState(5);
-    const [isHovered, setIsHovered] = useState(false);
-    const touchStartX = useRef(0);
-    const touchEndX = useRef(0);
+    const { dir, t } = useLanguage();
+    const scrollRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        setCurrentIndex(0);
-    }, [items]);
-
-    useEffect(() => {
-        const handleResize = () => {
-            const w = window.innerWidth;
-            if (w < 640) setItemsPerView(1.2); 
-            else if (w < 768) setItemsPerView(2.2); 
-            else if (w < 1024) setItemsPerView(3.2); 
-            else if (w < 1280) setItemsPerView(4.2); 
-            else setItemsPerView(5); 
-        };
-        handleResize();
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    useEffect(() => {
-        if (isHovered || items.length === 0) return;
-        const interval = setInterval(() => {
-            handleNext();
-        }, 3000);
-        return () => clearInterval(interval);
-    }, [currentIndex, isHovered, items.length, itemsPerView]);
-
-    const handleNext = () => {
-        setCurrentIndex((prev) => {
-            const maxIndex = items.length - Math.floor(itemsPerView);
-            return prev >= maxIndex ? 0 : prev + 1;
-        });
-    };
-
-    const handlePrev = () => {
-        setCurrentIndex((prev) => {
-            const maxIndex = items.length - Math.floor(itemsPerView);
-            return prev <= 0 ? maxIndex : prev - 1;
-        });
-    };
-
-    const handleTouchStart = (e: React.TouchEvent) => {
-        touchStartX.current = e.targetTouches[0].clientX;
-        touchEndX.current = e.targetTouches[0].clientX;
-    };
-
-    const handleTouchMove = (e: React.TouchEvent) => {
-        touchEndX.current = e.targetTouches[0].clientX;
-    };
-
-    const handleTouchEnd = () => {
-        if (touchStartX.current - touchEndX.current > 50) handleNext();
-        if (touchStartX.current - touchEndX.current < -50) handlePrev();
+    const scroll = (direction: 'left' | 'right') => {
+        if (scrollRef.current) {
+            const clientWidth = scrollRef.current.clientWidth;
+            // Scroll by roughly 80% of the container width to show the next set
+            const isRTL = dir === 'rtl';
+            const multiplier = isRTL ? -1 : 1;
+            const scrollAmount = direction === 'left' ? -clientWidth * 0.8 * multiplier : clientWidth * 0.8 * multiplier;
+            scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        }
     };
 
     if (loading && items.length === 0) {
         return (
-            <div className="w-full h-40 flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 rounded-2xl">
-                <Icon name="Database" size={32} className="mb-2 opacity-50 animate-pulse" />
-                <span className="text-xs font-bold uppercase tracking-widest">Loading Recent Products...</span>
+            <div className="w-full h-56 flex flex-col items-center justify-center bg-slate-100/50 dark:bg-slate-900/50 rounded-3xl border border-slate-200/50 dark:border-slate-800/50 backdrop-blur-sm">
+                <Icon name="Loader2" size={32} className="mb-3 text-emerald-900 dark:text-emerald-500 animate-spin" />
+                <span className="text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{t('Curating Recent Products...')}</span>
             </div>
         );
     }
 
-    if (items.length === 0) {
-        return null;
-    }
+    if (items.length === 0) return null;
 
     return (
-        <div 
-            className="relative w-full group select-none"
-            onMouseEnter={() => setIsHovered(true)} 
-            onMouseLeave={() => setIsHovered(false)}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-        >
-            <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
-                <motion.div 
-                    className="flex"
-                    animate={{ x: `-${currentIndex * (100 / itemsPerView)}%` }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                >
-                    {items.map((item, idx) => (
+        <div className="relative w-full group select-none">
+            {/* Desktop Navigation Arrows */}
+            <div className="absolute top-1/2 -translate-y-1/2 -start-4 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block">
+                <button onClick={() => scroll('left')} className="p-3 rounded-full bg-white/90 dark:bg-slate-900/90 text-slate-900 dark:text-white shadow-xl shadow-black/10 hover:scale-110 transition-transform border border-slate-200 dark:border-slate-800">
+                    <Icon name="ChevronLeft" size={24} className="rtl:rotate-180" />
+                </button>
+            </div>
+            <div className="absolute top-1/2 -translate-y-1/2 -end-4 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block">
+                <button onClick={() => scroll('right')} className="p-3 rounded-full bg-white/90 dark:bg-slate-900/90 text-slate-900 dark:text-white shadow-xl shadow-black/10 hover:scale-110 transition-transform border border-slate-200 dark:border-slate-800">
+                    <Icon name="ChevronRight" size={24} className="rtl:rotate-180" />
+                </button>
+            </div>
+
+            {/* Scroll Container */}
+            <div 
+                ref={scrollRef}
+                className="flex gap-4 sm:gap-6 overflow-x-auto snap-x snap-mandatory no-scrollbar pb-6 pt-2 px-2 -mx-2"
+                style={{ scrollBehavior: 'smooth' }}
+            >
+                {items.map((item, idx) => (
+                    <motion.div 
+                        key={`${item.id}-${idx}`}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.05, duration: 0.4 }}
+                        className="snap-start shrink-0 w-[260px] sm:w-[280px] md:w-[320px]"
+                    >
+                        <div 
+                            onClick={() => onSelect(item)}
+                            className="relative aspect-[4/5] bg-slate-200 dark:bg-slate-900 rounded-2xl overflow-hidden group/card shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer border border-slate-200 dark:border-slate-800 hover:border-emerald-500/50 dark:hover:border-emerald-500/50"
+                        >
+                            <img 
+                                src={item.coverImage} 
+                                alt={item.name} 
+                                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700"
+                                loading="lazy"
+                            />
+                            
+                            {/* Rich Gradient Overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent opacity-80 group-hover/card:opacity-100 transition-opacity duration-500" />
+                            
+                            {/* Top Badges Area */}
+                            <div className="absolute top-3 start-3 end-3 flex justify-between items-start z-20">
+                                <div className="flex flex-col gap-1.5 items-start">
+                                    <div className="px-2.5 py-1 bg-emerald-500/90 backdrop-blur-md text-white rounded-lg text-[10px] font-black uppercase tracking-wider shadow-lg">
+                                        {item.category === 'steamtools' ? t('steamtools') : item.category === 'extra' ? t('savegames') : t(item.category).toUpperCase()}
+                                    </div>
+                                    {item.isFree && (
+                                        <div className="px-2.5 py-1 bg-amber-500/90 backdrop-blur-md text-white rounded-lg text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1">
+                                            <Icon name="Gift" size={10} /> {t('Free')}
+                                        </div>
+                                    )}
+                                    {item.category === 'game' && item.links?.ankerParts && item.links.ankerParts.length > 0 && (
+                                        <div className="px-2 py-1 bg-indigo-500/90 backdrop-blur-md text-white rounded-lg text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1">
+                                            <Icon name="Zap" size={10} /> {t('Pre-installed')}
+                                        </div>
+                                    )}
+                                </div>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); toggleStash(item.id, e); }}
+                                    className={`p-2 rounded-xl backdrop-blur-md transition-all ${
+                                        stash.includes(item.id) 
+                                         ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
+                                         : 'bg-black/40 text-white/70 hover:bg-white/20 hover:text-white border border-white/10'
+                                    }`}
+                                    title={stash.includes(item.id) ? t(t('Remove from Stash')) : t(t('Add to Stash'))}
+                                >
+                                    <Icon name="Bookmark" size={16} className={stash.includes(item.id) ? "fill-current" : ""} />
+                                </button>
+                            </div>
+
+
+                        </div>
+                    </motion.div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+
+
+const GenreDetailView: React.FC<{ 
+    genre: string, 
+    games: ResourceItem[], 
+    onBack: () => void,
+    onSelect: (item: ResourceItem) => void,
+    stash: string[],
+    toggleStash: (id: string, e?: React.MouseEvent) => void
+}> = ({ genre, games, onBack, onSelect, stash, toggleStash }) => {
+    const { dir, t } = useLanguage();
+    // Filter games by genre
+    const filteredGames = useMemo(() => {
+        return games.filter(g => g.genres && g.genres.toLowerCase().includes(genre.toLowerCase()));
+    }, [games, genre]);
+    
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 24;
+    
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [genre]);
+    
+    const totalPages = Math.ceil(filteredGames.length / itemsPerPage);
+    const currentGames = filteredGames.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    
+    const handlePageChange = (newPage) => {
+        setCurrentPage(newPage);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    return (
+        <div className="w-full min-h-screen pt-16 pb-32">
+            <Helmet>
+                <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet" />
+            </Helmet>
+            
+            <AnimatedGenreHero genre={genre} games={filteredGames} onBack={onBack} />
+            <div className="px-4 sm:px-6 lg:px-8 max-w-[1600px] mx-auto mt-8">
+
+            {filteredGames.length === 0 ? (
+                <div className="w-full h-64 flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800">
+                    <Icon name="Search" size={48} className="mb-4 text-slate-400" />
+                    <h3 className="text-xl font-bold text-slate-600 dark:text-slate-300">{t('No games found')}</h3>
+                    <p className="text-slate-500">{t('Could not find any games matching this genre.')}</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6">
+                    {currentGames.map((item, idx) => (
                         <div 
                             key={`${item.id}-${idx}`}
-                            style={{ width: `${100 / itemsPerView}%` }}
-                            className="flex-shrink-0 p-1"
+                            onClick={() => onSelect(item)}
+                            className="relative aspect-[3/4] bg-slate-200 dark:bg-slate-900 rounded-2xl overflow-hidden group shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer border border-slate-200 dark:border-slate-800 hover:border-emerald-500/50"
                         >
-                            <div 
-                                onClick={() => onSelect(item)}
-                                className="relative aspect-[3/4] bg-slate-200 dark:bg-slate-900 rounded-xl overflow-hidden group/card shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer"
-                            >
-                                <img 
-                                    src={item.coverImage} 
-                                    alt={item.name} 
-                                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-110"
-                                    loading="lazy"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover/card:opacity-90 transition-opacity"></div>
-                                
-                                {item.isFree && (
-                                    <div className="absolute top-2 right-2 px-2 py-1 bg-emerald-500 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1 z-20">
-                                        <Icon name="Tag" size={10} /> Free
+                            <img 
+                                src={item.coverImage} 
+                                alt={item.name} 
+                                className="absolute inset-0 w-full h-full object-cover"
+                                loading="lazy"
+                            />
+                            
+                            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500" />
+                            
+                            <div className="absolute top-3 start-3 end-3 flex justify-between items-start z-20">
+
+                                <div className="flex flex-col gap-1.5 items-start">
+                                    <div className="px-2.5 py-1 bg-emerald-500/90 backdrop-blur-md text-white rounded-lg text-[10px] font-black uppercase tracking-wider shadow-lg">
+                                        {item.category === 'steamtools' ? t('steamtools') : item.category === 'extra' ? t('savegames') : t(item.category).toUpperCase()}
                                     </div>
-                                )}
-                                <div className="absolute top-2 left-2 px-2 py-1 bg-primary-600 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg z-20">
-                                    {item.category === 'steamtools' ? 'STEAMTOOLS' : item.category === 'extra' ? 'SAVEGAME' : item.category.toUpperCase()}
+                                    {item.isFree && (
+                                        <div className="px-2.5 py-1 bg-amber-500/90 backdrop-blur-md text-white rounded-lg text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1">
+                                            <Icon name="Gift" size={10} /> {t('Free')}
+                                        </div>
+                                    )}
+                                    {item.category === 'game' && item.links?.ankerParts && item.links.ankerParts.length > 0 && (
+                                        <div className="px-2 py-1 bg-indigo-500/90 backdrop-blur-md text-white rounded-lg text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1">
+                                            <Icon name="Zap" size={10} /> {t('Pre-installed')}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <button
-                                    onClick={(e) => toggleStash(item.id, e)}
-                                    className={`absolute top-2 right-2 z-40 p-1.5 rounded-full md:backdrop-blur-md transition-all ${
+                                    onClick={(e) => { e.stopPropagation(); toggleStash(item.id, e); }}
+                                    className={`p-1.5 sm:p-2 rounded-lg backdrop-blur-md transition-all ${
                                         stash.includes(item.id) 
-                                        ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
-                                        : 'bg-black/40 text-white/70 hover:bg-black/60 hover:text-white border border-white/10'
-                                    } ${item.isFree ? 'top-10' : ''}`}
-                                    title={stash.includes(item.id) ? "Remove from Stash" : "Add to Stash"}
+                                         ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
+                                         : 'bg-black/40 text-white/70 hover:bg-white/20 hover:text-white border border-white/10'
+                                    }`}
+                                    title={stash.includes(item.id) ? t(t('Remove from Stash')) : t(t('Add to Stash'))}
                                 >
-                                    <Icon name="Bookmark" size={12} className={stash.includes(item.id) ? "fill-current" : ""} />
+                                    <Icon name="Bookmark" size={14} className={stash.includes(item.id) ? "fill-current" : ""} />
                                 </button>
-
-                                <div className="absolute bottom-0 left-0 right-0 p-3 z-20">
-                                    <h3 className="font-black text-xs md:text-sm text-white leading-tight line-clamp-2 drop-shadow-md group-hover/card:text-primary-400 transition-colors">
-                                        {item.name}
-                                    </h3>
-                                    <div className="mt-1 flex justify-between items-center">
-                                        <span className="font-mono font-bold text-white text-[10px] drop-shadow-md bg-black/40 px-1.5 rounded">
-                                            {item.version}
-                                        </span>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     ))}
-                </motion.div>
+                </div>
+            )}
+            
+            {totalPages > 1 && (
+                <div className="mt-12 flex justify-center items-center gap-4">
+                    <button
+                        onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                        disabled={currentPage === 1}
+                        className="p-2 sm:p-3 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-slate-300 dark:border-slate-700"
+                    >
+                        <Icon name="ChevronLeft" size={20} className="rtl:rotate-180" />
+                    </button>
+                    
+                    <div className="flex gap-2">
+                        {Array.from({ length: totalPages }).map((_, i) => {
+                            const page = i + 1;
+                            // Show first, last, current, and +/- 2 pages around current
+                            if (
+                                page === 1 || 
+                                page === totalPages || 
+                                Math.abs(page - currentPage) <= 2
+                            ) {
+                                return (
+                                    <button
+                                        key={page}
+                                        onClick={() => handlePageChange(page)}
+                                        className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl font-bold transition-colors border ${
+                                            currentPage === page
+                                                ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-500/20'
+                                                : 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
+                                        }`}
+                                    >
+                                        {page}
+                                    </button>
+                                );
+                            } else if (
+                                page === currentPage - 3 ||
+                                page === currentPage + 3
+                            ) {
+                                return <span key={page} className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-slate-500">...</span>;
+                            }
+                            return null;
+                        })}
+                    </div>
+                    
+                    <button
+                        onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                        disabled={currentPage === totalPages}
+                        className="p-2 sm:p-3 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-slate-300 dark:border-slate-700"
+                    >
+                        <Icon name="ChevronRight" size={20} className="rtl:rotate-180" />
+                    </button>
+                </div>
+            )}
             </div>
-            <div className="absolute top-1/2 -translate-y-1/2 left-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block">
-                <button onClick={handlePrev} className="p-2 rounded-full bg-white/90 dark:bg-black/90 text-slate-900 dark:text-white shadow-lg hover:scale-110 transition-transform">
-                    <Icon name="ChevronLeft" size={20} />
-                </button>
+        </div>
+    );
+};
+
+
+const AboutSecretAreaSection: React.FC = () => {
+    const { dir, t } = useLanguage();
+    
+    return (
+        <div className="w-full relative mt-16 mb-16 overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-xl dark:shadow-2xl transition-colors duration-300">
+            {/* Background Base */}
+            <div className="absolute inset-0 z-0">
+                <div className="absolute inset-0 bg-gradient-to-r from-white via-slate-50 to-indigo-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/20 transition-colors duration-300"></div>
+                <div className="absolute -top-24 -left-24 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl"></div>
+                <div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-blue-900/10 dark:from-blue-900/20 via-transparent to-transparent opacity-50"></div>
             </div>
-            <div className="absolute top-1/2 -translate-y-1/2 right-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block">
-                <button onClick={handleNext} className="p-2 rounded-full bg-white/90 dark:bg-black/90 text-slate-900 dark:text-white shadow-lg hover:scale-110 transition-transform">
-                    <Icon name="ChevronRight" size={20} />
-                </button>
+
+            <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between p-8 sm:p-12 lg:p-16 gap-12" dir={dir}>
+                {/* Left Side: Content */}
+                <div className="w-full lg:w-1/2 flex flex-col text-start space-y-6">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-widest w-max mb-2 transition-colors duration-300">
+                        <Icon name="Info" size={14} />
+                        <span>{t("What's SecretArea?")}</span>
+                    </div>
+                    
+                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-tight transition-colors duration-300" style={{ fontFamily: "'Nexa', 'Inter', sans-serif" }}>
+                        {t('The idea behind')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">{t('SecretArea')}</span>
+                    </h2>
+                    
+                    <div className="space-y-4 text-sm sm:text-base text-slate-600 dark:text-slate-300 font-medium leading-relaxed transition-colors duration-300">
+                        <p>{t('SecretArea is all about bringing together the best and most popular games in one place — not every game, but only the ones that are worth your time and are actually good.')}</p>
+                        <p>{t('We focus on games from trusted sources, with no annoying ads and no viruses. We’re also gamers ourselves, and we created SecretArea because we used to spend too much time searching for good games instead of actually playing them.')}</p>
+                        <p>{t('Our goal is simple: bring the best games together in one place, so you can spend less time searching and more time playing.')}</p>
+                    </div>
+
+                    {/* Progress Bars */}
+                    <div className="mt-6 space-y-5 bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-800/50 backdrop-blur-sm transition-colors duration-300">
+                        {/* FitGirl */}
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-xs font-bold uppercase tracking-wide">
+                                <span className="text-emerald-600 dark:text-emerald-400">FitGirl Repack</span>
+                                <span className="text-emerald-600 dark:text-emerald-400">90%</span>
+                            </div>
+                            <div className="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden transition-colors duration-300">
+                                <div className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full w-0 animate-[fillProgress_1.5s_ease-out_forwards]" style={{ '--target-width': '90%' }}></div>
+                            </div>
+                        </div>
+                        {/* Ankergames */}
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-xs font-bold uppercase tracking-wide">
+                                <span className="text-blue-600 dark:text-blue-400">Ankergames</span>
+                                <span className="text-blue-600 dark:text-blue-400">10%</span>
+                            </div>
+                            <div className="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden transition-colors duration-300">
+                                <div className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full w-0 animate-[fillProgress_1.5s_ease-out_forwards_0.3s]" style={{ '--target-width': '10%' }}></div>
+                            </div>
+                        </div>
+                        {/* Dodi */}
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-xs font-bold uppercase tracking-wide">
+                                <span className="text-red-600 dark:text-red-400">Dodi Repack <span className="text-slate-500 dark:text-slate-400 lowercase normal-case">({t('he use Ads')})</span></span>
+                                <span className="text-red-600 dark:text-red-400">0%</span>
+                            </div>
+                            <div className="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden transition-colors duration-300">
+                                <div className="h-full bg-red-500 rounded-full w-0"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="pt-4">
+                        <button 
+                            onClick={() => {
+                                const el = document.getElementById('popular-repacks-section');
+                                if (el) {
+                                    const y = el.getBoundingClientRect().top + window.scrollY - 100;
+                                    window.scrollTo({ top: y, behavior: 'smooth' });
+                                }
+                            }}
+                            className="px-6 py-4 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 text-white dark:text-slate-900 font-black text-sm uppercase tracking-widest rounded-xl shadow-lg transition-all transform hover:-translate-y-1 flex items-center gap-3 w-full sm:w-auto justify-center"
+                        >
+                            <Icon name="TrendingUp" size={18} />
+                            {t('Most popular repacks')}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Right Side: Image */}
+                <div className="w-full lg:w-1/2 flex justify-center items-center">
+                    <img 
+                        src="/images/banner 03.png" 
+                        alt="SecretArea Idea" 
+                        className="w-full h-auto object-contain max-h-[500px] lg:max-h-[800px] drop-shadow-2xl hover:scale-105 transition-transform duration-700 ease-out"
+                        style={{ maxWidth: '1530px' }}
+                    />
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+
+const FreeTimeTopStudiosSection: React.FC<{
+    profiles: CompanyProfile[],
+    onOpenAllStudios: () => void
+}> = ({ profiles, onOpenAllStudios }) => {
+    const { dir, t } = useLanguage();
+
+    const topStudios = React.useMemo(() => {
+        return profiles
+            .map(profile => {
+                const totalCount = (profile.gameIds?.length || 0) + 
+                                   (profile.hypervisorIds?.length || 0) + 
+                                   (profile.steamtoolsIds?.length || 0);
+                return { ...profile, totalCount };
+            })
+            .sort((a, b) => b.totalCount - a.totalCount)
+            .slice(0, 6);
+    }, [profiles]);
+
+    return (
+        <div className="w-full relative mt-16 mb-24 overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-xl dark:shadow-2xl transition-colors duration-300">
+            {/* Background Base */}
+            <div className="absolute inset-0 z-0">
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-50 via-white to-blue-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/20 transition-colors duration-300"></div>
+                <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-indigo-900/10 dark:from-indigo-900/20 via-transparent to-transparent opacity-50"></div>
+            </div>
+
+            <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between p-8 sm:p-12 lg:p-16 gap-12" dir={dir}>
+                {/* Left Side: Content */}
+                <div className="w-full lg:w-1/2 flex flex-col text-start space-y-6">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold uppercase tracking-widest w-max mb-2 transition-colors duration-300">
+                        <Icon name="Gamepad2" size={14} />
+                        <span>{t("Top Studios")}</span>
+                    </div>
+                    
+                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-tight transition-colors duration-300" style={{ fontFamily: "'Nexa', 'Inter', sans-serif" }}>
+                        {t('Your Free Time Called.')}
+                    </h2>
+                    
+                    <h3 className="text-xl sm:text-2xl font-bold text-slate-700 dark:text-slate-200 transition-colors duration-300">
+                        {t('We brought the best games from the best studios.')}
+                    </h3>
+                    
+                    <div className="text-sm sm:text-base text-slate-600 dark:text-slate-300 font-medium leading-relaxed transition-colors duration-300">
+                        <p>{t('Why waste hours searching when we’ve already done it for you? We handpicked some of the best and most popular games from the best game studios, so you can skip the searching and get straight to playing. 🎮😎')}</p>
+                    </div>
+
+                    {/* Top 6 Studios Animation/Grid */}
+                    <div className="mt-6 grid grid-cols-3 sm:grid-cols-6 gap-3 sm:gap-4">
+                        {topStudios.map((studio, index) => (
+                            <div 
+                                key={studio.id} 
+                                className="group flex flex-col items-center justify-center p-3 sm:p-4 bg-slate-100 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-indigo-500/50 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all duration-300 shadow-sm hover:shadow-md animate-[fadeInUp_0.5s_ease-out_forwards]"
+                                style={{ animationDelay: `${index * 0.1}s`, opacity: 0 }}
+                            >
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center p-2 mb-2 shadow-inner group-hover:scale-110 transition-transform duration-300">
+                                    {studio.logoUrl ? (
+                                        <img src={studio.logoUrl} alt={studio.name} className="w-full h-full object-contain filter dark:brightness-110" />
+                                    ) : (
+                                        <span className="font-bold text-slate-400 dark:text-slate-500 text-xs uppercase">{studio.name.substring(0,2)}</span>
+                                    )}
+                                </div>
+                                <div className="text-center w-full">
+                                    <div className="text-[10px] sm:text-xs font-bold text-slate-700 dark:text-slate-300 truncate w-full">{studio.name}</div>
+                                    <div className="text-[9px] sm:text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 mt-0.5">{studio.totalCount} {t('Games')}</div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="pt-4">
+                        <button 
+                            onClick={onOpenAllStudios}
+                            className="px-6 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm uppercase tracking-widest rounded-xl shadow-[0_0_30px_rgba(79,70,229,0.3)] hover:shadow-[0_0_40px_rgba(79,70,229,0.5)] transition-all transform hover:-translate-y-1 flex items-center gap-3 w-full sm:w-auto justify-center"
+                        >
+                            <Icon name="Trophy" size={18} />
+                            {t('Top Studios')}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Right Side: Image */}
+                <div className="w-full lg:w-1/2 flex justify-center items-center">
+                    <img 
+                        src="/images/hero01.png" 
+                        alt="Your Free Time Called" 
+                        className="w-full h-auto object-contain max-h-[500px] lg:max-h-[800px] drop-shadow-2xl hover:scale-105 transition-transform duration-700 ease-out"
+                        style={{ maxWidth: '1530px' }}
+                    />
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+const FeaturedGenres: React.FC<{ games: ResourceItem[], onSelectGenre: (genre: string) => void }> = ({ games, onSelectGenre }) => {
+    const { dir, t } = useLanguage();
+    // Extract and sort unique genres
+    const genres = useMemo(() => {
+        const set = new Set<string>();
+        games.forEach(g => {
+            if (g.genres) {
+                g.genres.split(',').map(s => s.trim()).filter(Boolean).forEach(genre => set.add(genre));
+            }
+        });
+        return Array.from(set).sort((a, b) => a.localeCompare(b));
+    }, [games]);
+
+    // Group by first letter
+    const grouped = useMemo(() => {
+        const groups: { [key: string]: string[] } = {};
+        genres.forEach(g => {
+            const letter = g[0].toUpperCase();
+            if (!groups[letter]) groups[letter] = [];
+            groups[letter].push(g);
+        });
+        return groups;
+    }, [genres]);
+
+    const [showAll, setShowAll] = useState(false);
+
+    // If not showing all, only show a few groups to make it look like the screenshot (e.g. 6-9 groups)
+    const displayGroups = showAll ? Object.keys(grouped) : Object.keys(grouped).slice(0, 9);
+
+    if (genres.length === 0) return null;
+
+    return (
+        <div dir={dir} className="w-full text-slate-900 dark:text-white relative overflow-visible">
+            {/* Background Accent */}
+            <div className="absolute top-0 end-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none -me-20 -mt-20"></div>
+
+            <div className="relative z-10 flex flex-col md:flex-row justify-between md:items-end gap-6 mb-12 border-b border-slate-200 dark:border-slate-800 pb-6">
+                <div>
+                    <h2 className="text-xl md:text-2xl font-bold text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-3">
+                        {t('Featured Genres')}</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base">{t('Curated categories from your navigation menu.')}</p>
+                </div>
+                {Object.keys(grouped).length > 9 && (
+                    <button 
+                        onClick={() => setShowAll(!showAll)}
+                        className="px-6 py-2.5 bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-800/50 text-blue-700 dark:text-blue-300 font-medium rounded-full transition-colors border border-blue-200 dark:border-blue-800/50 text-sm flex items-center gap-2 self-start md:self-auto"
+                    >
+                        {showAll ? t('Show Less') : t('Show All')} <Icon name={showAll ? "ChevronUp" : "ChevronDown"} size={16} />
+                    </button>
+                )}
+            </div>
+
+            <div className={`relative z-10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-12 ${showAll ? 'max-h-[600px] overflow-y-auto pe-2 custom-scrollbar' : ''}`}>
+               {showAll && (
+                  <style dangerouslySetInnerHTML={{__html: `
+                     .custom-scrollbar::-webkit-scrollbar {
+                        width: 6px;
+                     }
+                     .custom-scrollbar::-webkit-scrollbar-track {
+                        background: rgba(148, 163, 184, 0.1);
+                        border-radius: 4px;
+                     }
+                     .custom-scrollbar::-webkit-scrollbar-thumb {
+                        background: rgba(59, 130, 246, 0.5);
+                        border-radius: 4px;
+                     }
+                     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                        background: rgba(59, 130, 246, 0.8);
+                     }
+                  `}} />
+               )}
+
+                {displayGroups.map(letter => (
+                    <div key={letter} className="flex flex-col gap-4">
+                        <div className="flex items-center gap-3 text-slate-600 dark:text-slate-500 font-black tracking-widest text-sm uppercase">
+                            <span className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400">
+                                {letter}
+                            </span> 
+                            {t('GENRES')}</div>
+                        <ul className="flex flex-col gap-3">
+                            {grouped[letter].map(genre => (
+                                <li key={genre}>
+                                    <button 
+                                        onClick={() => onSelectGenre(genre)}
+                                        className="text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 font-medium text-sm md:text-base transition-colors text-start"
+                                    >
+                                        {genre}
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                ))}
             </div>
         </div>
     );
 };
 
 const UpcomingListsDisplay: React.FC<{ lists: { [key: string]: string[] } }> = ({ lists }) => {
+    const { dir, t } = useLanguage();
     const [activeCategory, setActiveCategory] = useState<string>('game');
     const [currentPage, setCurrentPage] = useState<number>(1);
     const itemsPerPage = 10;
@@ -1279,7 +1719,7 @@ const UpcomingListsDisplay: React.FC<{ lists: { [key: string]: string[] } }> = (
     return (
         <div className="w-full bg-white dark:bg-[#1e232d] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 sm:p-6 md:p-8 relative overflow-hidden transition-colors">
             {/* Faded Background Image */}
-            <div className="absolute top-0 right-0 bottom-0 w-full md:w-2/3 pointer-events-none opacity-20 dark:opacity-10 transition-opacity duration-500">
+            <div className="absolute top-0 end-0 bottom-0 w-full md:w-2/3 pointer-events-none opacity-20 dark:opacity-10 transition-opacity duration-500">
                 <motion.img 
                     key={activeCategory}
                     initial={{ opacity: 0 }}
@@ -1287,14 +1727,14 @@ const UpcomingListsDisplay: React.FC<{ lists: { [key: string]: string[] } }> = (
                     transition={{ duration: 0.5 }}
                     src={getBgImage(activeCategory)} 
                     alt={`${activeCategory} Background`} 
-                    className="w-full h-full object-cover md:object-right"
+                    className="w-full h-full object-contain md:object-right"
                     style={{ maskImage: 'linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)', WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)' }}
                 />
             </div>
             
             <div className="relative z-10">
                 <h3 className="text-2xl md:text-3xl font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest mb-2 flex flex-wrap items-center gap-2 sm:gap-3">
-                    UPCOMING <span className="text-emerald-500 dark:text-emerald-400">RELEASES</span>
+                    {t('UPCOMING')} <span className="text-emerald-900 dark:text-emerald-500 dark:text-emerald-700 dark:text-emerald-400">{t('RELEASES')}</span>
                 </h3>
                 <div className="flex items-center gap-4 text-xs font-bold text-slate-800 dark:text-slate-500 mb-6 sm:mb-8 uppercase tracking-widest">
                     <span>{new Date().toLocaleDateString('en-GB', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</span>
@@ -1312,7 +1752,7 @@ const UpcomingListsDisplay: React.FC<{ lists: { [key: string]: string[] } }> = (
                                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
                             }`}
                         >
-                            {tab}
+                            {t(tab.toUpperCase())}
                         </button>
                     ))}
                 </div>
@@ -1325,7 +1765,7 @@ const UpcomingListsDisplay: React.FC<{ lists: { [key: string]: string[] } }> = (
                             animate={{ opacity: 1 }}
                             className="text-slate-800 dark:text-slate-600 text-sm italic py-8"
                         >
-                            No upcoming {activeCategory} listed.
+                            {t('No upcoming')} {t(activeCategory)} {t('listed.')}
                         </motion.div>
                     ) : (
                         activeList.map((item, idx) => {
@@ -1334,10 +1774,10 @@ const UpcomingListsDisplay: React.FC<{ lists: { [key: string]: string[] } }> = (
                             
                             const isTop5 = idx < 5;
                             const textColor = isTop5 
-                                ? "text-emerald-600 dark:text-emerald-400" 
+                                ? "text-emerald-600 dark:text-emerald-700 dark:text-emerald-400" 
                                 : "text-blue-600 dark:text-blue-400";
                             const arrowColor = isTop5
-                                ? "text-emerald-500 dark:text-emerald-400"
+                                ? "text-emerald-900 dark:text-emerald-500 dark:text-emerald-700 dark:text-emerald-400"
                                 : "text-blue-500 dark:text-blue-400";
 
                             return (
@@ -1366,17 +1806,17 @@ const UpcomingListsDisplay: React.FC<{ lists: { [key: string]: string[] } }> = (
                             disabled={currentPage === 1}
                             className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         >
-                            <Icon name="ChevronLeft" size={20} />
+                            <Icon name="ChevronLeft" size={20} className="rtl:rotate-180" />
                         </button>
                         <div className="text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest">
-                            PAGE {currentPage} OF {totalPages}
+                            {t('PAGE')} {currentPage} {t('OF')} {totalPages}
                         </div>
                         <button 
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                             disabled={currentPage === totalPages}
                             className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         >
-                            <Icon name="ChevronRight" size={20} />
+                            <Icon name="ChevronRight" size={20} className="rtl:rotate-180" />
                         </button>
                     </div>
                 )}
@@ -1428,10 +1868,10 @@ const HypervisorGuideModal: React.FC<{ open: boolean; onClose: () => void }> = (
               <p>Denuvo Hypervisor Crack or Bypass refers to advanced techniques that leverage virtualization at a very low level (often using a custom or modified hypervisor) to interfere with how the protection monitors the system. Denuvo relies heavily on integrity checks, timing analysis, and detection of debugging or emulation environments. A hypervisor-based approach allows an attacker to sit “under” the operating system, transparently controlling CPU behavior, intercepting instructions, and masking signs of analysis without modifying the protected executable directly.</p>
               <p>Instead of patching the game binary, the hypervisor can emulate or alter specific CPU instructions, fake timing results, or hide breakpoints and memory changes, effectively tricking Denuvo into believing everything is running on a normal, untampered system. This makes the protection much harder to detect or react to, since its checks are being handled outside its visibility. These methods are extremely complex and are typically explored by highly skilled reverse engineers, as they require deep knowledge of CPU virtualization, kernel internals, and anti-tamper mechanisms.</p>
               <p>Officially, only signed drivers can work at such low level. Due to the piracy nature of Denuvo Hypervisor drivers, they will never receive Microsoft-approved certificate. And that’s why to use such “cracks” you need to make certain modifications to your system security settings, listed below. Please note, that those changes are intended to be made temporary, for the course of your gameplay session and then should be reverted after you quit the game.</p>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">Windows virtualization-based security components</h3>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">{t('Windows virtualization-based security components')}</h3>
               <p>On modern systems with Secure Boot, TPM 2.0 and hardware-assisted virtualization capabilities, Windows 10 and 11 enable, mostly* by default, various security solutions via Virtualization-based Security (VBS). VBS is an umbrella term for using a bare-metal hypervisor, the Windows hypervisor, to create isolated virtual spaces that are safe from even a fully compromised OS, in which these security components run and monitor the OS or store confidential information.</p>
               <p>The following Windows components are such security solutions:</p>
-              <ul className="list-disc pl-6 space-y-2">
+              <ul className="list-disc ps-6 space-y-2">
                 <li><a href="https://learn.microsoft.com/en-us/windows/security/hardware-security/enable-virtualization-based-protection-of-code-integrity" target="_blank" rel="noopener" className="text-blue-500 hover:underline">Memory Integrity (HVCI)</a>: Runs checks to detect malicious or at least unexpected modifications of Windows kernel code and restricts suspicious kernel memory allocations. For example, RessourectoR imagines this could protect against malicious software that is being run with administrative privileges and attempts to modify system files, or against memory security vulnerabilities in user-run applications.</li>
                 <li><a href="https://learn.microsoft.com/en-us/windows-hardware/design/device-experiences/oem-credential-guard" target="_blank" rel="noopener" className="text-blue-500 hover:underline">Credential Guard</a>: Stores access credentials, such as passwords, authentication data, biometric data etc. in an isolated environment.</li>
                 <li><a href="https://learn.microsoft.com/en-us/windows-hardware/design/device-experiences/windows-hello" target="_blank" rel="noopener" className="text-blue-500 hover:underline">Windows Hello</a>: Allows you to log in with convenient methods like a short PIN, facial recognition or fingerprint scan. RessourectoR has not found a direct source for this, but it probably prefers Credential Guard to store its highly sensitive data. The login methods it provides tend to break when some of the components above are disabled. It is also protected by System Guard, if that is enabled.</li>
@@ -1450,17 +1890,17 @@ const HypervisorGuideModal: React.FC<{ open: boolean; onClose: () => void }> = (
               <p className="font-bold">Whether that game is worth the risks is something you will ultimately have to decide for yourself.</p>
               <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">What’s inside those cracks?</h3>
               <p>Basically, every modern Hypervisor bypass/crack consists of two parts:</p>
-              <ol className="list-decimal pl-6 space-y-4">
+              <ol className="list-decimal ps-6 space-y-4">
                 <li>
                   VBS.cmd: special command-line script, which checks your existing settings and modify them to make your system prepared for HV-cracks.
                   <p className="mt-2">This script is universal for all HV-games and is developed separately, it doesn’t depend on actual game cracks. You can download the latest version below:</p>
                   <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-5 my-4">
                     <a href="https://paste.fitgirl-repacks.site/?7bcd452c6412ca8a#7hF2cQmiRvFNqKWFmtUCF9D6k9MG9bFFZRfdgEUoy2Xm" target="_blank" rel="noopener" className="text-green-600 dark:text-green-400 font-bold hover:underline">Current version: v1.4 (Updated on March 26, 2026)</a>
                     <div className="mt-4">
-                      <div className="font-bold mb-2">Changes log:</div>
+                      <div className="font-bold mb-2">{t('Changes log')}:</div>
                       <div className="text-sm space-y-2">
                         <p className="font-bold">v1.4</p>
-                        <ol className="list-decimal pl-5 space-y-1">
+                        <ol className="list-decimal ps-5 space-y-1">
                           <li>Added Driver Signature Enforcement (DSE) and test signing detection. If test signing is already enabled, the script will skip the Startup Settings step, BitLocker suspension, and onetimeadvancedoptions entirely, as driver signature enforcement is already bypassed.</li>
                           <li>Fixed an issue where the Revert Changes option would incorrectly show “Nothing to revert, as no changes were previously applied.” when DSE was still disabled, even though a reboot was required to restore it.</li>
                           <li>Added FACEIT Anti-Cheat detection. If detected, the script will exit with a message asking the user to uninstall it before proceeding, as it is known to block the driver from loading.</li>
@@ -1470,7 +1910,7 @@ const HypervisorGuideModal: React.FC<{ open: boolean; onClose: () => void }> = (
                           <li>We rely on user reports to identify and fix issues. If you encounter any problems, please report them at <a href="https://cs.rin.ru/forum/viewtopic.php?f=14&amp;t=156435" className="text-blue-500 hover:underline">https://cs.rin.ru/forum/viewtopic.php?f=14&amp;t=156435</a></li>
                         </ol>
                         <p className="font-bold mt-3">v1.3</p>
-                        <ol className="list-decimal pl-5 space-y-1">
+                        <ol className="list-decimal ps-5 space-y-1">
                           <li>Fixed an issue where Credential Guard Scenarios registry key was being restored on revert even when Credential Guard itself was not running before the script was executed. CG and CG Scenarios are now tracked and reverted independently.</li>
                           <li>Fixed an issue where Memory Integrity (HVCI) would not be detected if it was configured but not yet running, which could keep VBS active. HVCI detection now checks both runtime status and registry configuration.</li>
                           <li>Added detection and removal of RequirePlatformSecurityFeatures when disabling VBS, which was causing VBS to remain enabled. The original value is backed up and restored accurately on revert.</li>
@@ -1479,7 +1919,7 @@ const HypervisorGuideModal: React.FC<{ open: boolean; onClose: () => void }> = (
                           <li>Minor improvements.</li>
                         </ol>
                         <p className="font-bold mt-3">v1.2</p>
-                        <ol className="list-decimal pl-5 space-y-1">
+                        <ol className="list-decimal ps-5 space-y-1">
                           <li>Fixed a compatibility issue where launching the script from a 32-bit application, like Compact AutoRunner which is used in Hypervisor Launcher by FitGirl, would cause system tools such as bcdedit to not be found, due to System32 being redirected to SysWOW64 in 32-bit processes. This manifested as the Windows hypervisor showing as failed to disable, and UEFI lock removal failing entirely. The script now relaunches itself as a 64-bit process when this is detected. Thanks to galaxyxyz888 on Discord.</li>
                           <li>Fixed an issue where the Credential Guard Scenarios registry key was not being disabled, which could keep VBS active even when Credential Guard was not running. Thanks to sowhatnumber on Discord.</li>
                           <li>Fixed an issue where SecConfig.efi would not correctly return to the current OS after clearing a UEFI lock on dual-boot systems. Thanks to RessourectoR.</li>
@@ -1490,7 +1930,7 @@ const HypervisorGuideModal: React.FC<{ open: boolean; onClose: () => void }> = (
                           <li>Minor visual improvements.</li>
                         </ol>
                         <p className="font-bold mt-3">v1.1</p>
-                        <ol className="list-decimal pl-5 space-y-1">
+                        <ol className="list-decimal ps-5 space-y-1">
                           <li>Fixed a crash when the script path or filename contained spaces or special characters, such as when downloaded multiple times and renamed to VBS (1).cmd.</li>
                           <li>Fixed an issue where Enhanced Sign-in Security was preventing VBS from being disabled. A check has been added to disable it if detected. This mainly affected ROG Ally X users where it is enabled by default. Thanks to .oathkeeper213 on Discord and Azazel35 on Reddit.</li>
                           <li>Added support for disabling VBS, HVCI and Credential Guard when protected by a UEFI lock using SecConfig.efi. In the script, the user is advised to only proceed on personal devices before removing the UEFI lock. Note that on managed devices, VBS, HVCI and Credential Guard protected by a UEFI lock can only be disabled for one boot cycle. UEFI locks can be fully reverted using the Revert Changes option. Thanks to poce on Discord.</li>
@@ -1509,7 +1949,7 @@ const HypervisorGuideModal: React.FC<{ open: boolean; onClose: () => void }> = (
                   <p className="mt-2">Those files work only for specific game versions, for which they were made. They won’t work on different game version or other games.</p>
                 </li>
               </ol>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">Pre-requirements</h3>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">{t('Pre-requirements')}</h3>
               <p>Your CPU must support one of two virtualization techniques: VT-x for Intel and AMD-V (SVM) for AMD.</p>
               <p>Google if CPU model supports virtualization to know if you can play HV-games.</p>
               <p>Before proceeding with HV cracks, check your BIOS for enabling those technologies.</p>
@@ -1523,7 +1963,7 @@ const HypervisorGuideModal: React.FC<{ open: boolean; onClose: () => void }> = (
   );
 };
 
-const analyzeRequirements = (reqs: {label: string, value: string}[]) => {
+export const analyzeRequirements = (reqs: {label: string, value: string}[]) => {
   let minRam = 0;
   let minOs = 0;
   let minGpuTier = 1;
@@ -1591,13 +2031,17 @@ export const checkCompatibilityStatus = (userSpecs: {ram: number, os: string, cp
   if (parsedReqs.minOs > 0 && parseInt(userSpecs.os) < parsedReqs.minOs) status = 'fail';
   
   if (status !== 'fail') {
-      if (parsedReqs.minGpuTier > 1 && userSpecs.gpuTier < parsedReqs.minGpuTier) status = 'warn';
-      if (parsedReqs.minCpuTier > 1 && userSpecs.cpuTier < parsedReqs.minCpuTier) status = 'warn';
+      let gpuDiff = parsedReqs.minGpuTier > 1 ? parsedReqs.minGpuTier - userSpecs.gpuTier : 0;
+      let cpuDiff = parsedReqs.minCpuTier > 1 ? parsedReqs.minCpuTier - userSpecs.cpuTier : 0;
+      
+      if (gpuDiff >= 2 || cpuDiff >= 2) status = 'fail';
+      else if (gpuDiff === 1 || cpuDiff === 1) status = 'warn';
   }
   return status;
 };
 
 const SystemChecker: React.FC<{ reqs: {label: string, value: string}[] }> = ({ reqs }) => {
+    const { dir, t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [userSpecs, setUserSpecs] = useState({
     ram: 16,
@@ -1677,7 +2121,7 @@ const SystemChecker: React.FC<{ reqs: {label: string, value: string}[] }> = ({ r
           <div className="p-2 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-lg">
             <Icon name="Cpu" size={20} />
           </div>
-          <span className="font-bold text-slate-900 dark:text-white">Can I Run It? (Smart Check)</span>
+          <span className="font-bold text-slate-900 dark:text-white">{t('Can I Run It? (Smart Check)')}</span>
         </div>
         <Icon name={isOpen ? "ChevronUp" : "ChevronDown"} size={20} className="text-slate-900 dark:text-slate-300" />
       </button>
@@ -1692,7 +2136,7 @@ const SystemChecker: React.FC<{ reqs: {label: string, value: string}[] }> = ({ r
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">Operating System</label>
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">{t('Operating System')}</label>
                 <select 
                   value={userSpecs.os}
                   onChange={(e) => setUserSpecs({...userSpecs, os: e.target.value})}
@@ -1705,7 +2149,7 @@ const SystemChecker: React.FC<{ reqs: {label: string, value: string}[] }> = ({ r
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">RAM (GB)</label>
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">{t('RAM (GB)')}</label>
                 <select 
                   value={userSpecs.ram}
                   onChange={(e) => setUserSpecs({...userSpecs, ram: parseInt(e.target.value)})}
@@ -1719,7 +2163,7 @@ const SystemChecker: React.FC<{ reqs: {label: string, value: string}[] }> = ({ r
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">Processor (CPU)</label>
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">{t('Processor (CPU)')}</label>
                 <select 
                   value={userSpecs.cpuTier}
                   onChange={(e) => setUserSpecs({...userSpecs, cpuTier: parseInt(e.target.value)})}
@@ -1733,7 +2177,7 @@ const SystemChecker: React.FC<{ reqs: {label: string, value: string}[] }> = ({ r
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">Graphics (GPU)</label>
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">{t('Graphics (GPU)')}</label>
                 <select 
                   value={userSpecs.gpuTier}
                   onChange={(e) => setUserSpecs({...userSpecs, gpuTier: parseInt(e.target.value)})}
@@ -1758,7 +2202,7 @@ const SystemChecker: React.FC<{ reqs: {label: string, value: string}[] }> = ({ r
 
             {result && (
               <div className={`p-4 rounded-xl border ${result.status === 'pass' ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' : result.status === 'warn' ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'}`}>
-                <h4 className={`font-black uppercase tracking-wider mb-3 ${result.status === 'pass' ? 'text-emerald-600 dark:text-emerald-400' : result.status === 'warn' ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}`}>
+                <h4 className={`font-black uppercase tracking-wider mb-3 ${result.status === 'pass' ? 'text-emerald-600 dark:text-emerald-700 dark:text-emerald-400' : result.status === 'warn' ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}`}>
                   {result.status === 'pass' ? 'Looks Good to Go!' : result.status === 'warn' ? 'Might Struggle a Bit' : 'Probably Won\'t Run Well'}
                 </h4>
                 <div className="space-y-2">
@@ -1766,7 +2210,7 @@ const SystemChecker: React.FC<{ reqs: {label: string, value: string}[] }> = ({ r
                     const iconName = msg.startsWith('❌') ? 'XCircle' : msg.startsWith('⚠️') ? 'AlertTriangle' : msg.startsWith('✅') ? 'CheckCircle2' : msg.startsWith('🚀') ? 'Rocket' : msg.startsWith('✨') ? 'Sparkles' : msg.startsWith('🚧') ? 'HardHat' : msg.startsWith('🚨') ? 'AlertOctagon' : 'Info';
                     return (
                     <div key={idx} className="flex gap-2 text-sm font-medium text-slate-900 dark:text-slate-200">
-                      <Icon name={iconName as any} size={16} className={`shrink-0 mt-0.5 ${msg.startsWith('❌') || msg.startsWith('🚨') ? 'text-red-500' : msg.startsWith('⚠️') || msg.startsWith('🚧') ? 'text-yellow-500' : msg.startsWith('✅') || msg.startsWith('✨') || msg.startsWith('🚀') ? 'text-emerald-500' : 'text-slate-700 dark:text-slate-500'}`} />
+                      <Icon name={iconName as any} size={16} className={`shrink-0 mt-0.5 ${msg.startsWith('❌') || msg.startsWith('🚨') ? 'text-red-500' : msg.startsWith('⚠️') || msg.startsWith('🚧') ? 'text-yellow-500' : msg.startsWith('✅') || msg.startsWith('✨') || msg.startsWith('🚀') ? 'text-emerald-900 dark:text-emerald-500' : 'text-slate-700 dark:text-slate-500'}`} />
                       <span>{msg.replace(/^(❌|⚠️|✅|🚀|✨|🚧|🚨)\s*/, '')}</span>
                     </div>
                   )})}
@@ -1780,10 +2224,74 @@ const SystemChecker: React.FC<{ reqs: {label: string, value: string}[] }> = ({ r
   );
 };
 
+const TorrentWarningModal: React.FC<{ link: string; onClose: () => void; }> = ({ link, onClose }) => {
+  const { t } = useLanguage();
+  const [step, setStep] = useState<'warning' | 'success'>('warning');
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[400] bg-white/80 dark:bg-[#0A0F1C]/90 backdrop-blur-md flex items-center justify-center p-4"
+    >
+      <motion.div 
+        key={step}
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800/80 p-8 rounded-3xl max-w-sm w-full shadow-2xl relative text-center"
+      >
+        <button onClick={onClose} className="absolute top-4 end-4 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-700 p-2 rounded-full">
+          <Icon name="X" size={16} />
+        </button>
+        {step === 'warning' ? (
+          <>
+            <div className="w-20 h-20 mx-auto bg-blue-500/10 rounded-full flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(59,130,246,0.2)] border border-blue-500/20">
+                <Icon name="Download" size={32} className="text-blue-600 dark:text-blue-500" />
+            </div>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-4">{t('Wait a minute! 🛑')}</h3>
+            <p className="text-slate-600 dark:text-slate-400 font-medium leading-relaxed mb-8 text-sm" dangerouslySetInnerHTML={{ __html: t('To use this method, you need <strong className="text-blue-600 dark:text-blue-400">qBittorrent</strong> to download uTorrent files without problems. Do you already have it installed? 🤔') }}></p>
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
+              <button onClick={() => setStep('success')} className="flex-1 w-full sm:w-auto bg-[#10B981] hover:bg-[#059669] text-white font-bold py-3 px-4 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_20px_rgba(16,185,129,0.2)] text-sm flex items-center justify-center gap-2">
+                {t('YES, I HAVE IT 🚀')}
+              </button>
+              <a 
+                href="https://www.qbittorrent.org/download" 
+                target="_blank" 
+                rel="noreferrer" 
+                onClick={(e) => {
+                  setStep('success');
+                }}
+                className="flex-1 w-full sm:w-auto bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold py-3 px-4 rounded-xl transition-colors border border-slate-300 dark:border-slate-700 flex items-center justify-center gap-2 text-sm"
+              >
+                {t('Not Yet 😅')}
+              </a>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="w-20 h-20 mx-auto bg-[#10B981]/10 rounded-full flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(16,185,129,0.2)] border border-[#10B981]/20">
+                <Icon name="CheckCircle" size={32} className="text-[#10B981]" />
+            </div>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-4">{t('Everything is fine! 🎉')}</h3>
+            <p className="text-slate-600 dark:text-slate-400 font-medium leading-relaxed mb-8 text-sm">
+              {t('Now you can have it thanks for respect N E X A 1337 Guidelines and instructions, all this for you. 🥳')}
+            </p>
+            <a href={link} onClick={onClose} className="block w-full bg-[#0ea5e9] hover:bg-[#0284c7] text-white font-bold py-3 px-6 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_20px_rgba(14,165,233,0.3)] text-sm">
+              {t('Get Files ⚡')}
+            </a>
+          </>
+        )}
+      </motion.div>
+    </motion.div>
+  );
+};
+
 const NoteModal: React.FC<{
   content: string;
   onClose: () => void;
-}> = ({ content, onClose }) => (
+}> = ({ content, onClose }) => { const { dir, t } = useLanguage(); return (
   <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
@@ -1800,24 +2308,22 @@ const NoteModal: React.FC<{
     >
       <button 
         onClick={onClose} 
-        className="absolute top-4 right-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 p-2 rounded-full transition-all"
+        className="absolute top-4 end-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 p-2 rounded-full transition-all"
       >
         <Icon name="X" size={16} />
       </button>
-      <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 pr-8 flex items-center gap-2">
-        <Icon name="Info" size={20} className="text-emerald-500" /> Note
+      <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 pe-8 flex items-center gap-2">
+        <Icon name="Info" size={20} className="text-emerald-900 dark:text-emerald-500" /> {t('Note')}
       </h3>
       <div className="text-sm text-slate-900 dark:text-slate-200 font-medium leading-relaxed max-h-[60vh] overflow-y-auto whitespace-pre-wrap custom-scrollbar">
         {content}
       </div>
       <div className="mt-6 flex justify-end">
-        <button onClick={onClose} className="px-5 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-xl hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors">
-          Close
-        </button>
+        <button onClick={onClose} className="px-5 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-xl hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors">{t('Close')}</button>
       </div>
     </motion.div>
   </motion.div>
-);
+); };
 
 const CompanyProfileModal: React.FC<{
   profile: CompanyProfile;
@@ -1825,6 +2331,7 @@ const CompanyProfileModal: React.FC<{
   onClose: () => void;
   onItemClick: (item: ResourceItem) => void;
 }> = ({ profile, resources, onClose, onItemClick }) => {
+    const { dir, t } = useLanguage();
   const categories = useMemo(() => Array.from(new Set(resources.map(r => r.category))), [resources]);
   const [activeCategory, setActiveCategory] = useState<string>(categories[0] || '');
   const [currentPage, setCurrentPage] = useState(1);
@@ -1862,10 +2369,10 @@ const CompanyProfileModal: React.FC<{
           </div>
           <div>
             <h2 className="text-2xl md:text-5xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-1 md:mb-2">{profile.name}</h2>
-            <p className="text-xs md:text-sm text-slate-600 dark:text-slate-300 max-w-3xl line-clamp-2 md:line-clamp-none leading-relaxed">{profile.description || 'Welcome to this company\'s profile. Explore their ecosystem of products and releases below.'}</p>
+            <p className="text-xs md:text-sm text-slate-600 dark:text-slate-300 max-w-3xl line-clamp-2 md:line-clamp-none leading-relaxed">{profile.description || t('Welcome to this company\'s profile. Explore their ecosystem of products and releases below.')}</p>
           </div>
         </div>
-        <button onClick={onClose} className="p-2 md:p-3 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-900 dark:text-slate-300 bg-slate-100 dark:bg-slate-900 shrink-0 border border-slate-200 dark:border-slate-700 ml-4">
+        <button onClick={onClose} className="p-2 md:p-3 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-900 dark:text-slate-300 bg-slate-100 dark:bg-slate-900 shrink-0 border border-slate-200 dark:border-slate-700 ms-4">
            <Icon name="X" size={24} />
         </button>
       </div>
@@ -1882,7 +2389,7 @@ const CompanyProfileModal: React.FC<{
                     : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-primary-500/50'
                  }`}
               >
-                 {cat === 'steamtools' ? 'SteamTools' : cat}
+                 {t(cat === 'steamtools' ? 'SteamTools' : cat)}
                  <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded ${activeCategory === cat ? 'bg-black/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-500'}`}>
                      {resources.filter(r => r.category === cat).length}
                  </span>
@@ -1914,9 +2421,10 @@ const CompanyProfileModal: React.FC<{
                          )}
                          {item.category === 'game' && (
                              <div className="bg-white p-0.5 rounded shadow-md w-6 h-6 flex items-center justify-center overflow-hidden">
-                                 <img src="https://fitgirl-repacks.site/wp-content/uploads/2016/08/icon.jpg" alt="FitGirl" className="w-full h-full object-cover rounded-sm" />
+                                 <img src="https://fitgirl-repacks.site/wp-content/uploads/2016/08/icon.jpg" alt="FitGirl" className="w-full h-full object-contain rounded-sm" />
                              </div>
                          )}
+
                          {/* Fallback if category is missing or different */}
                          {!['hypervisor', 'steamtools', 'game'].includes(item.category) && (
                              <div className="bg-primary-600 text-white px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest shadow-md">
@@ -1924,8 +2432,8 @@ const CompanyProfileModal: React.FC<{
                              </div>
                          )}
                      </div>
-                     {item.version && (
-                         <div className="bg-slate-900/80 md:backdrop-blur-sm text-slate-200 border border-slate-700 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold shadow-md truncate ml-2">
+                     {item.version && item.category !== 'steamtools' && (
+                         <div className="bg-slate-900/80 md:backdrop-blur-sm text-slate-200 border border-slate-700 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold shadow-md truncate ms-2">
                              {item.version}
                          </div>
                      )}
@@ -1935,8 +2443,8 @@ const CompanyProfileModal: React.FC<{
           </div>
         ) : (
           <div className="h-64 flex flex-col items-center justify-center text-slate-600 dark:text-slate-300 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl bg-white/50 dark:bg-slate-900/50">
-             <Icon name="SearchX" size={48} className="mb-4 opacity-30" />
-             <span className="text-sm font-bold uppercase tracking-widest text-slate-900 dark:text-slate-300">No products found in this category</span>
+             <Icon name="Search" size={48} className="mb-4 opacity-30" />
+             <span className="text-sm font-bold uppercase tracking-widest text-slate-900 dark:text-slate-300">{t('No products found in this category')}</span>
           </div>
         )}
         
@@ -1946,7 +2454,7 @@ const CompanyProfileModal: React.FC<{
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
                   className="px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center"
-               ><Icon name="ChevronLeft" size={16} /></button>
+               ><Icon name="ChevronLeft" size={16} className="rtl:rotate-180" /></button>
                <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar px-1">
                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                      <button
@@ -1962,7 +2470,7 @@ const CompanyProfileModal: React.FC<{
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                   disabled={currentPage === totalPages}
                   className="px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center"
-               ><Icon name="ChevronRight" size={16} /></button>
+               ><Icon name="ChevronRight" size={16} className="rtl:rotate-180" /></button>
             </div>
         )}
       </div>
@@ -1972,8 +2480,8 @@ const CompanyProfileModal: React.FC<{
 
 const ResourceDetailModal: React.FC<{ 
   item: ResourceItem; 
-  onClose: () => void;
-  isHypervisor?: boolean;
+  onClose: () => void; 
+  isHypervisor?: boolean; 
   stash: string[];
   toggleStash: (id: string, e?: React.MouseEvent) => void;
   onCompanyClick?: (companyName: string) => void;
@@ -1981,26 +2489,24 @@ const ResourceDetailModal: React.FC<{
   resolvedDev?: string;
   isGuestMode?: boolean;
   showGuestNotification?: () => void;
-}> = ({ item, onClose, isHypervisor, stash, toggleStash, onCompanyClick, onGenreClick, resolvedDev, isGuestMode, showGuestNotification }) => {
-  const [activeImage, setActiveImage] = useState(item.coverImage);
+  globalSpecs?: { ram: number, os: string, cpuModel: string, gpuModel: string, isActive: boolean };
+  initialScrollTarget?: string;
+}> = ({ item, onClose, isHypervisor, stash, toggleStash, onCompanyClick, onGenreClick, resolvedDev, isGuestMode, showGuestNotification, globalSpecs, initialScrollTarget }) => {
+  const { dir, t } = useLanguage();
   const [showTrailer, setShowTrailer] = useState(false);
-  const [translatedDesc, setTranslatedDesc] = useState<string | null>(null);
-  const [isTranslating, setIsTranslating] = useState(false);
-  const [showArabic, setShowArabic] = useState(false);
   const [showHypervisorGuide, setShowHypervisorGuide] = useState(false);
   const [noteModalContent, setNoteModalContent] = useState<string | null>(null);
-  const [showQBitWarning, setShowQBitWarning] = useState(false);
-  const [qBitSuccess, setQBitSuccess] = useState(false);
-
+  const [torrentWarningLink, setTorrentWarningLink] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
+  const [isCopiedGameId, setIsCopiedGameId] = useState(false);
 
-  useEffect(() => {
-    setActiveImage(item.galleryImages.length > 0 ? item.galleryImages[0] : item.coverImage);
-    setShowTrailer(false);
-    setTranslatedDesc(null);
-    setShowArabic(false);
-    setIsCopied(false);
-  }, [item]);
+  const handleCopyGameId = () => {
+    if (item.gameId) {
+      navigator.clipboard.writeText(item.gameId);
+      setIsCopiedGameId(true);
+      setTimeout(() => setIsCopiedGameId(false), 2000);
+    }
+  };
 
   const handleCopyLink = () => {
     const base = window.location.origin + window.location.pathname;
@@ -2010,41 +2516,8 @@ const ResourceDetailModal: React.FC<{
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  const handleTranslate = async () => {
-    if (showArabic) {
-        setShowArabic(false);
-        return;
-    }
-    if (translatedDesc) {
-        setShowArabic(true);
-        return;
-    }
-    setIsTranslating(true);
-    try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
-            contents: `Translate the following technical software/game description into professional Arabic. Keep technical terms English. \n\nTEXT: ${item.description}`,
-        });
-        const text = response.text;
-        if (text) {
-            setTranslatedDesc(text);
-            setShowArabic(true);
-        }
-    } catch (error) {
-        console.error("Translation failed", error);
-    } finally {
-        setIsTranslating(false);
-    }
-  };
-
-  const handleThumbnailClick = (img: string) => {
-    setActiveImage(img);
-    setShowTrailer(false);
-  };
-
   const handleReportBrokenLink = () => {
-    const whatsappMessage = `*Report Broken Link in Secret Area*\n\n*Item Name:* ${item.name}\n*Item ID:* ${item.id}\n*Category:* ${item.category}\n\nPlease check this link, it seems to be down. Thanks!`;
+    const whatsappMessage = `*{t('Report Broken Link')} in Secret Area*\n\n*Item Name:* ${item.name}\n*Item ID:* ${item.id}\n*Category:* ${item.category}\n\nPlease check this link, it seems to be down. Thanks!`;
     const phoneNumber = '212723242286';
     const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(whatsappMessage)}`;
     window.open(url, '_blank');
@@ -2052,902 +2525,1094 @@ const ResourceDetailModal: React.FC<{
 
   const isSteamTool = item.category === 'steamtools';
   const isExtra = item.category === 'extra';
-  const scoreConfig = (item.ratingPositive) ? ((score) => {
-    if (isNaN(score)) return { emoji: '🤔', color: 'text-slate-700 dark:text-slate-500', bg: 'bg-slate-100 dark:bg-slate-800', border: 'border-slate-200 dark:border-slate-700', wrapper: 'bg-slate-50 dark:bg-slate-900' };
-    if (score > 50) return { emoji: '😎', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-500/20', border: 'border-emerald-500/10', wrapper: 'bg-emerald-500/5' };
-    if (score === 50) return { emoji: '😐', color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-500/20', border: 'border-orange-500/10', wrapper: 'bg-orange-500/5' };
-    return { emoji: '😕', color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-500/20', border: 'border-red-500/10', wrapper: 'bg-red-500/5' };
-  })(parseInt((item.ratingPositive || '').toString().replace(/[^0-9]/g, ''))) : { emoji: '🤔', color: 'text-slate-700 dark:text-slate-500', bg: 'bg-slate-100 dark:bg-slate-800', border: 'border-slate-200 dark:border-slate-700', wrapper: 'bg-slate-50 dark:bg-slate-900' };
+
+  React.useEffect(() => {
+    if (initialScrollTarget) {
+      setTimeout(() => {
+        const el = document.getElementById(initialScrollTarget);
+        const container = document.getElementById('modal-scroll-container');
+        if (el && container) {
+          const y = el.getBoundingClientRect().top + container.scrollTop - container.getBoundingClientRect().top - 80;
+          container.scrollTo({ top: y, behavior: 'smooth' });
+        } else if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 350);
+    }
+  }, [initialScrollTarget, item]);
 
   return (
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-white dark:bg-slate-950 p-0"
-      onClick={onClose}
+      dir={dir} 
+      id="modal-scroll-container"
+      className="fixed inset-0 z-[100] bg-slate-50 dark:bg-[#0B1120] overflow-y-auto custom-scrollbar flex flex-col w-full h-full"
+      onClick={(e) => e.stopPropagation()}
     >
-      <motion.div 
-        initial={{ y: 50, opacity: 0, scale: 0.95 }}
-        animate={{ y: 0, opacity: 1, scale: 1 }}
-        exit={{ y: 50, opacity: 0, scale: 0.95 }}
-        className="bg-white dark:bg-slate-900 w-full h-full rounded-none relative overflow-hidden flex flex-col lg:flex-row"
-        onClick={e => e.stopPropagation()}
-      >
-        <button 
-          onClick={onClose} 
-          className="absolute top-4 right-4 z-[110] bg-white/60 dark:bg-black/60 hover:bg-red-500 hover:text-white text-slate-600 dark:text-slate-300 p-2.5 rounded-full transition-all md:backdrop-blur-md border border-slate-200 dark:border-white/10 shadow-lg"
-        >
-             <Icon name="X" size={20} />
-        </button>
-
-        <div className="w-full lg:w-[45%] bg-slate-100 dark:bg-[#030712] flex flex-col shrink-0 h-[35vh] sm:h-[40vh] md:h-[45vh] lg:h-full border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-800 relative">
-           <div className="flex-1 relative flex items-center justify-center overflow-hidden">
-              <div className="absolute inset-0 z-0 opacity-40 dark:opacity-60 pointer-events-none bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-200 via-slate-100 to-transparent dark:from-[#0f172a] dark:via-[#030712] dark:to-transparent">
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-slate-200/90 dark:to-slate-900/90 pointer-events-none z-10"></div>
-              <AnimatePresence mode="wait">
-                {showTrailer && item.links.trailer ? (
-                    <motion.div 
-                        key="trailer"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="w-full h-full z-20 bg-black flex items-center justify-center relative"
-                    >
-                        <iframe 
-                            className="w-full h-full absolute inset-0"
-                            src={getYoutubeEmbedUrl(item.links.trailer) || ''}
-                            title="Trailer"
-                            frameBorder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                            allowFullScreen
-                        ></iframe>
-                    </motion.div>
-                ) : activeImage.endsWith('.webm') || activeImage.endsWith('.mp4') ? (
-                    <motion.video
-                        key={activeImage}
-                        initial={{ opacity: 0, scale: 1.05 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        src={activeImage}
-                        autoPlay
-                        controls
-                        className="max-w-full max-h-full object-contain shadow-2xl z-10"
-                    />
-                ) : (
-                    <motion.img 
-                        key={activeImage}
-                        initial={{ opacity: 0, scale: 1.05 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        src={activeImage} 
-                        alt={item.name} 
-                        className="max-w-full max-h-full object-contain shadow-2xl z-10" 
-                    />
-                )}
-              </AnimatePresence>
-           </div>
-           <div className="h-20 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 p-3 flex gap-3 overflow-x-auto no-scrollbar shrink-0 z-20">
-              <Thumbnail src={item.coverImage} isActive={!showTrailer && activeImage === item.coverImage} onClick={() => handleThumbnailClick(item.coverImage)} />
-             {item.galleryImages.map((img, idx) => (
-               <Thumbnail key={idx} src={img} isActive={!showTrailer && activeImage === img} onClick={() => handleThumbnailClick(img)} />
-             ))}
-           </div>
-        </div>
-
-        <div className="flex-1 bg-white dark:bg-slate-900 overflow-y-auto custom-scrollbar relative flex flex-col">
-            <div className="p-4 sm:p-5 md:p-8 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 sticky top-0 z-30 md:backdrop-blur-xl">
-               <div className="flex flex-wrap items-center gap-2 mb-3">
-                  <Badge text={isSteamTool ? 'STEAMTOOLS' : (isExtra ? 'SAVEGAME' : item.category)} color="blue" icon={isSteamTool ? 'BrandSteam' : (isExtra ? 'Save' : 'Folder')} />
-                  {!isSteamTool && <Badge text={item.version} color="slate" icon="Code" />}
-                  <Badge text={`ID: ${item.gameId || item.id}`} color="slate" icon="Hash" />
-                  {!isSteamTool && !isExtra && item.category !== 'architect' && item.repackBy && <Badge text={`REPACK: ${item.repackBy.toUpperCase()}`} color="emerald" icon="Box" />}
-                  {isExtra && item.repackBy && <Badge text={`AUTHOR: ${item.repackBy.toUpperCase()}`} color="emerald" icon="User" />}
-                  {resolvedDev && (
-                      <button 
-                         onClick={() => onCompanyClick && onCompanyClick(resolvedDev)}
-                         className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-400 hover:bg-violet-200 dark:hover:bg-violet-500/30 transition-colors border border-violet-200 dark:border-violet-500/30"
-                      >
-                          <Icon name="Briefcase" size={12} />
-                          {resolvedDev}
-                      </button>
-                  )}
-               </div>
-               <div className="flex items-start justify-between gap-4">
-                 <div className="flex items-center gap-2 sm:gap-3">
-                   <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white leading-none tracking-tight uppercase italic">{item.name}</h2>
-                   <button
-                     onClick={handleCopyLink}
-                     className="text-slate-600 dark:text-slate-300 hover:text-blue-500 transition-colors bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 p-1.5 sm:p-2 rounded-lg"
-                     title="Copy Share Link"
-                   >
-                     <Icon name={isCopied ? "Check" : "Link"} size={18} className={`sm:w-5 sm:h-5 ${isCopied ? "text-emerald-500" : ""}`} />
-                   </button>
-                 </div>
-                 <button
-                    onClick={(e) => toggleStash(item.id, e)}
-                    className={`shrink-0 p-2 sm:p-3 rounded-xl transition-all ${
-                        stash.includes(item.id) 
-                        ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                    }`}
-                    title={stash.includes(item.id) ? "Remove from Stash" : "Add to Stash"}
-                 >
-                    <Icon name="Bookmark" size={18} className={`sm:w-5 sm:h-5 ${stash.includes(item.id) ? "fill-current" : ""}`} />
-                 </button>
-               </div>
-               {item.genres && (
-                 <div className="mt-3 text-xs font-mono text-primary-500 dark:text-sky-400 font-bold uppercase tracking-widest flex items-center gap-2 flex-wrap">
-                    <Icon name="Gamepad2" size={14} className="shrink-0" /> 
-                    {item.genres.split(',').map((genre, idx, arr) => {
-                        const trimmedGenre = genre.trim();
-                        const isClickable = ['game', 'hypervisor', 'steamtools'].includes(item.category.toLowerCase());
-                        
-                        return (
-                            <span key={idx} className="flex-shrink-0">
-                                {isClickable ? (
-                                    <span 
-                                        onClick={(e) => { e.stopPropagation(); onGenreClick?.(trimmedGenre); }}
-                                        className="cursor-pointer hover:text-primary-600 dark:hover:text-primary-200 hover:underline transition-colors"
-                                    >
-                                        {trimmedGenre}
-                                    </span>
-                                ) : (
-                                    <span>{trimmedGenre}</span>
-                                )}
-                                {idx < arr.length - 1 && <span className="text-slate-800 dark:text-slate-600 ml-1">,</span>}
-                            </span>
-                        );
-                    })}
-                 </div>
-               )}
-            </div>
-
-            <div className="p-4 sm:p-5 md:p-8 space-y-6 sm:space-y-8 pb-32">
-                <div className="bg-amber-50 dark:bg-amber-900/10 border-l-4 border-amber-500 p-4 rounded-r-xl">
-                    <div className="flex gap-3">
-                        <Icon name="AlertTriangle" className="text-amber-500 shrink-0 mt-0.5" />
-                        <div>
-                            <h4 className="text-sm font-bold text-amber-800 dark:text-amber-400 mb-1">N E X A 1337 Says :</h4>
-                            <p className="text-xs text-amber-700 dark:text-amber-500/80 leading-relaxed font-medium">
-                                Support the original developers and creators by purchasing legitimate copies of their products.<br/>
-                                All trademarks, copyrights, and intellectual property belong to their respective owners.<br/>
-                                If you are a rights holder and wish to request content removal, please contact us.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                
-                {isSteamTool ? (
-                    <div className="bg-slate-100 dark:bg-slate-950 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
-                        <div className="flex justify-between items-center mb-4 border-b border-slate-200 dark:border-slate-800 pb-2">
-                            <h4 className="text-xs font-black text-slate-900 dark:text-slate-300 uppercase tracking-[0.2em] flex items-center gap-2">
-                                <Icon name="BrandSteam" size={16} /> Community Score
-                            </h4>
-                            <span className="text-[10px] font-bold bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 px-2 py-0.5 rounded-full">
-                                VERIFIED
-                            </span>
-                        </div>
-                        
-                        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-                            <div className={`flex items-center gap-4 flex-1 w-full p-3 rounded-xl border ${scoreConfig.wrapper} ${scoreConfig.border}`}>
-                                <div className={`w-12 h-12 rounded-full ${scoreConfig.bg} ${scoreConfig.color} shrink-0 flex items-center justify-center text-2xl`}>
-                                    {scoreConfig.emoji}
-                                </div>
-                                <div>
-                                    <span className={`block text-[10px] font-bold ${scoreConfig.color} opacity-70 uppercase tracking-wider`}>Positive</span>
-                                    <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{item.ratingPositive || 'N/A'}</span>
-                                </div>
-                            </div>
-                            <div className="hidden sm:block w-px h-10 bg-slate-200 dark:bg-slate-800"></div>
-                            <div className="flex items-center gap-4 flex-1 w-full p-3 bg-blue-500/5 rounded-xl border border-blue-500/10 justify-end sm:justify-start flex-row-reverse sm:flex-row">
-                                <div className="p-2.5 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 shrink-0">
-                                    <Icon name="Users" size={24} />
-                                </div>
-                                <div className="text-right sm:text-left">
-                                    <span className="block text-[10px] font-bold text-blue-600/70 dark:text-blue-400/70 uppercase tracking-wider">In Game</span>
-                                    <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{item.ratingNegative || 'N/A'}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                ) : isExtra ? (
-                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                       <StatBox label="File Size" value={item.originalSize || item.repackSize} icon="Database" color="text-primary-500 dark:text-sky-400" />
-                       <StatBox label="Status by %" value={item.version} icon="PieChart" color="text-amber-500 dark:text-amber-400" />
-                       <StatBox label="Downloads" value={getFakeDownloads(item.id)} icon="Download" color="text-blue-500 dark:text-blue-400" />
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                       <StatBox label="Repack Size" value={item.repackSize} icon="Database" color="text-primary-500 dark:text-sky-400" />
-                       <StatBox label="Original Size" value={item.originalSize} icon="Server" color="text-slate-600 dark:text-slate-300" />
-                       <StatBox label="Languages" value={item.languages} icon="Globe" color="text-emerald-500 dark:text-emerald-400" />
-                       <StatBox label="Downloads" value={getFakeDownloads(item.id)} icon="Download" color="text-blue-500 dark:text-blue-400" />
-                    </div>
-                )}
-
-                {isSteamTool && item.hasDenuvo && (
-                    <div className="mb-4 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 flex gap-4">
-                        <div className="text-red-600 dark:text-red-400 shrink-0">
-                            <Icon name="ShieldLock" size={24} />
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-red-700 dark:text-red-400 text-sm uppercase mb-1">Denuvo DRM Detected</h4>
-                            <p className="text-xs text-red-600 dark:text-red-300 leading-relaxed font-medium">
-                                This game uses Denuvo Anti-Tampering DRM. There is currently no known public bypass for Denuvo, meaning you likely will NOT be able to play this game. However, there's a slight chance it might be available in the DepotBox or ProjectLighting Launcher with a bypass. <span className="font-bold underline">Download at your own risk.</span>
-                            </p>
-                        </div>
-                    </div>
-                )}
-
-                {isSteamTool && item.hasExternalLauncher && (
-                    <div className="mb-4 p-4 rounded-xl bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-900/50 flex gap-4">
-                        <div className="text-orange-600 dark:text-orange-400 shrink-0">
-                            <Icon name="User" size={24} />
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-orange-700 dark:text-orange-400 text-sm uppercase mb-1">Third-Party Account Required</h4>
-                            <p className="text-xs text-orange-600 dark:text-orange-300 leading-relaxed font-medium">
-                                This game requires an external launcher or account verification (EA Account). As this game also has Denuvo, it might be impossible to play in any case. <span className="font-bold underline">Download at your own risk.</span>
-                            </p>
-                        </div>
-                    </div>
-                )}
-
-                <Section title="Overview" action={
-                        <button onClick={handleTranslate} disabled={isTranslating} className={`flex items-center gap-2 px-3 py-1 rounded-md border text-[10px] font-bold uppercase tracking-wider transition-all ${showArabic ? 'bg-primary-500/20 border-primary-500 text-primary-600 dark:text-sky-400' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>
-                            {isTranslating ? (<><Icon name="Cpu" size={12} className="animate-spin" /> Decrypting...</>) : (<><Icon name="Globe" size={12} /> {showArabic ? 'Show Original' : 'Translate AR'}</>)}
-                        </button>
-                    }>
-                   <div className="bg-slate-50 dark:bg-slate-950/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 relative overflow-hidden group">
-                     <div className="max-h-[250px] overflow-y-auto custom-scrollbar pr-2">
-                        <AnimatePresence mode="wait">
-                            <motion.div key={showArabic ? 'ar' : 'en'} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className={`text-sm md:text-base leading-relaxed whitespace-pre-wrap font-medium ${showArabic ? 'text-right font-sans text-slate-800 dark:text-slate-200' : 'text-slate-900 dark:text-slate-200'}`} dir={showArabic ? 'rtl' : 'ltr'}>
-                                {showArabic && translatedDesc ? translatedDesc : item.description}
-                            </motion.div>
-                        </AnimatePresence>
-                     </div>
-                     <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-slate-50 dark:from-slate-950 to-transparent pointer-events-none opacity-50"></div>
-                   </div>
-                </Section>
-
-                {item.systemReqs.length > 0 && (
-                   <Section title="System Requirements">
-                      <motion.div 
-                        initial="hidden" 
-                        animate="visible" 
-                        variants={{
-                          hidden: { opacity: 0 },
-                          visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
-                        }}
-                        className="flex flex-col gap-2"
-                      >
-                        {item.systemReqs.map((req, idx) => {
-                          let paramIcon = req.icon || 'Cpu';
-                          const label = req.label.toLowerCase();
-                          if (label.includes('os')) paramIcon = 'BrandWindows';
-                          if (label.includes('ram')) paramIcon = 'Cpu';
-                          if (label.includes('gpu')) paramIcon = 'GPU';
-                          if (label.includes('storage')) paramIcon = 'Database';
-                          
-                          return (
-                            <motion.div 
-                              key={idx} 
-                              variants={{
-                                hidden: { opacity: 0, x: -10 },
-                                visible: { opacity: 1, x: 0 }
-                              }}
-                              className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl hover:border-slate-300 dark:hover:border-slate-700 transition-all hover:shadow-sm"
-                            >
-                               <div className="flex items-center gap-3 shrink-0 mb-2 sm:mb-0">
-                                 <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-slate-900 dark:text-slate-300 group-hover:text-blue-500 transition-colors">
-                                   <Icon name={paramIcon} size={18} />
-                                 </div>
-                                 <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 uppercase tracking-wider">{req.label}</span>
-                               </div>
-                               <span className="text-sm font-mono text-slate-600 dark:text-slate-300 text-left sm:text-right sm:max-w-[60%] leading-relaxed">
-                                 {req.value}
-                               </span>
-                            </motion.div>
-                          );
-                        })}
-                      </motion.div>
-                      <div className="mt-6">
-                        <SystemChecker reqs={item.systemReqs} />
-                      </div>
-                   </Section>
-                )}
-
-                {item.toolsNeeded && item.toolsNeeded.length > 0 && (
-                    <Section title="Tools You Need">
-                        <div className="flex flex-wrap gap-3">
-                            {item.toolsNeeded.map((tool, idx) => (
-                                <a 
-                                    key={idx} 
-                                    href={tool.url} 
-                                    target="_blank" 
-                                    rel="noreferrer" 
-                                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-900/30 text-orange-700 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors text-xs font-bold uppercase tracking-wider"
-                                >
-                                    <Icon name="Wrench" size={14} /> {tool.name}
-                                </a>
-                            ))}
-                        </div>
-                    </Section>
-                )}
-
-                {item.installSteps.length > 0 && (
-                   <Section title={isExtra ? "Steps You Need" : "Installation Guide"}>
-                      <p className="text-sm text-slate-600 dark:text-slate-300 mb-4 mt-[-10px]">Follow these steps to safely install and set up your application.</p>
-                      <motion.div 
-                        initial="hidden"
-                        animate="visible"
-                        variants={{
-                          hidden: { opacity: 0 },
-                          visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
-                        }}
-                        className="flex flex-col gap-3"
-                      >
-                        {item.installSteps.map((step, idx) => (
-                          <motion.div 
-                            key={idx} 
-                            variants={{
-                              hidden: { opacity: 0, y: 10 },
-                              visible: { opacity: 1, y: 0 }
-                            }}
-                            className="group flex gap-4 p-4 sm:p-5 bg-white dark:bg-slate-900/80 rounded-2xl border border-slate-100 dark:border-slate-800/80 hover:border-blue-300 dark:hover:border-blue-700/50 transition-all hover:shadow-lg hover:-translate-y-0.5 items-start relative overflow-hidden"
-                          >
-                            <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-blue-400 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                            <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-sm shrink-0 group-hover:bg-blue-500 group-hover:text-white transition-all shadow-sm group-hover:scale-110">
-                              {idx + 1}
-                            </div>
-                            <span className="text-sm text-slate-900 dark:text-slate-200 font-medium leading-relaxed pt-1">{step}</span>
-                          </motion.div>
-                        ))}
-                      </motion.div>
-                   </Section>
-                )}
-
-                {isHypervisor && (
-                   <Section title="What is a Hypervisor Bypass?">
-                      <div className="p-4 bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-200 dark:border-red-900/30">
-                        <p className="text-sm text-red-800 dark:text-red-300 font-medium">
-                          Please read this article before proceeding with downloading and installation: 
-                          <button onClick={(e) => { e.stopPropagation(); setShowHypervisorGuide(true); }} className="ml-1 text-red-600 dark:text-red-400 underline font-bold hover:text-red-500 transition-colors">
-                            https://fitgirl-repacks.site/hypervisor-guide/
-                          </button>
-                        </p>
-                      </div>
-                   </Section>
-                )}
-
-                <Section title={item.category === 'architect' ? "Download Channels / Via Telegram" : "Download Channels"}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                        {item.category === 'architect' && (
-                            <a 
-                                href={TELEGRAM_LINK} 
-                                target="_blank" 
-                                rel="noreferrer" 
-                                onClick={(e) => {
-                                    if (isGuestMode) {
-                                        e.preventDefault();
-                                        showGuestNotification?.();
-                                    }
-                                }}
-                                className="col-span-1 md:col-span-2 group relative overflow-hidden bg-gradient-to-r from-[#229ED9] to-[#1D85B8] p-3 sm:p-5 rounded-xl shadow-lg shadow-[#229ED9]/20 hover:shadow-[#229ED9]/40 transition-all hover:-translate-y-1 active:scale-95"
-                            >
-                                <div className="absolute inset-0 bg-white/5 opacity-10"></div>
-                                <div className="relative z-10 flex items-center justify-center gap-3 sm:gap-4">
-                                    <div className="p-2 bg-white/10 rounded-full md:backdrop-blur-sm relative">
-                                        <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 items-center justify-center z-20">
-                                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]" style={{ animation: 'pulse 0.8s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}></span>
-                                        </span>
-                                        <Icon name="Telegram" size={20} className="text-white sm:w-6 sm:h-6 group-hover:scale-110 transition-transform" />
-                                    </div>
-                                    <div className="text-left sm:text-center">
-                                        <div className="text-[10px] font-black text-blue-100 uppercase tracking-[0.2em] opacity-80">Join Channel</div>
-                                        <div className="text-[11px] sm:text-lg font-black text-white uppercase tracking-wider leading-tight sm:leading-none break-all sm:break-normal">
-                                            Download Via Telegram
-                                        </div>
-                                    </div>
-                                </div>
-                            </a>
-                        )}
-                        {item.links.full && (
-                            <a 
-                                href={item.links.full} 
-                                target="_blank" 
-                                rel="noreferrer" 
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (isGuestMode) {
-                                        e.preventDefault();
-                                        showGuestNotification?.();
-                                        return;
-                                    }
-                                    if (['game', 'hypervisor'].includes(item.category?.toLowerCase())) {
-                                        e.preventDefault();
-                                        setShowQBitWarning(true);
-                                    }
-                                }}
-                                className="col-span-1 md:col-span-2 group relative overflow-hidden bg-gradient-to-r from-primary-600 to-primary-500 p-3 sm:p-5 rounded-xl shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 transition-all hover:-translate-y-1 active:scale-95"
-                            >
-                                <div className="absolute inset-0 bg-white/5 opacity-10"></div>
-                                {['game', 'hypervisor'].includes(item.category?.toLowerCase()) && (
-                                    <div className="absolute top-0 right-0 bg-gradient-to-r from-amber-400 to-orange-500 text-black text-[8px] sm:text-[10px] font-black uppercase tracking-widest px-3 py-1 sm:py-1.5 rounded-bl-xl shadow-[0_0_15px_rgba(245,158,11,0.6)] flex items-center gap-1 z-20 border-l border-b border-yellow-300">
-                                        <Icon name="Sparkles" size={12} className="animate-pulse" /> Recommendation
-                                    </div>
-                                )}
-                                <div className="relative z-10 flex items-center justify-center gap-3 sm:gap-4">
-                                    {['steamtools', 'tools', 'savegame', 'extra', 'architect'].includes(item.category?.toLowerCase()) ? (
-                                        <img 
-                                            src="https://play-lh.googleusercontent.com/HAOAPee5LQ1c7D2npKzi2hKO5AV29Syu1XKkGM_Etd4dCcpVch13GxUkCLMlaCMpH91tYHF4DaiCF_Fs3LOlkA" 
-                                            alt="Drive/Google" 
-                                            referrerPolicy="no-referrer"
-                                            className="w-10 h-10 sm:w-12 sm:h-12 object-contain"
-                                         loading="lazy" />
-                                    ) : ['game', 'hypervisor'].includes(item.category?.toLowerCase()) ? (
-                                        <img 
-                                            src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/utorrent-icon.png" 
-                                            alt="uTorrent" 
-                                            referrerPolicy="no-referrer"
-                                            className="w-10 h-10 sm:w-12 sm:h-12 object-contain"
-                                         loading="lazy" />
-                                    ) : (
-                                        <div className="p-2 bg-white/10 rounded-full md:backdrop-blur-sm">
-                                            <Icon name="Download" size={20} className="text-white sm:w-6 sm:h-6" />
-                                        </div>
-                                    )}
-                                    <div className="text-left sm:text-center">
-                                        <div className="text-[10px] font-black text-primary-100 uppercase tracking-[0.2em] opacity-80">Master File</div>
-                                        <div className="text-[11px] sm:text-lg font-black text-white uppercase tracking-wider leading-tight sm:leading-none break-all sm:break-normal">
-                                            {['game', 'hypervisor'].includes(item.category) ? `Magnet (${item.repackSize})` : `Full Project (${item.repackSize})`}
-                                        </div>
-                                        {item.links.fullNote && (
-                                            <div className="mt-1 flex items-center gap-2">
-                                                <div className="text-[9px] sm:text-[10px] text-white/80 font-bold truncate max-w-[150px] sm:max-w-[200px]">
-                                                    {item.links.fullNote.length > 30 ? `${item.links.fullNote.substring(0, 30)}...` : item.links.fullNote}
-                                                </div>
-                                                {item.links.fullNote.length > 30 && (
-                                                    <button 
-                                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setNoteModalContent(item.links.fullNote!); }}
-                                                        className="flex items-center gap-1 text-[8px] sm:text-[9px] font-bold uppercase tracking-widest bg-white/20 text-white px-1.5 py-0.5 sm:px-2 sm:py-0.5 rounded hover:bg-white/30 transition-colors shadow-sm"
-                                                    >
-                                                        <Icon name="Info" size={12} className="w-3 h-3" />
-                                                        <span>Read</span>
-                                                    </button>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </a>
-                        )}
-                        {item.links.parts.map(part => (
-                            <DownloadButton 
-                                key={`part-${part.id}`}
-                                label={['game', 'hypervisor'].includes(item.category) ? <span className="text-red-500 group-hover:text-red-400">DataNodes (Speed &amp; Usability) - Part {part.id < 10 ? '0' + part.id : part.id}</span> : `Download Part ${part.id < 10 ? '0' + part.id : part.id}`} 
-                                sub="Primary Server" 
-                                href={part.link} 
-                                icon="Server" 
-                                customIconUrl="https://jdownloader.org/_media/vote/jdi.png"
-                                note={part.note}
-                                onNoteClick={(note) => setNoteModalContent(note)}
-                            />
-                        ))}
-                        {item.links.parts.length === 0 && !item.links.full && (
-                            <div className="col-span-1 md:col-span-2 p-6 bg-slate-100 dark:bg-slate-950 rounded-xl border border-dashed border-slate-300 dark:border-slate-800 text-center">
-                                <Icon name="Loader" size={24} className="animate-spin mx-auto mb-2 text-slate-600 dark:text-slate-300" />
-                                <p className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase tracking-widest">Awaiting Encryption Keys...</p>
-                            </div>
-                        )}
-                        {item.links.mirrors.map(mirror => (
-                            <DownloadButton 
-                                key={`mirror-${mirror.id}`}
-                                label={['game', 'hypervisor'].includes(item.category) ? `FuckingFast (REALLY Fucking Fast 🙂) - Link ${mirror.id < 10 ? '0' + mirror.id : mirror.id}` : `Mirror Link ${mirror.id < 10 ? '0' + mirror.id : mirror.id}`} 
-                                sub="Backup Server" 
-                                href={mirror.link} 
-                                icon="Database" 
-                                customIconUrl="https://jdownloader.org/_media/vote/jdi.png"
-                                secondary 
-                                note={mirror.note}
-                                onNoteClick={(note) => setNoteModalContent(note)}
-                            />
-                        ))}
-                    </div>
-                    
-                    <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4 mt-6 pt-6 border-t border-slate-200 dark:border-slate-800">
-                        {item.links.trailer && (
-                            <button onClick={() => setShowTrailer(!showTrailer)} className={`flex items-center justify-center gap-2 p-3 sm:p-0 rounded-lg sm:bg-transparent border sm:border-0 text-xs font-bold uppercase tracking-widest transition-colors ${showTrailer ? 'bg-red-500/10 border-red-500 text-red-600 dark:text-red-400' : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-red-600 dark:text-red-500 hover:text-red-500 dark:hover:text-red-400'}`}>
-                                <Icon name="Video" size={16} /> {showTrailer ? 'Close Trailer' : 'Game Trailer'}
-                            </button>
-                        )}
-                        {item.links.tutorial && <a href={item.links.tutorial} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 p-3 sm:p-0 rounded-lg bg-slate-50 dark:bg-slate-800/50 sm:bg-transparent border sm:border-0 border-slate-200 dark:border-slate-700 text-xs font-bold text-amber-600 dark:text-amber-500 hover:text-amber-500 dark:hover:text-amber-400 uppercase tracking-widest transition-colors"><Icon name="BrandYoutube" size={16} /> Watch Tutorial</a>}
-                        {item.links.dlc && <a href={item.links.dlc} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 p-3 sm:p-0 rounded-lg bg-slate-50 dark:bg-slate-800/50 sm:bg-transparent border sm:border-0 border-slate-200 dark:border-slate-700 text-xs font-bold text-purple-600 dark:text-purple-500 hover:text-purple-500 dark:hover:text-purple-400 uppercase tracking-widest transition-colors"><Icon name="Plus" size={16} /> Get DLCs / Updates</a>}
-                        
-                        <button 
-                            onClick={handleReportBrokenLink} 
-                            className="flex items-center justify-center gap-2 p-3 sm:p-0 rounded-lg bg-red-50 dark:bg-red-900/10 sm:bg-transparent border sm:border-0 border-red-200 dark:border-red-900/30 text-xs font-bold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 uppercase tracking-widest transition-colors"
-                        >
-                            <Icon name="AlertTriangle" size={16} /> Report Broken Link
-                        </button>
-                    </div>
-                </Section>
-                
-                <CommentsSection itemId={item.id} itemTitle={item.title || item.name} itemCategory={item.category} />
-            </div>
-        </div>
-      </motion.div>
-      <AnimatePresence>
-        {showHypervisorGuide && (
-          <HypervisorGuideModal key="hypervisor-guide" open={showHypervisorGuide} onClose={() => setShowHypervisorGuide(false)} />
-        )}
-        {noteModalContent && (
-          <NoteModal key="note-modal" content={noteModalContent} onClose={() => setNoteModalContent(null)} />
-        )}
-        {showQBitWarning && (
-          <motion.div
-            key="qbit-warning"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6 bg-slate-900/80 backdrop-blur-sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowQBitWarning(false);
-            }}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md overflow-hidden relative"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowQBitWarning(false);
-                }}
-                className="absolute top-4 right-4 p-2 text-slate-600 dark:text-slate-300 hover:text-slate-600 dark:hover:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-full transition-colors z-10"
-                aria-label="Close"
-              >
-                <Icon name="X" size={20} />
-              </button>
-              <div className="p-6 sm:p-8 text-center space-y-6 pt-8">
-                {!qBitSuccess ? (
-                  <>
-                    <div className="w-16 h-16 bg-blue-500/20 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce shadow-lg shadow-blue-500/20">
-                      <Icon name="Download" size={32} />
-                    </div>
-                    <div>
-                      <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-3">Wait a minute! 🛑</h3>
-                      <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
-                        To use this method, you need <span className="font-bold text-blue-600 dark:text-blue-400">qBittorrent</span> to download uTorrent files without problems. Do you already have it installed? 🤔
-                      </p>
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                      <a 
-                        href={item.links.full}
-                        target="_blank" 
-                        rel="noreferrer"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (isGuestMode) {
-                              e.preventDefault();
-                              showGuestNotification?.();
-                              return;
-                          }
-                          setShowQBitWarning(false);
-                        }}
-                        className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 flex items-center justify-center"
-                      >
-                        YES, I HAVE IT 🚀
-                      </a>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          window.open('https://www.qbittorrent.org/download', '_blank');
-                          setQBitSuccess(true);
-                        }}
-                        className="flex-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-200 font-bold py-3 px-4 rounded-xl transition-all border border-slate-200 dark:border-slate-700 flex items-center justify-center"
-                      >
-                        Not Yet 😅
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="w-16 h-16 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse shadow-lg shadow-emerald-500/20">
-                      <Icon name="Check" size={32} />
-                    </div>
-                    <div>
-                      <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-3">Everything is fine! 🎉</h3>
-                      <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 font-medium leading-relaxed mb-6">
-                        Now you can have it thanks for respect N E X A 1337 Guidelines and instructions, all this for you. 🥳
-                      </p>
-                      <a 
-                        href={item.links.full}
-                        target="_blank" 
-                        rel="noreferrer"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (isGuestMode) {
-                              e.preventDefault();
-                              showGuestNotification?.();
-                              return;
-                          }
-                          setShowQBitWarning(false);
-                          setTimeout(() => setQBitSuccess(false), 500);
-                        }}
-                        className="block w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-lg shadow-primary-500/30 hover:-translate-y-0.5"
-                      >
-                        Get Files ⚡️
-                      </a>
-                    </div>
-                  </>
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
-};
-
-const Badge: React.FC<{ text: string; color: 'blue' | 'slate' | 'emerald'; icon: string }> = ({ text, color, icon }) => {
-  const colors = {
-    blue: 'bg-primary-500/10 text-primary-600 dark:text-sky-400 border-primary-500/20',
-    slate: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700',
-    emerald: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
-  };
-  return (
-    <span className={`px-2.5 py-1 rounded-md border text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 ${colors[color]}`}>
-       <Icon name={icon} size={12} /> {text}
-    </span>
-  );
-};
-
-const StatBox: React.FC<{ label: string; value: string; icon: string; color: string; fullWidth?: boolean }> = ({ label, value, icon, color, fullWidth }) => (
-  <div className={`bg-slate-50 dark:bg-slate-900 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center text-center ${fullWidth ? 'col-span-2 lg:col-span-1' : ''}`}>
-     <Icon name={icon} size={20} className={`${color} mb-2`} />
-     <span className="text-[10px] font-bold text-slate-900 dark:text-slate-300 uppercase tracking-widest mb-1">{label}</span>
-     <span className="text-xs font-mono font-bold text-slate-900 dark:text-white truncate w-full px-2">{value || 'N/A'}</span>
-  </div>
-);
-
-const Section: React.FC<{ title: string; children: React.ReactNode; action?: React.ReactNode }> = ({ title, children, action }) => (
-  <div className="space-y-4">
-     <div className="flex items-center justify-between pr-1">
-        <h3 className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase tracking-[0.2em] flex items-center gap-2 pl-1">
-            <span className="w-1.5 h-1.5 bg-primary-500 rounded-full"></span> {title}
-        </h3>
-        {action}
-     </div>
-     {children}
-  </div>
-);
-
-const Thumbnail: React.FC<{ src: string; isActive: boolean; onClick: () => void }> = ({ src, isActive, onClick }) => {
-  const isVideo = src.endsWith('.webm') || src.endsWith('.mp4');
-  return (
-    <button onClick={onClick} className={`relative aspect-square h-full rounded-lg overflow-hidden border-2 transition-all shrink-0 ${isActive ? 'border-primary-500 scale-105 opacity-100' : 'border-transparent opacity-50 hover:opacity-100'}`}>
-      {isVideo ? (
-        <video src={src} className="w-full h-full object-cover" muted loop playsInline />
-      ) : (
-        <img src={src} alt="thumb" className="w-full h-full object-cover"  loading="lazy" />
-      )}
-      {isVideo && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-          <Icon name="Play" size={16} className="text-white opacity-80" />
-        </div>
-      )}
-    </button>
-  );
-};
-
-const DownloadButton: React.FC<{ label: React.ReactNode; sub: string; href: string; icon: string; customIconUrl?: string; secondary?: boolean; note?: string; onNoteClick?: (note: string) => void }> = ({ label, sub, href, icon, customIconUrl, secondary, note, onNoteClick }) => (
-  <div className={`relative group flex flex-col p-2 sm:p-4 rounded-xl border transition-all active:scale-95 hover:-translate-y-1 ${secondary ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 hover:border-primary-500/50'}`}>
-     <div className="flex items-center gap-2 sm:gap-4 flex-1">
-         <div className={`p-1.5 sm:p-2.5 rounded-lg shrink-0 transition-colors ${secondary ? 'bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-500 group-hover:text-slate-800 dark:group-hover:text-slate-900 dark:text-slate-200' : 'bg-slate-200 dark:bg-slate-900 text-primary-600 dark:text-primary-500 group-hover:text-white group-hover:bg-primary-500'}`}>
-            {customIconUrl ? (
-               <img src={customIconUrl} alt="icon" referrerPolicy="no-referrer" className="w-4 h-4 sm:w-5 sm:h-5 object-contain"  loading="lazy" />
-            ) : (
-               <Icon name={icon} size={20} className="w-4 h-4 sm:w-5 sm:h-5" />
-            )}
+      {/* Header with Breadcrumb and Close Button */}
+      <div className="sticky top-0 z-50 bg-slate-50/90 dark:bg-[#0B1120]/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/50 px-4 sm:px-8 py-4 flex items-center justify-between">
+         <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
+            <span className="hover:text-primary-500 cursor-pointer" onClick={onClose}>{t('Home')}</span>
+            <span>/</span>
+            <span className="hover:text-primary-500 cursor-pointer capitalize" onClick={onClose}>{item.category === 'extra' ? t('SaveGame') : t(item.category || 'Games')}</span>
+            <span>/</span>
+            <span className="text-slate-900 dark:text-white">{item.name}</span>
          </div>
-         <div className="min-w-0 flex-1">
-            <div className="text-[8px] sm:text-[10px] font-bold uppercase tracking-widest opacity-60 mb-0.5 text-slate-600 dark:text-slate-300">{sub}</div>
-            <div className={`text-xs font-bold break-words leading-tight ${secondary ? 'text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white' : 'text-slate-700 dark:text-slate-200 group-hover:text-primary-600 dark:group-hover:text-white'}`}>{label}</div>
-         </div>
-         <Icon name="ExternalLink" size={14} className={`shrink-0 w-3 h-3 sm:w-4 sm:h-4 opacity-50 sm:opacity-0 group-hover:opacity-100 transition-opacity ${secondary ? 'text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white' : 'text-slate-600 dark:text-slate-300 group-hover:text-primary-600 dark:group-hover:text-white'}`} />
-     </div>
-     <a href={href} target="_blank" rel="noreferrer" className="absolute inset-0 z-10" aria-label={label}></a>
-     
-     {note && (
-         <div className="relative z-20 mt-2 sm:mt-3 flex items-center justify-between border-t border-slate-200 dark:border-slate-700/50 pt-2">
-            <div className={`text-[9px] sm:text-[10px] font-bold truncate pr-2 flex-1 ${secondary ? 'text-slate-600 dark:text-slate-300' : 'text-emerald-600 dark:text-emerald-500'}`}>
-                {note.length > 40 ? `${note.substring(0, 40)}...` : note}
-            </div>
-            {note.length > 40 && onNoteClick && (
-                <button 
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); onNoteClick(note); }}
-                    className={`flex items-center gap-1 shrink-0 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 sm:px-2 sm:py-1 rounded transition-colors cursor-pointer ${secondary ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700' : 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-500/30'}`}
-                >
-                    <Icon name="Info" size={12} className="w-3 h-3" />
-                    <span>Read</span>
-                </button>
-            )}
-         </div>
-     )}
-  </div>
-);
+         <button onClick={onClose} className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800">
+             <Icon name="X" size={24} />
+         </button>
+      </div>
 
-// --- LATEST INTEL PANEL ---
-
-type IntelCategory = 'ALL' | 'GAME' | 'HYPERVISOR' | 'STEAMTOOLS' | 'ARCHITECT' | 'EXTRA' | 'UPCOMING';
-interface IntelItem {
-  id: string;
-  title: string;
-  description: string;
-  timestamp: string;
-  category: IntelCategory;
-  type: 'NEW' | 'UPDATE' | 'FIX' | 'ALERT';
-  version?: string;
-}
-
-const LatestIntelPanel: React.FC<{ open: boolean; onClose: () => void; items: IntelItem[] }> = ({ open, onClose, items }) => {
-  const [filter, setFilter] = useState<IntelCategory>('ALL');
-
-  if (!open) return null;
-
-  const filteredIntel = items.filter(item => filter === 'ALL' || item.category === filter);
-
-  const getCategoryIcon = (category: string) => {
-    switch(category) {
-      case 'GAME': return 'Gamepad2';
-      case 'HYPERVISOR': return 'Cpu';
-      case 'STEAMTOOLS': return 'Wrench';
-      case 'ARCHITECT': return 'Building';
-      case 'EXTRA': return 'Plus';
-      case 'UPCOMING': return 'Clock';
-      default: return 'Info';
-    }
-  };
-
-  const getTypeColor = (type: string) => {
-    switch(type) {
-      case 'NEW': return 'bg-emerald-500 text-white';
-      case 'UPDATE': return 'bg-blue-500 text-white';
-      case 'FIX': return 'bg-purple-500 text-white';
-      case 'ALERT': return 'bg-red-500 text-white';
-      default: return 'bg-slate-500 text-white';
-    }
-  };
-
-  const formatTimeAgo = (dateString: string) => {
-    if (!dateString) return 'Unknown date';
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return dateString; // Fallback to raw string if unparseable
-    
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-    
-    if (diffInSeconds < 0) return 'Just now';
-    if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-    if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 604800)}w ago`;
-    if (diffInSeconds < 31536000) return `${Math.floor(diffInSeconds / 2592000)}mo ago`;
-    return `${Math.floor(diffInSeconds / 31536000)}y ago`;
-  };
-
-  return (
-    <AnimatePresence>
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[110] flex justify-end bg-black/60 md:backdrop-blur-sm"
-        onClick={onClose}
-      >
-        <motion.div 
-          initial={{ x: '100%' }}
-          animate={{ x: 0 }}
-          exit={{ x: '100%' }}
-          transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className="w-full max-w-md h-full bg-white dark:bg-slate-900 shadow-2xl flex flex-col border-l border-slate-200 dark:border-slate-800"
-          onClick={e => e.stopPropagation()}
-        >
-          <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center text-primary-500 relative">
-                <Icon name="Radar" size={24} className="animate-pulse" />
-                <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-slate-50 dark:border-slate-950"></div>
-              </div>
-              <div>
-                <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-widest">Latest Intel</h2>
-                <p className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase tracking-wider">Live Changelog Feed</p>
-              </div>
-            </div>
-            <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-300 transition-colors">
-              <Icon name="X" size={20} />
-            </button>
-          </div>
-
-          <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex gap-2 overflow-x-auto no-scrollbar">
-            {(['ALL', 'GAME', 'HYPERVISOR', 'STEAMTOOLS', 'ARCHITECT', 'EXTRA', 'UPCOMING'] as IntelCategory[]).map(cat => (
-              <button
-                key={cat}
-                onClick={() => setFilter(cat)}
-                className={`shrink-0 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
-                  filter === cat 
-                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md' 
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                }`}
-              >
-                {cat === 'ARCHITECT' ? 'TOOLS' : cat === 'EXTRA' ? 'SAVEGAME' : cat}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-            {filteredIntel.map((item, index) => (
-              <motion.div 
-                key={`${item.id}-${index}`}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="relative pl-6 border-l-2 border-slate-200 dark:border-slate-800"
-              >
-                <div className={`absolute -left-[9px] top-0 w-4 h-4 rounded-full border-4 border-white dark:border-slate-900 ${getTypeColor(item.type).split(' ')[0]}`}></div>
-                
-                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700/50 hover:border-primary-500/50 transition-colors group">
-                  <div className="flex items-start justify-between gap-4 mb-2">
-                    <div className="flex items-center gap-2">
-                      <Icon name={getCategoryIcon(item.category)} size={14} className="text-slate-600 dark:text-slate-300" />
-                      <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${getTypeColor(item.type)}`}>
-                        {item.type}
-                      </span>
-                      {item.version && (
-                        <span className="text-[10px] font-mono font-bold text-slate-900 dark:text-slate-300 bg-slate-200 dark:bg-slate-700 px-1.5 rounded">
-                          {item.version}
-                        </span>
+      <div className="max-w-7xl mx-auto w-full px-4 sm:px-8 py-8 space-y-12">
+          {/* Top Hero Section */}
+          <div className="flex flex-col lg:flex-row gap-8">
+              {/* Left Column (Cover + Trailer) */}
+              <div className="w-full lg:w-[320px] flex-shrink-0 flex flex-col gap-4">
+                  <div className="aspect-[2/3] rounded-xl overflow-hidden shadow-2xl relative border border-slate-200 dark:border-slate-800">
+                      <img src={item.coverImage} alt={item.name} className="w-full h-full object-cover" />
+                      {item.category === 'hypervisor' && (
+                         <div className="absolute top-3 start-3 bg-red-600/90 backdrop-blur text-white px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest shadow-lg border border-red-500/50 z-20">
+                             HV
+                         </div>
                       )}
-                    </div>
-                    <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider shrink-0">
-                      {formatTimeAgo(item.timestamp)}
-                    </span>
                   </div>
                   
-                  <h3 className="text-sm font-black text-slate-900 dark:text-white mb-1 group-hover:text-primary-500 transition-colors">
-                    {item.title}
-                  </h3>
-                  <p className="text-xs text-slate-900 dark:text-slate-200 leading-relaxed font-medium">
-                    {item.description}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-            
-            {filteredIntel.length === 0 && (
-              <div className="text-center py-10">
-                <Icon name="Ghost" size={48} className="mx-auto text-slate-900 dark:text-slate-700 mb-4" />
-                <p className="text-sm font-bold text-slate-900 dark:text-slate-300 uppercase tracking-widest">No intel found</p>
+                  {item.category === 'steamtools' && item.ratingPositive && (
+                      <div className="grid grid-cols-2 gap-3 my-4">
+                         {/* Left Card */}
+                         <div className="bg-slate-100 dark:bg-[#282a32] rounded-xl p-3 flex flex-col items-center justify-center shadow-sm">
+                            <div className="flex items-center gap-2 text-2xl font-bold">
+                               <span className="text-2xl drop-shadow-md">
+                                  {Number(item.ratingPositive) >= 90 ? '🤩' : Number(item.ratingPositive) >= 70 ? '😎' : '😐'}
+                               </span>
+                               <span className={Number(item.ratingPositive) >= 70 ? "text-[#4FD033]" : "text-[#F5C341]"}>
+                                  {item.ratingPositive}%
+                               </span>
+                            </div>
+                            <span className={`text-sm font-medium mt-1 ${Number(item.ratingPositive) >= 70 ? "text-[#4FD033]" : "text-[#F5C341]"}`}>
+                               {Number(item.ratingNegative) ? (Math.floor(Number(item.ratingNegative) * 31.8) >= 1000 ? (Math.floor(Number(item.ratingNegative) * 31.8) / 1000).toFixed(0) + 'k' : Math.floor(Number(item.ratingNegative) * 31.8)) : '0'} {t('reviews')}
+                            </span>
+                         </div>
+                    
+                         {/* Right Card */}
+                         <div className="bg-slate-100 dark:bg-[#282a32] rounded-xl p-3 flex flex-col items-center justify-center shadow-sm">
+                            <div className="text-2xl font-bold text-[#F5C341]">
+                               {Number(item.ratingNegative) ? Number(item.ratingNegative).toLocaleString() : '0'}
+                            </div>
+                            <span className="text-[#F5C341] text-sm font-medium mt-1">{t('In-Game')}</span>
+                         </div>
+                      </div>
+                  )}
+
+                  {item.links.trailer && (
+                     <button onClick={() => setShowTrailer(true)} className="w-full py-3 sm:py-4 bg-slate-800 hover:bg-slate-700 text-white dark:bg-slate-800/50 dark:hover:bg-slate-800 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors border border-slate-700">
+                        <Icon name="Youtube" size={20} className="text-primary-500 rtl:rotate-180" />
+                        {t('Watch Trailer')}
+                     </button>
+                  )}
+                  
               </div>
+
+              {/* Right Column (Details) */}
+              <div className="flex-1 flex flex-col min-w-0">
+                 <div className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2 truncate">
+                     {item.name} {item.repackBy ? `${item.repackBy} Edition` : ""}
+                 </div>
+                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight mb-4 leading-tight">
+                     {item.name}
+                 </h1>
+
+                 {/* Rating and Meta Row */}
+                 <div className="flex flex-wrap items-center gap-4 mb-6">
+                     <div className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                         {t('RATE & REVIEW')}
+                     </div>
+                     <div className="flex items-center gap-1 bg-slate-800/10 dark:bg-slate-800/50 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700/50 text-xs font-bold text-slate-700 dark:text-slate-300">
+                         <Icon name="Star" size={14} className="text-amber-500" />
+                         <Icon name="Star" size={14} className="text-amber-500" />
+                         <Icon name="Star" size={14} className="text-amber-500" />
+                         <Icon name="Star" size={14} className="text-amber-500" />
+                         <Icon name="Star" size={14} className={item.id.charCodeAt(0) % 2 === 0 ? 'text-amber-500' : 'text-slate-300'} />
+                         <span className="ms-1 text-slate-500 dark:text-slate-400">
+                             {((item.id.charCodeAt(0) % 11) / 10 + 4.0).toFixed(1)} / 5.0 ({(item.id.charCodeAt(0) * 123) % 5000 + 100} {t('reviews')})
+                         </span>
+                     </div>
+                 </div>
+
+                 {/* Quick Stats Row */}
+                 <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-sm text-slate-600 dark:text-slate-400 mb-6 font-medium">
+                     <div className="flex items-center gap-2 bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded font-bold text-slate-900 dark:text-slate-200 text-xs">
+                         PC
+                     </div>
+                     {item.repackSize && <span>{item.repackSize}</span>}
+                     {item.originalSize && <span className="opacity-60 line-through text-xs">{item.originalSize}</span>}
+                     {item.id && <span>ID : {item.id}</span>}
+                     {item.languages && <span className="opacity-80">{t('Languages')}: {item.languages}</span>}
+                     {item.category === 'steamtools' && item.gameId && (
+                         <button 
+                            onClick={handleCopyGameId}
+                            className="flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity text-blue-600 dark:text-blue-400 font-bold"
+                         >
+                            GameID: {item.gameId}
+                            <Icon name={isCopiedGameId ? "Check" : "Copy"} size={14} />
+                         </button>
+                     )}
+                     {item.repackBy && (
+                         <div className="flex items-center gap-2 ms-auto bg-slate-100 dark:bg-slate-800/50 p-1.5 pe-4 rounded-full border border-slate-200 dark:border-slate-700/50">
+                             <div className="w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center text-white text-[10px]">
+                                {item.repackBy.charAt(0).toUpperCase()}
+                             </div>
+                             <div className="flex flex-col">
+                                <span className="text-[9px] uppercase tracking-widest text-slate-500 dark:text-slate-500 leading-none">{t('Repacker')}</span>
+                                <span className="text-xs font-bold text-slate-900 dark:text-slate-200 leading-none">{item.repackBy}</span>
+                             </div>
+                         </div>
+                     )}
+                 </div>
+
+                 {/* Action Buttons Row */}
+                 <div className="flex flex-wrap items-center gap-3 mb-8">
+                     {item.category !== 'steamtools' && (
+                         <div className="px-3 py-2 bg-emerald-500 text-white text-sm font-bold rounded-lg border border-emerald-600">
+                             V {item.version || '1.0'}
+                         </div>
+                     )}
+                     <div className="px-3 py-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-700 dark:text-emerald-400 text-sm font-bold rounded-lg border border-emerald-500/20 flex items-center gap-2">
+                         <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Latest
+                     </div>
+                     
+                     <button onClick={(e) => toggleStash(item.id, e)} className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-bold transition-all ${stash.includes(item.id) ? 'bg-primary-500 text-white border-primary-600' : 'bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>
+                         <Icon name="Bookmark" size={16} className={stash.includes(item.id) ? 'fill-current' : ''} /> {stash.includes(item.id) ? t('Remove from Stash') : t('Add to Stash')}
+                     </button>
+
+                     <button onClick={handleReportBrokenLink} className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 text-sm font-bold transition-all">
+                         <Icon name="AlertTriangle" size={16} /> {t('Report')}
+                     </button>
+                     
+                     <button onClick={handleCopyLink} className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 text-sm font-bold transition-all">
+                         <Icon name={isCopied ? "Check" : "Link"} size={16} className={isCopied ? "text-emerald-900 dark:text-emerald-500" : ""} /> {t('Share Link')}
+                     </button>
+                 </div>
+
+                 {item.description && (
+                 <>
+                 {/* Description */}
+                 <div className="prose prose-slate dark:prose-invert max-w-none mb-8 max-h-[300px] overflow-y-auto custom-scrollbar pe-4">
+                     <p className="text-base leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-wrap" dir="auto">
+                         {item.description}
+                     </p>
+                 </div>
+
+                 </>
+                 )}
+                 {/* Metadata Boxes */}
+                 <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-6">
+                     {item.repackBy && (
+                         <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+                             <span className="text-xs text-slate-500 dark:text-slate-400">{t('Release Group')} /</span>
+                             <span className="text-sm font-bold text-slate-900 dark:text-white">
+                                 {['steamtools', 'architect'].includes(item.category) && item.repackBy === 'NEXA' ? 'SecretArea' : item.repackBy}
+                             </span>
+                         </div>
+                     )}
+                     {item.dateAdded && (
+                         <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+                             <span className="text-xs text-slate-500 dark:text-slate-400">{t('Released')} /</span>
+                             <span className="text-sm font-bold text-slate-900 dark:text-white">{item.dateAdded}</span>
+                         </div>
+                     )}
+                     {resolvedDev && (
+                         <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+                             <span className="text-xs text-slate-500 dark:text-slate-400">{t('Game Studio')} /</span>
+                             <span className="text-sm font-bold text-slate-900 dark:text-white cursor-pointer hover:text-primary-500 transition-colors" onClick={(e) => { e.stopPropagation(); if(onCompanyClick) onCompanyClick(resolvedDev); }}>{resolvedDev}</span>
+                         </div>
+                     )}
+                 </div>
+
+                 {/* Genres */}
+                 {item.genres && (
+                     <div className="flex flex-wrap items-center gap-2 mb-8">
+                         <span className="px-3 py-1.5 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold rounded flex items-center gap-1">
+                             {t('Genres')} <Icon name="ChevronRight" size={14} className="rtl:rotate-180" />
+                         </span>
+                         {item.genres.split(',').map((genre, idx) => (
+                             <span key={idx} className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 text-xs font-bold rounded border border-slate-200 dark:border-slate-700/50 cursor-pointer hover:border-primary-500/50 transition-colors" onClick={() => onGenreClick?.(genre.trim())}>
+                                 {genre.trim()}
+                             </span>
+                         ))}
+                     </div>
+                 )}
+
+                 {/* Steam & Download Actions */}
+                 <div className="flex flex-col sm:flex-row items-center gap-4">
+                      {item.category === 'architect' ? (
+                          <a href="https://t.me/nexa1337agency" target="_blank" rel="noreferrer" className="w-full sm:w-auto flex-1 flex items-center justify-between px-4 py-3 bg-[#2AABEE]/10 hover:bg-[#2AABEE]/20 rounded-xl border border-[#2AABEE]/30 transition-all text-slate-900 dark:text-white">
+                              <div className="flex items-center gap-3">
+                                  <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRzS8azG7PVRzinq2bwi1bFK0wF9XYCyXR1IUnaj0hwWQ&s=10" alt="Telegram" className="w-6 h-6 object-contain rounded-full" />
+                                  <div className="flex flex-col text-start">
+                                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{t('Join our community')}</span>
+                                      <span className="text-sm font-bold text-[#2AABEE]">{t('Get it on Telegram')}</span>
+                                  </div>
+                              </div>
+                              <Icon name="ExternalLink" size={20} className="text-[#2AABEE]" />
+                          </a>
+                      ) : item.category === 'extra' ? null : (
+                          <a href={`https://steamdb.info/search/?a=app&q=${encodeURIComponent(item.name)}`} target="_blank" rel="noreferrer" className="w-full sm:w-auto flex-1 flex items-center justify-between px-4 py-3 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl border border-slate-200 dark:border-slate-700 transition-all text-slate-900 dark:text-white">
+                              <div className="flex items-center gap-3">
+                                  <Icon name="Database" size={24} />
+                                  <div className="flex flex-col text-start">
+                                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{t('Check database stats and info')}</span>
+                                      <span className="text-sm font-bold">{t('Get it on SteamDB')}</span>
+                                  </div>
+                              </div>
+                              <Icon name="ExternalLink" size={20} className="text-slate-400" />
+                          </a>
+                      )}
+                 </div>
+                 <div className="flex flex-col sm:flex-row items-center gap-4 mt-4">
+                      <button onClick={() => {
+                          const el = document.getElementById('download');
+                          const container = document.getElementById('modal-scroll-container');
+                          if (el && container) {
+                              const y = el.getBoundingClientRect().top + container.scrollTop - container.getBoundingClientRect().top - 80;
+                              container.scrollTo({ top: y, behavior: 'smooth' });
+                          } else if (el) {
+                              el.scrollIntoView({ behavior: 'smooth' });
+                          }
+                      }} className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-primary-500/25">
+                          {t('Download')} <Icon name="Download" size={20} className="rtl:rotate-180" />
+                      </button>
+                      {item.galleryImages && item.galleryImages.length > 0 && (
+                      <button onClick={() => {
+                          const el = document.getElementById('features');
+                          const container = document.getElementById('modal-scroll-container');
+                          if (el && container) {
+                              const y = el.getBoundingClientRect().top + container.scrollTop - container.getBoundingClientRect().top - 80;
+                              container.scrollTo({ top: y, behavior: 'smooth' });
+                          } else if (el) {
+                              el.scrollIntoView({ behavior: 'smooth' });
+                          }
+                      }} className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-slate-800 hover:bg-slate-700 dark:bg-slate-800/50 dark:hover:bg-slate-700 text-white rounded-xl font-bold transition-all border border-slate-700">
+                          <Icon name="Zap" size={20} /> Game Features
+                      </button>
+                      )}
+                 </div>
+              </div>
+          </div>
+
+          {/* N E X A 1337 message note if available */}
+          {item.links.fullNote && (
+              <div className="w-full bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-900/30 rounded-xl p-4 flex gap-4">
+                 <div className="text-blue-500 shrink-0">
+                     <Icon name="Info" size={24} />
+                 </div>
+                 <div>
+                     <h4 className="text-sm font-bold text-blue-900 dark:text-blue-400 uppercase tracking-widest mb-1">{t('N E X A 1337 Says')}</h4>
+                     <p className="text-sm text-blue-800 dark:text-blue-300">{item.links.fullNote}</p>
+                 </div>
+              </div>
+          )}
+
+          {/* Gallery Section */}
+          {item.galleryImages && item.galleryImages.length > 0 && (
+              <div id="features" className="space-y-6 pt-8">
+                  <h2 className="text-2xl font-black text-slate-900 dark:text-white text-center mb-8 tracking-tight">{t('Game Screenshots Gallery')}</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {item.galleryImages.map((img, idx) => (
+                          <div key={idx} className="aspect-video rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 hover:border-primary-500 transition-colors group">
+                              {img.endsWith('.webm') || img.endsWith('.mp4') ? (
+                                  <video src={img} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" muted loop autoPlay playsInline />
+                              ) : (
+                                  <img src={img} alt={`${item.name} screenshot ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                              )}
+                          </div>
+                      ))}
+                  </div>
+              </div>
+          )}
+
+                                                        {/* Unified Details Section - Full Width */}
+          </div>
+          <div className="w-full bg-slate-50 dark:bg-[#0F172A] border-y border-slate-200 dark:border-slate-800 mt-8">
+              <div className="max-w-7xl mx-auto w-full px-4 sm:px-8">
+                  <div className="flex flex-col">
+                  {item.systemReqs && item.systemReqs.length > 0 && (
+                  <>
+                  {/* System Requirements */}
+                  <div className="py-6 sm:py-12 border-b border-slate-200 dark:border-slate-800">
+                      <div className="flex items-center gap-4 mb-8">
+                          <div className="w-12 h-12 bg-purple-500/10 text-purple-500 rounded-xl flex items-center justify-center">
+                              <Icon name="Cpu" size={24} />
+                          </div>
+                          <div>
+                              <h3 className="text-xl font-bold text-slate-900 dark:text-white">{t('System Requirements')}</h3>
+                              <p className="text-sm text-slate-500 dark:text-slate-400">{t('Minimum specifications needed')}</p>
+                          </div>
+                      </div>
+                      
+                      <HardwareCompatibility requirements={item.systemReqs} globalSpecs={globalSpecs} />
+                      <div className="mb-8"></div>
+                      <div className="text-center text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-6 border-b border-slate-200 dark:border-slate-800 pb-4">
+                          REQUIRES A 64-BIT PROCESSOR AND OPERATING SYSTEM
+                      </div>
+                      <div className="space-y-4">
+                          {item.systemReqs && item.systemReqs.map((req, idx) => (
+                              <div key={idx} className="flex justify-between items-center text-sm border-b border-slate-200/50 dark:border-slate-800/50 pb-3 last:border-0 last:pb-0">
+                                  <span className="text-slate-500 dark:text-slate-400 font-medium flex items-center gap-2">
+                                      {req.label.toLowerCase().match(/os|operating system|windows/) && <Icon name="Windows" size={16} />}
+                                      {req.label.toLowerCase().match(/processor|cpu/) && <Icon name="Cpu" size={16} />}
+                                      {req.label.toLowerCase().match(/memory|ram/) && <Icon name="RAM" size={16} />}
+                                      {req.label.toLowerCase().match(/graphics|gpu|video/) && <Icon name="GPU" size={16} />}
+                                      {req.label.toLowerCase().match(/storage|hdd|ssd|disk space/) && <Icon name="Storage" size={16} />}
+                                      {req.label}
+                                  </span>
+                                  <span className="text-slate-900 dark:text-slate-200 font-bold text-end max-w-[60%]">{req.value}</span>
+                              </div>
+                          ))}
+                      </div>
+                  </div>
+
+                  </>
+                  )}
+                  {/* Installation Steps */}
+                  {item.installSteps && item.installSteps.length > 0 && (
+                  <div className="py-6 sm:py-12 border-b border-slate-200 dark:border-slate-800">
+                      <div className="flex items-center gap-4 mb-2">
+                          <div className="w-10 h-10 bg-indigo-500/10 text-indigo-500 rounded-xl flex items-center justify-center">
+                              <Icon name="List" size={20} />
+                          </div>
+                          <div>
+                              <h3 className="text-xl font-bold text-slate-900 dark:text-white">{t('Installation Steps')}</h3>
+                          </div>
+                      </div>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 ms-14">{t('Follow these steps to safely install and set up your Games and Apps.')}</p>
+                      
+                      <div className="space-y-4 ms-14">
+                          {item.installSteps.map((step, idx) => (
+                              <div key={idx} className="flex gap-4">
+                                  <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                                      {idx + 1}
+                                  </div>
+                                  <div className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: step }} />
+                              </div>
+                          ))}
+                      </div>
+                  </div>
+                  )}
+
+                  {/* Hypervisor Bypass Alert */}
+                  {item.category === 'hypervisor' && (
+                  <div className="py-6 border-b border-slate-200 dark:border-slate-800">
+                      <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                          <Icon name="HelpCircle" size={24} className="text-blue-500" />
+                          {t('What is a hypervisor bypass?')}
+                      </h3>
+                      <div className="w-full bg-red-50 dark:bg-[#1e1416] border border-red-200 dark:border-[#3b1c20] rounded-xl p-4 sm:p-6 flex flex-col gap-2 transition-colors">
+                         <h4 className="text-red-600 dark:text-red-400 font-medium">
+                            {t('Please read this article before proceeding with downloading and installation:')}
+                         </h4>
+                         <a href="https://fitgirl-repacks.site/hypervisor-guide/" onClick={(e) => { e.preventDefault(); setShowHypervisorGuide(true); }} className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 underline underline-offset-4 decoration-red-600/30 dark:decoration-red-500/30 font-medium transition-colors break-all">
+                            https://fitgirl-repacks.site/hypervisor-guide/
+                         </a>
+                      </div>
+                  </div>
+                  )}
+
+                  {item.toolsNeeded && item.toolsNeeded.length > 0 && (
+                  <>
+                  {/* Tools You Need */}
+                  <div className="py-6 sm:py-12 border-b border-slate-200 dark:border-slate-800">
+                      <div className="flex items-center gap-4 mb-6">
+                          <div className="w-10 h-10 bg-orange-500/10 text-orange-500 rounded-xl flex items-center justify-center">
+                              <Icon name="Wrench" size={20} />
+                          </div>
+                          <h3 className="text-xl font-bold text-slate-900 dark:text-white">{t('Tools You Need')}</h3>
+                      </div>
+                      <div className="flex flex-wrap gap-3">
+                          {item.toolsNeeded && item.toolsNeeded.map((tool, idx) => (
+                              <a key={idx} href={tool.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-primary-500/50 transition-colors">
+                                  <Icon name="Terminal" size={16} className="text-slate-400" />
+                                  <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{tool.name}</span>
+                              </a>
+                          ))}
+                          {(!item.toolsNeeded || item.toolsNeeded.length === 0) && (
+                              <div className="text-sm text-slate-500 dark:text-slate-400">{t('No specific tools required for this game.')}</div>
+                          )}
+                      </div>
+                  </div>
+
+                  </>
+                  )}
+                  {/* N E X A 1337 Alert */}
+                  <div className="py-6 border-b border-slate-200 dark:border-slate-800">
+                      <div className="w-full bg-[#fdf8f6] dark:bg-slate-900 border-l-4 border-amber-500 rounded-r-xl p-4 flex gap-4">
+                         <div className="text-amber-500 shrink-0 mt-1">
+                             <Icon name="AlertTriangle" size={24} />
+                         </div>
+                         <div>
+                             <h4 className="font-bold text-amber-500 mb-2">{t('N E X A 1337 Says :')}</h4>
+                             <p className="text-amber-600 dark:text-amber-500/80 text-sm mb-1">
+                                 {t('Support the original developers and creators by purchasing legitimate copies of their products.')}
+                             </p>
+                             <p className="text-amber-600 dark:text-amber-500/80 text-sm mb-1">
+                                 {t('All trademarks, copyrights, and intellectual property belong to their respective owners.')}
+                             </p>
+                             <p className="text-amber-600 dark:text-amber-500/80 text-sm">
+                                 {t('If you are a rights holder and wish to request content removal, please contact us.')}
+                             </p>
+                         </div>
+                      </div>
+                  </div>
+
+                  {/* Download Channels */}
+                  {(item.links.full || (item.links.mirrors && item.links.mirrors.length > 0) || (item.links.parts && item.links.parts.length > 0) || (item.links.ankerParts && item.links.ankerParts.length > 0)) && (
+                  <div className="py-6 sm:py-12" id="download">
+                      <div className="flex items-center gap-4 mb-6">
+                          <div className="w-10 h-10 bg-primary-500/10 text-primary-500 rounded-xl flex items-center justify-center">
+                              <Icon name="Download" size={20} />
+                          </div>
+                          <h3 className="text-xl font-bold text-slate-900 dark:text-white">{t('Download Channels')}</h3>
+                      </div>
+                      
+                      {item.links.full && (
+                          <div className="mb-6">
+                              <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">{t('Direct Full Download')}</h4>
+                              <div className="relative">
+                                  <div className="absolute -top-3 end-4 z-10 bg-amber-500 text-white shadow-[0_0_15px_rgba(245,158,11,0.4)] text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-md">
+                                      {t('Recommendation')}
+                                  </div>
+                                  <DownloadButton
+                                      label={item.category === 'architect' ? `${t('Full project')} (${item.repackSize || item.originalSize || 'Size N/A'})` : ['steamtools', 'extra'].includes(item.category) ? t('Game Files') : `${t('Master File Magnet')} (${item.repackSize || item.originalSize || 'Size N/A'})`}
+                                      sub={t('Direct Link')}
+                                      href={item.links.full}
+                                      icon={['steamtools', 'architect', 'extra'].includes(item.category) ? "Download" : "Magnet"}
+                                      imageUrl={item.category === 'architect' ? "https://cdn-icons-png.flaticon.com/512/8767/8767957.png" : item.category === 'extra' ? "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRh4ru3ji2f7YFR6JYvKnvkM6LRna6RVfnz8J_M7_kbJA&s=10" : item.category === 'steamtools' ? "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTSLGNofupfGH5Rxt7lDZ4dKAzQhOJpRBo4GH5OIXr8pHW11lVdWcWyB1nr&s=10" : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQncl_6sUpjbAWmRH7VWRzcIHb6rN3ggXVQMESUax-qew&s=10"}
+                                      onClick={['steamtools', 'architect', 'extra'].includes(item.category) ? undefined : (e) => {
+                                        e.preventDefault();
+                                        setTorrentWarningLink(item.links.full);
+                                      }}
+                                  />
+                              </div>
+                          </div>
+                      )}
+
+                                            {( (item.links.mirrors && item.links.mirrors.length > 0) || (item.links.parts && item.links.parts.length > 0) ) && (
+                          <details className="mb-6 group">
+                              <summary className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2 cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 transition-colors select-none list-none">
+                                  <Icon name="ChevronRight" size={14} className="group-open:rotate-90 transition-transform" />
+                                  <img src={item.category === 'architect' ? "https://cdn-icons-png.flaticon.com/512/7063/7063204.png" : item.category === 'extra' ? "https://images.icon-icons.com/3053/PNG/512/google_backup_and_sync_macos_bigsur_icon_190135.png" : item.category === 'steamtools' ? "https://play-lh.googleusercontent.com/WNNDb4VyH2yXBwFME6OTWZKhVFPDnQt2xoJeXPcRZSBcnDoMD1JAHQc1GAzu9pH04wCUhFrxfGD1yEE2Bg9HXA=s0-br30" : "https://fitgirl-repacks.site/wp-content/uploads/2016/08/icon.jpg"} alt="Logo" className="w-4 h-4 rounded-sm object-contain" /> {['steamtools', 'architect', 'extra'].includes(item.category) ? t('Backup Server') : t('FitGirl Repack Links')} ({(item.links.mirrors?.length || 0) + (item.links.parts?.length || 0)})
+                              </summary>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mt-3">
+                                  {item.links.parts && item.links.parts.map(part => (
+                                      <DownloadButton
+                                          key={'part_'+part.id}
+                                          label={['architect', 'extra'].includes(item.category) ? `Part ${String(part.id).padStart(2, '0')}` : item.category === 'steamtools' ? `Mirror Link ${String(part.id).padStart(2, '0')}` : (part.id === '1' || part.id === 1 ? 'DataNodes' : `DataNodes Part ${part.id}`)}
+                                          badge={['steamtools', 'architect', 'extra'].includes(item.category) ? undefined : ((part.id === '1' || part.id === 1) ? '(Speed & Usability)' : undefined)}
+                                          sub={t('Download')}
+                                          href={part.link}
+                                          icon="Archive"
+                                          imageUrl={item.category === 'architect' ? "https://cdn-icons-png.flaticon.com/512/7063/7063204.png" : item.category === 'extra' ? "https://images.icon-icons.com/3053/PNG/512/google_backup_and_sync_macos_bigsur_icon_190135.png" : item.category === 'steamtools' ? "https://play-lh.googleusercontent.com/WNNDb4VyH2yXBwFME6OTWZKhVFPDnQt2xoJeXPcRZSBcnDoMD1JAHQc1GAzu9pH04wCUhFrxfGD1yEE2Bg9HXA=s0-br30" : "https://fitgirl-repacks.site/wp-content/uploads/2016/08/icon.jpg"}
+                                          secondary
+                                          note={part.note}
+                                          onNoteClick={(note) => setNoteModalContent(note)}
+                                      />
+                                  ))}
+                                  {item.links.mirrors && item.links.mirrors.map(part => (
+                                      <DownloadButton
+                                          key={'mirror_'+part.id}
+                                          label={['architect', 'extra'].includes(item.category) ? `Part ${String(part.id).padStart(2, '0')}` : item.category === 'steamtools' ? `Mirror Link ${String(part.id).padStart(2, '0')}` : (part.id === '1' || part.id === 1 ? 'FuckingFast' : `FuckingFast Part ${part.id}`)}
+                                          badge={['steamtools', 'architect', 'extra'].includes(item.category) ? undefined : ((part.id === '1' || part.id === 1) ? 'Really Fucking Fast' : undefined)}
+                                          sub={t('Download')}
+                                          href={part.link}
+                                          icon="Archive"
+                                          imageUrl={item.category === 'architect' ? "https://cdn-icons-png.flaticon.com/512/7063/7063204.png" : item.category === 'extra' ? "https://images.icon-icons.com/3053/PNG/512/google_backup_and_sync_macos_bigsur_icon_190135.png" : item.category === 'steamtools' ? "https://play-lh.googleusercontent.com/WNNDb4VyH2yXBwFME6OTWZKhVFPDnQt2xoJeXPcRZSBcnDoMD1JAHQc1GAzu9pH04wCUhFrxfGD1yEE2Bg9HXA=s0-br30" : "https://fitgirl-repacks.site/wp-content/uploads/2016/08/icon.jpg"}
+                                          secondary
+                                          note={part.note}
+                                          onNoteClick={(note) => setNoteModalContent(note)}
+                                      />
+                                  ))}
+                              </div>
+                          </details>
+                      )}
+                      
+                      {item.links.ankerParts && item.links.ankerParts.length > 0 && (
+                          <details className="mb-6 group">
+                              <summary className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2 cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 transition-colors select-none list-none">
+                                  <Icon name="ChevronRight" size={14} className="group-open:rotate-90 transition-transform" />
+                                  <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTYdQ_DlScM7nLh2AxH9ds27fTftrY9Jz1WhjBthb514jeSHnu2W6lT0Oo&s=10" alt="AnkerGames" className="w-4 h-4 rounded-sm object-contain" /> Pre-installed / AnkerGames ({item.links.ankerParts.length})
+                              </summary>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mt-3">
+                                  {item.links.ankerParts.map(part => (
+                                      <DownloadButton
+                                          key={part.id}
+                                          label={`Part ${part.id}`}
+                                          sub={t('Download')}
+                                          href={part.link}
+                                          icon="Zap"
+                                          imageUrl="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTYdQ_DlScM7nLh2AxH9ds27fTftrY9Jz1WhjBthb514jeSHnu2W6lT0Oo&s=10"
+                                          secondary
+                                          note={part.note}
+                                          onNoteClick={(note) => setNoteModalContent(note)}
+                                      />
+                                  ))}
+                              </div>
+
+                              <div className="mt-8 flex flex-col gap-6">
+                                  {/* Installation Guide */}
+                                  <div className="bg-slate-100 dark:bg-slate-800/40 rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-700/50">
+                                      <div className="flex items-center gap-4 mb-6">
+                                          <div className="w-12 h-12 bg-blue-500/10 text-blue-500 rounded-xl flex items-center justify-center shrink-0">
+                                              <Icon name="Box" size={24} />
+                                          </div>
+                                          <div>
+                                              <h4 className="text-lg font-bold text-slate-900 dark:text-white">{t('Installation Guide')}</h4>
+                                              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Step-by-step setup process</p>
+                                          </div>
+                                      </div>
+
+                                      <div className="flex flex-col gap-5 relative ps-2">
+                                          <div className="absolute top-4 bottom-4 start-[23px] w-px bg-slate-300 dark:bg-slate-700 z-0"></div>
+                                          
+                                          <div className="relative z-10 flex gap-4">
+                                              <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-900 border-2 border-blue-500 flex items-center justify-center text-blue-500 text-xs font-bold shrink-0 shadow-sm">1</div>
+                                              <div className="pt-1.5 text-sm text-slate-700 dark:text-slate-300">
+                                                  {t('Game is pre-installed / portable, therefore you do not need to install the game.')}
+                                              </div>
+                                          </div>
+                                          
+                                          <div className="relative z-10 flex gap-4">
+                                              <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-900 border-2 border-blue-500 flex items-center justify-center text-blue-500 text-xs font-bold shrink-0 shadow-sm">2</div>
+                                              <div className="pt-1.5 text-sm text-slate-700 dark:text-slate-300">
+                                                  {t('Just extract the rar / zip file.')}
+                                              </div>
+                                          </div>
+                                          
+                                          <div className="relative z-10 flex gap-4">
+                                              <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-900 border-2 border-blue-500 flex items-center justify-center text-blue-500 text-xs font-bold shrink-0 shadow-sm">3</div>
+                                              <div className="pt-1.5 text-sm text-slate-700 dark:text-slate-300">
+                                                  {t('Simply launch the game Run Me!.bat')}
+                                              </div>
+                                          </div>
+                                      </div>
+                                  </div>
+
+                                  {/* Important Notes */}
+                                  <div className="bg-slate-100 dark:bg-slate-800/40 rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-700/50">
+                                      <div className="flex items-center gap-4 mb-6">
+                                          <div className="w-10 h-10 bg-amber-500/10 text-amber-500 rounded-xl flex items-center justify-center shrink-0">
+                                              <Icon name="AlertTriangle" size={20} />
+                                          </div>
+                                          <div>
+                                              <h4 className="text-lg font-bold text-slate-900 dark:text-white">{t('Important Notes')}</h4>
+                                              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{t('Please review these important details before installation')}</p>
+                                          </div>
+                                      </div>
+
+                                      <ul className="space-y-4">
+                                          <li className="flex gap-3">
+                                              <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 mt-2"></div>
+                                              <span className="text-sm text-slate-700 dark:text-slate-300">{t('Install necessary apps from Redist or _CommonRedist to ensure game launches without any problems.')}</span>
+                                          </li>
+                                          <li className="flex gap-3">
+                                              <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 mt-2"></div>
+                                              <span className="text-sm text-slate-700 dark:text-slate-300">{t('Always extract game in Antivirus / Defender excluded folder - Please check our FAQs to know why it is important.')}</span>
+                                          </li>
+                                          <li className="flex gap-3">
+                                              <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 mt-2"></div>
+                                              <span className="text-sm text-slate-700 dark:text-slate-300">{t('Always run the game as administrator.')}</span>
+                                          </li>
+                                          <li className="flex gap-3">
+                                              <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 mt-2"></div>
+                                              <span className="text-sm text-slate-700 dark:text-slate-300">{t('For detailed guide, make sure to read Installation Guide.txt inside the game files.')}</span>
+                                          </li>
+                                      </ul>
+                                  </div>
+                              </div>
+                          </details>
+                      )}
+
+                  </div>
+                  )}
+
+              </div>
+          </div>
+          </div>
+          <div className="max-w-7xl mx-auto w-full px-4 sm:px-8 pb-8">
+{/* Comments Section */}
+          <CommentsSection itemId={item.id} itemTitle={item.title || item.name} itemCategory={item.category} />
+  </div>
+  
+  {/* Modals for Trailer and Notes */}
+  <AnimatePresence>
+      {showHypervisorGuide && (
+          <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[300] bg-white dark:bg-[#0B1120] flex items-center justify-center"
+              onClick={() => setShowHypervisorGuide(false)}
+          >
+              <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  className="w-full h-full relative flex flex-col overflow-hidden"
+                  onClick={e => e.stopPropagation()}
+              >
+                  {/* Header */}
+                  <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0F172A] shrink-0 relative">
+                     <div className="flex items-center gap-4 z-10">
+                        <button onClick={() => setShowHypervisorGuide(false)} className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-200 dark:bg-slate-800/50 hover:bg-slate-300 dark:hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors">
+                           <Icon name="ArrowLeft" size={16} /> Back to Product
+                        </button>
+                     </div>
+                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="flex items-center gap-2 text-slate-900 dark:text-white font-black text-lg tracking-widest uppercase pointer-events-auto">
+                           <Icon name="ShieldAlert" size={24} className="text-red-500" />
+                           HYPERVISOR GUIDE
+                        </div>
+                     </div>
+                     <button onClick={() => setShowHypervisorGuide(false)} className="p-2 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors z-10">
+                        <Icon name="X" size={20} />
+                     </button>
+                  </div>
+                  {/* Content */}
+                  <div className="flex-1 overflow-y-auto custom-scrollbar"><div className="max-w-4xl mx-auto p-6 md:p-12 text-slate-700 dark:text-slate-300 text-sm md:text-base leading-relaxed space-y-6">
+                      <p className="text-red-500 font-bold">This page is a work-in-progress and will be updated.</p>
+                      <p>This article is partially based on RessourectoR's (admin of cs.rin.ru site) article:</p>
+                      <p><a href="https://cs.rin.ru/forum/viewtopic.php?f=10&t=156407" target="_blank" rel="noopener" className="text-blue-400 hover:text-blue-300 underline text-base">https://cs.rin.ru/forum/viewtopic.php?f=10&t=156407</a></p>
+                      <p>I highly recommend to open and read it at least one time. It's more complex than this page and covers more security topics.</p>
+                      
+                      <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-4">What are Hypervisor Cracks?</h3>
+                      <p>Denuvo Hypervisor Crack or Bypass refers to advanced techniques that leverage virtualization at a very low level (often using a custom or modified hypervisor) to interfere with how the protection monitors the system. Denuvo relies heavily on integrity checks, timing analysis, and detection of debugging or emulation environments. A hypervisor-based approach allows an attacker to sit "under" the operating system, transparently controlling CPU behavior, intercepting instructions, and masking signs of analysis without modifying the protected executable directly.</p>
+                      <p>Instead of patching the game binary, the hypervisor can emulate or alter specific CPU instructions, fake timing results, or hide breakpoints and memory changes, effectively tricking Denuvo into believing everything is running on a normal, untampered system. This makes the protection much harder to detect or react to, since its checks are being handled outside its visibility. These methods are extremely complex and are typically explored by highly skilled reverse engineers, as they require deep knowledge of CPU virtualization, kernel internals, and anti-tamper mechanisms.</p>
+                      <p>Officially, only signed drivers can work at such low level. Due to the piracy nature of Denuvo Hypervisor drivers, they will never receive Microsoft-approved certificate. And that's why to use such "cracks" you need to make certain modifications to your system security settings, listed below. Please note, that those changes are intended to be made temporary, for the course of your gameplay session and then should be reverted after you quit the game.</p>
+                      
+                      <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-4">{t('Windows virtualization-based security components')}</h3>
+                      <p>On modern systems with Secure Boot, TPM 2.0 and hardware-assisted virtualization capabilities, Windows 10 and 11 enable, mostly* by default, various security solutions via Virtualization-based Security (VBS). VBS is an umbrella term for using a bare-metal hypervisor, the Windows hypervisor, to create isolated virtual spaces that are safe from even a fully compromised OS, in which these security components run and monitor the OS or store confidential information.</p>
+                      <p>The following Windows components are such security solutions:</p>
+                      <ul className="list-disc ps-6 space-y-2">
+                        <li><a href="https://learn.microsoft.com/en-us/windows/security/hardware-security/enable-virtualization-based-protection-of-code-integrity" target="_blank" rel="noopener" className="text-blue-400 hover:text-blue-300">Memory Integrity (HVCI)</a>: Runs checks to detect malicious or at least unexpected modifications of Windows kernel code and restricts suspicious kernel memory allocations.</li>
+                        <li><a href="https://learn.microsoft.com/en-us/windows-hardware/design/device-experiences/oem-credential-guard" target="_blank" rel="noopener" className="text-blue-400 hover:text-blue-300">Credential Guard</a>: Stores access credentials, such as passwords, authentication data, biometric data etc. in an isolated environment.</li>
+                        <li><a href="https://learn.microsoft.com/en-us/windows-hardware/design/device-experiences/windows-hello" target="_blank" rel="noopener" className="text-blue-400 hover:text-blue-300">Windows Hello</a>: Allows you to log in with convenient methods like a short PIN, facial recognition or fingerprint scan.</li>
+                        <li><a href="https://learn.microsoft.com/en-us/windows/security/hardware-security/how-hardware-based-root-of-trust-helps-protect-windows" target="_blank" rel="noopener" className="text-blue-400 hover:text-blue-300">System Guard (Secure Launch)</a>: An advanced system hardening framework that protects the OS boot process and System Management Mode.</li>
+                      </ul>
+                      <p className="text-sm italic text-slate-500 dark:text-slate-400">* Even though hardware and boot requirements are met, Windows sometimes seems to fail at enabling features that are supposed to be enabled automatically, such as VBS and memority integrity.</p>
+                      
+                      <div className="font-bold text-slate-800 dark:text-slate-200 mt-4 space-y-4">
+                        <p>Without the Windows hypervisor, none of these security features can be used. By design, the hypervisor cannot be disabled directly. Instead, all the above features that want to utilize VBS signal that it needs to be enabled, which then loads the hypervisor. Therefore, we must disable all those features to prevent the Windows hypervisor from being loaded.</p>
+                        <p>A boot option that prevents Hyper-V from loading the hypervisor also needs to be added.</p>
+                      </div>
+
+                      <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-4">I want to play that new Denuvo-protected game, is it safe to disable all this and use a hypervisor crack?</h3>
+                      <p>There is no simple answer. This is RessourectoR's personal take as someone with 10 years of experience in security-focused system administration and only a casual interest in gaming.</p>
+                      <p>It's true that the most common threats are info stealer malware from fake download buttons, ransomware that encrypts your files or joining a DDoS botnet. It's supposed such malware is usually not interested in higher privilege escalation or hardware sabotage, if it can already access what it needs. It's also true that the best protection against such malware is a good ad blocker, staying on trusted sites and user education.</p>
+                      <p>More experienced PC users develop a false sense of security from seeing how successfully they avoid malware infection by "being smart". They argue that they don't need all these restrictive, patronizing security features and AVs that just annoy with false positives, because their malware-free track record "proves" that they know better. They also argue that more advanced threats are not aimed at home users, but corporate networks and too unlikely to care about. Especially relevant for gamers: Virtualization can reduce system performance and whether that is noticeable or not is also a point of contention.</p>
+                      <p className="font-bold text-slate-900 dark:text-white">Whether that game is worth the risks is something you will ultimately have to decide for yourself.</p>
+
+                      <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-4">What's inside those cracks?</h3>
+                      <p>Basically, every modern Hypervisor bypass/crack consists of two parts:</p>
+                      <ol className="list-decimal ps-6 space-y-4">
+                        <li>
+                           <p className="font-bold text-slate-900 dark:text-white">VBS.cmd: special command-line script, which checks your existing settings and modify them to make your system prepared for HV-cracks.</p>
+                           <p className="mt-2">This script is universal for all HV-games and is developed separately, it doesn't depend on actual game cracks. You can download the latest version below:</p>
+                           <div className="bg-[#9aff612e] border border-[#159311] rounded-xl p-5 my-4">
+                              <a href="https://paste.fitgirl-repacks.site/?cd32d8e86fa5112d#Fi2WAtgoW9pp4VGEQVXqMH73bHpeMSTGmd1WYiX6j9yN" target="_blank" rel="noopener" className="text-emerald-700 dark:text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 font-bold underline">Current version: v1.9 (Updated on July 22, 2026)</a>
+                              <details className="mt-4 border border-[#159311]/30 rounded-lg bg-black/20 group">
+    <summary className="cursor-pointer font-bold text-emerald-700 dark:text-emerald-400 p-3 hover:bg-black/30 transition-colors flex items-center gap-2 select-none">
+        <div className="transform transition-transform group-open:rotate-180">
+            <Icon name="ChevronDown" size={16} />
+        </div>
+        {t('Changes log')}
+    </summary>
+    <div className="p-4 space-y-4 text-emerald-900/80 dark:text-emerald-900 dark:text-emerald-50/80 text-sm border-t border-[#159311]/30 max-h-80 overflow-y-auto custom-scrollbar">
+        <p className="font-bold text-emerald-700 dark:text-emerald-400">v1.9</p>
+        <ol className="list-decimal ps-6 space-y-2">
+            <li>Added a check for Bitdefender Advanced Threat Defense. The script will now warn the user when Bitdefender Advanced Threat Defense is on, as it may cause an "Initialization error 5" message in certain games that use VMProtect, notably Ubisoft and Capcom titles.</li>
+            <li>Added a check for MacType. The script will now warn the user when MacType is running as it's known to cause games to silently crash. The script may also disable MacType when it's set to run as a service.</li>
+            <li>Updated introductory notes.</li>
+            <li>Bug fixes.</li>
+            <li>We rely on user reports to identify and fix issues. If you encounter any problems, please report them at <a href="https://cs.rin.ru/forum/viewtopic.php?f=14&t=156435" rel="noopener" target="_blank" className="text-emerald-700 dark:text-emerald-700 dark:text-emerald-400 underline hover:text-emerald-800 dark:hover:text-emerald-300">https://cs.rin.ru/forum/viewtopic.php?f=14&t=156435</a>.</li>
+        </ol>
+
+        <p className="font-bold text-emerald-700 dark:text-emerald-400 pt-2 border-t border-[#159311]/20">v1.8</p>
+        <ol className="list-decimal ps-6 space-y-2">
+            <li>The script now enables Test Signing instead of taking the user to disable driver signature enforcement through the Startup Settings in cases where Secure Boot is off. This approach is more stable, and does not need to be reapplied after every restart. Learn more about Test Signing <a href="https://learn.microsoft.com/en-us/windows-hardware/drivers/install/test-signing#test-sign-a-driver-package" rel="noopener" target="_blank" className="text-emerald-700 dark:text-emerald-700 dark:text-emerald-400 underline hover:text-emerald-800 dark:hover:text-emerald-300">here</a>.</li>
+            <li>Improved Windows Hello detection.</li>
+            <li>Updated introductory notes.</li>
+            <li>Minor improvements.</li>
+            <li>Bug fixes.</li>
+            <li>We rely on user reports to identify and fix issues. If you encounter any problems, please report them at <a href="https://cs.rin.ru/forum/viewtopic.php?f=14&t=156435" rel="noopener" target="_blank" className="text-emerald-700 dark:text-emerald-700 dark:text-emerald-400 underline hover:text-emerald-800 dark:hover:text-emerald-300">https://cs.rin.ru/forum/viewtopic.php?f=14&t=156435</a>.</li>
+        </ol>
+
+        <p className="font-bold text-emerald-700 dark:text-emerald-400 pt-2 border-t border-[#159311]/20">v1.7.2</p>
+        <ol className="list-decimal ps-6 space-y-2">
+            <li>Improved boot entry identifier detection, addressing issues for some dual boot systems.</li>
+            <li>Added an error message for when the current boot entry could not be identified.</li>
+            <li>Added detection and disabling of Hypervisor-Enforced Paging Translation.</li>
+            <li>Updated introductory notes.</li>
+            <li>Minor improvements.</li>
+            <li>Bug fixes.</li>
+            <li>We rely on user reports to identify and fix issues. If you encounter any problems, please report them at <a href="https://cs.rin.ru/forum/viewtopic.php?f=14&t=156435" rel="noopener" target="_blank" className="text-emerald-700 dark:text-emerald-700 dark:text-emerald-400 underline hover:text-emerald-800 dark:hover:text-emerald-300">https://cs.rin.ru/forum/viewtopic.php?f=14&t=156435</a>.</li>
+        </ol>
+
+        <p className="font-bold text-emerald-700 dark:text-emerald-400 pt-2 border-t border-[#159311]/20">v1.7.1</p>
+        <ol className="list-decimal ps-6 space-y-2">
+            <li>Improved Windows Hello detection.</li>
+            <li>Improved BitLocker detection and suspension.</li>
+            <li>Minor improvements.</li>
+            <li>Bug fixes.</li>
+            <li>We rely on user reports to identify and fix issues. If you encounter any problems, please report them at <a href="https://cs.rin.ru/forum/viewtopic.php?f=14&t=156435" rel="noopener" target="_blank" className="text-emerald-700 dark:text-emerald-700 dark:text-emerald-400 underline hover:text-emerald-800 dark:hover:text-emerald-300">https://cs.rin.ru/forum/viewtopic.php?f=14&t=156435</a>.</li>
+        </ol>
+
+        <p className="font-bold text-emerald-700 dark:text-emerald-400 pt-2 border-t border-[#159311]/20">v1.7</p>
+        <ol className="list-decimal ps-6 space-y-2">
+            <li>Added detection for mapped network drives. Running the script from a mapped network drive, including shared folders in virtual machines that appear as mapped networks drives, is not supported and the script will now exit with an appropriate message instead of outright crashing. This is a Windows issue and not the script's.</li>
+            <li>When a Windows Hello PIN is both enabled and protected by VBS on Windows 11, the script cannot continue and prompts the user to disable their PIN first. This further addresses Windows Hello related issues.</li>
+            <li>Added detection for Parallels Desktop for Mac. The script now checks BIOS and system manufacturer information to detect Parallels and exits with an appropriate message.</li>
+            <li>The script now checks if it's running on an unsupported version of Windows (Windows 10, version 1909 or lower), and if so, prompts the user to update their Windows.</li>
+            <li>Fixed boot entry detection not working on Single Language editions of Windows by reading the value by position instead of searching for the word "identifier".</li>
+            <li>Fixed an issue where disabling VBS with Credential Guard enabled on Windows 10 could require two reboots before fully taking effect.</li>
+            <li>Added detection and disabling of additional registry keys for Enhanced Sign-in Security, covering keys that were previously missed.</li>
+            <li>Fixed an issue where Startup Settings wouldn't show up on boot in a system that has disabled advanced boot options.</li>
+            <li>The script now checks whether the Windows architecture is unsupported, and if so, prompts the user to exit.</li>
+            <li>Updated introductory notes.</li>
+            <li>Minor improvements.</li>
+            <li>Bug fixes.</li>
+        </ol>
+
+        <p className="pt-2">The "Run as administrator" option in the context menu will fail to execute the script on paths that contain certain special characters. This is a Windows issue and not the script's.</p>
+        <p>We recommend that instructions avoid explicitly directing users to run the script with administrative privileges. Instead, users should launch the script normally and, if prompted, simply approve the UAC dialog to grant the necessary privileges.</p>
+        <p>In order to fix this, open Command Prompt as administrator, then paste in and execute these commands:</p>
+        <div className="bg-black/50 p-3 rounded font-mono text-xs text-slate-300 space-y-2 overflow-x-auto my-2">
+            <div>set _r=^%SystemRoot^%</div>
+            <div>reg add HKLM\SOFTWARE\Classes\batfile\shell\runas\command /f /v "" /t REG_EXPAND_SZ /d "%_r%\System32\cmd.exe /C \"%1\" %*\""</div>
+            <div>reg add HKLM\SOFTWARE\Classes\cmdfile\shell\runas\command /f /v "" /t REG_EXPAND_SZ /d "%_r%\System32\cmd.exe /C \"%1\" %*\""</div>
+        </div>
+
+        <p className="font-bold text-emerald-700 dark:text-emerald-400 pt-2 border-t border-[#159311]/20">v1.6.2</p>
+        <ol className="list-decimal ps-6 space-y-2">
+            <li>Fixed an issue where a "All changes have been reverted successfully. A restart is not necessary." message would incorrectly be shown when reverting changes in cases where only driver signature enforcement is off.</li>
+        </ol>
+
+        <p className="font-bold text-emerald-700 dark:text-emerald-400 pt-2 border-t border-[#159311]/20">v1.6.1</p>
+        <ol className="list-decimal ps-6 space-y-2">
+            <li>Fixed an issue where reverting Credential Guard would explicitly set LsaCfgFlags to 2 even on systems where it was running due to Windows default enablement rather than explicit configuration. The original value is now backed up before disabling and restored accurately on revert, or left unset if it was never explicitly configured.</li>
+            <li>Added DISM RestoreHealth and SFC Scannow options to the troubleshoot menu, complementing the existing Fix WMI option. These can help resolve system file corruption that may cause issues with PowerShell or WMI.</li>
+            <li>Updated introductory notes.</li>
+            <li>Minor improvements.</li>
+            <li>Bug fixes.</li>
+        </ol>
+
+        <p className="font-bold text-emerald-700 dark:text-emerald-400 pt-2 border-t border-[#159311]/20">v1.6</p>
+        <ol className="list-decimal ps-6 space-y-2">
+            <li>Added detection and disabling of FACEIT Anti-Cheat. The driver is now automatically unloaded if found running.</li>
+            <li>Added detection and disabling of the WindowsHelloSecureBiometrics registry key, an additional Enhanced Sign-in Security key that was missing from the previous implementation.</li>
+            <li>Added detection and disabling of HyperGuard, a VBS-dependent security feature that could keep the Windows hypervisor active.</li>
+            <li>Added detection and disabling of Guarded Host, a VBS-dependent security feature that could keep the Windows hypervisor active.</li>
+            <li>Added boot entry identifier detection to ensure bcdedit commands target the correct boot entry, improving compatibility with non-standard boot configurations.</li>
+            <li>When Windows Hello protection is detected, the script now disables the Microsoft account Windows Hello-only sign-in enforcement and removes the Windows Hello credential container via certutil before disabling the Device Guard registry key. This prevents the broken PIN on the next boot and ensures the user can sign back in with their password. The original sign-in enforcement value is saved and restored accurately on revert.</li>
+            <li>Updated introductory notes.</li>
+            <li>Minor improvements.</li>
+            <li>Bug fixes.</li>
+        </ol>
+
+        <p className="font-bold text-emerald-700 dark:text-emerald-400 pt-2 border-t border-[#159311]/20">v1.5</p>
+        <ol className="list-decimal ps-6 space-y-2">
+            <li>Improved the Windows hypervisor detection. The script now also checks if Hyper-V, Virtual Machine Platform, Windows Hypervisor Platform, Windows Subsystem for Linux, or Windows Sandbox features are enabled. If any of these are enabled and a hypervisor is detected as running, the Windows hypervisor will be disabled, covering cases where VBS appeared disabled but the hypervisor remained active due to these features.</li>
+            <li>Added VSM (Virtual Secure Mode) launch type detection. If vsmlaunchtype is set to Auto in the boot configuration, it is disabled alongside the hypervisor and restored on revert.</li>
+            <li>Added a WMI check and a Troubleshoot option in the main menu with a Fix WMI tool, for systems where PowerShell CIM/WMI calls fail with invalid class errors.</li>
+            <li>Added a PowerShell check at startup to detect and report issues such as Restricted Language mode, PowerShell Core replacing PowerShell Desktop, malware interfering with PowerShell, and .NET initialization failures.</li>
+            <li>Added a QuickEdit and Terminal app detection check. The script now relaunches itself in conhost.exe when running inside Windows Terminal to avoid known issues with window resizing, choice.exe input handling, and console buffer behavior that can cause the script to appear frozen or behave incorrectly.</li>
+            <li>Added a Temp folder check. If the script is launched directly from an archive file, the user is informed to extract it first.</li>
+            <li>Improved robustness by explicitly setting environment variables at launch, ensuring correct behavior regardless of system configuration or how the script is invoked.</li>
+        </ol>
+        <p>Other minor improvements.</p>
+
+        <p className="font-bold text-emerald-700 dark:text-emerald-400 pt-2 border-t border-[#159311]/20">v1.4</p>
+        <ol className="list-decimal ps-6 space-y-2">
+            <li>Added Driver Signature Enforcement (DSE) and test signing detection. If test signing is already enabled, the script will skip the Startup Settings step, BitLocker suspension, and onetimeadvancedoptions entirely, as driver signature enforcement is already bypassed.</li>
+            <li>Fixed an issue where the Revert Changes option would incorrectly show "Nothing to revert, as no changes were previously applied." when DSE was still disabled, even though a reboot was required to restore it.</li>
+            <li>Added FACEIT Anti-Cheat detection. If detected, the script will exit with a message asking the user to uninstall it before proceeding, as it is known to block the driver from loading.</li>
+            <li>Replaced PowerShell calls with full path via %psc% to avoid resolution issues when PowerShell is not in PATH.</li>
+            <li>Removed outdated comments.</li>
+            <li>Minor improvements.</li>
+        </ol>
+
+        <p className="font-bold text-emerald-700 dark:text-emerald-400 pt-2 border-t border-[#159311]/20">v1.3</p>
+        <ol className="list-decimal ps-6 space-y-2">
+            <li>Fixed an issue where Credential Guard Scenarios registry key was being restored on revert even when Credential Guard itself was not running before the script was executed. CG and CG Scenarios are now tracked and reverted independently.</li>
+            <li>Fixed an issue where Memory Integrity (HVCI) would not be detected if it was configured but not yet running, which could keep VBS active. HVCI detection now checks both runtime status and registry configuration.</li>
+            <li>Added detection and removal of RequirePlatformSecurityFeatures when disabling VBS, which was causing VBS to remain enabled. The original value is backed up and restored accurately on revert.</li>
+            <li>Added detection and removal of the Enhanced Sign-in Security Scenarios key alongside the existing subkey, and reverts them independently.</li>
+            <li>Added a message informing the user when no security features needed to be disabled.</li>
+            <li>Minor improvements.</li>
+        </ol>
+
+        <p className="font-bold text-emerald-700 dark:text-emerald-400 pt-2 border-t border-[#159311]/20">v1.2</p>
+        <ol className="list-decimal ps-6 space-y-2">
+            <li>Fixed a compatibility issue where launching the script from a 32-bit application, like Compact AutoRunner which is used in Hypervisor Launcher by FitGirl, would cause system tools such as bcdedit to not be found, due to System32 being redirected to SysWOW64 in 32-bit processes. This manifested as the Windows hypervisor showing as failed to disable, and UEFI lock removal failing entirely. The script now relaunches itself as a 64-bit process when this is detected. Thanks to galaxyxyz888 on Discord.</li>
+            <li>Fixed an issue where the Credential Guard Scenarios registry key was not being disabled, which could keep VBS active even when Credential Guard was not running. Thanks to sowhatnumber on Discord.</li>
+            <li>Fixed an issue where SecConfig.efi would not correctly return to the current OS after clearing a UEFI lock on dual-boot systems. Thanks to RessourectoR.</li>
+            <li>Fixed an issue where reverting the Windows hypervisor would incorrectly show as failed after a reboot on systems with UEFI locked VBS or HVCI, caused by SecConfig.efi clearing the hypervisorlaunchtype BCD entry during the UEFI lock removal process on boot.</li>
+            <li>Fixed an issue where the Revert Changes option would not show "No changes have been made" on systems that had previously agreed to UEFI lock removal, even when no features had actually been disabled, due to the UEFILockAgreed registry value being incorrectly counted as a tracked change.</li>
+            <li>Fixed an issue where the ManageVBS registry key was not being cleaned up correctly after reverting on systems that had agreed to UEFI lock removal.</li>
+            <li>Added test signing detection. If test signing is already enabled, the script will inform the user.</li>
+            <li>Minor visual improvements.</li>
+        </ol>
+
+        <p className="font-bold text-emerald-700 dark:text-emerald-400 pt-2 border-t border-[#159311]/20">v1.1</p>
+        <ol className="list-decimal ps-6 space-y-2">
+            <li>Fixed a crash when the script path or filename contained spaces or special characters, such as when downloaded multiple times and renamed to VBS (1).cmd.</li>
+            <li>Fixed an issue where Enhanced Sign-in Security was preventing VBS from being disabled. A check has been added to disable it if detected. This mainly affected ROG Ally X users where it is enabled by default. Thanks to .oathkeeper213 on Discord and Azazel35 on Reddit.</li>
+            <li>Added support for disabling VBS, HVCI and Credential Guard when protected by a UEFI lock using SecConfig.efi. In the script, the user is advised to only proceed on personal devices before removing the UEFI lock. Note that on managed devices, VBS, HVCI and Credential Guard protected by a UEFI lock can only be disabled for one boot cycle. UEFI locks can be fully reverted using the Revert Changes option. Thanks to poce on Discord.</li>
+            <li>Added support for disabling VBS and HVCI mandatory mode. Note that reverting mandatory mode is not currently supported and must be re-enabled manually if needed.</li>
+            <li>Added a note in the script's introduction regarding compatibility issues with kernel anti-cheats, specifically Vanguard, where disabling driver signature enforcement would result in a bug check (BSOD) in some system configurations, and FACEIT Anti-Cheat, which prevented the driver from loading with a multitude of different errors, most notably ERROR_ACCESS_DENIED, ERROR_INVALID_BLOCK and ERROR_NO_SYSTEM_RESOURCES. Thanks to xyz2theb on Reddit, deviljin0500, faintx11 & xeros1 on Discord for reporting this.</li>
+            <li>Updated introductory notes.</li>
+            <li>Minor visual improvements.</li>
+        </ol>
+    </div>
+</details>
+                           </div>
+                        </li>
+                        <li>
+                           <p className="font-bold text-slate-900 dark:text-white">The Crack/Bypass itself</p>
+                           <p className="mt-2">Consists of EXEs/DLLs, which does the actual Denuvo bypassing + other additional DLLs, like Goldberg Steam emulator to get past the underlying Steam protection.</p>
+                           <p>Those files work only for specific game versions, for which they were made. They won't work on different game version or other games.</p>
+                        </li>
+                      </ol>
+
+                      <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-4">Other Software Updates</h3>
+                      <div className="bg-[#9aff612e] border border-[#159311] rounded-xl p-5 my-4">
+                         <a href="https://paste.fitgirl-repacks.site/?7bb76c6f568d3725#G68jW7TWoMwDHUxBXhP4ttUX7Eeky9yCPPVHHtTs9aKj" target="_blank" rel="noopener" className="text-emerald-700 dark:text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 font-bold underline text-lg">Updated hypervisor-launcher.exe v1.3.1</a><br />
+                         <p className="mt-2 text-emerald-900 dark:text-emerald-50 mb-2">Solves the PC restart issue on some systems, mostly on Intels. This a mirror from <a href="https://github.com/NotAndreh/hypervisor-launcher/releases" rel="noopener" target="_blank" className="text-emerald-700 dark:text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 underline">this official GitHub page</a>.</p>
+                         <p className="text-emerald-900 dark:text-emerald-50 mb-2">The older version of "hypervisor-launcher.exe" is used in many DenuvOwO releases and in some of my repacks released before March 28, 2026. All HV-repacks past with date with this launcher version are using the updated build. You may download and try the new version ONLY if you have a launch issue, no need to replace it if everything works for you.</p>
+                         <p className="text-emerald-900 dark:text-emerald-50">My repacks with older version "hypervisor-launcher.exe":</p>
+                         <ul className="list-disc ps-6 space-y-1 mt-2 text-emerald-900 dark:text-emerald-50">
+                             <li><a href="https://fitgirl-repacks.site/assassins-creed-shadows/" rel="noopener" target="_blank" className="text-emerald-700 dark:text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 underline">Assassin's Creed Shadows</a></li>
+                             <li><a href="https://fitgirl-repacks.site/hello-kitty-island-adventure/" rel="noopener" target="_blank" className="text-emerald-700 dark:text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 underline">Hello Kitty Island Adventure</a></li>
+                             <li><a href="https://fitgirl-repacks.site/nba-2k26/" rel="noopener" target="_blank" className="text-emerald-700 dark:text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 underline">NBA 2K26</a></li>
+                             <li><a href="https://fitgirl-repacks.site/stellar-blade/" rel="noopener" target="_blank" className="text-emerald-700 dark:text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 underline">Stellar Blade</a></li>
+                         </ul>
+                      </div>
+
+                      <h3 className="text-xl font-bold text-white mt-8 mb-4">{t('Pre-requirements')}</h3>
+                      <p>Your CPU must support one of two virtualization techniques: VT-x for Intel and AMD-V (SVM) for AMD.</p>
+                      <p>Google if CPU model supports virtualization to know if you can play HV-games.</p>
+                      <p>Before proceeding with HV cracks, check your BIOS for enabling those technologies.</p>
+
+                      <h3 className="text-xl font-bold text-white mt-8 mb-4">Do I need to disable Secure Boot or use EfiGuard?</h3>
+                      <p>No. Current HV bypasses do not require those changes.</p>
+                      </div>
+                  </div>
+              </motion.div>
+          </motion.div>
+      )}
+      {showTrailer && item.links.trailer && (
+          <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[300] bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
+              onClick={() => setShowTrailer(false)}
+          >
+              <motion.div 
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.9, opacity: 0 }}
+                  className="w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl relative border border-slate-800"
+                  onClick={e => e.stopPropagation()}
+              >
+                  <button 
+                      onClick={() => setShowTrailer(false)}
+                      className="absolute top-4 end-4 z-10 w-10 h-10 bg-black/50 hover:bg-primary-500 text-white rounded-full flex items-center justify-center backdrop-blur-md transition-colors border border-white/10"
+                  >
+                      <Icon name="X" size={20} />
+                  </button>
+                  <iframe 
+                      className="w-full h-full"
+                      src={getYoutubeEmbedUrl(item.links.trailer) || ''} 
+                      title="YouTube video player" 
+                      frameBorder="0" 
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                      allowFullScreen
+                  ></iframe>
+              </motion.div>
+          </motion.div>
+      )}
+      
+      {torrentWarningLink && (
+        <TorrentWarningModal link={torrentWarningLink} onClose={() => setTorrentWarningLink(null)} />
+      )}
+      {noteModalContent && (
+          <NoteModal content={noteModalContent} onClose={() => setNoteModalContent(null)} />
+      )}
+  </AnimatePresence>
+</motion.div>
+  );
+};
+
+
+
+
+const DownloadButton: React.FC<{
+  label: string;
+  sub: string;
+  href: string;
+  icon: string;
+  imageUrl?: string;
+  secondary?: boolean;
+  note?: string;
+  badge?: string;
+  onNoteClick?: (note: string) => void;
+  onClick?: (e: React.MouseEvent) => void;
+}> = ({ label, sub, href, icon, imageUrl, secondary, note, badge, onNoteClick, onClick }) => {
+  const validNote = note && note.trim().toLowerCase() !== 'undefined' && note.trim() !== '-' && note.trim() !== '' ? note.trim() : null;
+  const isShortNote = validNote && validNote.length <= 50;
+
+  return (
+    <div className={`group relative flex items-center justify-between gap-2 sm:gap-4 p-4 rounded-xl border transition-all hover:scale-[1.02] active:scale-[0.98] ${
+        secondary 
+          ? 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/40 dark:hover:bg-slate-800/80 border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md' 
+          : 'bg-primary-500/10 hover:bg-primary-500/20 border-primary-500/30 shadow-sm hover:shadow-md'
+      }`}>
+      
+      <a 
+        href={href}
+        onClick={onClick}
+        target="_blank"
+        rel="noreferrer"
+        className="absolute inset-0 z-0 rounded-xl"
+        title={note}
+      ></a>
+
+      <div className="relative z-10 flex items-center gap-3 sm:gap-4 min-w-0 pointer-events-none flex-1">
+        <div className={`shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center overflow-hidden ${
+          secondary 
+            ? 'bg-slate-200 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400' 
+            : 'bg-primary-500 text-white shadow-[0_0_15px_rgba(var(--color-primary-500),0.3)]'
+        }`}>
+          {imageUrl ? (
+             <img src={imageUrl} alt={label} className="w-full h-full object-contain" />
+          ) : (
+             <Icon name={icon as any} size={24} />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className={`text-[10px] sm:text-xs font-bold uppercase tracking-widest truncate ${
+            secondary ? 'text-slate-500 dark:text-slate-400' : 'text-primary-500'
+          }`}>{sub}</div>
+          <div className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate flex items-center gap-2">
+            <span className="truncate">{label}</span>
+            {badge && (
+              <span className="shrink-0 px-1.5 py-0.5 bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 text-[8px] sm:text-[9px] uppercase tracking-wider font-black rounded border border-amber-500/20 whitespace-nowrap">
+                {badge}
+              </span>
             )}
           </div>
+          {validNote && isShortNote && (
+            <div className={`text-[10px] sm:text-xs font-bold mt-0.5 line-clamp-2 leading-tight ${secondary ? 'text-slate-500 dark:text-slate-400' : 'text-primary-600 dark:text-primary-400'}`}>
+              {note}
+            </div>
+          )}
+        </div>
+      </div>
+        
+      <div className="relative z-10 flex items-center gap-1.5 sm:gap-2 shrink-0">
+        {!isShortNote && validNote && (
+          <button 
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onNoteClick?.(note); }}
+            className="w-8 h-8 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 flex items-center justify-center transition-colors pointer-events-auto border border-blue-500/20 shrink-0 shadow-sm"
+            title="Read Note"
+          >
+            <Icon name="Info" size={16} />
+          </button>
+        )}
+        <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-transform group-hover:translate-x-1 pointer-events-none ${
+          secondary ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300' : 'bg-primary-500 text-white'
+        }`}>
+          <Icon name="Download" size={16} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+const LatestIntelPanel: React.FC<{
+  open: boolean;
+  onClose: () => void;
+  items: any[];
+}> = ({ open, onClose, items }) => {
+  const { dir, t } = useLanguage();
+  if (!open) return null;
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-end p-0 sm:p-4"
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="w-full sm:w-[400px] bg-slate-50 dark:bg-[#0B1120] h-full sm:h-auto sm:max-h-full sm:rounded-2xl border-l sm:border border-slate-200 dark:border-slate-800 flex flex-col shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-100 dark:bg-slate-900/50">
+              <div className="flex items-center gap-2">
+                <Icon name="Wifi" size={20} className="text-primary-500" />
+                <h2 className="font-bold text-slate-900 dark:text-white">{t('Latest Intel')}</h2>
+              </div>
+              <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full text-slate-500 transition-colors">
+                <Icon name="X" size={20} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+              {items.map((item) => (
+                <div key={item.id} className="p-4 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 relative overflow-hidden shadow-sm">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${item.type === 'NEW' ? 'bg-emerald-500/10 text-emerald-900 dark:text-emerald-500 border border-emerald-500/20' : 'bg-blue-500/10 text-blue-500 border border-blue-500/20'}`}>
+                      {item.type}
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-medium">
+                      {item.timestamp ? item.timestamp : t('Recent')}
+                    </span>
+                  </div>
+                  <h3 className="font-bold text-sm text-slate-900 dark:text-white mb-1 line-clamp-1">{item.title}</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{item.description}</p>
+                  <div className="mt-3 flex items-center gap-2">
+                    <span className="text-[10px] bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded font-medium text-slate-600 dark:text-slate-300">
+                      {item.category}
+                    </span>
+                    {item.version && item.category !== 'steamtools' && (
+                      <span className="text-[10px] bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded font-medium text-slate-600 dark:text-slate-300">
+                        v{item.version}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {items.length === 0 && (
+                <div className="text-center py-8 text-slate-500">
+                  <Icon name="Folder" size={32} className="mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No recent intel available</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
         </motion.div>
-      </motion.div>
+      )}
     </AnimatePresence>
   );
 };
-
 
 const MostPopularRepacksModal: React.FC<{
     isOpen: boolean,
@@ -2955,6 +3620,7 @@ const MostPopularRepacksModal: React.FC<{
     onClose: () => void,
     onSelect: (item: ResourceItem) => void
 }> = ({ isOpen, games, onClose, onSelect }) => {
+    const { dir, t } = useLanguage();
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(20);
 
@@ -2998,8 +3664,8 @@ const MostPopularRepacksModal: React.FC<{
                             <Icon name="Trophy" className="text-yellow-600 dark:text-yellow-500" size={20} />
                         </div>
                         <div>
-                            <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Most Popular Repacks</h2>
-                            <p className="text-xs text-slate-600 dark:text-slate-300">All Top {games.length} Games</p>
+                            <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{t('Most Popular Repacks')}</h2>
+                            <p className="text-xs text-slate-600 dark:text-slate-300">{t('All Top')} {games.length} {t('Games')}</p>
                         </div>
                     </div>
                     <button 
@@ -3037,7 +3703,7 @@ const MostPopularRepacksModal: React.FC<{
                                         
 
                                         {isHypervisor && (
-                                            <div className="absolute top-2 right-2 z-10 bg-red-600/90 backdrop-blur-md text-white font-black text-[10px] sm:text-xs px-2 py-1 rounded-lg shadow-lg border border-red-400/30 group-hover:scale-110 transition-transform">
+                                            <div className="absolute top-2 end-2 z-10 bg-red-600/90 backdrop-blur-md text-white font-black text-[10px] sm:text-xs px-2 py-1 rounded-lg shadow-lg border border-red-400/30 group-hover:scale-110 transition-transform">
                                                 HV
                                             </div>
                                         )}
@@ -3058,7 +3724,7 @@ const MostPopularRepacksModal: React.FC<{
                                 disabled={validCurrentPage === 1}
                                 className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
                             >
-                                <Icon name="ChevronLeft" size={16} />
+                                <Icon name="ChevronLeft" size={16} className="rtl:rotate-180" />
                             </button>
                             {(() => {
                                 const maxVisible = Math.min(5, totalPages);
@@ -3085,7 +3751,7 @@ const MostPopularRepacksModal: React.FC<{
                                 disabled={validCurrentPage === totalPages}
                                 className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
                             >
-                                <Icon name="ChevronRight" size={16} />
+                                <Icon name="ChevronRight" size={16} className="rtl:rotate-180" />
                             </button>
                         </div>
                     </div>
@@ -3098,11 +3764,168 @@ const MostPopularRepacksModal: React.FC<{
     );
 };
 
+
+const GameOfTheDaySection: React.FC<{
+    game: ResourceItem | null;
+    onSelect: (item: ResourceItem) => void;
+}> = ({ game, onSelect }) => {
+    const { t, dir } = useLanguage();
+    if (!game) return null;
+
+    const bgUrl = game.galleryImages?.[0] || game.image || game.coverImage;
+    const isVideo = bgUrl?.match(/\.(webm|mp4)$/i);
+
+    const todayDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+    return (
+        <div dir={dir} className="mt-8 mb-4 bg-white dark:bg-[#0a111a] rounded-xl border border-slate-200 dark:border-slate-800/60 overflow-hidden relative w-full shadow-xl dark:shadow-2xl flex flex-col md:flex-row">
+            <div className="absolute inset-0 z-0">
+                {isVideo ? (
+                    <video src={bgUrl} autoPlay loop muted playsInline className="w-full h-full object-cover opacity-10 dark:opacity-20" />
+                ) : (
+                    <img src={bgUrl} alt="" className="w-full h-full object-cover opacity-10 dark:opacity-20" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-b md:bg-gradient-to-r md:from-white md:via-white/90 dark:md:from-[#0a111a] dark:md:via-[#0a111a]/90 from-white/80 via-white/80 dark:from-[#0a111a]/80 dark:via-[#0a111a]/80 to-transparent"></div>
+            </div>
+
+            <div className="relative z-10 p-6 md:p-10 flex flex-col md:flex-row gap-8 lg:gap-12 w-full items-center md:items-start">
+                <div className="shrink-0 w-48 sm:w-56 md:w-64 flex flex-col items-center">
+                    <div className="relative aspect-[3/4] w-full rounded-xl overflow-hidden cursor-pointer shadow-[0_0_20px_rgba(30,161,215,0.1)]" onClick={() => onSelect(game)}>
+                        <div className="absolute top-0 start-0 w-4 h-4 border-t-2 border-s-2 border-[#1ea1d7] z-20"></div>
+                        <div className="absolute top-0 end-0 w-4 h-4 border-t-2 border-e-2 border-[#1ea1d7] z-20"></div>
+                        <div className="absolute bottom-0 start-0 w-4 h-4 border-b-2 border-s-2 border-[#1ea1d7] z-20"></div>
+                        <div className="absolute bottom-0 end-0 w-4 h-4 border-b-2 border-e-2 border-[#1ea1d7] z-20"></div>
+
+                        <img src={game.coverImage} className="w-full h-full object-cover relative z-10" />
+                        
+                        <div className="absolute top-0 end-3 z-20 bg-[#1ea1d7] text-white p-2 pb-3 rounded-b-md">
+                            <Icon name="Star" size={16} className="fill-current" />
+                        </div>
+
+                        {game.version && game.category !== 'steamtools' && (
+                            <div className="absolute bottom-3 start-3 z-20 bg-white/90 dark:bg-black/90 text-emerald-600 dark:text-emerald-700 dark:text-emerald-400 text-xs font-bold px-2 py-1 border border-emerald-500/30 rounded shadow-md">
+                                {game.version}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex justify-between w-full px-4 sm:px-6 mt-6 text-center">
+                        <div>
+                            <div className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">{getFakeDownloads(game.id)}</div>
+                            <div className="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-bold tracking-wider mt-1 uppercase">{t('DOWNLOADS')}</div>
+                        </div>
+                        <div>
+                            <div className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">{getFakeLikes(game.id)}</div>
+                            <div className="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-bold tracking-wider mt-1 uppercase">{t('LIKES')}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex-1 flex flex-col mt-4 md:mt-0 items-center md:items-start text-center md:text-start">
+                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 sm:gap-4 mb-4">
+                        <span className="bg-[#1ea1d7] text-white text-[10px] sm:text-[11px] font-black px-2 sm:px-3 py-1 sm:py-1.5 rounded uppercase tracking-wider">{t('GAME OF THE DAY')}</span>
+                        {game.category?.toLowerCase() === 'hypervisor' && (
+                            <span className="bg-purple-100 dark:bg-purple-500/20 border border-purple-200 dark:border-purple-500/30 text-purple-600 dark:text-purple-400 text-[10px] sm:text-[11px] font-black px-2 sm:px-3 py-1 sm:py-1.5 rounded uppercase tracking-wider">
+                                {t('HYPERVISOR')}
+                            </span>
+                        )}
+                        <span className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm font-medium">{todayDate}</span>
+                        {game.links?.trailer && (
+                            <span className="bg-red-100 dark:bg-red-500/20 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 text-[10px] sm:text-[11px] font-bold px-2 sm:px-3 py-1 sm:py-1.5 rounded-full flex items-center gap-1.5">
+                                <div className="w-1.5 h-1.5 rounded-full bg-red-500 dark:bg-red-400"></div>
+                                {t('Trailer')}
+                            </span>
+                        )}
+                    </div>
+
+                    <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-3 tracking-tight">{game.name}</h2>
+                    
+                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-6 font-medium flex-wrap justify-center md:justify-start">
+                        <span className="bg-slate-200 dark:bg-slate-800/80 text-slate-800 dark:text-white px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold border border-slate-300 dark:border-slate-700/50">PC</span>
+                        <span className="bg-slate-200 dark:bg-slate-800/80 text-slate-800 dark:text-white px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold border border-slate-300 dark:border-slate-700/50">2026</span>
+                        <span className="opacity-50">—</span>
+                        <span>{game.genres?.split(',').slice(0, 3).join(', ')}</span>
+                    </div>
+
+                    <p className="text-slate-700 dark:text-slate-300 text-sm md:text-[15px] leading-relaxed line-clamp-3 mb-6 sm:mb-8 max-w-2xl">
+                        {game.description}
+                    </p>
+
+                    <div className="flex items-center gap-6 sm:gap-8 mb-6 sm:mb-8 text-xs sm:text-sm border-b border-slate-200 dark:border-slate-800/60 pb-6 w-full max-w-xl justify-center md:justify-start">
+                        <div><span className="text-slate-900 dark:text-white font-bold">{game.repackSize}</span> <span className="text-slate-500 mis-1">{t('size')}</span></div>
+                        <div><span className="text-slate-900 dark:text-white font-bold">{getFakeDownloads(game.id)}</span> <span className="text-slate-500 mis-1">{t('views')}</span></div>
+                        <div><span className="text-slate-900 dark:text-white font-bold">4.1</span> <span className="text-slate-500 mis-1">{t('score')}</span></div>
+                    </div>
+
+                    <button 
+                        onClick={() => onSelect(game)}
+                        className="bg-primary-500 text-white dark:bg-white dark:text-slate-900 font-bold px-5 sm:px-6 py-2.5 sm:py-3 rounded-md flex items-center gap-2 hover:bg-primary-600 dark:hover:bg-slate-200 transition-colors w-fit"
+                    >
+                        {t('View Details')}
+                        <Icon name="ArrowRight" size={16} className="rtl:rotate-180" />
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+const SupportUsBanner: React.FC = () => {
+    const { dir, t } = useLanguage();
+    const [isDonateOpen, setIsDonateOpen] = useState(false);
+
+    return (
+        <div className="mt-12 bg-white dark:bg-slate-950 rounded-3xl p-6 sm:p-10 lg:p-14 relative overflow-hidden flex flex-col md:flex-row items-center justify-between shadow-xl dark:shadow-2xl border border-slate-200 dark:border-slate-800 transition-colors duration-300">
+            {/* Background styling */}
+            <div className="absolute inset-0 z-0">
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/80 via-white to-slate-50 dark:from-indigo-900/40 dark:via-slate-900 dark:to-slate-950 transition-colors duration-300"></div>
+                <div className="absolute top-0 right-0 w-full md:w-1/2 h-full bg-gradient-to-l from-indigo-500/10 to-transparent blur-3xl"></div>
+            </div>
+
+            {/* Left Side Content */}
+            <div className="relative z-10 w-full md:w-1/2 flex flex-col items-center md:items-start text-center md:text-start mb-10 md:mb-0 space-y-5" dir={dir}>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold uppercase tracking-widest mb-2 transition-colors duration-300">
+                    <Icon name="Heart" size={14} className="animate-pulse" />
+                    <span>{t('Support The Community')}</span>
+                </div>
+                <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white uppercase tracking-tighter transition-colors duration-300" style={{ fontFamily: "'Nexa', 'Inter', sans-serif" }}>
+                    {t('Keep Us')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">{t('Alive')}</span>
+                </h2>
+                <p className="text-sm md:text-base text-slate-600 dark:text-slate-300 max-w-md font-medium leading-relaxed transition-colors duration-300">
+                    {t('Help us maintain the servers and continue delivering premium content. Every contribution makes a huge difference.')}
+                </p>
+                <button 
+                    onClick={() => setIsDonateOpen(true)}
+                    className="mt-6 px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-black text-sm uppercase tracking-widest rounded-2xl shadow-[0_0_30px_rgba(79,70,229,0.3)] hover:shadow-[0_0_40px_rgba(79,70,229,0.5)] transition-all transform hover:-translate-y-1 active:translate-y-0 flex items-center gap-3"
+                >
+                    <Icon name="Heart" size={20} className="fill-current" />
+                    {t('Support Us')}
+                </button>
+            </div>
+
+            {/* Right Side Image */}
+            <div className="relative z-10 w-full md:w-1/2 flex justify-center md:justify-end">
+                <img 
+                    src="/images/support_logo.png" 
+                    alt="Support Logo" 
+                    className="w-full h-auto object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-500" 
+                    style={{ maxWidth: '1024px', maxHeight: '500px' }}
+                />
+            </div>
+
+            <DonateModal open={isDonateOpen} onClose={() => setIsDonateOpen(false)} />
+        </div>
+    );
+};
+
+
 const MostPopularRepacksSection: React.FC<{ 
     gameIds: string[], 
     allResources: Record<string, ResourceItem[]>,
     onSelect: (item: ResourceItem) => void
 }> = ({ gameIds, allResources, onSelect }) => {
+    const { dir, t } = useLanguage();
     
     const [displayCount, setDisplayCount] = useState(20);
     const [showAllModal, setShowAllModal] = useState(false);
@@ -3131,7 +3954,7 @@ const MostPopularRepacksSection: React.FC<{
 
     return (
         <>
-        <div className="mt-12 bg-white dark:bg-slate-900/40 rounded-3xl p-5 sm:p-8 border border-slate-200 dark:border-slate-800/60 md:backdrop-blur-xl relative z-10 w-full overflow-hidden shadow-xl dark:shadow-2xl">
+        <div id="popular-repacks-section" className="mt-12 bg-white dark:bg-slate-900/40 rounded-3xl p-5 sm:p-8 border border-slate-200 dark:border-slate-800/60 md:backdrop-blur-xl relative z-10 w-full overflow-hidden shadow-xl dark:shadow-2xl scroll-mt-24">
             <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 via-transparent to-primary-500/5 pointer-events-none"></div>
             
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 sm:mb-10 relative z-10">
@@ -3141,9 +3964,8 @@ const MostPopularRepacksSection: React.FC<{
                     </div>
                     <div>
                         <h2 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-tight">
-                            Most Popular Repacks
-                        </h2>
-                        <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">Top community favorites this year</p>
+                            {t('Most Popular Repacks')}</h2>
+                        <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">{t('Top community favorites this year')}</p>
                     </div>
                 </div>
                 
@@ -3154,8 +3976,8 @@ const MostPopularRepacksSection: React.FC<{
                     >
                         <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         <span className="relative z-10 flex items-center gap-2 group-hover:text-white transition-colors duration-300">
-                            SEE MORE GAMES
-                            <Icon name="ArrowRight" size={20} className="transform group-hover:translate-x-1 transition-transform" />
+                            {t('SEE MORE GAMES')}
+                            <Icon name="ArrowRight" size={20} className="transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform rtl:rotate-180" />
                         </span>
                     </button>
                 )}
@@ -3178,33 +4000,21 @@ const MostPopularRepacksSection: React.FC<{
                                 <img 
                                     src={game.image || game.coverImage || 'https://placehold.co/600x800/0f172a/334155?text=ENCRYPTED'} 
                                     alt={game.name} 
-                                    className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-110 saturate-100 group-hover:saturate-150"
+                                    className="w-full h-full object-cover transition-all duration-700 group-hover:brightness-110 saturate-100 group-hover:saturate-150"
                                     onError={(e) => {
                                         e.currentTarget.src = 'https://placehold.co/600x800/0f172a/334155?text=ENCRYPTED';
                                     }}
                                 />
                                 
-                                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300"></div>
                                 
                                 {isHypervisor && (
-                                    <div className="absolute top-2 right-2 z-10 bg-red-500/90 backdrop-blur-md text-white font-black text-[9px] sm:text-[10px] px-2 py-1 rounded-lg shadow-lg border border-red-400/30 group-hover:scale-110 transition-transform tracking-widest">
+                                    <div className="absolute top-2 end-2 z-10 bg-red-500/90 backdrop-blur-md text-white font-black text-[9px] sm:text-[10px] px-2 py-1 rounded-lg shadow-lg border border-red-400/30 group-hover:scale-110 transition-transform tracking-widest">
                                         HV
                                     </div>
                                 )}
                                 
-                                <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 z-20 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                                    <h3 className="text-white font-black text-xs sm:text-sm line-clamp-2 leading-tight drop-shadow-md group-hover:text-blue-400 transition-colors">
-                                        {game.name || game.title}
-                                    </h3>
-                                    {game.repackSize && (
-                                        <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 bg-white/20 backdrop-blur-md rounded-md border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                            <Icon name="Database" size={14} className="text-white/80" />
-                                            <span className="text-[10px] sm:text-xs font-bold text-white tracking-wider">{game.repackSize}</span>
-                                        </div>
-                                    )}
                                 </div>
-                            </div>
-                        </motion.div>
+</motion.div>
                     );
                 })}
             </div>
@@ -3223,6 +4033,7 @@ const MostPopularRepacksSection: React.FC<{
 };
 
 const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
+    const { dir, t } = useLanguage();
     const [currentPage, setCurrentPage] = useState(0);
     const ITEMS_PER_PAGE = 10;
     
@@ -3252,7 +4063,7 @@ const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
     const displayedPageGames = displayGames.slice(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE);
 
     return (
-        <div className="mt-12 w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] overflow-hidden bg-slate-50 dark:bg-[#0a0a0a] border-y border-slate-200 dark:border-white/10 transition-colors duration-300">
+        <div className="mt-12 w-screen relative start-[50%] end-[50%] -ms-[50vw] -me-[50vw] overflow-hidden bg-slate-50 dark:bg-[#0a0a0a] border-y border-slate-200 dark:border-white/10 transition-colors duration-300">
             {noData && (
                 <div className="bg-yellow-500/10 border border-yellow-500/30 p-4 m-4 md:m-8 rounded-xl relative z-20 mx-auto max-w-5xl">
                     <h4 className="text-yellow-400 font-bold mb-2 flex items-center gap-2">
@@ -3270,7 +4081,7 @@ const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
                 </div>
             )}
             {/* Header / Title Style */}
-            <div className="relative z-10 flex flex-col items-center justify-center py-16 px-4">
+            <div dir={dir} className="relative z-10 flex flex-col items-center justify-center py-16 px-4">
                 <div 
                     className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20 dark:opacity-40 mix-blend-luminosity"
                     style={{ backgroundImage: `url('https://e1.pxfuel.com/desktop-wallpaper/123/929/desktop-wallpaper-we-loved-them-all-games-collage.jpg')` }}
@@ -3279,25 +4090,25 @@ const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
                 
                 <div className="relative z-20 text-center flex flex-col items-center">
                     <h2 className="flex flex-col md:flex-row items-center justify-center font-black tracking-tighter leading-none transition-colors duration-300">
-                        <span className="text-8xl md:text-[11rem] xl:text-[13rem] text-slate-900 dark:text-slate-100 font-['Anton'] md:pr-6 leading-none">
+                        <span className="text-8xl md:text-[11rem] xl:text-[13rem] text-slate-900 dark:text-slate-100 font-['Anton'] md:pe-6 rtl:md:ps-6 leading-none">
                             {displayGames.length}
                         </span>
                         <div className="flex flex-col items-center md:items-start md:mt-2">
                             <span className="text-5xl md:text-7xl xl:text-[6.5rem] font-['Bebas_Neue'] uppercase leading-[0.8] tracking-widest text-[#0b1b3d] dark:text-[#c4d4e2]">
-                                OPEN WORLD
+                                {t('OPEN WORLD')}
                             </span>
-                            <span className="text-[5rem] md:text-[8rem] xl:text-[10rem] font-['Permanent_Marker'] md:-ml-2 text-transparent bg-clip-text bg-gradient-to-br from-red-600 via-red-500 to-orange-600 leading-[0.8] -mt-2 md:-mt-6 text-stroke-2 text-stroke-white dark:text-stroke-black" style={{ WebkitTextStroke: '2px rgba(255,255,255,0.1)' }}>
-                                GAMES
+                            <span className="text-[5rem] md:text-[8rem] xl:text-[10rem] font-['Permanent_Marker'] md:-ms-2 rtl:md:-me-2 text-transparent bg-clip-text bg-gradient-to-br from-red-600 via-red-500 to-orange-600 leading-[0.8] -mt-2 md:-mt-6 text-stroke-2 text-stroke-white dark:text-stroke-black" style={{ WebkitTextStroke: '2px rgba(255,255,255,0.1)' }}>
+                                {t('GAMES')}
                             </span>
                         </div>
                     </h2>
                     <div className="mt-4 md:mt-6 flex items-center gap-4 text-slate-800 dark:text-slate-200 font-['Inter'] font-black tracking-[0.3em] text-lg md:text-2xl uppercase transition-colors duration-300">
                         <span className="h-[2px] w-12 md:w-24 bg-slate-800 dark:bg-slate-200 transition-colors duration-300 opacity-50"></span>
-                        YOU MUST PLAY
+                        {t('YOU MUST PLAY')}
                         <span className="h-[2px] w-12 md:w-24 bg-slate-800 dark:bg-slate-200 transition-colors duration-300 opacity-50"></span>
                     </div>
                     <p className="mt-4 text-[9px] md:text-xs text-slate-600 dark:text-slate-400 font-bold tracking-[0.25em] uppercase transition-colors duration-300">
-                        From Fantasy Kingdoms to Chaotic Cities
+                        {t('From Fantasy Kingdoms to Chaotic Cities')}
                     </p>
                 </div>
             </div>
@@ -3323,7 +4134,7 @@ const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
                             return (
                                 <div key={`${game.id}-${idx}`} className="relative group flex items-stretch border-b border-slate-300 dark:border-white/10 last:border-b-0 overflow-hidden min-h-[90px] sm:min-h-[110px] md:min-h-[130px] transition-all hover:brightness-105 dark:hover:brightness-125 bg-white sm:bg-transparent dark:bg-black/60 dark:md:backdrop-blur-md">
                                     {/* Number Box on the left */}
-                                    <div className="w-[70px] md:w-[120px] shrink-0 flex items-center justify-center bg-slate-100 dark:bg-[#050505] relative z-20 border-r border-slate-300 dark:border-white/5 shadow-none dark:shadow-[5px_0_15px_rgba(0,0,0,0.5)] transition-colors duration-300">
+                                    <div className="w-[70px] md:w-[120px] shrink-0 flex items-center justify-center bg-slate-100 dark:bg-[#050505] relative z-20 border-e border-slate-300 dark:border-white/5 shadow-none dark:shadow-[5px_0_15px_rgba(0,0,0,0.5)] transition-colors duration-300">
                                         <span 
                                             style={{ 
                                                 textShadow: `0 0 10px ${c1}66`,
@@ -3362,14 +4173,14 @@ const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
 
                                         {/* Symbol on the right */}
                                         {game.symbolUrl && (
-                                            <div className="relative z-10 shrink-0 ml-4 flex items-center justify-end w-[40px] md:w-[80px] h-10 md:h-20 mr-2">
+                                            <div className="relative z-10 shrink-0 ms-4 flex items-center justify-end w-[40px] md:w-[80px] h-10 md:h-20 me-2">
                                                 <img src={game.symbolUrl} alt="Symbol" className="max-w-full max-h-full object-contain object-right opacity-90 group-hover:opacity-100 transition-all duration-300 drop-shadow-md"  loading="lazy" />
                                             </div>
                                         )}
                                     </div>
                                     
                                     {/* Right Edge Glow */}
-                                    <div className="absolute right-0 top-0 bottom-0 w-1 bg-black/20 dark:bg-white opacity-0 group-hover:opacity-50 blur-[2px] transition-opacity"></div>
+                                    <div className="absolute end-0 top-0 bottom-0 w-1 bg-black/20 dark:bg-white opacity-0 group-hover:opacity-50 blur-[2px] transition-opacity"></div>
                                 </div>
                             );
                         })}
@@ -3385,7 +4196,7 @@ const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
                         disabled={currentPage === 0}
                         className="p-3 bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 text-slate-800 dark:text-white rounded-full transition-colors flex items-center justify-center shrink-0 border border-slate-300 dark:border-transparent shadow-sm"
                     >
-                        <Icon name="ChevronLeft" size={20} />
+                        <Icon name="ChevronLeft" size={20} className="rtl:rotate-180" />
                     </button>
                     <div className="flex gap-2 mx-2">
                         {Array.from({ length: totalPages }).map((_, i) => (
@@ -3404,7 +4215,7 @@ const TopGamesSection: React.FC<{ games: TopGame[] }> = ({ games }) => {
                         disabled={currentPage === totalPages - 1}
                         className="p-3 bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 text-slate-800 dark:text-white rounded-full transition-colors flex items-center justify-center shrink-0 border border-slate-300 dark:border-transparent shadow-sm"
                     >
-                        <Icon name="ChevronRight" size={20} />
+                        <Icon name="ChevronRight" size={20} className="rtl:rotate-180" />
                     </button>
                 </div>
             )}
@@ -3418,6 +4229,7 @@ const BestStudiosCarousel: React.FC<{
     onSeeAll: () => void,
     categoryType: 'games' | 'tools'
 }> = ({ profiles, onSelect, onSeeAll, categoryType }) => {
+    const { dir, t } = useLanguage();
     const sortedProfiles = useMemo(() => {
         return [...profiles]
             .map(p => {
@@ -3448,15 +4260,15 @@ const BestStudiosCarousel: React.FC<{
                         <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center border border-blue-200 dark:border-blue-500/30">
                             <Icon name="Briefcase" size={20} className="text-blue-600 dark:text-blue-400" />
                         </div>
-                        {categoryType === 'games' ? 'Top Studios' : 'Top Tech Companies'}
+                        {categoryType === 'games' ? t('Top Studios') : t('Top Tech Companies')}
                     </h2>
-                    <p className="text-sm text-slate-700 dark:text-slate-300 mt-2 font-medium">Leading developers by released items</p>
+                    <p className="text-sm text-slate-700 dark:text-slate-300 mt-2 font-medium">{t('Leading developers by released items')}</p>
                 </div>
                 <button 
                     onClick={onSeeAll}
                     className="cursor-pointer shrink-0 group text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-slate-200 flex items-center gap-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
-                    View Directory <Icon name="ArrowRight" size={16} className="group-hover:translate-x-1 transition-transform" />
+                    {t('View Directory')} <Icon name="ArrowRight" size={16} className="group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform rtl:rotate-180" />
                 </button>
             </div>
             
@@ -3467,7 +4279,7 @@ const BestStudiosCarousel: React.FC<{
                         onClick={() => onSelect(profile)}
                         className="group relative bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-slate-800/60 rounded-3xl p-5 md:p-6 overflow-hidden cursor-pointer hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300"
                     >
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-500/5 to-transparent rounded-bl-full pointer-events-none transition-opacity opacity-0 group-hover:opacity-100" />
+                        <div className="absolute top-0 end-0 w-32 h-32 bg-gradient-to-bl from-blue-500/5 to-transparent rounded-bl-full pointer-events-none transition-opacity opacity-0 group-hover:opacity-100" />
                         
                         <div className="flex items-start justify-between mb-6">
                             <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-slate-50 dark:bg-slate-900/80 flex items-center justify-center p-3 border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden group-hover:scale-105 transition-transform duration-300">
@@ -3482,7 +4294,7 @@ const BestStudiosCarousel: React.FC<{
                                     {profile.totalGames}
                                 </span>
                                 <span className="text-[10px] md:text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest">
-                                    {profile.totalGames === 1 ? 'Item' : 'Items'}
+                                    {profile.totalGames === 1 ? t('Item') : t('Items')}
                                 </span>
                             </div>
                         </div>
@@ -3492,7 +4304,7 @@ const BestStudiosCarousel: React.FC<{
                                 {profile.name}
                             </h3>
                             <div className="flex items-center gap-1.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-blue-500 text-xs font-semibold">
-                                View Profile <Icon name="ArrowRight" size={12} />
+                                {t('View Profile')} <Icon name="ArrowRight" size={12} className="rtl:rotate-180" />
                             </div>
                         </div>
                     </div>
@@ -3505,6 +4317,7 @@ const BestStudiosCarousel: React.FC<{
 // --- MAIN PAGE COMPONENT ---
 
 const SecretArea: React.FC = () => {
+  const { dir, t } = useLanguage();
   const [isUnlocked, setIsUnlocked] = useState(() => localStorage.getItem('secret_area_unlocked') === 'true' || localStorage.getItem('nexa_guest_mode') === 'true');
   const [isGuestMode, setIsGuestMode] = useState(() => localStorage.getItem('nexa_guest_mode') === 'true');
   const [showHackerLoader, setShowHackerLoader] = useState(() => localStorage.getItem('secret_area_unlocked') === 'true' || localStorage.getItem('nexa_guest_mode') === 'true');
@@ -3530,6 +4343,7 @@ const SecretArea: React.FC = () => {
   const [companyProfiles, setCompanyProfiles] = useState<CompanyProfile[]>([]);
   const [topGames, setTopGames] = useState<TopGame[]>([]);
   const [bestGameSeries, setBestGameSeries] = useState<BestGameSeries[]>([]);
+  const [openedViaRandom, setOpenedViaRandom] = useState(false);
   const [popularRepackIds, setPopularRepackIds] = useState<string[]>([]);
   
   const getResolvedDeveloper = (item: ResourceItem) => {
@@ -3615,6 +4429,8 @@ const SecretArea: React.FC = () => {
   };
 
   const [selectedResource, setSelectedResource] = useState<ResourceItem | null>(null);
+  const [selectedResourceAction, setSelectedResourceAction] = useState<string | undefined>(undefined);
+  const [selectedGenreView, setSelectedGenreView] = useState<string | null>(null);
   const [selectedCompanyProfile, setSelectedCompanyProfile] = useState<CompanyProfile | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [visitorCount, setVisitorCount] = useState(2491);
@@ -3806,7 +4622,7 @@ const SecretArea: React.FC = () => {
         newHistory.push({ 
           type: 'info', 
           text: (
-            <div className="flex flex-col space-y-2 mt-1 ml-2">
+            <div className="flex flex-col space-y-2 mt-1 ms-2">
               <div>[-] <a href="https://wa.me/212723242286" target="_blank" rel="noreferrer" className="text-blue-400 hover:text-blue-300 underline underline-offset-2">WhatsApp</a></div>
               <div>[-] <a href="https://www.instagram.com/nexa1337" target="_blank" rel="noreferrer" className="text-pink-400 hover:text-pink-300 underline underline-offset-2">Instagram</a></div>
               <div>[-] <a href="mailto:support@nexa1337.com" className="text-purple-400 hover:text-purple-300 underline underline-offset-2">Email (support@nexa1337.com)</a></div>
@@ -3819,7 +4635,7 @@ const SecretArea: React.FC = () => {
         newHistory.push({ 
           type: 'info', 
           text: (
-            <div className="flex flex-col space-y-3 mt-2 ml-2 font-mono">
+            <div className="flex flex-col space-y-3 mt-2 ms-2 font-mono">
               <div className="text-[#a6e3a1] font-bold">{"\u003e\u003e\u003e SECURE NETWORKS DETECTED \u003c\u003c\u003c"}</div>
               <div className="flex items-center space-x-2.5">
                 <img 
@@ -3954,8 +4770,8 @@ const SecretArea: React.FC = () => {
   const [globalSpecs, setGlobalSpecs] = useState({
     ram: 16,
     os: '10',
-    cpuTier: 3,
-    gpuTier: 3,
+    cpuModel: 'Core i5-12400',
+    gpuModel: 'GeForce RTX 3060',
     isActive: false
   });
   const [showGlobalFilter, setShowGlobalFilter] = useState(false);
@@ -4024,36 +4840,30 @@ const SecretArea: React.FC = () => {
   }, [allResources, upcomingGames]);
 
   const recentProducts = useMemo(() => {
-    let all: ResourceItem[] = [];
+    let all: { item: ResourceItem, rowIndex: number, dateScore: number }[] = [];
+    
+    // The items in allResources are already reversed (newest from bottom of sheet are at index 0).
     ["game", "hypervisor", "steamtools", "architect", "extra"].forEach(cat => {
-        all = all.concat(allResources[cat] || []);
+        const items = allResources[cat] || [];
+        items.forEach((item, index) => {
+             let d = 0;
+             if (item.dateAdded) {
+                 if (!isNaN(Number(item.dateAdded))) d = Number(item.dateAdded);
+                 else d = new Date(item.dateAdded).getTime();
+             }
+             
+             all.push({ item, rowIndex: index, dateScore: isNaN(d) ? 0 : d });
+        });
     });
-    const scoredItems = all.map(item => {
-        let score = 0;
-        let d = 0;
-        if (item.dateAdded) {
-            if (!isNaN(Number(item.dateAdded))) d = Number(item.dateAdded);
-            else d = new Date(item.dateAdded).getTime();
-        }
-        if (!isNaN(d) && d > 0) {
-            const daysOld = (Date.now() - d) / (1000 * 60 * 60 * 24);
-            score += Math.max(0, 100 - (daysOld * 0.5));
-        }
-        if (["game", "hypervisor"].includes(item.category?.toLowerCase())) score += 15;
 
-        if (item.coverImage && !item.coverImage.includes("placehold.co")) score += 10;
-        if (item.ratingPositive && !isNaN(parseInt(item.ratingPositive))) {
-            const p = parseInt(item.ratingPositive);
-            if (p > 90) score += 20;
-            else if (p > 80) score += 10;
-            else if (p > 70) score += 5;
+    return all.sort((a, b) => {
+        // If both have a valid dateAdded, sort by date directly
+        if (a.dateScore > 0 && b.dateScore > 0 && a.dateScore !== b.dateScore) {
+            return b.dateScore - a.dateScore;
         }
-        return { item, score, d };
-    });
-    return scoredItems.sort((a, b) => {
-        if (b.score !== a.score) return b.score - a.score;
-        if (!isNaN(a.d) && !isNaN(b.d)) return b.d - a.d;
-        return 0;
+        // Fallback: sort by their position in the sheet (rowIndex 0 is newest)
+        // Since we want the newest items first, lower rowIndex should come first.
+        return a.rowIndex - b.rowIndex;
     }).map(s => s.item).slice(0, 20);
   }, [allResources]);
 
@@ -4567,6 +5377,7 @@ const SecretArea: React.FC = () => {
 
           const partsArr: { id: number, link: string, note?: string }[] = [];
           const mirrorsArr: { id: number, link: string, note?: string }[] = [];
+          const ankerArr: { id: number, link: string, note?: string }[] = [];
           for (let i = 1; i <= 20; i++) {
               let pVal = getVal(`part${i}`);
               let pNote = getVal(`partNote${i}`) || getVal(`note${i}`);
@@ -4594,6 +5405,11 @@ const SecretArea: React.FC = () => {
                       return { link: parenMatch[1].trim(), note: parenMatch[2].trim() };
                   }
 
+                  const spaceMatch = val.match(/^(https?:\/\/[^\s]+)\s+(.+)$/);
+                  if (spaceMatch) {
+                      return { link: spaceMatch[1].trim(), note: spaceMatch[2].trim() };
+                  }
+
                   return { link: val.trim(), note: '' };
               };
 
@@ -4605,15 +5421,23 @@ const SecretArea: React.FC = () => {
 
               let mVal = getVal(`mirror${i}`);
               let mNote = getVal(`mirrorNote${i}`);
+              let aVal = getVal(`anker${i}`);
+              let aNote = getVal(`ankerNote${i}`);
 
               if (mVal) {
                   const extracted = extractNote(mVal);
                   mVal = extracted.link;
                   if (extracted.note) mNote = extracted.note;
               }
+              if (aVal) {
+                  const extracted = extractNote(aVal);
+                  aVal = extracted.link;
+                  if (extracted.note) aNote = extracted.note;
+              }
 
               if (pVal) partsArr.push({ id: i, link: pVal, note: pNote });
               if (mVal) mirrorsArr.push({ id: i, link: mVal, note: mNote });
+              if (aVal) ankerArr.push({ id: i, link: aVal, note: aNote });
           }
 
           const isPinnedRaw = getVal('pinned');
@@ -4647,6 +5471,7 @@ const SecretArea: React.FC = () => {
             links: { 
               parts: partsArr,
               mirrors: mirrorsArr,
+              ankerParts: ankerArr,
               full: getVal('full'), 
               fullNote: getVal('fullNote') || getVal('note'),
               tutorial: getVal('tutorial'), 
@@ -4864,6 +5689,27 @@ const SecretArea: React.FC = () => {
   }, [isUnlocked]);
   useEffect(() => { setCurrentPage(1); }, [activeTab, searchQuery]);
 
+    useEffect(() => {
+            const handleRandomGame = () => {
+          let popularItems = [];
+          if (popularRepackIds.length > 0) {
+              const allItems = Object.values(allResources).flat();
+              popularItems = allItems.filter(item => popularRepackIds.some(id => String(id).toLowerCase() === String(item.id).toLowerCase()));
+          }
+          if (popularItems.length === 0 && allResources['game'] && allResources['game'].length > 0) {
+              popularItems = allResources['game'];
+          }
+          if (popularItems.length > 0) {
+              const randomIndex = Math.floor(Math.random() * popularItems.length);
+              const randomGame = popularItems[randomIndex];
+              setOpenedViaRandom(true);
+              setSelectedResource(randomGame);
+          }
+      };
+      window.addEventListener('randomPopularGame', handleRandomGame);
+      return () => window.removeEventListener('randomPopularGame', handleRandomGame);
+  }, [popularRepackIds, allResources]);
+
   useEffect(() => {
       const hash = window.location.hash;
       const qIndex = hash.indexOf('?');
@@ -4991,7 +5837,7 @@ const SecretArea: React.FC = () => {
 
   if (!isUnlocked) {
     return (
-      <div className={`w-full h-screen fixed inset-0 z-[200] bg-slate-50 dark:bg-slate-950 font-sans transition-colors duration-300 ${showMathGame ? 'overflow-y-auto' : 'overflow-hidden flex items-center justify-center p-4'}`}>
+      <div dir="ltr" className={`w-full h-screen fixed inset-0 z-[200] bg-slate-50 dark:bg-slate-950 font-sans transition-colors duration-300 ${showMathGame ? 'overflow-y-auto' : 'overflow-hidden flex items-center justify-center p-4'}`}>
           <div className="fixed inset-0 z-0 pointer-events-none">
              {bgImage && (
                 <div
@@ -5001,7 +5847,7 @@ const SecretArea: React.FC = () => {
              )}
              <div className="absolute inset-0 bg-slate-50/70 dark:bg-slate-950/70 md:backdrop-blur-[2px]"></div>
              <div
-                className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary-500/10 dark:bg-primary-900/20 rounded-full md:blur-[120px] blur-[80px]"
+                className="absolute top-1/4 start-1/4 w-[500px] h-[500px] bg-primary-500/10 dark:bg-primary-900/20 rounded-full md:blur-[120px] blur-[80px]"
              />
           </div>
         <div className={`relative z-10 w-full ${showMathGame ? 'flex justify-center min-h-full items-center p-4 py-8' : 'max-w-2xl flex flex-col items-center'}`}>
@@ -5017,7 +5863,7 @@ const SecretArea: React.FC = () => {
                     
                     {/* Matrix Digital Rain Effect (Static Visual) */}
                     <div className="absolute inset-0 pointer-events-none opacity-5 overflow-hidden">
-                        <div className="animate-pulse text-[10px] font-mono leading-3 text-emerald-500 break-words text-justify p-2 select-none">
+                        <div className="animate-pulse text-[10px] font-mono leading-3 text-emerald-900 dark:text-emerald-500 break-words text-justify p-2 select-none">
                             / x + ∑ ∛ √ ² ³ ≤ ≥ ≠ π μ η α Δ Ω ∞ ½ ¼ 0 1 0 1 1 0 ∞ ∑ π μ η α Δ Ω / x + ∑ ∛ √ ² ³ ≤ ≥ ≠ π μ η α Δ Ω ∞ ½ ¼
                             / x + ∑ ∛ √ ² ³ ≤ ≥ ≠ π μ η α Δ Ω ∞ ½ ¼ 0 1 0 1 1 0 ∞ ∑ π μ η α Δ Ω / x + ∑ ∛ √ ² ³ ≤ ≥ ≠ π μ η α Δ Ω ∞ ½ ¼
                             / x + ∑ ∛ √ ² ³ ≤ ≥ ≠ π μ η α Δ Ω ∞ ½ ¼ 0 1 0 1 1 0 ∞ ∑ π μ η α Δ Ω / x + ∑ ∛ √ ² ³ ≤ ≥ ≠ π μ η α Δ Ω ∞ ½ ¼
@@ -5025,7 +5871,7 @@ const SecretArea: React.FC = () => {
                         </div>
                     </div>
 
-                    <button onClick={() => setShowMathGame(false)} className="absolute top-4 right-4 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-200 transition-colors z-20">
+                    <button onClick={() => setShowMathGame(false)} className="absolute top-4 end-4 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-200 transition-colors z-20">
                         <Icon name="X" size={24} />
                     </button>
                     
@@ -5056,7 +5902,7 @@ const SecretArea: React.FC = () => {
                     {mathStatus === 'playing' && (
                         <form onSubmit={verifyMath} className="space-y-4 sm:space-y-6 relative z-10">
                             <div className="py-4 sm:py-6 bg-slate-100 dark:bg-slate-950/80 rounded-xl border border-slate-200 dark:border-slate-800 relative overflow-hidden group">
-                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50"></div>
+                                <div className="absolute top-0 start-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50"></div>
                                 
                                 {mathProblem.note && (
                                     <div className="mb-2 sm:mb-3">
@@ -5098,13 +5944,13 @@ const SecretArea: React.FC = () => {
 
                     {mathStatus === 'won' && (
                         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="space-y-6 relative z-10">
-                            <div className="text-emerald-500 flex justify-center"><Icon name="CheckCircle" size={48} /></div>
+                            <div className="text-emerald-900 dark:text-emerald-500 flex justify-center"><Icon name="CheckCircle" size={48} /></div>
                             <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-200 px-4">
                                 "Intelligence confirmed. Welcome to the inner circle."
                             </p>
                             <div className="bg-emerald-500/10 border border-emerald-500/30 p-4 rounded-xl">
-                                <span className="block text-[10px] uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-1">Secret Key</span>
-                                <span className="font-mono text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-400 select-all">Wolfspace</span>
+                                <span className="block text-[10px] uppercase tracking-widest text-emerald-600 dark:text-emerald-700 dark:text-emerald-400 mb-1">Secret Key</span>
+                                <span className="font-mono text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-700 dark:text-emerald-400 select-all">Wolfspace</span>
                             </div>
                             <button onClick={copyAndCloseMath} className="w-full py-3 sm:py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 text-xs sm:text-sm">
                                 <Icon name="Copy" size={18} /> Copy & Enter
@@ -5121,24 +5967,24 @@ const SecretArea: React.FC = () => {
                     )}
                 </div>
             ) : (
-                <div className="flex flex-col relative overflow-hidden w-full h-[450px]">
+                <div dir="ltr" className="flex flex-col relative overflow-hidden w-full h-[60vh] min-h-[350px] sm:h-[450px]">
                       {/* Background Image inside terminal */}
                       <div className="absolute inset-0 z-0 pointer-events-none">
                         <img src="https://images2.alphacoders.com/135/1355120.jpeg" alt="Terminal Background" className="w-full h-full object-cover opacity-20 dark:opacity-30 mix-blend-overlay" />
                         <div className="absolute inset-0 bg-slate-900/80 dark:bg-black/60 backdrop-blur-[1px]"></div>
                       </div>
                       
-                      <div className="h-10 bg-slate-800/80 dark:bg-[#0f172a]/50 backdrop-blur-sm border-b border-slate-700/50 dark:border-slate-800/50 flex items-center px-4 justify-between relative z-10 shrink-0">
+                      <div className="h-8 sm:h-10 bg-slate-800/80 dark:bg-[#0f172a]/50 backdrop-blur-sm border-b border-slate-700/50 dark:border-slate-800/50 flex items-center px-2 sm:px-4 justify-between relative z-10 shrink-0">
                         <div className="flex gap-2">
                           <div className="w-3 h-3 rounded-full bg-red-500"></div>
                           <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
                           <div className="w-3 h-3 rounded-full bg-green-500"></div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="relative w-4 h-4 flex items-center justify-center">
-                                <FaWolfPackBattalion size={14} className="text-white dark:text-white relative z-10" />
+                            <div className="relative w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
+                                <Icon name="Wolf" className="w-full h-full text-white dark:text-white relative z-10" />
                             </div>
-                            <div className="text-xs font-semibold text-slate-300 lowercase tracking-widest font-mono">guest@nexa1337:~/root</div>
+                            <div className="text-[9px] sm:text-xs font-semibold text-slate-300 lowercase tracking-wide sm:tracking-widest font-mono truncate">guest@nexa1337:~/root</div>
                         </div>
                         <div className="w-12"></div>
                       </div>
@@ -5181,7 +6027,7 @@ const SecretArea: React.FC = () => {
                           )}
                           <div className="flex items-center items-stretch">
                             {terminalMode === 'password' ? null : (
-                              <span className="text-[#89B4FA] font-bold mr-2 shrink-0 drop-shadow-sm flex items-center">
+                              <span className="text-[#89B4FA] font-bold me-2 shrink-0 drop-shadow-sm flex items-center">
                                  └─$
                               </span>
                             )}
@@ -5209,8 +6055,42 @@ const SecretArea: React.FC = () => {
     );
   }
 
+
+  if (selectedGenreView) {
+      return (
+          <div className="min-h-screen bg-slate-50 dark:bg-[#030712] font-sans selection:bg-primary-500/30">
+             <GenreDetailView 
+                genre={selectedGenreView}
+                games={Object.values(allResources).flat()}
+                onBack={() => {
+                   setSelectedGenreView(null);
+                   setTimeout(() => {
+                       const el = document.getElementById('featured-genres');
+                       if (el) {
+                           const y = el.getBoundingClientRect().top + window.scrollY - 100;
+                           window.scrollTo({ top: y, behavior: 'smooth' });
+                       }
+                   }, 50);
+                }}
+                onSelect={setSelectedResource}
+                stash={stash}
+                toggleStash={toggleStash}
+             />
+             {selectedResource && (
+               <ResourceDetailModal globalSpecs={globalSpecs} item={selectedResource} 
+                  onClose={() => { setSelectedResource(null); setSelectedResourceAction(undefined); }}
+                  stash={stash}
+                  toggleStash={toggleStash}
+                  initialScrollTarget={selectedResourceAction}
+               />
+             )}
+             <Footer onSupportClick={() => setShowDonateModal(true)} />
+          </div>
+      );
+  }
+
   return (
-    <div className="w-full min-h-screen bg-slate-50 dark:bg-[#030712] font-sans text-slate-800 dark:text-slate-200 selection:bg-primary-500/30 transition-colors duration-300 overflow-x-hidden relative">
+    <div dir={dir} className="w-full min-h-screen bg-slate-50 dark:bg-[#030712] font-sans text-slate-800 dark:text-slate-200 selection:bg-primary-500/30 transition-colors duration-300 overflow-x-hidden relative">
       <div className="fixed inset-0 z-0 opacity-40 dark:opacity-60 pointer-events-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-200 via-slate-50 to-slate-50 dark:from-slate-900 dark:via-[#030712] dark:to-[#030712]">
       </div>
 
@@ -5219,13 +6099,13 @@ const SecretArea: React.FC = () => {
           <motion.div
             initial={{ opacity: 1 }}
             exit={{ opacity: 0, transition: { duration: 0.8, ease: "easeInOut" } }}
-            className="fixed inset-0 z-[9999] bg-slate-50 dark:bg-[#020617] flex flex-col items-center justify-center p-4 overflow-hidden transition-colors duration-300"
+            dir="ltr" className="fixed inset-0 z-[9999] bg-slate-50 dark:bg-[#020617] flex flex-col items-center justify-center p-4 overflow-hidden transition-colors duration-300"
           >
             {/* Simple Background */}
             <div className="absolute inset-0 z-0 pointer-events-none">
                
                <div className="absolute inset-0 bg-slate-50/70 dark:bg-[#020617]/80 md:backdrop-blur-[2px]" />
-               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-400/10 dark:bg-cyan-900/10 rounded-full blur-[100px]" />
+               <div className="absolute top-1/2 start-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-400/10 dark:bg-cyan-900/10 rounded-full blur-[100px]" />
             </div>
             
             <div className="relative z-10 w-full max-w-2xl flex flex-col items-center">
@@ -5239,25 +6119,25 @@ const SecretArea: React.FC = () => {
                 
                 
                 {/* Mac OS Window Header */}
-                <div className="h-10 bg-slate-800/80 dark:bg-[#0f172a]/50 backdrop-blur-sm border-b border-slate-700/50 dark:border-slate-800/50 flex items-center px-4 justify-between relative z-10">
+                <div className="h-8 sm:h-10 bg-slate-800/80 dark:bg-[#0f172a]/50 backdrop-blur-sm border-b border-slate-700/50 dark:border-slate-800/50 flex items-center px-2 sm:px-4 justify-between relative z-10">
                   <div className="flex gap-2">
                     <div className="w-3 h-3 rounded-full bg-red-500"></div>
                     <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
                     <div className="w-3 h-3 rounded-full bg-green-500"></div>
                   </div>
                   <div className="flex items-center gap-2">
-                     <div className="relative w-4 h-4 flex items-center justify-center">
-                        <FaWolfPackBattalion size={14} className="text-white dark:text-white relative z-10" />
-                        <FaWolfPackBattalion size={14} className="text-red-500 absolute inset-0 z-0 opacity-70 animate-[glitch_2s_infinite]" style={{ clipPath: 'polygon(0 0, 100% 0, 100% 45%, 0 45%)', transform: 'translate(-1px, 1px)' }} />
-                        <FaWolfPackBattalion size={14} className="text-cyan-500 absolute inset-0 z-0 opacity-70 animate-[glitch_3s_infinite_reverse]" style={{ clipPath: 'polygon(0 55%, 100% 55%, 100% 100%, 0 100%)', transform: 'translate(1px, -1px)' }} />
+                     <div className="relative w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
+                        <Icon name="Wolf" className="w-full h-full text-white dark:text-white relative z-10" />
+                        <Icon name="Wolf" className="w-full h-full text-red-500 absolute inset-0 z-0 opacity-70 animate-[glitch_2s_infinite]" style={{ clipPath: 'polygon(0 0, 100% 0, 100% 45%, 0 45%)', transform: 'translate(-1px, 1px)' }} />
+                        <Icon name="Wolf" className="w-full h-full text-cyan-500 absolute inset-0 z-0 opacity-70 animate-[glitch_3s_infinite_reverse]" style={{ clipPath: 'polygon(0 55%, 100% 55%, 100% 100%, 0 100%)', transform: 'translate(1px, -1px)' }} />
                      </div>
-                     <div className="text-xs font-semibold text-slate-300 lowercase tracking-widest font-mono">guest@nexa1337:~/root</div>
+                     <div className="text-[9px] sm:text-xs font-semibold text-slate-300 lowercase tracking-wide sm:tracking-widest font-mono truncate">guest@nexa1337:~/root</div>
                   </div>
                   <div className="w-12"></div>
                 </div>
 
                 {/* Content */}
-                <div className="p-6 md:p-10 flex flex-col items-center relative overflow-hidden h-[410px] z-10">
+                <div className="p-4 sm:p-6 md:p-10 flex flex-col items-center relative overflow-hidden h-[60vh] min-h-[300px] sm:h-[410px] z-10">
                   <h2 className="text-xl md:text-2xl font-black tracking-[0.2em] uppercase mb-10 text-white dark:text-white text-center">
                     Secret Area
                   </h2>
@@ -5314,7 +6194,7 @@ const SecretArea: React.FC = () => {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="w-full"
         >
-          <div className="fixed top-24 right-4 z-[9999] flex flex-col gap-2 pointer-events-none">
+          <div className="fixed top-24 end-4 z-[9999] flex flex-col gap-2 pointer-events-none">
         <AnimatePresence>
             {notifications.map(n => (
                 <motion.div
@@ -5348,24 +6228,52 @@ const SecretArea: React.FC = () => {
 
       <AnimatePresence>
         {selectedResource && (
-          <ResourceDetailModal 
-            item={selectedResource} 
-            onClose={() => setSelectedResource(null)} 
-            isHypervisor={selectedResource.category === 'hypervisor'}
-            stash={stash}
-            toggleStash={toggleStash}
-            onCompanyClick={handleCompanyClick}
-            onGenreClick={(genre) => {
-              setSearchQuery(genre);
-              if (['game', 'hypervisor', 'steamtools'].includes(selectedResource.category.toLowerCase())) {
-                  setActiveTab(selectedResource.category.toLowerCase() as any);
-              }
-              setSelectedResource(null);
-            }}
-            resolvedDev={getResolvedDeveloper(selectedResource)}
-            isGuestMode={isGuestMode}
-            showGuestNotification={showGuestNotification}
-          />
+          <>
+            <ResourceDetailModal 
+              globalSpecs={globalSpecs}
+              item={selectedResource} 
+              onClose={() => { setSelectedResource(null); setSelectedResourceAction(undefined); setOpenedViaRandom(false); }} 
+              isHypervisor={selectedResource.category === 'hypervisor'}
+              stash={stash}
+              toggleStash={toggleStash}
+              onCompanyClick={handleCompanyClick}
+              onGenreClick={(genre) => {
+                setSearchQuery(genre);
+                if (['game', 'hypervisor', 'steamtools'].includes(selectedResource.category.toLowerCase())) {
+                    setActiveTab(selectedResource.category.toLowerCase() as any);
+                }
+                setSelectedResource(null);
+                setOpenedViaRandom(false);
+              }}
+              resolvedDev={getResolvedDeveloper(selectedResource)}
+              isGuestMode={isGuestMode}
+              showGuestNotification={showGuestNotification}
+              initialScrollTarget={selectedResourceAction}
+            />
+            {openedViaRandom && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8, y: -20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.8, y: -20 }}
+                className="fixed bottom-6 start-1/2 -translate-x-1/2 lg:bottom-10 lg:start-auto lg:end-10 lg:translate-x-0 z-[9999]"
+              >
+                <div 
+                  className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden flex items-center justify-center shrink-0 group shadow-2xl cursor-pointer transition-transform hover:scale-110 active:scale-95 border-2 border-white/20 hover:border-white/50" 
+                  title="Discover another random game"
+                  onClick={() => window.dispatchEvent(new CustomEvent('randomPopularGame'))}
+                >
+                  <div className="absolute inset-0 bg-[conic-gradient(from_0deg,#ff0000,#ff8000,#ffff00,#00ff00,#00ffff,#0000ff,#8000ff,#ff00ff,#ff0000)] animate-[spin_4s_linear_infinite] group-hover:animate-[spin_1s_linear_infinite]" />
+                  <div className="absolute inset-[3px] sm:inset-[4px] rounded-full bg-slate-900 flex items-center justify-center z-10 overflow-hidden transition-colors duration-300 group-hover:bg-slate-800">
+                    <div className="absolute top-1/2 start-1/2 w-full h-full origin-top-start -ms-0 -mt-0 bg-gradient-to-br from-indigo-500/50 to-transparent animate-[spin_2s_linear_infinite] group-hover:from-indigo-400/80 group-hover:animate-[spin_0.5s_linear_infinite]" />
+                    <div className="absolute w-[60%] h-[60%] rounded-full border border-indigo-500/60 border-dashed animate-[spin_10s_linear_infinite] group-hover:border-indigo-400 group-hover:animate-[spin_3s_linear_infinite_reverse] group-hover:scale-110 transition-transform" />
+                    <div className="absolute w-[30%] h-[30%] rounded-full border border-indigo-500/60 group-hover:border-indigo-400 group-hover:scale-125 transition-transform" />
+                    <Icon name="RefreshCw" size={16} className="text-white relative z-20 group-hover:animate-spin hidden sm:block" />
+                    <Icon name="RefreshCw" size={14} className="text-white relative z-20 group-hover:animate-spin sm:hidden" />
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </>
         )}
       </AnimatePresence>
 
@@ -5423,7 +6331,11 @@ const SecretArea: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-24 pb-40 relative z-10">
+      <HeroSlider 
+        games={allResources['game']?.slice(0, 8) || []}
+        onSelectGame={(game, action) => { setSelectedResource(game); setSelectedResourceAction(action); }}
+      />
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-24 pb-40 relative z-10">
         
         <header className="flex flex-col gap-6 lg:gap-8 mb-12 relative z-[9999] pointer-events-auto">
           <div className="space-y-4">
@@ -5434,8 +6346,8 @@ const SecretArea: React.FC = () => {
                    animate={{ opacity: 1, y: 0 }}
                    className="px-3 py-1.5 border rounded-lg flex items-center gap-2.5 shadow-lg whitespace-nowrap shrink-0 relative overflow-hidden bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-200 shadow-[0_0_15px_rgba(148,163,184,0.3)]"
                  >
-                    <Icon name="UserCircle" size={14} className="opacity-80" />
-                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider">GUEST MODE</span>
+                    <Icon name="User" size={14} className="opacity-80" />
+                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider">{t('GUEST MODE')}</span>
                  </motion.div>
                )}
                <motion.div 
@@ -5450,7 +6362,7 @@ const SecretArea: React.FC = () => {
                        : 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-500/40 text-red-600 dark:text-red-400 shadow-[0_0_15px_rgba(239,68,68,0.2)] hover:shadow-[0_0_25px_rgba(239,68,68,0.4)]'
                  }`}
                >
-                  <div className={`absolute inset-0 bg-gradient-to-r from-transparent to-transparent -left-full group-hover:animate-[shimmer_1.5s_infinite] ${
+                  <div className={`absolute inset-0 bg-gradient-to-r from-transparent to-transparent -start-full group-hover:animate-[shimmer_1.5s_infinite] ${
                     networkStatus.isTesting ? 'via-yellow-400/10' : (networkStatus.quality === 'Poor' || networkStatus.quality === 'Fair' ? 'via-red-400/10' : 'via-primary-400/10')
                   }`} />
                   <span className="relative flex h-2 w-2">
@@ -5467,9 +6379,9 @@ const SecretArea: React.FC = () => {
                        animate={{ opacity: [1, 0.7, 1], textShadow: ["0 0 0px transparent", `0 0 8px ${networkStatus.isTesting ? 'rgba(234,179,8,0.5)' : (networkStatus.quality === 'Poor' || networkStatus.quality === 'Fair' ? 'rgba(239,68,68,0.5)' : 'rgba(14,165,233,0.5)')}`, "0 0 0px transparent"] }}
                        transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
                      >
-                       {networkStatus.isTesting ? 'ANALYZING CONNECTION...' : (networkStatus.quality === 'Poor' || networkStatus.quality === 'Fair' ? 'CONNECTION UNSTABLE' : 'SECURE CONNECTION ESTABLISHED')}
+                       {networkStatus.isTesting ? t('ANALYZING CONNECTION...') : (networkStatus.quality === 'Poor' || networkStatus.quality === 'Fair' ? t('CONNECTION UNSTABLE') : t('SECURE CONNECTION ESTABLISHED'))}
                      </motion.span>
-                     <span className="sm:hidden">{networkStatus.isTesting ? 'ANALYZING' : (networkStatus.quality === 'Poor' || networkStatus.quality === 'Fair' ? 'UNSTABLE' : 'SECURE')}</span>
+                     <span className="sm:hidden">{networkStatus.isTesting ? t('ANALYZING') : (networkStatus.quality === 'Poor' || networkStatus.quality === 'Fair' ? t('UNSTABLE') : t('SECURE'))}</span>
                   </span>
                </motion.div>
 
@@ -5477,13 +6389,13 @@ const SecretArea: React.FC = () => {
                  initial={{ opacity: 0, y: -10 }}
                  animate={{ opacity: 1, y: 0 }}
                  transition={{ duration: 0.5, delay: 0.1 }}
-                 className="flex items-center gap-2.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-500/30 rounded-lg text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap shrink-0 relative overflow-hidden group shadow-[0_0_10px_rgba(16,185,129,0.1)] hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all duration-300"
+                 className="flex items-center gap-2.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-500/30 rounded-lg text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-700 dark:text-emerald-400 whitespace-nowrap shrink-0 relative overflow-hidden group shadow-[0_0_10px_rgba(16,185,129,0.1)] hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all duration-300"
                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-400/10 to-transparent -left-full group-hover:animate-[shimmer_1.5s_infinite]" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-400/10 to-transparent -start-full group-hover:animate-[shimmer_1.5s_infinite]" />
                   <motion.div
                     animate={{ rotate: 360 }}
                     transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                    className="flex items-center justify-center text-emerald-500"
+                    className="flex items-center justify-center text-emerald-900 dark:text-emerald-500"
                   >
                     <Icon name="Loader2" size={12} /> 
                   </motion.div>
@@ -5492,19 +6404,16 @@ const SecretArea: React.FC = () => {
                     className="hidden sm:inline tracking-[0.1em]"
                     animate={{ opacity: [0.8, 1, 0.8], textShadow: ["0 0 0px transparent", "0 0 8px rgba(16,185,129,0.6)", "0 0 0px transparent"] }}
                     transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                  >
-                    NODES ACTIVE
-                  </motion.span>
-                  <span className="sm:hidden text-emerald-500 ml-1">
+                  >{t('NODES ACTIVE')}</motion.span>
+                  <span className="sm:hidden text-emerald-900 dark:text-emerald-500 ms-1">
                     <Icon name="Activity" size={12} />
                   </span>
                </motion.div>
             </div>
             
             <h1 className="text-5xl md:text-7xl lg:text-[5rem] xl:text-7xl lg:whitespace-nowrap font-black text-slate-900 dark:text-white tracking-tighter leading-none uppercase italic relative shrink-0">
-              Secret 
-              <motion.span 
-                className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-cyan-300 inline-block ml-2"
+              {t('SecretTitle1')} <motion.span 
+                className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-cyan-300 inline-block ms-2"
                 animate={{
                   textShadow: [
                     "0px 0px 0px transparent",
@@ -5521,12 +6430,10 @@ const SecretArea: React.FC = () => {
                   repeatType: "mirror",
                   ease: "easeInOut"
                 }}
-              >
-                Area
-              </motion.span>
+              >{t('SecretTitle2')}</motion.span>
             </h1>
-            <p className="text-slate-600 dark:text-slate-300 max-w-xl text-sm md:text-base font-medium leading-relaxed border-l-2 border-slate-300 dark:border-slate-800 pl-4">
-              Everything you need, from games to tools, collected from trusted sources and presented in a clean experience ad-free.
+            <p className="text-slate-600 dark:text-slate-300 max-w-xl text-sm md:text-base font-medium leading-relaxed border-s-2 border-slate-300 dark:border-slate-800 ps-4">
+              {t('Everything you need, from games to tools, collected from trusted sources and presented in a clean experience ad-free.')}
             </p>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap items-center gap-3 w-full mt-2 relative z-[90]">
@@ -5542,7 +6449,7 @@ const SecretArea: React.FC = () => {
             >
                 <Icon name="BrandSteam" size={18} className="group-hover:scale-110 transition-transform shrink-0 relative z-10" /> 
                 <span className="relative z-10 flex items-center gap-1.5">
-                    Free Accounts
+                    {t('Free Accounts')}
                     {steamAccounts && steamAccounts.length > 0 && (
                         <span className="flex items-center justify-center bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-black shadow-md border border-red-400">
                             {steamAccounts.length}
@@ -5558,7 +6465,7 @@ const SecretArea: React.FC = () => {
             >
                 <Icon name="Gift" size={18} className="text-yellow-300 group-hover:scale-110 transition-transform shrink-0 relative z-10" /> 
                 <span className="relative z-10 flex items-center gap-1.5">
-                    Master Gift
+                    {t('Master Gift')}
                     {masterGifts && masterGifts.length > 0 && (
                         <span className="flex items-center justify-center bg-yellow-400 text-yellow-900 text-[9px] px-1.5 py-0.5 rounded-full font-black shadow-md border border-yellow-300">
                             {masterGifts.length}
@@ -5569,14 +6476,13 @@ const SecretArea: React.FC = () => {
             <a id="join-community-btn" href={DISCORD_LINK} target="_blank" rel="noreferrer" className="relative z-[100] cursor-pointer w-full md:w-auto flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden">
                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                <Icon name="Discord" size={18} className="group-hover:scale-110 transition-transform shrink-0 relative z-10" />
-                <span className="relative z-10">Join Community</span>
+                <span className="relative z-10">{t('Join Community')}</span>
             </a>
             <a id="channel-btn" href={TELEGRAM_LINK} target="_blank" rel="noreferrer" className="relative z-[100] cursor-pointer w-full md:w-auto flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-[#229ED9] hover:bg-[#1D85B8] text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden">
                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                <Icon name="Telegram" size={18} className="group-hover:scale-110 transition-transform shrink-0 relative z-10" />
                 <span className="relative z-10 flex items-center gap-2">
-                   Channel
-                   <span className="flex h-2 w-2 relative">
+                   {t('Channel')} <span className="flex h-2 w-2 relative">
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-white shadow-[0_0_8px_rgba(255,255,255,1)]" style={{ animation: 'pulse 0.8s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}></span>
                    </span>
                </span>
@@ -5584,9 +6490,7 @@ const SecretArea: React.FC = () => {
             <a id="subreddit-btn" href={REDDIT_LINK} target="_blank" rel="noreferrer" className="relative z-[100] cursor-pointer w-full md:w-auto flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-[#FF4500] hover:bg-[#E03D00] text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden">
                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                <Icon name="Reddit" size={18} className="group-hover:scale-110 transition-transform shrink-0 relative z-10" />
-                <span className="relative z-10 flex items-center gap-2">
-                   Join Community
-               </span>
+                <span className="relative z-10 flex items-center gap-2">{t('Join Community')}</span>
             </a>
             <button 
                 onClick={(e) => { e.preventDefault(); setShowDonateModal(true); }}
@@ -5594,9 +6498,7 @@ const SecretArea: React.FC = () => {
             >
                 <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <Icon name="Heart" size={18} className="text-white group-hover:scale-110 group-hover:animate-pulse transition-transform shrink-0 relative z-10" /> 
-                <span className="relative z-10 flex items-center gap-1.5">
-                    Support Us
-                </span>
+                <span className="relative z-10 flex items-center gap-1.5">{t('Support Us')}</span>
             </button>
           </div>
         </header>
@@ -5605,6 +6507,46 @@ const SecretArea: React.FC = () => {
           <NetworkDiagnostic onStatusChange={setNetworkStatus} />
         </div>
 
+        {/* PROMO SECTION */}
+        <section className="mb-16 w-full">
+          <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl group">
+            
+            {/* Subtle Gradient Background for Light/Dark Mode */}
+            <div className="absolute inset-0 z-0 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800"></div>
+
+            <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between p-8 md:p-12 gap-8 w-full" dir={dir}>
+               {/* Left Side: Content */}
+               <div className="flex-1 text-center lg:text-start space-y-6">
+                  <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white uppercase tracking-tighter" style={{ fontFamily: "'Oswald', sans-serif" }}>
+                     {t('Unlock Exclusive')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-amber-600 dark:from-amber-400 dark:to-amber-500">{t('Rewards')}</span>
+                  </h2>
+                  <p className="text-slate-600 dark:text-slate-300 text-sm md:text-base max-w-xl mx-auto lg:mx-0 font-medium leading-relaxed">
+                     {t('Get access to premium mastergifts and free accounts. Elevate your gaming experience with our exclusive collection.')}
+                  </p>
+                  
+                  <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start pt-2">
+                     <button onClick={(e) => { e.preventDefault(); setShowSteamModal(true); }} className="px-8 py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white dark:text-slate-900 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-amber-500/30 transition-all active:scale-95 flex items-center gap-2">
+                        <Icon name="User" size={20} />
+                        {t('Free Accounts')}
+                     </button>
+                     <button onClick={(e) => { e.preventDefault(); setShowMasterGiftModal(true); }} className="px-8 py-3.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600 rounded-xl font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2 shadow-sm">
+                        <Icon name="Gift" size={20} className="text-amber-500 dark:text-amber-400" />
+                        {t('Mastergift')}
+                     </button>
+                  </div>
+               </div>
+
+               {/* Right Side: Image */}
+               <div className="flex-1 flex justify-center lg:justify-end relative mt-8 lg:mt-0 p-4 lg:p-0">
+                  <div className="absolute inset-0 bg-amber-500/10 dark:bg-amber-500/20 blur-[100px] rounded-full w-[300px] h-[300px] lg:w-[400px] lg:h-[400px] mx-auto lg:mr-10 rtl:lg:ml-10 rtl:lg:mr-auto"></div>
+                  <img src="/images/free_gifts.png" alt="Free Gifts" className="relative z-10 w-full max-w-[350px] lg:max-w-[450px] xl:max-w-[550px] h-auto object-contain drop-shadow-2xl hover:scale-105 hover:-translate-y-2 transition-transform duration-500" />
+               </div>
+            </div>
+          </div>
+        </section>
+
+
+
         <section className="mb-16">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-6">
              <div className="flex items-center gap-3">
@@ -5612,14 +6554,14 @@ const SecretArea: React.FC = () => {
                     <Icon name="Rocket" size={20} />
                 </div>
                 <h2 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter">
-                    Upcoming Games <span className="text-primary-500">2026+</span>
+                    {t('Upcoming Games')} <span className="text-primary-500">2026+</span>
                 </h2>
              </div>
              
              <div className="flex gap-2 bg-white dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800 overflow-x-auto no-scrollbar relative z-[90]">
                 {['PlayStation 5', 'Xbox S/X', 'Steam'].map((p) => (
                     <button
-                        key={p}
+                        key={t(p)}
                         type="button"
                         id={"btn-platform-" + p.replace(/\s+/g, '-').toLowerCase()}
                         onClick={(e) => { e.preventDefault(); setUpcomingPlatform(p); }}
@@ -5629,7 +6571,7 @@ const SecretArea: React.FC = () => {
                             : 'text-slate-700 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-900 dark:text-slate-200'
                         }`}
                     >
-                        {p}
+                        {t(p)}
                     </button>
                 ))}
              </div>
@@ -5659,7 +6601,7 @@ const SecretArea: React.FC = () => {
                     <Icon name="Sparkles" size={20} />
                 </div>
                 <h2 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter">
-                    Recent <span className="text-emerald-500">Products</span>
+                    {t('Recent')} <span className="text-emerald-900 dark:text-emerald-500">{t('Products')}</span>
                 </h2>
              </div>
           </div>
@@ -5683,7 +6625,51 @@ const SecretArea: React.FC = () => {
         </section>
 
         <section className="mb-16">
-           <UpcomingListsDisplay lists={upcomingLists} />
+           
+
+<UpcomingListsDisplay lists={upcomingLists} />
+        </section>
+
+        {/* COMMUNITY SECTION */}
+        <section className="mb-16 w-full">
+          <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl group flex flex-col md:flex-row min-h-[400px]">
+            {/* Gradient background overlay */}
+            <div className="absolute inset-0 z-0 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800"></div>
+
+            <div className="relative z-10 flex flex-col lg:flex-row items-stretch justify-between w-full h-full" dir={dir}>
+               
+               {/* Left Side: Content */}
+               <div className="flex-1 flex flex-col justify-center p-8 md:p-12 space-y-6 lg:max-w-xl xl:max-w-2xl text-center lg:text-start lg:rtl:text-right">
+                  <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white uppercase tracking-tighter" style={{ fontFamily: "'Oswald', sans-serif" }}>
+                     {t('Join Our')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-cyan-400 dark:to-blue-500">{t('Community')}</span>
+                  </h2>
+                  <p className="text-slate-600 dark:text-slate-300 text-sm md:text-base font-medium leading-relaxed">
+                     {t('Connect with us on Discord, Telegram, and Reddit for the latest updates and exclusive drops.')}
+                  </p>
+                  
+                  <div className="flex flex-col sm:flex-row flex-wrap items-center gap-4 justify-center lg:justify-start pt-4">
+                     <a href="https://discord.gg/pygmDWFAHK" target="_blank" rel="noopener noreferrer" className="px-6 py-3.5 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-xl font-bold uppercase tracking-wide transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 w-full sm:w-auto">
+                        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>
+                        {t('Discord')}
+                     </a>
+                     <a href="https://t.me/secretarea1337" target="_blank" rel="noopener noreferrer" className="px-6 py-3.5 bg-[#0088cc] hover:bg-[#0077b3] text-white rounded-xl font-bold uppercase tracking-wide transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 w-full sm:w-auto">
+                        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+                        {t('Telegram')}
+                     </a>
+                     <a href="https://www.reddit.com/r/SecretArea1337/" target="_blank" rel="noopener noreferrer" className="px-6 py-3.5 bg-[#FF4500] hover:bg-[#e03d00] text-white rounded-xl font-bold uppercase tracking-wide transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 w-full sm:w-auto">
+                        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.249 0 .688.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-2.465 3.928a.373.373 0 0 0-.279-.13.371.371 0 0 0-.281.133c-.092.11-.275.34-.693.34-.403 0-.583-.217-.677-.333a.372.372 0 0 0-.281-.132.373.373 0 0 0-.279.131.373.373 0 0 0-.022.502c.28.375.726.568 1.259.568.537 0 .983-.195 1.264-.57a.374.374 0 0 0-.01-.509z"/></svg>
+                        {t('Reddit')}
+                     </a>
+                  </div>
+               </div>
+
+               {/* Right Side: Background/Banner Image */}
+               <div className="lg:w-1/2 relative flex items-center justify-center p-6 lg:p-12 order-first lg:order-last min-h-[300px] lg:min-h-[450px]">
+                  <div className="absolute inset-0 bg-blue-500/10 dark:bg-blue-500/20 blur-[120px] rounded-full w-[300px] h-[300px] mx-auto"></div>
+                  <img src="/images/banner 02.png" alt="Community Banner" className="relative z-10 w-full h-auto max-h-[400px] lg:max-h-[600px] object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-1000" />
+               </div>
+            </div>
+          </div>
         </section>
 
         <div className="sticky top-20 z-40 mb-10">
@@ -5695,7 +6681,7 @@ const SecretArea: React.FC = () => {
                           <button 
                               key={tab}
                               onClick={() => setActiveTab(tab as any)}
-                              className={`shrink-0 relative px-4 py-2.5 sm:px-6 md:px-8 sm:py-3 rounded-lg font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all z-10 flex items-center justify-center ${activeTab === tab ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-900 dark:text-slate-200'}`}
+                              className={`shrink-0 relative px-4 py-2.5 sm:px-6 md:px-8 sm:py-3 rounded-lg font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all z-10 flex items-center justify-center ${activeTab === tab ? 'text-black dark:text-white' : 'text-slate-700 dark:text-slate-400 hover:text-black dark:hover:text-white'}`}
                           >
                             {activeTab === tab && (
                               <motion.div layoutId="activeTab" className="absolute inset-0 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700" transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />
@@ -5703,26 +6689,26 @@ const SecretArea: React.FC = () => {
                             <span className="relative z-10 flex items-center gap-1.5">
                               {tab === 'hypervisor' ? (
                                 <>
-                                  GAME
+                                  {t('GAME')}
                                   <span className="bg-red-600 text-white px-1.5 py-0.5 rounded-md text-[8px] sm:text-[9px] font-black tracking-widest shadow-sm">
-                                    HYPERVISOR
+                                    {t('HYPERVISOR')}
                                   </span>
                                 </>
                               ) : tab === 'architect' ? (
-                                'TOOLS'
+                                t('TOOLS')
                               ) : tab === 'extra' ? (
-                                'SAVEGAME'
+                                t('SAVEGAME')
                               ) : tab === 'stash' ? (
                                 <>
                                   <Icon name="Bookmark" size={14} className={activeTab === 'stash' ? 'text-primary-500' : ''} />
-                                  MY STASH
+                                  {t('MY STASH')}
                                   {stash.length > 0 && (
-                                    <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold transition-colors ${animateStashTab ? 'bg-primary-500 text-white animate-pulse' : 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-200'}`}>
+                                    <span className={`ms-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold transition-colors ${animateStashTab ? 'bg-primary-500 text-white animate-pulse' : 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-200'}`}>
                                       {stash.length}
                                     </span>
                                   )}
                                 </>
-                              ) : tab}
+                              ) : t(tab)}
                             </span>
                           </button>
                         ))}
@@ -5732,16 +6718,16 @@ const SecretArea: React.FC = () => {
                           <button 
                             onClick={() => setShowIntelPanel(true)}
                             className="relative flex items-center justify-center p-3 sm:p-3.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-200 rounded-xl transition-all flex-1 sm:flex-none"
-                            title="Latest Intel (Live Changelog)"
+                            title="{t('Latest Intel')} (Live Changelog)"
                           >
                             <Icon name="Radar" size={20} className="animate-pulse text-primary-500" />
-                            <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-slate-200 dark:border-slate-800"></div>
+                            <div className="absolute top-2 end-2 w-2 h-2 bg-red-500 rounded-full border-2 border-slate-200 dark:border-slate-800"></div>
                           </button>
 
                           <button 
                             onClick={() => setShowGlobalFilter(!showGlobalFilter)}
                             className={`flex items-center justify-center p-3 sm:p-3.5 rounded-xl transition-all border flex-1 sm:flex-none ${globalSpecs.isActive ? 'bg-primary-500 text-white border-primary-500 shadow-lg shadow-primary-500/20' : 'bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-200 border-transparent'}`}
-                            title="Global System Filter"
+                            title={t('Global System Filter')}
                           >
                             <Icon name="Cpu" size={20} />
                           </button>
@@ -5760,26 +6746,24 @@ const SecretArea: React.FC = () => {
                                 setShowRequestModal(true);
                             }}
                             className="flex items-center justify-center gap-2 px-3 sm:px-4 py-3 sm:py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all w-full sm:w-auto sm:w-full md:w-auto"
-                            title="Request a game or tool not listed here"
+                            title={t('Request a game or tool not listed here')}
                           >
                             <Icon name="Plus" size={20} />
-                            <span className="text-xs sm:text-xs font-bold uppercase tracking-wider">
-                                Request Item
-                            </span>
+                            <span className="text-xs sm:text-xs font-bold uppercase tracking-wider">{t('Request Item')}</span>
                           </button>
                       </div>
                   </div>
 
                   <div className="relative w-full group">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-300 group-focus-within:text-primary-500 transition-colors">
+                    <div className="absolute start-4 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-300 group-focus-within:text-primary-500 transition-colors">
                       <Icon name="Search" size={18} />
                     </div>
                     <input 
                       type="text" 
                       value={searchQuery} 
                       onChange={e => setSearchQuery(e.target.value)} 
-                      placeholder={`SEARCH ${activeTab.toUpperCase()}...`} 
-                      className="w-full pl-12 pr-4 py-3 sm:py-3.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/20 text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider placeholder:text-slate-300 dark:placeholder:text-slate-600 transition-all truncate"
+                      placeholder={`${t('SEARCH')} ${t(activeTab.toUpperCase())}...`} 
+                      className="w-full ps-12 pe-4 py-3 sm:py-3.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/20 text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider placeholder:text-slate-300 dark:placeholder:text-slate-600 transition-all truncate"
                     />
                   </div>
               </div>
@@ -5797,14 +6781,14 @@ const SecretArea: React.FC = () => {
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                         <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
                           <Icon name="Cpu" size={18} className="text-primary-500" />
-                          Global "Can I Run It?" Filter
+                          {t('Global System Filter')}
                         </h3>
                         <label className="flex items-center gap-2 cursor-pointer self-start sm:self-auto">
-                          <span className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">Enable Filter</span>
+                          <span className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">{t('Enable Filter')}</span>
                           <div className="relative">
                             <input type="checkbox" className="sr-only" checked={globalSpecs.isActive} onChange={(e) => setGlobalSpecs({...globalSpecs, isActive: e.target.checked})} />
                             <div className={`block w-10 h-6 rounded-full transition-colors ${globalSpecs.isActive ? 'bg-primary-500' : 'bg-slate-300 dark:bg-slate-600'}`}></div>
-                            <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${globalSpecs.isActive ? 'translate-x-4' : ''}`}></div>
+                            <div className={`dot absolute start-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${globalSpecs.isActive ? 'translate-x-4 rtl:-translate-x-4' : ''}`}></div>
                           </div>
                         </label>
                       </div>
@@ -5824,7 +6808,7 @@ const SecretArea: React.FC = () => {
                           </select>
                         </div>
                         <div className="space-y-1">
-                          <label className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">RAM (GB)</label>
+                          <label className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">{t('RAM (GB)')}</label>
                           <select 
                             value={globalSpecs.ram}
                             onChange={(e) => setGlobalSpecs({...globalSpecs, ram: parseInt(e.target.value)})}
@@ -5840,30 +6824,34 @@ const SecretArea: React.FC = () => {
                         <div className="space-y-1">
                           <label className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">CPU</label>
                           <select 
-                            value={globalSpecs.cpuTier}
-                            onChange={(e) => setGlobalSpecs({...globalSpecs, cpuTier: parseInt(e.target.value)})}
+                            value={globalSpecs.cpuModel}
+                            onChange={(e) => setGlobalSpecs({...globalSpecs, cpuModel: e.target.value})}
                             className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
                           >
-                            <option value="1">Basic Dual Core (Older Intel/AMD)</option>
-                            <option value="2">Standard Quad Core (i3 / Ryzen 3)</option>
-                            <option value="3">Solid 6-Core (i5 / Ryzen 5)</option>
-                            <option value="4">High-End 8+ Core (i7 / Ryzen 7)</option>
-                  <option value="5">Enthusiast (i9 / Ryzen 9)</option>
+                            <optgroup label="AMD">
+                                {CPU_DATA.AMD.map(cpu => <option key={cpu} value={cpu}>{cpu}</option>)}
+                            </optgroup>
+                            <optgroup label="Intel">
+                                {CPU_DATA.Intel.map(cpu => <option key={cpu} value={cpu}>{cpu}</option>)}
+                            </optgroup>
                           </select>
                         </div>
                         <div className="space-y-1">
                           <label className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">GPU</label>
                           <select 
-                            value={globalSpecs.gpuTier}
-                            onChange={(e) => setGlobalSpecs({...globalSpecs, gpuTier: parseInt(e.target.value)})}
+                            value={globalSpecs.gpuModel}
+                            onChange={(e) => setGlobalSpecs({...globalSpecs, gpuModel: e.target.value})}
                             className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
                           >
-                            <option value="1">Integrated (Intel HD / AMD APU)</option>
-                            <option value="2">Entry Level (GTX 1050 / RX 560)</option>
-                            <option value="3">Mid Range (RTX 3060 / RX 6600)</option>
-                            <option value="4">High End (RTX 4070 / RX 7800)</option>
-                            <option value="5">Ultra (RTX 4080 / RX 7900 XTX)</option>
-                  <option value="6">Enthusiast / Next-Gen (RTX 5090 / 4090)</option>
+                            <optgroup label="NVIDIA">
+                                {GPU_DATA.NVIDIA.map(gpu => <option key={gpu} value={gpu}>{gpu}</option>)}
+                            </optgroup>
+                            <optgroup label="AMD">
+                                {GPU_DATA.AMD.map(gpu => <option key={gpu} value={gpu}>{gpu}</option>)}
+                            </optgroup>
+                            <optgroup label="Intel">
+                                {GPU_DATA.Intel.map(gpu => <option key={gpu} value={gpu}>{gpu}</option>)}
+                            </optgroup>
                           </select>
                         </div>
                       </div>
@@ -5878,15 +6866,15 @@ const SecretArea: React.FC = () => {
           {loading ? (
             <div className="flex flex-col items-center justify-center h-[50vh] text-slate-900 dark:text-slate-300">
                <div className="w-16 h-16 border-4 border-slate-200 dark:border-slate-800 border-t-primary-500 rounded-full animate-spin mb-6"></div>
-               <p className="font-mono text-xs uppercase tracking-[0.2em] animate-pulse">Decrypting Data Stream...</p>
+               <p className="font-mono text-xs uppercase tracking-[0.2em] animate-pulse">{t('Decrypting Data Stream...')}</p>
             </div>
           ) : filteredData.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-[50vh] text-slate-900 dark:text-slate-300">
                <div className="p-6 bg-white dark:bg-slate-900 rounded-full mb-6 shadow-sm">
                  <Icon name="Database" size={40} className="opacity-20" />
                </div>
-               <h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight mb-1">No Data Found</h3>
-               <p className="text-slate-900 dark:text-slate-300 text-xs mb-6">Try adjusting your search or category.</p>
+               <h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight mb-1">{t('No Data Found')}</h3>
+               <p className="text-slate-900 dark:text-slate-300 text-xs mb-6">{t('Try adjusting your search or category.')}</p>
                <button 
                  onClick={() => {
                     setRequestModalInitialTitle(searchQuery);
@@ -5901,7 +6889,7 @@ const SecretArea: React.FC = () => {
             <div className="space-y-12">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {paginatedData.map((item, idx) => {
-                      const compStatus = globalSpecs.isActive ? checkCompatibilityStatus(globalSpecs, item.systemReqs) : null;
+                      const compStatus = globalSpecs.isActive ? checkCompatibilityStatus({...globalSpecs, cpuTier: getCpuTier(globalSpecs.cpuModel), gpuTier: getGpuTier(globalSpecs.gpuModel)}, item.systemReqs) : null;
                       const isFail = compStatus === 'fail';
                       const resolvedDev = getResolvedDeveloper(item);
                       
@@ -5913,7 +6901,7 @@ const SecretArea: React.FC = () => {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: idx * 0.05 }}
                           whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                          className={`group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden cursor-pointer hover:shadow-2xl hover:shadow-primary-900/10 hover:border-primary-500/30 transition-all relative flex flex-col ${isFail ? 'opacity-50 grayscale hover:grayscale-0 hover:opacity-100' : ''}`}
+                          className={`group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden cursor-pointer hover:shadow-2xl hover:shadow-primary-900/10 hover:border-primary-500/30 transition-all relative flex flex-col ${isFail ? 'opacity-70 grayscale hover:grayscale-0 hover:opacity-100 shadow-[0_4px_30px_rgba(0,0,0,0.8)]' : ''}`}
                           onClick={() => {
                               if (item.category === 'profil') {
                                   handleCompanyClick(resolvedDev || item.name);
@@ -5927,64 +6915,69 @@ const SecretArea: React.FC = () => {
                             <img src={item.coverImage} alt={item.name} className="w-full h-full object-cover transition-opacity duration-300 opacity-90 group-hover:opacity-100"  loading="lazy" />
                             <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent opacity-90"></div>
                             
-                            {compStatus && compStatus !== 'unknown' && (
-                                <div className="absolute top-3 right-3 z-30">
+                            {/* Top Left Badges */}
+                            <div className="absolute top-3 start-3 flex flex-col gap-2 z-30 items-start">
+                                <div className="flex items-center gap-2">
+                                    <div className="px-2 py-1 bg-primary-600 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg transition-all flex items-center gap-1">
+                                      <span>{item.id}</span>
+                                      {popularRepackIds.map(id => String(id).toLowerCase()).includes(String(item.id).toLowerCase()) && (
+                                          <Icon name="Star" size={10} className="text-yellow-400 fill-yellow-400" />
+                                      )}
+                                    </div>
+                                    {item.isPinned && (
+                                        <div className="bg-yellow-500 text-white p-1.5 rounded-lg shadow-lg border border-white/20">
+                                            <Icon name="Pin" size={16} />
+                                        </div>
+                                    )}
+                                </div>
+                                {item.isFree && (
+                                    <div className="px-2 py-1 bg-emerald-500 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1">
+                                        <Icon name="Gift" size={12} /> Free
+                                    </div>
+                                )}
+                                {item.category === 'hypervisor' && (
+                                    <div className="bg-red-600 text-white px-2 py-1 rounded-lg shadow-lg border border-red-400/30 text-[10px] font-black tracking-widest">
+                                        HV
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Top Right Badges */}
+                            <div className="absolute top-3 end-3 flex flex-col gap-2 z-30 items-end">
+                                {compStatus && compStatus !== 'unknown' && (
                                     <div className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1 border ${
                                         compStatus === 'pass' ? 'bg-emerald-500/90 text-white border-emerald-400' : 
                                         compStatus === 'warn' ? 'bg-yellow-500/90 text-white border-yellow-400' : 
-                                        'bg-red-500/90 text-white border-red-400'
+                                        'bg-black/80 text-white border-white/20 backdrop-blur-md'
                                     }`}>
                                         <Icon name={compStatus === 'pass' ? 'CheckCircle' : compStatus === 'warn' ? 'AlertTriangle' : 'X'} size={12} />
                                         {compStatus === 'pass' ? 'Runs Great' : compStatus === 'warn' ? 'Might Struggle' : 'Won\'t Run'}
                                     </div>
-                                </div>
-                            )}
-
-                            {item.isPinned && !compStatus && (
-                                <div className="absolute top-3 left-3 z-20">
-                                    <div className="bg-yellow-500 text-white p-1.5 rounded-lg shadow-lg border border-white/20">
-                                        <Icon name="Pin" size={16} />
-                                    </div>
-                                </div>
-                            )}
-                            {item.category === 'steamtools' ? (
-                                <>
-                                    {item.gameId && (
-                                        <div className={`absolute top-3 ${compStatus ? 'left-3' : 'right-3'} px-2 py-1 bg-black/60 md:backdrop-blur-md rounded-md border border-white/10 text-[10px] font-mono font-bold text-white shadow-sm`}>
+                                )}
+                                {item.category === 'steamtools' ? (
+                                    item.gameId && (
+                                        <div className="px-2 py-1 bg-black/60 md:backdrop-blur-md rounded-md border border-white/10 text-[10px] font-mono font-bold text-white shadow-sm">
                                             ID: {item.gameId}
                                         </div>
-                                    )}
-                                </>
-                            ) : (
-                                <div className={`absolute top-3 ${compStatus ? 'left-3' : 'right-3'} px-2 py-1 bg-white/90 dark:bg-black/60 md:backdrop-blur-md rounded-md border border-slate-200 dark:border-white/10 text-[10px] font-mono font-bold text-primary-600 dark:text-primary-400`}>
-                                    {item.repackSize}
-                                </div>
-                            )}
-                            <div className={`absolute top-3 ${item.isPinned && !compStatus ? 'left-12' : 'left-3'} px-2 py-1 bg-primary-600 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg transition-all flex items-center gap-1`}>
-                              <span>{item.id}</span>
-                              {popularRepackIds.map(id => String(id).toLowerCase()).includes(String(item.id).toLowerCase()) && (
-                                  <Icon name="Star" size={10} className="text-yellow-400 fill-yellow-400" />
-                              )}
-                            </div>
-                            {item.category === 'hypervisor' && (
-                                <div className={`absolute top-10 ${compStatus ? 'left-3' : 'right-3'} z-20`}>
-                                    <div className="bg-red-600 text-white px-2 py-1 rounded-lg shadow-lg border border-red-400/30 text-[10px] font-black tracking-widest">
-                                        HV
+                                    )
+                                ) : (
+                                    <div className="px-2 py-1 bg-white/90 dark:bg-black/60 md:backdrop-blur-md rounded-md border border-slate-200 dark:border-white/10 text-[10px] font-mono font-bold text-primary-600 dark:text-primary-400">
+                                        {item.repackSize}
                                     </div>
-                                </div>
-                            )}
-                            {item.isFree && (
-                                <div className={`absolute ${item.category === 'hypervisor' ? 'top-20' : 'top-10'} ${compStatus ? 'left-3' : 'right-3'} px-2 py-1 bg-emerald-500 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1 z-20`}>
-                                    <Icon name="Tag" size={12} /> Free
-                                </div>
+                                )}
+                            </div>
+                            {item.category === 'game' && item.links?.ankerParts && item.links.ankerParts.length > 0 && (
+                                <div className="absolute top-2 start-1/2 -translate-x-1/2 px-1.5 py-0.5 sm:px-2 sm:py-1 bg-indigo-500/20 dark:bg-indigo-500/10 backdrop-blur-md border border-indigo-500/30 dark:border-indigo-400/20 shadow-[0_4px_30px_rgba(0,0,0,0.1)] text-indigo-900 dark:text-indigo-100 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest shadow-xl flex items-center gap-1 z-30 pointer-events-none whitespace-nowrap">
+                                <Icon name="Zap" size={10} className="text-amber-400" /> <span>{t('Pre-installed')}</span>
+                            </div>
                             )}
                             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-30">
                                <div className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center text-white shadow-[0_0_20px_rgba(14,165,233,0.5)] transform scale-50 group-hover:scale-100 transition-transform duration-300">
-                                  <Icon name="ArrowRight" size={24} />
+                                  <Icon name="ArrowRight" size={24} className="rtl:rotate-180" />
                                </div>
                             </div>
                             
-                            <div className="absolute bottom-0 left-0 right-0 p-5 z-20">
+                            <div className="absolute bottom-0 start-0 end-0 p-5 z-20">
                                 {resolvedDev && (
                                     <button
                                         onClick={(e) => {
@@ -6015,12 +7008,12 @@ const SecretArea: React.FC = () => {
                                               ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
                                               : 'bg-black/40 text-white/70 hover:bg-black/60 hover:text-white border border-white/10'
                                           }`}
-                                          title={stash.includes(item.id) ? "Remove from Stash" : "Add to Stash"}
+                                          title={stash.includes(item.id) ? t(t('Remove from Stash')) : t(t('Add to Stash'))}
                                       >
                                           <Icon name="Bookmark" size={12} className={stash.includes(item.id) ? "fill-current" : ""} />
                                       </button>
                                       <span className="text-[10px] font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1 drop-shadow-sm">
-                                         Details <Icon name="ChevronRight" size={12} />
+                                         {t('Details')} <Icon name="ChevronRight" size={12} className="rtl:rotate-180" />
                                       </span>
                                   </div>
                                 </div>
@@ -6039,7 +7032,7 @@ const SecretArea: React.FC = () => {
                       disabled={currentPage === 1}
                       className="p-2 sm:p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white disabled:opacity-30 transition-all hover:bg-slate-200 dark:hover:bg-slate-700 shrink-0"
                     >
-                      <Icon name="ChevronLeft" size={20} />
+                      <Icon name="ChevronLeft" size={20} className="rtl:rotate-180" />
                     </button>
                     
                     <div className="flex gap-1 sm:gap-2">
@@ -6074,7 +7067,7 @@ const SecretArea: React.FC = () => {
                       disabled={currentPage === totalPages}
                       className="p-2 sm:p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white disabled:opacity-30 transition-all hover:bg-slate-200 dark:hover:bg-slate-700 shrink-0"
                     >
-                      <Icon name="ChevronRight" size={20} />
+                      <Icon name="ChevronRight" size={20} className="rtl:rotate-180" />
                     </button>
                   </div>
                 </div>
@@ -6083,12 +7076,23 @@ const SecretArea: React.FC = () => {
           )}
         </div>
 
+        
+        {['game', 'hypervisor', 'steamtools'].includes(activeTab) && allResources.hypervisor?.length > 0 && (
+            <GameOfTheDaySection 
+                game={allResources.hypervisor[0]}
+                onSelect={setSelectedResource}
+            />
+        )}
         {['game', 'hypervisor', 'steamtools'].includes(activeTab) && (
-            <MostPopularRepacksSection 
+            <>
+                <SupportUsBanner />
+                <MostPopularRepacksSection 
+
                 gameIds={popularRepackIds}
                 allResources={allResources}
                 onSelect={setSelectedResource}
             />
+        </>
         )}
         <div className="mt-8 mb-4 w-full flex justify-center">
             <AdBanner 
@@ -6141,10 +7145,41 @@ const SecretArea: React.FC = () => {
             </>
         )}
 
+        
         {bestGameSeries && bestGameSeries.length > 0 && (
           <BestGameSeriesSection series={bestGameSeries} />
         )}
       </div>
+      
+      
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+          <AboutSecretAreaSection />
+      </div>
+      
+      
+      
+
+
+      {/* Featured Genres Full Width Section */}
+      <div id="featured-genres" className="w-full relative mt-2 mb-24">
+          <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+              <FeaturedGenres 
+                  games={Object.values(allResources).flat()} 
+                  onSelectGenre={(genre) => {
+                      setSelectedGenreView(genre);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }} 
+              />
+          </div>
+      </div>
+      
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+          <FreeTimeTopStudiosSection 
+              profiles={companyProfiles}
+              onOpenAllStudios={() => setShowAllProfiles(true)}
+          />
+      </div>
+
       <Footer onSupportClick={() => setShowDonateModal(true)} />
       </motion.div>
       )}
@@ -6157,7 +7192,7 @@ const SecretArea: React.FC = () => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 20 }}
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="fixed bottom-[85px] md:bottom-10 left-6 sm:left-10 z-[90] w-12 h-12 rounded-full bg-slate-900/50 dark:bg-slate-100/10 backdrop-blur-md border border-white/20 hover:bg-slate-900/70 dark:hover:bg-slate-100/20 text-white flex items-center justify-center shadow-xl transition-all hover:-translate-y-1"
+            className="fixed bottom-[85px] md:bottom-10 start-6 sm:start-10 z-[90] w-12 h-12 rounded-full bg-slate-900/50 dark:bg-slate-100/10 backdrop-blur-md border border-white/20 hover:bg-slate-900/70 dark:hover:bg-slate-100/20 text-white flex items-center justify-center shadow-xl transition-all hover:-translate-y-1"
           >
             <Icon name="ArrowUp" size={24} />
           </motion.button>
@@ -6185,6 +7220,7 @@ const AllProfilesModal: React.FC<{
     onSelect: (profile: CompanyProfile) => void,
     categoryType: 'games' | 'tools'
 }> = ({ isOpen = true, profiles, onClose, onSelect, categoryType }) => {
+    const { dir, t } = useLanguage();
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const PROFILES_PER_PAGE = 30;
@@ -6225,7 +7261,7 @@ const AllProfilesModal: React.FC<{
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-0"
+                dir={dir} className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-0"
                 onClick={onClose}
             >
 
@@ -6242,25 +7278,25 @@ const AllProfilesModal: React.FC<{
                         <Icon name="Briefcase" size={28} className="text-blue-500 dark:text-blue-400 sm:w-8 sm:h-8" /> 
                         <div>
                             <h3 className="text-lg sm:text-2xl font-black uppercase tracking-wider text-slate-900 dark:text-white">
-                                {categoryType === 'games' ? 'All Studios' : 'All Companies'}
+                                {categoryType === 'games' ? t('All Studios') : t('All Companies')}
                             </h3>
                             <p className="text-blue-600 dark:text-blue-200 text-[10px] sm:text-sm font-bold mt-1">
-                                {filteredProfiles.length} Total Found
+                                {filteredProfiles.length} {t('Total Found')}
                             </p>
                         </div>
                     </div>
 
                     <div className="relative z-10 flex items-center gap-3 w-full sm:w-auto">
                         <div className="relative flex-1 sm:w-64">
-                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-300">
+                            <div className="absolute start-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-300">
                               <Icon name="Search" size={16} />
                             </div>
                             <input 
                               type="text" 
                               value={searchQuery} 
                               onChange={e => setSearchQuery(e.target.value)} 
-                              placeholder="SEARCH PROFILES..." 
-                              className="w-full pl-10 pr-4 py-2.5 bg-white/60 dark:bg-black/40 border border-slate-300 dark:border-slate-700/50 rounded-xl focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider placeholder:text-slate-700 dark:text-slate-500 transition-all"
+                              placeholder={t('SEARCH PROFILES...')} 
+                              className="w-full ps-10 pe-4 py-2.5 bg-white/60 dark:bg-black/40 border border-slate-300 dark:border-slate-700/50 rounded-xl focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider placeholder:text-slate-700 dark:text-slate-500 transition-all"
                             />
                         </div>
                         <button onClick={onClose} className="p-2.5 bg-white/60 dark:bg-black/40 hover:bg-white dark:hover:bg-black/60 rounded-xl transition-colors text-slate-700 dark:text-white border border-slate-300 dark:border-slate-700/50 hover:border-slate-400 dark:hover:border-slate-500 shadow">
@@ -6288,7 +7324,7 @@ const AllProfilesModal: React.FC<{
                                     <div className="text-center w-full">
                                         <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-1 group-hover/studio:text-blue-500 dark:group-hover/studio:text-blue-400 transition-colors" title={profile.name}>{profile.name}</h3>
                                         <span className="inline-block mt-2 px-2 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-300 text-[9px] sm:text-[10px] font-black uppercase tracking-wider rounded border border-blue-200 dark:border-blue-500/30 group-hover/studio:shadow-sm">
-                                            {profile.totalGames} {profile.totalGames === 1 ? 'Item' : 'Items'}
+                                            {profile.totalGames} {profile.totalGames === 1 ? t('Item') : t('Items')}
                                         </span>
                                     </div>
                                 </div>
@@ -6296,9 +7332,9 @@ const AllProfilesModal: React.FC<{
                         </div>
                     ) : (
                         <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                            <Icon name="SearchX" size={48} className="text-slate-800 dark:text-slate-600 mb-4" />
-                            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No Profiles Found</h3>
-                            <p className="text-slate-600 dark:text-slate-300 text-sm">Try adjusting your search criteria.</p>
+                            <Icon name="Search" size={48} className="text-slate-800 dark:text-slate-600 mb-4" />
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('No Profiles Found')}</h3>
+                            <p className="text-slate-600 dark:text-slate-300 text-sm">{t('Try adjusting your search criteria.')}</p>
                         </div>
                     )}
                 </div>
@@ -6311,7 +7347,7 @@ const AllProfilesModal: React.FC<{
                                 disabled={currentPage === 1}
                                 className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
                             >
-                                <Icon name="ChevronLeft" size={16} />
+                                <Icon name="ChevronLeft" size={16} className="rtl:rotate-180" />
                             </button>
                             
                             {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
@@ -6333,7 +7369,7 @@ const AllProfilesModal: React.FC<{
                                 disabled={currentPage === totalPages}
                                 className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
                             >
-                                <Icon name="ChevronRight" size={16} />
+                                <Icon name="ChevronRight" size={16} className="rtl:rotate-180" />
                             </button>
                         </div>
                     </div>

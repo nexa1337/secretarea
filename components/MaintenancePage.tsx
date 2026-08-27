@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { FaTelegram, FaDiscord, FaReddit, FaWolfPackBattalion } from 'react-icons/fa6';
+import { FaTelegram, FaDiscord, FaReddit } from 'react-icons/fa6';
+import Icon from './Icon';
 import { LowPolyBackground } from './LowPolyBackground';
 
 interface MaintenanceProps {
@@ -73,7 +74,7 @@ const MaintenancePage: React.FC<MaintenanceProps> = ({ endTime, message }) => {
     <div className="flex flex-col items-center gap-2">
       <div className="relative w-16 h-20 sm:w-24 sm:h-28 bg-white dark:bg-slate-900 rounded-lg shadow-xl dark:shadow-2xl flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-700 transition-colors duration-300">
         <div className="absolute inset-0 bg-gradient-to-b from-slate-100 to-slate-200 dark:from-slate-700/50 dark:to-slate-900/50 opacity-50 pointer-events-none transition-colors duration-300" />
-        <div className="absolute top-1/2 left-0 w-full h-[1px] bg-slate-300 dark:bg-slate-950/80 shadow-sm z-10 transition-colors duration-300" />
+        <div className="absolute top-1/2 start-0 w-full h-[1px] bg-slate-300 dark:bg-slate-950/80 shadow-sm z-10 transition-colors duration-300" />
         <span className="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tighter z-0 transition-colors duration-300">
           {pad(val)}
         </span>
@@ -106,10 +107,10 @@ const MaintenancePage: React.FC<MaintenanceProps> = ({ endTime, message }) => {
       >
         {/* Logo Area */}
         <div className="mb-10 flex items-center gap-3 relative">
-            <div className="relative group">
-                <FaWolfPackBattalion size={40} className="text-slate-900 dark:text-white relative z-10 animate-pulse transition-colors duration-300" />
-                <FaWolfPackBattalion size={40} className="text-red-500 absolute inset-0 z-0 opacity-70 animate-[glitch_2s_infinite]" style={{ clipPath: 'polygon(0 0, 100% 0, 100% 45%, 0 45%)', transform: 'translate(-2px, 2px)' }} />
-                <FaWolfPackBattalion size={40} className="text-blue-500 absolute inset-0 z-0 opacity-70 animate-[glitch_3s_infinite_reverse]" style={{ clipPath: 'polygon(0 55%, 100% 55%, 100% 100%, 0 100%)', transform: 'translate(2px, -2px)' }} />
+            <div className="relative group w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24">
+                <Icon name="Wolf" className="w-full h-full text-slate-900 dark:text-white relative z-10 animate-pulse transition-colors duration-300" />
+                <Icon name="Wolf" className="w-full h-full text-red-500 absolute inset-0 z-0 opacity-70 animate-[glitch_2s_infinite]" style={{ clipPath: 'polygon(0 0, 100% 0, 100% 45%, 0 45%)', transform: 'translate(-2px, 2px)' }} />
+                <Icon name="Wolf" className="w-full h-full text-blue-500 absolute inset-0 z-0 opacity-70 animate-[glitch_3s_infinite_reverse]" style={{ clipPath: 'polygon(0 55%, 100% 55%, 100% 100%, 0 100%)', transform: 'translate(2px, -2px)' }} />
             </div>
             <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-widest uppercase transition-colors duration-300">SecretArea</h1>
         </div>

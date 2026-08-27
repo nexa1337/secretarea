@@ -114,10 +114,10 @@ const GamingRoadmapComponent: React.FC = () => {
   const closePopup = () => setSelectedNode(null);
 
   return (
-    <div className={`mt-16 mb-16 ${isRTL ? 'text-right' : 'text-left'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className={`mt-16 mb-16 ${isRTL ? 'text-end' : 'text-start'}`} dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
         <h2 className="text-3xl font-black text-slate-800 dark:text-white tracking-tight flex items-center">
-          <Icon name="Map" className={`text-indigo-500 ${isRTL ? 'ml-3' : 'mr-3'}`} size={36} />
+          <Icon name="Map" className={`text-indigo-500 ${isRTL ? 'ms-3' : 'me-3'}`} size={36} />
           {lang === 'fr' ? 'Parcours du Combattant' : lang === 'en' ? 'The Roadmap' : 'خارطة الطريق'}
         </h2>
         
@@ -179,13 +179,13 @@ const GamingRoadmapComponent: React.FC = () => {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className={`relative w-full max-w-4xl max-h-[90vh] sm:max-h-[85vh] flex flex-col bg-white dark:bg-slate-900 rounded-[2rem] sm:rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] border border-slate-100 dark:border-slate-800 overflow-hidden ${isRTL ? 'text-right' : 'text-left'}`}
+                className={`relative w-full max-w-4xl max-h-[90vh] sm:max-h-[85vh] flex flex-col bg-white dark:bg-slate-900 rounded-[2rem] sm:rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] border border-slate-100 dark:border-slate-800 overflow-hidden ${isRTL ? 'text-end' : 'text-start'}`}
                 dir={isRTL ? 'rtl' : 'ltr'}
                 onClick={e => e.stopPropagation()}
               >
                 {/* Header */}
                 <div className="bg-slate-50/80 dark:bg-slate-800/50 backdrop-blur-xl px-6 sm:px-10 py-6 sm:py-8 flex justify-between items-start border-b border-slate-100 dark:border-slate-800 shrink-0">
-                  <div className={`${isRTL ? 'ml-12' : 'mr-12'} flex items-center gap-5 sm:gap-6`}>
+                  <div className={`${isRTL ? 'ms-12' : 'me-12'} flex items-center gap-5 sm:gap-6`}>
                     {selectedNode.icon && (
                       <div className="hidden sm:flex shrink-0 p-4 bg-white dark:bg-slate-800 text-indigo-500 dark:text-indigo-400 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                         <Icon name={selectedNode.icon} size={32} />
@@ -222,7 +222,7 @@ const GamingRoadmapComponent: React.FC = () => {
                           const isHeading = item.startsWith('•') || item.includes(' :');
                           return (
                             <li key={i} className="flex items-start">
-                              <Icon name="ArrowRight" size={20} className={`shrink-0 mt-0.5 text-indigo-400 ${isRTL ? 'ml-4' : 'mr-4'}`} />
+                              <Icon name="ArrowRight" size={20} className={`shrink-0 mt-0.5 text-indigo-400 ${isRTL ? 'ms-4' : 'me-4'}`} />
                               <span className={`text-xs sm:text-sm ${isHeading ? 'font-medium text-slate-800 dark:text-slate-200' : 'text-slate-600 dark:text-slate-400'} leading-relaxed ${isRTL ? 'font-arabic' : ''}`}>{item}</span>
                             </li>
                           )
@@ -235,7 +235,7 @@ const GamingRoadmapComponent: React.FC = () => {
                   {selectedNode.roadmap && (
                     <div className="space-y-6">
                       <h4 className="font-semibold text-base sm:text-lg text-slate-800 dark:text-white flex items-center">
-                        <div className={`p-2 bg-purple-100 dark:bg-purple-900/30 rounded-xl ${isRTL ? 'ml-4' : 'mr-4'}`}>
+                        <div className={`p-2 bg-purple-100 dark:bg-purple-900/30 rounded-xl ${isRTL ? 'ms-4' : 'me-4'}`}>
                            <Icon name="Map" size={20} className="text-purple-600 dark:text-purple-400" />
                         </div>
                          {lang === 'fr' ? "Plan d'Apprentissage" : lang === 'en' ? 'Learning Path' : 'مسار التعلم'}
@@ -247,7 +247,7 @@ const GamingRoadmapComponent: React.FC = () => {
                             <ul className="space-y-4">
                               {block.items.map((item, j) => (
                                 <li key={j} className="flex items-start text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                                  <div className={`mt-1 w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0 ${isRTL ? 'ml-4' : 'mr-4'}`} />
+                                  <div className={`mt-1 w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0 ${isRTL ? 'ms-4' : 'me-4'}`} />
                                   <span className={isRTL ? 'font-arabic' : ''}>{item}</span>
                                 </li>
                               ))}
@@ -262,7 +262,7 @@ const GamingRoadmapComponent: React.FC = () => {
                   {selectedNode.tools && (
                     <div className="space-y-6">
                       <h4 className="font-semibold text-base sm:text-lg text-slate-800 dark:text-white flex items-center">
-                        <div className={`p-2 bg-blue-100 dark:bg-blue-900/30 rounded-xl ${isRTL ? 'ml-4' : 'mr-4'}`}>
+                        <div className={`p-2 bg-blue-100 dark:bg-blue-900/30 rounded-xl ${isRTL ? 'ms-4' : 'me-4'}`}>
                            <Icon name="Wrench" size={20} className="text-blue-600 dark:text-blue-400" />
                         </div>
                          {lang === 'fr' ? 'Outils Recommandés' : lang === 'en' ? 'Recommended Tools' : 'الأدوات الموصى بها'}
@@ -282,13 +282,13 @@ const GamingRoadmapComponent: React.FC = () => {
                   {selectedNode.salaries && (
                     <div className="space-y-6">
                       <h4 className="font-semibold text-base sm:text-lg text-slate-800 dark:text-white flex items-center">
-                        <div className={`p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl ${isRTL ? 'ml-3' : 'mr-3'}`}>
+                        <div className={`p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl ${isRTL ? 'ms-3' : 'me-3'}`}>
                            <Icon name="TrendingUp" size={20} className="text-emerald-600 dark:text-emerald-400" />
                         </div>
                          {lang === 'fr' ? 'Salaires' : lang === 'en' ? 'Salaries' : 'الرواتب'}
                       </h4>
                       <div className="overflow-x-auto rounded-2xl border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
-                        <table className="w-full text-sm text-left">
+                        <table className="w-full text-sm text-start">
                           <thead className="bg-emerald-50/50 dark:bg-emerald-900/10 text-emerald-700 dark:text-emerald-400">
                             <tr>
                               <th className="px-5 py-4 font-medium text-xs sm:text-sm">{lang === 'fr' ? 'Région' : lang === 'en' ? 'Region' : 'المنطقة'}</th>
@@ -300,7 +300,7 @@ const GamingRoadmapComponent: React.FC = () => {
                               <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
                                 <td className="px-5 py-5 font-normal text-sm text-slate-800 dark:text-slate-200 whitespace-nowrap align-top">
                                   <div className="flex items-center">
-                                    <Icon name="Globe" size={16} className={`text-emerald-500/70 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                                    <Icon name="Globe" size={16} className={`text-emerald-500/70 ${isRTL ? 'ms-2' : 'me-2'}`} />
                                     {salaryInfo.region}
                                   </div>
                                 </td>
@@ -308,7 +308,7 @@ const GamingRoadmapComponent: React.FC = () => {
                                   <ul className="space-y-2">
                                     {salaryInfo.items.map((item, j) => (
                                       <li key={j} className="flex items-start text-sm">
-                                        <div className={`mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 ${isRTL ? 'ml-2.5' : 'mr-2.5'}`} />
+                                        <div className={`mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 ${isRTL ? 'ms-2.5' : 'me-2.5'}`} />
                                         <span className={isRTL ? 'font-arabic' : ''}>{item}</span>
                                       </li>
                                     ))}

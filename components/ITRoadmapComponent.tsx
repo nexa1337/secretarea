@@ -137,12 +137,12 @@ const ITRoadmapComponent: React.FC = () => {
   }, [initialNodes, setNodes]);
 
   return (
-    <div className={`mt-12 mb-12 ${isRTL ? 'text-right' : 'text-left'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className={`mt-12 mb-12 ${isRTL ? 'text-end' : 'text-start'}`} dir={isRTL ? 'rtl' : 'ltr'}>
       
       {/* Header & Lang Toggle */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 border-b border-slate-200 dark:border-slate-700 pb-4">
         <h3 className="text-lg md:text-xl font-bold text-slate-800 dark:text-white flex items-center w-full md:w-auto">
-          <Icon name="Map" size={20} className={`text-primary-500 shrink-0 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+          <Icon name="Map" size={20} className={`text-primary-500 shrink-0 ${isRTL ? 'ms-2' : 'me-2'}`} />
           <span className="leading-tight">
             {lang === 'fr' && 'Cybersecurity Roadmap 2026-2027'}
             {lang === 'en' && 'Cybersecurity Roadmap 2026-2027'}
@@ -189,7 +189,7 @@ const ITRoadmapComponent: React.FC = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className={`fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto ${isRTL ? 'text-right' : 'text-left'}`}
+              className={`fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto ${isRTL ? 'text-end' : 'text-start'}`}
               dir={isRTL ? 'rtl' : 'ltr'}
               onClick={closePopup}
             >
@@ -227,7 +227,7 @@ const ITRoadmapComponent: React.FC = () => {
                 {selectedNode.roadmap && (
                   <section>
                     <h3 className="text-xl font-bold mb-4 flex items-center text-slate-800 dark:text-white">
-                      <Icon name="Target" size={18} className={`text-orange-500 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                      <Icon name="Target" size={18} className={`text-orange-500 ${isRTL ? 'ms-2' : 'me-2'}`} />
                       {lang === 'fr' ? 'Roadmap / Étapes' : lang === 'en' ? 'Roadmap / Steps' : 'خارطة الطريق / الخطوات'}
                     </h3>
                     <div className="space-y-4">
@@ -246,20 +246,20 @@ const ITRoadmapComponent: React.FC = () => {
                 {selectedNode.tools && (
                   <section>
                     <h3 className="text-xl font-bold mb-4 flex items-center text-slate-800 dark:text-white">
-                      <Icon name="Wrench" size={18} className={`text-blue-500 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                      <Icon name="Wrench" size={18} className={`text-blue-500 ${isRTL ? 'ms-2' : 'me-2'}`} />
                       {lang === 'fr' ? 'Meilleurs outils 2026' : lang === 'en' ? 'Best Tools 2026' : 'أفضل الأدوات 2026'}
                     </h3>
                     <div className="overflow-x-auto">
-                      <table className={`w-full border-collapse text-sm ${isRTL ? 'text-right' : 'text-left'}`}>
+                      <table className={`w-full border-collapse text-sm ${isRTL ? 'text-end' : 'text-start'}`}>
                         <thead>
                           <tr className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                            <th className={`p-3 font-bold border-b dark:border-slate-700 ${isRTL ? 'text-right' : 'text-left'}`}>
+                            <th className={`p-3 font-bold border-b dark:border-slate-700 ${isRTL ? 'text-end' : 'text-start'}`}>
                               {lang === 'fr' ? 'Usage' : lang === 'en' ? 'Usage' : 'الاستخدام'}
                             </th>
-                            <th className={`p-3 font-bold border-b dark:border-slate-700 ${isRTL ? 'text-right' : 'text-left'}`}>
+                            <th className={`p-3 font-bold border-b dark:border-slate-700 ${isRTL ? 'text-end' : 'text-start'}`}>
                               {lang === 'fr' ? 'Recommandé' : lang === 'en' ? 'Recommended' : 'موصى به'}
                             </th>
-                            <th className={`p-3 font-bold border-b dark:border-slate-700 ${isRTL ? 'text-right' : 'text-left'}`}>
+                            <th className={`p-3 font-bold border-b dark:border-slate-700 ${isRTL ? 'text-end' : 'text-start'}`}>
                               {lang === 'fr' ? 'Alternative' : lang === 'en' ? 'Alternative' : 'بديل'}
                             </th>
                           </tr>
@@ -281,7 +281,7 @@ const ITRoadmapComponent: React.FC = () => {
                 {selectedNode.salaries && (
                   <section>
                     <h3 className="text-xl font-bold mb-4 flex items-center text-slate-800 dark:text-white">
-                      <Icon name="TrendingUp" size={18} className={`text-emerald-500 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                      <Icon name="TrendingUp" size={18} className={`text-emerald-500 ${isRTL ? 'ms-2' : 'me-2'}`} />
                       {lang === 'fr' ? 'Salaires' : lang === 'en' ? 'Salaries' : 'الرواتب'}
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

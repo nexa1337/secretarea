@@ -29,7 +29,7 @@ import {
   SiTryhackme, SiCisco, SiKick, SiN8N, SiWoocommerce, SiZapier
 } from 'react-icons/si';
 
-import { FaLandmark, FaWolfPackBattalion } from 'react-icons/fa6';
+import { FaLandmark } from 'react-icons/fa6';
 import { BsGpuCard } from 'react-icons/bs';
 
 interface IconProps {
@@ -69,6 +69,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Heart: TbHeart,
   Zap: TbBolt,
   Activity: TbActivity,
+  Tools: TbTools,
   Wrench: TbTools,
   Briefcase: TbBriefcase,
   GraduationCap: TbSchool,
@@ -99,7 +100,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Kick: SiKick,
   FaceId: TbFaceId,
   User: TbUser,
-  Wolf: FaWolfPackBattalion,
+  Wolf: ({ size = 24, className = "" }) => <img src="/images/logo01.png" alt="Logo" width={size} height={size} className={`object-contain ${className}`} />,
   Lock: TbLock,
   Logout: TbLogout,
   Key: TbKey,

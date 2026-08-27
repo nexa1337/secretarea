@@ -1,16 +1,7 @@
-import React, { useState } from 'react';
+import { useLanguage } from '../src/contexts/LanguageContext';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import Icon from './Icon';
-
-export const NEXA_ECOSYSTEM_LINKS = [
-  { name: 'N E X A 1337', url: 'https://nexa1337.github.io/nexa1337', clicks: '342K' },
-  { name: 'N E X A 1337 - Secret Area', url: 'https://secretarea.vercel.app/', clicks: '215K' },
-  { name: 'N E X A 1337 - Tool', url: 'https://nexa1337.github.io/tool', clicks: '189K' },
-  { name: 'N E X A 1337 - Tool v2', url: 'https://nexa1337.github.io/toolv2', clicks: '92K' },
-  { name: 'N E X A 1337 - School', url: 'https://school-lime-psi.vercel.app/', clicks: '54K' },
-  { name: 'N E X A 1337 - Digital Store', url: 'https://digitalstore-iota-five.vercel.app/', clicks: '128K' }
-];
 
 const WindowsLogo = () => (
   <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
@@ -25,94 +16,60 @@ const AndroidLogo = () => (
 );
 
 const Footer: React.FC = () => {
-  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const { dir, t } = useLanguage();
 
   return (
-    <>
-      <footer className="w-full py-8 text-center text-slate-800 dark:text-slate-300 text-sm pb-24 md:pb-8 flex flex-col items-center">
-        <div className="flex flex-wrap justify-center gap-4 mb-6">
-          <a href="#" className="flex items-center gap-3 px-4 py-2 border border-[#00a2ed]/40 hover:border-[#00a2ed] rounded-lg text-[#00a2ed] bg-[#00a2ed]/5 hover:bg-[#00a2ed]/10 transition-all">
-            <WindowsLogo />
-            <div className="text-left font-sans">
-              <div className="text-[10px] leading-tight font-medium opacity-90 uppercase tracking-widest text-[#00a2ed]">Download for</div>
-              <div className="text-[15px] font-bold leading-tight">Desktop App</div>
-            </div>
-          </a>
-
-          <a href="#" className="flex items-center gap-3 px-4 py-2 border border-[#3DDC84]/40 hover:border-[#3DDC84] rounded-lg text-[#3DDC84] bg-[#3DDC84]/5 hover:bg-[#3DDC84]/10 transition-all">
-            <AndroidLogo />
-            <div className="text-left font-sans">
-              <div className="text-[10px] leading-tight font-medium opacity-90 uppercase tracking-widest text-[#3DDC84]">Download for</div>
-              <div className="text-[15px] font-bold leading-tight">Android App</div>
-            </div>
-          </a>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-center gap-6 mb-4 font-semibold text-slate-900 dark:text-slate-200">
-          <Link to="/" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Secret Area</Link>
-          <Link to="/personal-space" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Personal Space</Link>
-          <Link to="/roadmap" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Roadmap</Link>
-          <Link to="/disclaimer" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Disclaimer</Link>
-        </div>
-        <div className="flex flex-col sm:flex-row items-center justify-between w-full max-w-[1600px] mx-auto px-8 sm:px-12 md:px-24 mt-8 pb-4">
-          <p className="text-center sm:text-left mb-4 sm:mb-0 ml-0 sm:ml-12 md:ml-20">
-            © 2026 <span className="font-bold text-slate-900 dark:text-slate-300">SecretArea</span>. All rights reserved.
-          </p>
-          <p className="text-center sm:text-right mr-0 sm:mr-12 md:mr-20">
-            Built by : <button onClick={() => setIsPopupOpen(true)} className="font-bold text-slate-900 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">N E X A 1337</button>
-          </p>
-        </div>
-      </footer>
-
-      <AnimatePresence>
-        {isPopupOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsPopupOpen(false)}
-              className="absolute inset-0 bg-slate-900/60 md:backdrop-blur-sm"
-            />
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md overflow-hidden"
-            >
-              <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white">N E X A 1337 Ecosystem</h3>
-                <button onClick={() => setIsPopupOpen(false)} className="text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-                  <Icon name="X" size={24} />
-                </button>
-              </div>
-              <div className="p-4 space-y-3">
-                {NEXA_ECOSYSTEM_LINKS.map((link, idx) => (
-                  <a 
-                    key={idx}
-                    href={link.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-primary-50 dark:hover:bg-primary-900/20 border border-slate-100 dark:border-slate-700 transition-colors group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm group-hover:text-primary-600 dark:group-hover:text-primary-400">
-                        <Icon name="ExternalLink" size={18} />
-                      </div>
-                      <span className="font-bold text-slate-900 dark:text-slate-200 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{link.name}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 rounded-full">
-                      <Icon name="Activity" size={14} />
-                      {link.clicks} clicks
-                    </div>
-                  </a>
-                ))}
-              </div>
-            </motion.div>
+    <footer dir={dir} className="w-full py-12 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 pb-24 md:pb-12">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+          <div className="flex flex-col items-center md:items-start text-center md:text-start">
+            <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-widest mb-4">Secret Area</h3>
+            <p className="text-sm max-w-xs">{t('Our goal is simple: bring the best games together in one place, so you can spend less time searching and more time playing.')}</p>
           </div>
-        )}
-      </AnimatePresence>
-    </>
+          
+          <div className="flex flex-col items-center">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4">{t('Navigation')}</h3>
+            <div className="flex flex-col gap-3 font-medium text-sm text-center">
+              <Link to="/" className="hover:text-primary-500 transition-colors">{t('Secret Area')}</Link>
+              <Link to="/personal-space" className="hover:text-primary-500 transition-colors">{t('Personal Space')}</Link>
+              <Link to="/roadmap" className="hover:text-primary-500 transition-colors">{t('Roadmap')}</Link>
+              <Link to="/disclaimer" className="hover:text-primary-500 transition-colors">{t('Disclaimer')}</Link>
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center md:items-end">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4">{t('Apps')}</h3>
+            <div className="flex flex-col gap-3 w-full max-w-[200px]">
+              <a href="#" className="flex items-center gap-3 px-4 py-2 border border-slate-200 dark:border-slate-800 hover:border-[#00a2ed] dark:hover:border-[#00a2ed] rounded-xl text-slate-700 dark:text-slate-300 hover:text-[#00a2ed] dark:hover:text-[#00a2ed] bg-slate-50 dark:bg-slate-900/50 hover:bg-[#00a2ed]/5 transition-all w-full">
+                <WindowsLogo />
+                <div className="text-start font-sans">
+                  <div className="text-[9px] leading-tight font-medium opacity-70 uppercase tracking-widest">{t('Download for')}</div>
+                  <div className="text-sm font-bold leading-tight">{t('Desktop App')}</div>
+                </div>
+              </a>
+              <a href="#" className="flex items-center gap-3 px-4 py-2 border border-slate-200 dark:border-slate-800 hover:border-[#3DDC84] dark:hover:border-[#3DDC84] rounded-xl text-slate-700 dark:text-slate-300 hover:text-[#3DDC84] dark:hover:text-[#3DDC84] bg-slate-50 dark:bg-slate-900/50 hover:bg-[#3DDC84]/5 transition-all w-full">
+                <AndroidLogo />
+                <div className="text-start font-sans">
+                  <div className="text-[9px] leading-tight font-medium opacity-70 uppercase tracking-widest">{t('Download for')}</div>
+                  <div className="text-sm font-bold leading-tight">{t('Android App')}</div>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center justify-between pt-8 border-t border-slate-200 dark:border-slate-800/60 text-sm">
+          <p className="mb-4 sm:mb-0">
+            © 2026 <span className="font-bold text-slate-900 dark:text-white">{t('SecretArea')}</span>. {t('All rights reserved.')}
+          </p>
+          <p className="flex items-center gap-1.5">
+            {t('Built by :')} <a href="https://nexa1337vcard.vercel.app" target="_blank" rel="noreferrer" className="font-bold text-slate-900 dark:text-white hover:text-primary-500 transition-colors">N E X A 1337</a>
+          </p>
+        </div>
+        
+      </div>
+    </footer>
   );
 };
 

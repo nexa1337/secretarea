@@ -1,3 +1,4 @@
+import { useLanguage } from '../src/contexts/LanguageContext';
 
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -6,6 +7,7 @@ import { NAV_ITEMS, SOCIAL_LINKS } from '../constants';
 import Icon from './Icon';
 
 const BottomNav: React.FC = () => {
+  const { t } = useLanguage();
   const location = useLocation();
   const [showMoreMobile, setShowMoreMobile] = useState(false);
 
@@ -20,7 +22,7 @@ const BottomNav: React.FC = () => {
 
   return (
     <>
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-900/90 md:backdrop-blur-md border-t border-slate-200 dark:border-slate-800 z-50 pb-safe">
+      <div className="md:hidden fixed bottom-0 start-0 end-0 bg-white/90 dark:bg-slate-900/90 md:backdrop-blur-md border-t border-slate-200 dark:border-slate-800 z-50 pb-safe">
         <div className="flex justify-around items-center h-16 relative">
           {mobileNavItems.map((item) => {
             const isActive = !item.isExternal && !item.isMore && location.pathname === item.path;
@@ -37,7 +39,7 @@ const BottomNav: React.FC = () => {
                   }`}
                 >
                   <Icon name={item.iconName} size={24} className={showMoreMobile ? 'animate-bounce-subtle' : ''} />
-                  <span className="text-[10px] mt-1 font-medium">{item.label}</span>
+                  <span className="text-[10px] mt-1 font-medium">{t(item.label)}</span>
                 </button>
               );
             }
@@ -47,12 +49,12 @@ const BottomNav: React.FC = () => {
                 <Link
                   key={item.label}
                   to={item.path}
-                   className="relative flex flex-col items-center justify-center w-full h-full -mt-6 group"
+                   className="flex flex-col items-center justify-center w-full h-full transition-colors group"
                 >
-                  <div className="w-14 h-14 bg-gradient-to-tr from-slate-800 to-black rounded-full flex items-center justify-center shadow-lg border-[3px] border-white dark:border-slate-900 text-white group-hover:scale-105 transition-transform">
-                     <Icon name={item.iconName} size={28} className="animate-pulse" />
+                  <div className="w-8 h-8 flex items-center justify-center">
+                     <Icon name={item.iconName} size={24} />
                   </div>
-                  <span className="text-[10px] mt-1 font-bold text-slate-800 dark:text-slate-200">{item.label}</span>
+                  <span className="text-[10px] mt-1 font-bold text-slate-800 dark:text-slate-200">{t(item.label)}</span>
                 </Link>
               );
             }
@@ -68,7 +70,7 @@ const BottomNav: React.FC = () => {
                 }`}
               >
                 <Icon name={item.iconName} size={24} className={isActive ? 'animate-bounce-subtle' : ''} />
-                <span className="text-[10px] mt-1 font-medium">{item.label}</span>
+                <span className="text-[10px] mt-1 font-medium">{t(item.label)}</span>
               </Link>
             );
           })}
@@ -91,7 +93,7 @@ const BottomNav: React.FC = () => {
               exit={{ opacity: 0, y: 100 }}
               className="md:hidden fixed inset-x-4 bottom-20 z-50 bg-white/95 dark:bg-slate-900/95 md:backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-3xl p-4 shadow-2xl flex flex-col items-stretch max-h-[85vh]"
             >
-             <h3 className="text-slate-900 dark:text-white font-bold mb-3 px-2 tracking-tight">N E X A 1337 Ecosystem</h3>
+             <h3 className="text-slate-900 dark:text-white font-bold mb-3 px-2 tracking-tight">{t('N E X A 1337 Ecosystem')}</h3>
              
              <div className="flex flex-col gap-2 overflow-y-auto no-scrollbar px-2 pb-2">
                 <a href="https://instagram.com/nexa1337" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm transition-all group">
@@ -100,8 +102,8 @@ const BottomNav: React.FC = () => {
                             <Icon name="Briefcase" size={18} />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-slate-900 dark:text-white font-extrabold text-[13px] tracking-tight">N E X A 1337</span>
-                            <span className="text-slate-700 dark:text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">342K clicks</span>
+                            <span className="text-slate-900 dark:text-white font-extrabold text-[13px] tracking-tight">{t('N E X A 1337')}</span>
+                            <span className="text-slate-700 dark:text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">{t('342K clicks')}</span>
                         </div>
                     </div>
                     <Icon name="ExternalLink" size={14} className="text-slate-700 dark:text-slate-300 dark:text-slate-500 group-hover:text-blue-500 transition-colors" />
@@ -113,8 +115,8 @@ const BottomNav: React.FC = () => {
                             <Icon name="Layout" size={18} />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-slate-900 dark:text-white font-extrabold text-[13px] tracking-tight">N E X A 1337 - Secret Area</span>
-                            <span className="text-slate-700 dark:text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">215K clicks</span>
+                            <span className="text-slate-900 dark:text-white font-extrabold text-[13px] tracking-tight">{t('N E X A 1337 - Secret Area')}</span>
+                            <span className="text-slate-700 dark:text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">{t('215K clicks')}</span>
                         </div>
                     </div>
                     <Icon name="ExternalLink" size={14} className="text-slate-700 dark:text-slate-300 dark:text-slate-500 group-hover:text-indigo-500 transition-colors" />
@@ -126,8 +128,8 @@ const BottomNav: React.FC = () => {
                             <Icon name="Wrench" size={18} />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-slate-900 dark:text-white font-extrabold text-[13px] tracking-tight">N E X A 1337 - Tool</span>
-                            <span className="text-slate-700 dark:text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">189K clicks</span>
+                            <span className="text-slate-900 dark:text-white font-extrabold text-[13px] tracking-tight">{t('N E X A 1337 - Tool')}</span>
+                            <span className="text-slate-700 dark:text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">{t('189K clicks')}</span>
                         </div>
                     </div>
                     <Icon name="ExternalLink" size={14} className="text-slate-700 dark:text-slate-300 dark:text-slate-500 group-hover:text-emerald-500 transition-colors" />
@@ -140,7 +142,7 @@ const BottomNav: React.FC = () => {
                             <Icon name="Sparkles" size={18} />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-white font-extrabold text-[13px] tracking-tight">N E X A 1337 - Tool v2</span>
+                            <span className="text-white font-extrabold text-[13px] tracking-tight">{t('N E X A 1337 - Tool v2')}</span>
                             <span className="text-pink-400 font-bold text-[10px] uppercase tracking-wider flex items-center gap-1">
                               <Icon name="TrendingUp" size={12} className="animate-pulse" /> 92K clicks
                             </span>
@@ -155,8 +157,8 @@ const BottomNav: React.FC = () => {
                             <Icon name="GraduationCap" size={18} />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-slate-900 dark:text-white font-extrabold text-[13px] tracking-tight">N E X A 1337 - School</span>
-                            <span className="text-slate-700 dark:text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">54K clicks</span>
+                            <span className="text-slate-900 dark:text-white font-extrabold text-[13px] tracking-tight">{t('N E X A 1337 - School')}</span>
+                            <span className="text-slate-700 dark:text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">{t('54K clicks')}</span>
                         </div>
                     </div>
                     <Icon name="ExternalLink" size={14} className="text-slate-700 dark:text-slate-300 dark:text-slate-500 group-hover:text-amber-500 transition-colors" />
@@ -168,8 +170,8 @@ const BottomNav: React.FC = () => {
                             <Icon name="ShoppingCart" size={18} />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-slate-900 dark:text-white font-extrabold text-[13px] tracking-tight">N E X A 1337 - Digital Store</span>
-                            <span className="text-slate-700 dark:text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">Products & More</span>
+                            <span className="text-slate-900 dark:text-white font-extrabold text-[13px] tracking-tight">{t('N E X A 1337 - Digital Store')}</span>
+                            <span className="text-slate-700 dark:text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">{t('Products & More')}</span>
                         </div>
                     </div>
                     <Icon name="ExternalLink" size={14} className="text-slate-700 dark:text-slate-300 dark:text-slate-500 group-hover:text-rose-500 transition-colors" />

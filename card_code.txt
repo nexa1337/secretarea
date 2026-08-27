@@ -1,0 +1,66 @@
+                              }
+                          }}
+                      >
+                          <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 dark:via-white/10 to-transparent group-hover:animate-[shimmer_1.5s_infinite] z-40 pointer-events-none"></div>
+                          <div className="aspect-[3/4] relative overflow-hidden bg-slate-100 dark:bg-slate-950">
+                            <img src={item.coverImage} alt={item.name} className="w-full h-full object-cover transition-opacity duration-300 opacity-90 group-hover:opacity-100"  loading="lazy" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent opacity-90"></div>
+                            
+                            {compStatus && compStatus !== 'unknown' && (
+                                <div className="absolute top-3 end-3 z-30">
+                                    <div className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1 border ${
+                                        compStatus === 'pass' ? 'bg-emerald-500/90 text-white border-emerald-400' : 
+                                        compStatus === 'warn' ? 'bg-yellow-500/90 text-white border-yellow-400' : 
+                                        'bg-black/80 text-white border-white/20 backdrop-blur-md'
+                                    }`}>
+                                        <Icon name={compStatus === 'pass' ? 'CheckCircle' : compStatus === 'warn' ? 'AlertTriangle' : 'X'} size={12} />
+                                        {compStatus === 'pass' ? 'Runs Great' : compStatus === 'warn' ? 'Might Struggle' : 'Won\'t Run'}
+                                    </div>
+                                </div>
+                            )}
+
+                            {item.isPinned && !compStatus && (
+                                <div className="absolute top-3 start-3 z-20">
+                                    <div className="bg-yellow-500 text-white p-1.5 rounded-lg shadow-lg border border-white/20">
+                                        <Icon name="Pin" size={16} />
+                                    </div>
+                                </div>
+                            )}
+                            {item.category === 'steamtools' ? (
+                                <>
+                                    {item.gameId && (
+                                        <div className={`absolute top-3 ${compStatus ? 'start-3' : 'end-3'} px-2 py-1 bg-black/60 md:backdrop-blur-md rounded-md border border-white/10 text-[10px] font-mono font-bold text-white shadow-sm`}>
+                                            ID: {item.gameId}
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <div className={`absolute top-3 ${compStatus ? 'start-3' : 'end-3'} px-2 py-1 bg-white/90 dark:bg-black/60 md:backdrop-blur-md rounded-md border border-slate-200 dark:border-white/10 text-[10px] font-mono font-bold text-primary-600 dark:text-primary-400`}>
+                                    {item.repackSize}
+                                </div>
+                            )}
+                            <div className={`absolute top-3 ${item.isPinned && !compStatus ? 'start-12' : 'start-3'} px-2 py-1 bg-primary-600 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg transition-all flex items-center gap-1`}>
+                              <span>{item.id}</span>
+                              {popularRepackIds.map(id => String(id).toLowerCase()).includes(String(item.id).toLowerCase()) && (
+                                  <Icon name="Star" size={10} className="text-yellow-400 fill-yellow-400" />
+                              )}
+                            </div>
+                            {item.category === 'hypervisor' && (
+                                <div className={`absolute top-10 ${compStatus ? 'start-3' : 'end-3'} z-20`}>
+                                    <div className="bg-red-600 text-white px-2 py-1 rounded-lg shadow-lg border border-red-400/30 text-[10px] font-black tracking-widest">
+                                        HV
+                                    </div>
+                                </div>
+                            )}
+                            {item.isFree && (
+                                <div className={`absolute ${item.category === 'hypervisor' ? 'top-20' : 'top-10'} ${compStatus ? 'start-3' : 'end-3'} px-2 py-1 bg-emerald-500 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1 z-20`}>
+                                    <Icon name="Tag" size={12} /> Free
+                                </div>
+                            )}
+                            {item.category === 'game' && item.links?.ankerParts && item.links.ankerParts.length > 0 && (
+                                <div className="absolute top-2 start-1/2 -translate-x-1/2 px-1.5 py-0.5 sm:px-2 sm:py-1 bg-indigo-500/20 dark:bg-indigo-500/10 backdrop-blur-md border border-indigo-500/30 dark:border-indigo-400/20 shadow-[0_4px_30px_rgba(0,0,0,0.1)] text-indigo-900 dark:text-indigo-100 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest shadow-xl flex items-center gap-1 z-30 pointer-events-none whitespace-nowrap">
+                                <Icon name="Zap" size={10} className="text-amber-400" /> <span>{t('Pre-installed')}</span>
+                            </div>
+                            )}
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-30">
+                               <div className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center text-white shadow-[0_0_20px_rgba(14,165,233,0.5)] transform scale-50 group-hover:scale-100 transition-transform duration-300">

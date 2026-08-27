@@ -20,9 +20,9 @@ const MindMapRenderer: React.FC<{ data: MindMapSection }> = ({ data }) => {
   return (
     <div className="bg-slate-50 dark:bg-slate-900/50 p-6 md:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 relative overflow-hidden mb-12">
       {/* Background decoration */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
+      <div className="absolute top-0 end-0 w-64 h-64 bg-primary-500/5 rounded-full blur-3xl -me-20 -mt-20"></div>
 
-      <div className="relative z-10 mb-8 text-center md:text-left">
+      <div className="relative z-10 mb-8 text-center md:text-start">
         <h3 className="text-2xl font-bold mb-2 flex items-center justify-center md:justify-start gap-2">
           <Icon name="Network" className="text-primary-500" />
           {data.title}
@@ -34,18 +34,18 @@ const MindMapRenderer: React.FC<{ data: MindMapSection }> = ({ data }) => {
         {Object.entries(groups).map(([category, nodes]) => (
           <div key={category} className="relative">
             {/* Connection Line decoration */}
-            <div className="absolute left-4 top-8 bottom-0 w-0.5 bg-gradient-to-b from-primary-200 to-transparent dark:from-primary-900/50"></div>
+            <div className="absolute start-4 top-8 bottom-0 w-0.5 bg-gradient-to-b from-primary-200 to-transparent dark:from-primary-900/50"></div>
             
             <h4 className="font-bold text-sm uppercase tracking-wider text-primary-600 dark:text-primary-400 mb-4 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-primary-500"></span>
               {category}
             </h4>
             
-            <div className="space-y-4 pl-6">
+            <div className="space-y-4 ps-6">
               {(nodes as MindMapNode[]).map((node, nIdx) => (
                 <div key={nIdx} className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-primary-200 dark:hover:border-primary-800 transition-all group relative">
                   {/* Small connector line */}
-                  <div className="absolute top-1/2 -left-6 w-6 h-0.5 bg-slate-200 dark:bg-slate-700 group-hover:bg-primary-300 transition-colors"></div>
+                  <div className="absolute top-1/2 -start-6 w-6 h-0.5 bg-slate-200 dark:bg-slate-700 group-hover:bg-primary-300 transition-colors"></div>
                   
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-slate-50 dark:bg-slate-900 rounded-lg text-primary-500 shrink-0">
@@ -85,7 +85,7 @@ const NexaProjectModal: React.FC<{ project: NexaProject; onClose: () => void }> 
             >
                 <button 
                     onClick={onClose} 
-                    className="absolute top-4 right-4 z-50 p-2 bg-white/20 hover:bg-white/40 md:backdrop-blur rounded-full text-slate-900 dark:text-white transition-colors"
+                    className="absolute top-4 end-4 z-50 p-2 bg-white/20 hover:bg-white/40 md:backdrop-blur rounded-full text-slate-900 dark:text-white transition-colors"
                 >
                     <Icon name="X" size={24} />
                 </button>
@@ -142,7 +142,7 @@ const NexaProjectModal: React.FC<{ project: NexaProject; onClose: () => void }> 
                     <div className="mb-8">
                         <button 
                             onClick={() => setIncludedOpen(!includedOpen)}
-                            className="w-full flex items-center justify-between p-4 bg-primary-50 dark:bg-primary-900/10 border border-primary-100 dark:border-primary-900/30 rounded-xl text-left"
+                            className="w-full flex items-center justify-between p-4 bg-primary-50 dark:bg-primary-900/10 border border-primary-100 dark:border-primary-900/30 rounded-xl text-start"
                         >
                             <div>
                                 <strong className="block text-primary-700 dark:text-primary-300">What's Included:</strong>
@@ -288,12 +288,12 @@ const CategoryDetail: React.FC = () => {
             onClick={closeLightbox}
           >
             {/* Close Button */}
-            <button className="absolute top-4 right-4 text-white hover:text-primary-500 transition-colors z-50">
+            <button className="absolute top-4 end-4 text-white hover:text-primary-500 transition-colors z-50">
               <Icon name="X" size={32} />
             </button>
 
             {/* Zoom Controls */}
-            <div className="absolute top-4 left-4 flex gap-2 z-50">
+            <div className="absolute top-4 start-4 flex gap-2 z-50">
               <button onClick={zoomOut} className="p-2 bg-slate-800/80 rounded-full text-white hover:bg-slate-700">
                 <Icon name="Minus" size={20} />
               </button>
@@ -308,7 +308,7 @@ const CategoryDetail: React.FC = () => {
             <div className="relative w-full h-full flex items-center justify-center">
               {/* Prev Button */}
               {activeProject.images.length > 1 && (
-                <button onClick={prevImage} className="absolute left-2 p-3 text-white hover:text-primary-500 z-40 bg-black/50 rounded-full hover:bg-black/70 transition-colors">
+                <button onClick={prevImage} className="absolute start-2 p-3 text-white hover:text-primary-500 z-40 bg-black/50 rounded-full hover:bg-black/70 transition-colors">
                   <Icon name="ChevronLeft" size={32} />
                 </button>
               )}
@@ -329,13 +329,13 @@ const CategoryDetail: React.FC = () => {
 
               {/* Next Button */}
               {activeProject.images.length > 1 && (
-                <button onClick={nextImage} className="absolute right-2 p-3 text-white hover:text-primary-500 z-40 bg-black/50 rounded-full hover:bg-black/70 transition-colors">
+                <button onClick={nextImage} className="absolute end-2 p-3 text-white hover:text-primary-500 z-40 bg-black/50 rounded-full hover:bg-black/70 transition-colors">
                   <Icon name="ChevronRight" size={32} />
                 </button>
               )}
 
               {/* Navigation Dots */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-50">
+              <div className="absolute bottom-4 start-1/2 -translate-x-1/2 flex gap-2 z-50">
                 {activeProject.images.map((_, idx) => (
                   <div 
                     key={idx} 
@@ -346,7 +346,7 @@ const CategoryDetail: React.FC = () => {
             </div>
             
             {/* Info Panel */}
-            <div className="absolute bottom-8 left-8 text-white max-w-md hidden md:block z-40 bg-black/40 p-4 rounded-xl md:backdrop-blur-md">
+            <div className="absolute bottom-8 start-8 text-white max-w-md hidden md:block z-40 bg-black/40 p-4 rounded-xl md:backdrop-blur-md">
               <h3 className="text-xl font-bold">{activeProject.title}</h3>
               <p className="text-slate-300 text-sm">{activeProject.description}</p>
             </div>
@@ -358,10 +358,10 @@ const CategoryDetail: React.FC = () => {
       <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-6 py-12 md:py-20 relative overflow-hidden">
           {/* Background Gradient for Header */}
-          <div className={`absolute -right-20 -top-20 w-96 h-96 bg-${category.color}-500/10 rounded-full blur-3xl`}></div>
+          <div className={`absolute -end-20 -top-20 w-96 h-96 bg-${category.color}-500/10 rounded-full blur-3xl`}></div>
 
           <Link to="/roadmap" className="inline-flex items-center text-sm text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 mb-6 transition-colors relative z-10">
-            <Icon name="ArrowLeft" size={16} className="mr-2" /> Back to Space
+            <Icon name="ArrowLeft" size={16} className="me-2" /> Back to Space
           </Link>
           
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 relative z-10">
@@ -421,7 +421,7 @@ const CategoryDetail: React.FC = () => {
                 {/* Background Effects */}
                 <div className="absolute inset-0 bg-slate-50 dark:bg-[#030712] -z-20"></div>
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] -z-10"></div>
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-emerald-500/10 blur-[100px] -z-10"></div>
+                <div className="absolute top-0 start-1/2 -translate-x-1/2 w-3/4 h-32 bg-emerald-500/10 blur-[100px] -z-10"></div>
 
                 <div className="text-center mb-12 relative z-10">
                   <motion.div 
@@ -454,7 +454,7 @@ const CategoryDetail: React.FC = () => {
                         <div className="relative h-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl p-8 rounded-[23px] flex flex-col justify-between overflow-hidden">
                           
                           {/* Glow effect on hover */}
-                          <div className="absolute -top-24 -right-24 w-48 h-48 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                          <div className="absolute -top-24 -end-24 w-48 h-48 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
                           <div>
                             <div className="flex justify-between items-start mb-6">
@@ -562,7 +562,7 @@ const CategoryDetail: React.FC = () => {
           {/* NEXA BUSINESS LINKS (Digital Products) */}
           {isBusiness && category.nexaBusinessLinks && (
              <motion.section variants={item} className="bg-gradient-to-r from-emerald-900 to-teal-900 p-8 rounded-2xl text-white relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
+                <div className="absolute top-0 end-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -me-20 -mt-20"></div>
                 <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
                    <div>
                       <h2 className="text-2xl font-bold mb-2">N E X A 1337 Business</h2>
@@ -577,7 +577,7 @@ const CategoryDetail: React.FC = () => {
                           rel="noreferrer"
                           className="px-6 py-3 bg-white text-emerald-900 font-bold rounded-full hover:bg-emerald-50 transition-colors flex items-center"
                         >
-                           {link.label} <Icon name="ExternalLink" size={16} className="ml-2" />
+                           {link.label} <Icon name="ExternalLink" size={16} className="ms-2" />
                         </a>
                       ))}
                    </div>
@@ -590,7 +590,7 @@ const CategoryDetail: React.FC = () => {
             <motion.section variants={item} className="bg-white dark:bg-slate-900 p-4 md:p-8 rounded-2xl border border-slate-200 dark:border-slate-800">
                <div className="mb-6">
                  <h2 className="text-2xl font-bold flex items-center">
-                    <Icon name="TrendingUp" className="mr-2 text-emerald-500" /> Market Growth
+                    <Icon name="TrendingUp" className="me-2 text-emerald-500" /> Market Growth
                  </h2>
                  <p className="text-slate-600 dark:text-slate-400 mt-2 text-sm">
                    Projected growth rates (CAGR) for the Gaming Industry (2026 - 2035) with estimated developer salaries. 
@@ -622,10 +622,10 @@ const CategoryDetail: React.FC = () => {
                    </div>
                    <div className="flex justify-center gap-6 mt-4">
                       <div className="flex items-center text-xs text-slate-600 dark:text-slate-400">
-                        <div className="w-3 h-3 bg-emerald-500 rounded-sm mr-2"></div> Arab Growth %
+                        <div className="w-3 h-3 bg-emerald-500 rounded-sm me-2"></div> Arab Growth %
                       </div>
                       <div className="flex items-center text-xs text-slate-600 dark:text-slate-400">
-                        <div className="w-3 h-3 bg-slate-300 dark:bg-slate-600 rounded-sm mr-2"></div> Global Growth %
+                        <div className="w-3 h-3 bg-slate-300 dark:bg-slate-600 rounded-sm me-2"></div> Global Growth %
                       </div>
                    </div>
                </div>
@@ -639,19 +639,19 @@ const CategoryDetail: React.FC = () => {
                   <div className="overflow-x-auto pb-2 no-scrollbar">
                     <div className="min-w-[600px] lg:min-w-0">
                       <div className="grid grid-cols-11 gap-2 text-xs font-mono text-center border-b border-slate-100 dark:border-slate-800 pb-2 mb-2 font-bold text-slate-400">
-                         <div className="text-left">Region</div>
+                         <div className="text-start">Region</div>
                          {category.gamingMarketStats.map((s) => <div key={s.year}>{s.year}</div>)}
                       </div>
                       {/* Global Row */}
                       <div className="grid grid-cols-11 gap-2 text-xs text-center items-center py-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded transition-colors">
-                         <div className="text-left font-bold text-slate-700 dark:text-slate-300">Global</div>
+                         <div className="text-start font-bold text-slate-700 dark:text-slate-300">Global</div>
                          {category.gamingMarketStats.map((s) => (
                            <div key={s.year} className="text-slate-600 dark:text-slate-400">${(s.avgSalaryGlobal / 1000).toFixed(1)}k</div>
                          ))}
                       </div>
                       {/* Arab Row */}
                       <div className="grid grid-cols-11 gap-2 text-xs text-center items-center py-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded transition-colors">
-                         <div className="text-left font-bold text-emerald-600">Arab</div>
+                         <div className="text-start font-bold text-emerald-600">Arab</div>
                          {category.gamingMarketStats.map((s) => (
                            <div key={s.year} className="text-emerald-600 dark:text-emerald-400 font-bold">${(s.avgSalaryArab / 1000).toFixed(1)}k</div>
                          ))}
@@ -667,12 +667,12 @@ const CategoryDetail: React.FC = () => {
           {isGaming && category.gameBuildProcess && (
             <motion.section variants={item}>
               <h2 className="text-2xl font-bold mb-6 flex items-center">
-                <Icon name="Wrench" className="mr-2 text-primary-500" /> How I Build Games
+                <Icon name="Wrench" className="me-2 text-primary-500" /> How I Build Games
               </h2>
               <div className="relative">
                  {/* Line */}
-                 <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-slate-200 dark:bg-slate-800 md:hidden"></div>
-                 <div className="hidden md:block absolute top-6 left-0 right-0 h-0.5 bg-slate-200 dark:bg-slate-800"></div>
+                 <div className="absolute start-6 top-0 bottom-0 w-0.5 bg-slate-200 dark:bg-slate-800 md:hidden"></div>
+                 <div className="hidden md:block absolute top-6 start-0 end-0 h-0.5 bg-slate-200 dark:bg-slate-800"></div>
 
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {category.gameBuildProcess.map((step, idx) => (
@@ -695,7 +695,7 @@ const CategoryDetail: React.FC = () => {
           {!isGaming && !isBusiness && category.projects.length > 0 && (
             <motion.section variants={item}>
               <h2 className="text-2xl font-bold mb-6 flex items-center">
-                <Icon name="Image" className="mr-2 text-primary-500" /> Galerie
+                <Icon name="Image" className="me-2 text-primary-500" /> Galerie
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {category.projects.map((project, idx) => (
@@ -716,7 +716,7 @@ const CategoryDetail: React.FC = () => {
                         <p className="text-slate-300 text-xs mt-1 translate-y-2 group-hover:translate-y-0 transition-transform duration-300 delay-75 line-clamp-1">{project.description}</p>
                         <div className="flex items-center gap-2 mt-3 translate-y-2 group-hover:translate-y-0 transition-transform duration-300 delay-100">
                           <span className="text-white bg-white/20 md:backdrop-blur-md px-2 py-1 rounded text-xs flex items-center">
-                            <Icon name="Images" size={12} className="mr-1" /> {project.images.length}
+                            <Icon name="Images" size={12} className="me-1" /> {project.images.length}
                           </span>
                         </div>
                       </div>
@@ -730,7 +730,7 @@ const CategoryDetail: React.FC = () => {
           {category.id !== 'business' && (
           <motion.section variants={item} className={`p-8 rounded-2xl border relative overflow-hidden bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800`}>
                 <h2 className="text-2xl font-bold mb-8 flex items-center">
-                  <Icon name="Map" className="mr-2 text-primary-500" /> 
+                  <Icon name="Map" className="me-2 text-primary-500" /> 
                   {isIT ? 'Gamified Learning Path' : 'Roadmap & Learning Path'}
                 </h2>
             <div className="space-y-12 relative z-10">
@@ -744,11 +744,11 @@ const CategoryDetail: React.FC = () => {
                    </h3>
                  )}
                  
-                 <div className="relative border-l-2 ml-3 space-y-12 border-slate-200 dark:border-slate-700">
+                 <div className="relative border-s-2 ms-3 space-y-12 border-slate-200 dark:border-slate-700">
                   {category.roadmap.map((step, idx) => (
-                    <div key={idx} className="relative pl-10 group">
+                    <div key={idx} className="relative ps-10 group">
                       {/* Timeline Dot */}
-                      <div className={`absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 transition-all duration-500 z-10 ${
+                      <div className={`absolute -start-[9px] top-1.5 w-4 h-4 rounded-full border-2 transition-all duration-500 z-10 ${
                           step.status === 'completed' ? 'bg-emerald-500 border-emerald-500' : step.status === 'in-progress' ? 'bg-primary-500 border-primary-500 animate-pulse' : 'bg-slate-200 dark:bg-slate-800 border-slate-400 dark:border-slate-600'
                       }`}></div>
                       
@@ -778,7 +778,7 @@ const CategoryDetail: React.FC = () => {
               {category.experience && (
                 <div>
                   <h3 className="text-lg font-bold text-slate-400 uppercase tracking-widest text-xs mb-6 border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center">
-                    <Icon name="Briefcase" size={14} className="mr-2"/> Professional Experience
+                    <Icon name="Briefcase" size={14} className="me-2"/> Professional Experience
                   </h3>
                   <div className="space-y-6">
                     {category.experience.map((exp, idx) => (
@@ -799,7 +799,7 @@ const CategoryDetail: React.FC = () => {
               {category.education && (
                 <div>
                    <h3 className="text-lg font-bold text-slate-400 uppercase tracking-widest text-xs mb-6 border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center">
-                    <Icon name="GraduationCap" size={14} className="mr-2"/> Education
+                    <Icon name="GraduationCap" size={14} className="me-2"/> Education
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {category.education.map((edu, idx) => (
@@ -817,7 +817,7 @@ const CategoryDetail: React.FC = () => {
               {category.resources.length > 0 && (
                 <div>
                    <h3 className={`text-lg font-bold uppercase tracking-widest text-xs mb-6 border-b pb-2 flex items-center ${isBusiness ? 'text-slate-500 border-slate-800' : 'text-slate-400 border-slate-100 dark:border-slate-800'}`}>
-                    <Icon name="Globe" size={14} className="mr-2"/> Where I Learn From
+                    <Icon name="Globe" size={14} className="me-2"/> Where I Learn From
                   </h3>
                   <div className="flex flex-wrap gap-4">
                     {category.resources.map((res, idx) => (
@@ -828,14 +828,14 @@ const CategoryDetail: React.FC = () => {
                         rel="noreferrer"
                         className={`flex items-center p-3 rounded-lg border transition-colors group ${isBusiness ? 'bg-white/5 border-white/10 hover:border-emerald-500 text-white' : 'bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 hover:border-primary-500 dark:hover:border-primary-500'}`}
                       >
-                         <div className={`w-8 h-8 rounded flex items-center justify-center shadow-sm mr-3 ${isBusiness ? 'bg-emerald-900/50 text-emerald-400' : 'bg-white dark:bg-slate-900 text-primary-500'}`}>
+                         <div className={`w-8 h-8 rounded flex items-center justify-center shadow-sm me-3 ${isBusiness ? 'bg-emerald-900/50 text-emerald-400' : 'bg-white dark:bg-slate-900 text-primary-500'}`}>
                            <Icon name={res.type === 'Platform' ? 'Monitor' : res.type === 'YouTube' ? 'Youtube' : 'BookOpen'} size={16} />
                          </div>
                          <div>
                            <div className={`font-bold text-sm transition-colors ${isBusiness ? 'group-hover:text-emerald-400' : 'group-hover:text-primary-500'}`}>{res.name}</div>
                            <div className="text-xs text-slate-500">{res.type}</div>
                          </div>
-                         <Icon name="ExternalLink" size={12} className="ml-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                         <Icon name="ExternalLink" size={12} className="ms-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </a>
                     ))}
                   </div>
@@ -859,12 +859,12 @@ const CategoryDetail: React.FC = () => {
           {category.services && (
             <motion.section variants={item} className="bg-gradient-to-br from-primary-900 to-slate-900 text-white p-6 rounded-2xl shadow-lg border border-primary-500/20">
                <h3 className="font-bold text-lg mb-4 flex items-center text-white">
-                <Icon name="Zap" size={18} className="mr-2 text-primary-400"/> What I Do
+                <Icon name="Zap" size={18} className="me-2 text-primary-400"/> What I Do
               </h3>
               <ul className="space-y-3">
                 {category.services.map((service, idx) => (
                   <li key={idx} className="flex items-start text-sm">
-                    <Icon name="Check" size={16} className="mr-3 mt-0.5 text-primary-400 shrink-0" />
+                    <Icon name="Check" size={16} className="me-3 mt-0.5 text-primary-400 shrink-0" />
                     <span className="font-medium text-slate-200">{service}</span>
                   </li>
                 ))}
@@ -875,7 +875,7 @@ const CategoryDetail: React.FC = () => {
           {/* COMPÉTENCES (Skills) */}
           <motion.section variants={item} className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
             <h3 className="font-bold text-lg mb-6 flex items-center text-slate-800 dark:text-white">
-              <Icon name="Activity" size={18} className="mr-2 text-yellow-500"/> Skills
+              <Icon name="Activity" size={18} className="me-2 text-yellow-500"/> Skills
             </h3>
             <div className="space-y-5">
               {category.skills.map((skill, idx) => (
@@ -896,13 +896,13 @@ const CategoryDetail: React.FC = () => {
           {isGaming && category.gameDevToolsList && (
              <motion.section variants={item} className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
                 <h3 className="font-bold text-lg mb-4 flex items-center">
-                  <Icon name="Wrench" className="mr-2 text-primary-500"/> Dev Tools
+                  <Icon name="Wrench" className="me-2 text-primary-500"/> Dev Tools
                 </h3>
                 <div className="space-y-2">
                    {category.gameDevToolsList.map((tool, idx) => (
                      <div key={idx} className="flex items-center justify-between p-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-colors">
                         <div className="flex items-center">
-                           <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded mr-2 text-slate-600 dark:text-slate-300">
+                           <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded me-2 text-slate-600 dark:text-slate-300">
                               <Icon name={tool.icon || 'Box'} size={16} />
                            </div>
                            <div>
@@ -930,13 +930,13 @@ const CategoryDetail: React.FC = () => {
               {(apps2d3d.length > 0 || appsSecurity.length > 0) && (
                 <motion.section variants={item} className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
                   <h3 className="font-bold text-lg mb-4 flex items-center">
-                    <Icon name={appsSecurity.length > 0 ? 'Shield' : 'Box'} size={18} className="mr-2 text-blue-500"/> 
+                    <Icon name={appsSecurity.length > 0 ? 'Shield' : 'Box'} size={18} className="me-2 text-blue-500"/> 
                     {appsSecurity.length > 0 ? 'Security Tools' : 'Applications 2D et 3D'}
                   </h3>
                   <div className="space-y-3">
                     {(appsSecurity.length > 0 ? appsSecurity : apps2d3d).map((tool, idx) => (
                       <div key={idx} className="flex items-center p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-blue-200 dark:hover:border-blue-900">
-                        <div className="p-2 bg-white dark:bg-slate-900 rounded-md shadow-sm mr-3 text-blue-600 dark:text-blue-400">
+                        <div className="p-2 bg-white dark:bg-slate-900 rounded-md shadow-sm me-3 text-blue-600 dark:text-blue-400">
                           <Icon name={tool.icon || 'Box'} size={20} />
                         </div>
                         <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{tool.name}</span>
@@ -950,13 +950,13 @@ const CategoryDetail: React.FC = () => {
               {(appsRender.length > 0 || appsLanguage.length > 0) && (
                 <motion.section variants={item} className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
                   <h3 className="font-bold text-lg mb-4 flex items-center">
-                    <Icon name={appsLanguage.length > 0 ? 'Code' : 'Aperture'} size={18} className="mr-2 text-purple-500"/> 
+                    <Icon name={appsLanguage.length > 0 ? 'Code' : 'Aperture'} size={18} className="me-2 text-purple-500"/> 
                     {appsLanguage.length > 0 ? 'Languages' : 'Applications Render'}
                   </h3>
                   <div className="space-y-3">
                     {(appsLanguage.length > 0 ? appsLanguage : appsRender).map((tool, idx) => (
                       <div key={idx} className="flex items-center p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-purple-200 dark:hover:border-purple-900">
-                        <div className="p-2 bg-white dark:bg-slate-900 rounded-md shadow-sm mr-3 text-purple-600 dark:text-purple-400">
+                        <div className="p-2 bg-white dark:bg-slate-900 rounded-md shadow-sm me-3 text-purple-600 dark:text-purple-400">
                           <Icon name={tool.icon || 'Image'} size={20} />
                         </div>
                         <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{tool.name}</span>
@@ -969,7 +969,7 @@ const CategoryDetail: React.FC = () => {
               {/* Fallback or Other Tools */}
               {appsOther.length > 0 && apps2d3d.length === 0 && appsRender.length === 0 && appsSecurity.length === 0 && appsLanguage.length === 0 && (
                 <motion.section variants={item} className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
-                    <h3 className="font-bold text-lg mb-4 flex items-center"><Icon name="Wrench" size={18} className="mr-2 text-slate-500"/> Toolkit</h3>
+                    <h3 className="font-bold text-lg mb-4 flex items-center"><Icon name="Wrench" size={18} className="me-2 text-slate-500"/> Toolkit</h3>
                     <div className="flex flex-wrap gap-2">
                       {appsOther.map((tool, idx) => (
                         <span key={idx} className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center gap-2">
@@ -987,7 +987,7 @@ const CategoryDetail: React.FC = () => {
           {category.certificates.length > 0 && (
             <motion.section variants={item} className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
               <h3 className="font-bold text-lg mb-4 flex items-center">
-                <Icon name="Award" size={18} className="mr-2 text-orange-500"/> Certificates
+                <Icon name="Award" size={18} className="me-2 text-orange-500"/> Certificates
               </h3>
               
               {/* Disclaimer Alert */}
@@ -1001,7 +1001,7 @@ const CategoryDetail: React.FC = () => {
               <ul className="space-y-3">
                 {category.certificates.map((cert, idx) => (
                   <li key={idx} className="flex items-start text-sm group">
-                    <Icon name="CheckCircle2" size={16} className="mr-2 mt-0.5 text-emerald-500 shrink-0" />
+                    <Icon name="CheckCircle2" size={16} className="me-2 mt-0.5 text-emerald-500 shrink-0" />
                     <span className="text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">{cert}</span>
                   </li>
                 ))}
@@ -1013,10 +1013,10 @@ const CategoryDetail: React.FC = () => {
           {category.interests && (
             <motion.section variants={item} className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
               {/* Decorative Circle */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -mr-10 -mt-10"></div>
+              <div className="absolute top-0 end-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -me-10 -mt-10"></div>
               
               <h3 className="font-bold text-lg mb-4 flex items-center relative z-10">
-                <Icon name="Heart" size={18} className="mr-2 text-red-500"/> {isIT ? 'Highlights' : 'Mes Intérêts'}
+                <Icon name="Heart" size={18} className="me-2 text-red-500"/> {isIT ? 'Highlights' : 'Mes Intérêts'}
               </h3>
               
               <div className="grid grid-cols-2 gap-3 mb-6 relative z-10">
@@ -1046,7 +1046,7 @@ const CategoryDetail: React.FC = () => {
                   className="relative z-10 w-full flex items-center justify-center py-3 bg-white text-slate-900 font-bold rounded-xl hover:bg-primary-500 hover:text-white transition-all group mt-4"
                 >
                   <span className="flex items-center">
-                    <Icon name="Rocket" size={18} className="mr-2 group-hover:animate-bounce" /> 
+                    <Icon name="Rocket" size={18} className="me-2 group-hover:animate-bounce" /> 
                     Red Team Space
                   </span>
                 </a>
@@ -1056,7 +1056,7 @@ const CategoryDetail: React.FC = () => {
                   title="No link available now"
                 >
                   <span className="flex items-center">
-                    <Icon name="Lock" size={18} className="mr-2" /> 
+                    <Icon name="Lock" size={18} className="me-2" /> 
                     Portfolio - No link available now
                   </span>
                 </div>

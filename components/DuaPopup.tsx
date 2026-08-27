@@ -103,13 +103,13 @@ export const DuaPopup: React.FC = () => {
                     animate={{ opacity: 1, x: 0, y: 0, scale: 1, rotate: 0 }}
                     exit={{ opacity: 0, x: 100, scale: 0.9, filter: 'blur(5px)' }}
                     transition={{ type: "spring", stiffness: 400, damping: 25, mass: 0.8 }}
-                    className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[100] w-[calc(100vw-2rem)] sm:w-[380px] md:w-[420px] bg-white/95 dark:bg-slate-900/95 md:backdrop-blur-xl rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.3)] border border-slate-200/50 dark:border-slate-700/50 overflow-hidden"
+                    className="fixed bottom-4 end-4 sm:bottom-6 sm:end-6 z-[100] w-[calc(100vw-2rem)] sm:w-[380px] md:w-[420px] bg-white/95 dark:bg-slate-900/95 md:backdrop-blur-xl rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.3)] border border-slate-200/50 dark:border-slate-700/50 overflow-hidden"
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
                     onTouchStart={() => setIsHovered(true)}
                     onTouchEnd={() => setIsHovered(false)}
                 >
-                    <div className="absolute top-0 left-0 w-full h-1 bg-slate-100 dark:bg-slate-800">
+                    <div className="absolute top-0 start-0 w-full h-1 bg-slate-100 dark:bg-slate-800">
                         <div 
                             className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500"
                             style={{ width: `${progress}%`, transition: 'width 50ms linear' }}
@@ -118,7 +118,7 @@ export const DuaPopup: React.FC = () => {
                     
                     <button 
                         onClick={() => setIsVisible(false)}
-                        className="absolute top-3 right-3 p-1.5 rounded-full bg-slate-100/50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors hover:bg-slate-200 dark:hover:bg-slate-700 z-10"
+                        className="absolute top-3 end-3 p-1.5 rounded-full bg-slate-100/50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors hover:bg-slate-200 dark:hover:bg-slate-700 z-10"
                     >
                         <Icon name="X" size={14} />
                     </button>
@@ -128,13 +128,13 @@ export const DuaPopup: React.FC = () => {
                             localStorage.setItem('duaPopupDisabled', 'true');
                             setIsVisible(false);
                         }}
-                        className="absolute top-3 left-3 px-2 py-1 rounded bg-slate-100/50 dark:bg-slate-800/50 text-[10px] text-slate-700 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors hover:bg-slate-200 dark:hover:bg-slate-700 z-10"
+                        className="absolute top-3 start-3 px-2 py-1 rounded bg-slate-100/50 dark:bg-slate-800/50 text-[10px] text-slate-700 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors hover:bg-slate-200 dark:hover:bg-slate-700 z-10"
                     >
                         Don't show again
                     </button>
                     
                     <div className="p-5 sm:p-6 pb-4 flex flex-col items-center justify-center space-y-3 relative">
-                        <div className="absolute -top-6 -left-6 opacity-5 pointer-events-none transform rotate-[-20deg]">
+                        <div className="absolute -top-6 -start-6 opacity-5 pointer-events-none transform rotate-[-20deg]">
                             <Icon name="BuildingMosque" size={120} className="text-current" />
                         </div>
 
