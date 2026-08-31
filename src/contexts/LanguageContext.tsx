@@ -9,6 +9,15 @@ interface Translations {
 }
 
 export const translations: Translations = {
+
+
+
+
+
+
+
+
+
     'Community': { en: 'Community', fr: 'Communauté', es: 'Comunidad', ar: 'مجتمعنا' },
 
     'Join Our': { en: 'Join Our', fr: 'Rejoignez notre', es: 'Únete a nuestra', ar: 'انضم إلى' },

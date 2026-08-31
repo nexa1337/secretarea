@@ -15,6 +15,7 @@ import { CommentsSection } from '../components/CommentsSection';
 import { BestGameSeriesSection } from '../components/BestGameSeriesSection';
 import { DuaPopup } from '../components/DuaPopup';
 import { NetworkDiagnostic } from '../components/NetworkDiagnostic';
+import DonateModal from "../components/DonateModal";
 import MaintenancePage from '../components/MaintenancePage';
 import HardwareCompatibility from "../components/HardwareCompatibility";
 import { LowPolyBackground } from '../components/LowPolyBackground';
@@ -23,9 +24,9 @@ import backupData from '../data/backup_resources.json';
 
 // --- CONFIGURATION ---
 const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbx7nzBZc_tIhbAUK5OvOzgifGVzaVorzjn5OXNe8ENC0p7Pjia7O-u4WggxjRZipt4v/exec';
-const DISCORD_LINK = 'https://discord.gg/MgqvMyZv2b';
-const TELEGRAM_LINK = 'https://t.me/nexa1337agency';
-const REDDIT_LINK = 'https://www.reddit.com/r/SecretArea1337';
+const DISCORD_LINK = 'https://discord.gg/pygmDWFAHK';
+const TELEGRAM_LINK = 'https://t.me/secretarea1337';
+const REDDIT_LINK = 'https://www.reddit.com/r/SecretArea1337/';
 const INSTAGRAM_LINK = 'https://instagram.com/nexa1337';
 const ITEMS_PER_PAGE = 12; // Show 12 items per page for laptop grid (4x3)
 
@@ -664,85 +665,6 @@ const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: 
 };
 
 // DONATE MODAL
-const DonateModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => { const { dir, t } = useLanguage();
-    const [iframeLoaded, setIframeLoaded] = useState(false);
-
-    if (!open) return null;
-
-    return (
-        <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            dir={dir} className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
-            onClick={onClose}
-        >
-            <motion.div 
-                initial={{ scale: 0.95, opacity: 0, y: 10 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.95, opacity: 0, y: 10 }}
-                onClick={(e) => e.stopPropagation()}
-                className="w-full max-w-[360px] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
-            >
-                <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 rounded-xl">
-                            <Icon name="Heart" size={20} />
-                        </div>
-                        <div>
-                            <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">{t('Support Us')}</h2>
-                            <p className="text-xs text-slate-900 dark:text-slate-300 font-medium mt-0.5">{t('Keep the servers alive')}</p>
-                        </div>
-                    </div>
-                    <button 
-                        onClick={onClose}
-                        className="p-2 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl transition-colors border border-slate-200 dark:border-slate-700 shadow-sm"
-                    >
-                        <Icon name="X" size={18} />
-                    </button>
-                </div>
-                
-                <div className="p-5 flex flex-col items-center justify-center w-full bg-slate-50 dark:bg-slate-900 relative min-h-[400px]">
-                    {!iframeLoaded && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                            <motion.div
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                                className="text-pink-500"
-                            >
-                                <Icon name="Loader2" size={24} />
-                            </motion.div>
-                            <p className="text-xs font-bold text-slate-600 dark:text-slate-300 animate-pulse uppercase tracking-widest">{t('Loading Gateway')}</p>
-                        </div>
-                    )}
-                    <iframe 
-                        src="https://trocador.app/anonpay/?ticker_to=xmr&network_to=Mainnet&address=4A1aLQiLKP9MppgCFYHWhM8GNP9eoxEQBQpAWKuiNaD5C2kLmrG2aM9cSK2pncFNNgKCCKbtqNrijAEampjek7SM7BsUFvX&donation=True&name=SecretArea&description=Support+the+website&email=nexa1337agency@gmail.com&bgcolor=00000000" 
-                        width="310" 
-                        height="350" 
-                        className="bg-white rounded-xl dark:invert-[.85] dark:hue-rotate-180"
-                        style={{ border: 0, opacity: iframeLoaded ? 1 : 0, transition: 'opacity 0.5s ease-in-out' }} 
-                        scrolling="no"
-                        onLoad={() => setIframeLoaded(true)}
-                    ></iframe>
-                    
-                    <div className="mt-4 p-3 sm:p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl flex items-start gap-3 w-[310px]">
-                        <div className="p-2 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-xl shrink-0">
-                            <Icon name="Wallet" size={18} />
-                        </div>
-                        <div className="text-start flex-1">
-                            <h4 className="text-xs font-bold text-slate-900 dark:text-slate-300 mb-1">{t('No crypto wallet?')}</h4>
-                            <p className="text-[10px] text-slate-600 dark:text-slate-500 leading-relaxed font-medium">
-                                {t('You can use ')}<a href="https://exodus.com/" target="_blank" rel="noreferrer" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-bold">Exodus</a>, <a href="https://cakewallet.com/" target="_blank" rel="noreferrer" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-bold">Cake Wallet</a>, or another wallet to exchange and send.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </motion.div>
-        </motion.div>
-    );
-};
-
-// REQUEST MODAL
 const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (data: any) => Promise<void>; initialTitle?: string; allResources?: Record<string, ResourceItem[]> }> = ({ open, onClose, onSubmit, initialTitle = '', allResources = {} }) => {
     const { dir, t } = useLanguage();
     const [formData, setFormData] = useState({ title: initialTitle, category: 'Game', image: '', message: '' });
@@ -926,28 +848,6 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
         </motion.div>
     );
 };
-const Footer: React.FC<{ onSupportClick?: () => void }> = ({ onSupportClick }) => (
-  <footer className="w-full mt-2 pt-2 pb-8 flex justify-center items-center gap-3 sm:gap-4 md:gap-6 flex-wrap relative z-20 px-4">
-     <a id="join-community-btn" href={DISCORD_LINK} target="_blank" rel="noreferrer" className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-white hover:bg-[#5865F2] hover:shadow-lg hover:shadow-[#5865F2]/20 transition-all border border-slate-200 dark:border-slate-800">
-        <Icon name="Discord" size={20} />
-     </a>
-     <a id="telegram-btn" href={TELEGRAM_LINK} target="_blank" rel="noreferrer" className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-white hover:bg-[#229ED9] hover:shadow-lg hover:shadow-[#229ED9]/20 transition-all border border-slate-200 dark:border-slate-800">
-        <span className="absolute -top-0.5 -end-0.5 flex h-2.5 w-2.5 items-center justify-center z-20">
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]" style={{ animation: 'pulse 0.8s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}></span>
-        </span>
-        <Icon name="Telegram" size={20} />
-     </a>
-     <a id="reddit-btn" href={REDDIT_LINK} target="_blank" rel="noreferrer" className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-white hover:bg-[#FF4500] hover:shadow-lg hover:shadow-[#FF4500]/20 transition-all border border-slate-200 dark:border-slate-800">
-        <Icon name="Reddit" size={22} />
-     </a>
-     {onSupportClick && (
-         <button onClick={onSupportClick} className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-tr from-pink-500 to-rose-500 flex items-center justify-center text-white hover:scale-110 hover:shadow-lg hover:shadow-pink-500/30 transition-all border border-pink-400 group">
-            <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"></div>
-            <Icon name="Heart" size={20} className="group-hover:animate-pulse" />
-         </button>
-     )}
-  </footer>
-);
 const AdBanner: React.FC<{ desktopSrc: string, mobileSrc: string, link: string, className?: string }> = ({ desktopSrc, mobileSrc, link, className }) => {
   const { dir, t } = useLanguage();
   return (
@@ -1396,7 +1296,7 @@ const AboutSecretAreaSection: React.FC = () => {
     const { dir, t } = useLanguage();
     
     return (
-        <div className="w-full relative mt-16 mb-16 overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-xl dark:shadow-2xl transition-colors duration-300">
+        <div className="w-full relative mt-6 mb-16 overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-xl dark:shadow-2xl transition-colors duration-300">
             {/* Background Base */}
             <div className="absolute inset-0 z-0">
                 <div className="absolute inset-0 bg-gradient-to-r from-white via-slate-50 to-indigo-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/20 transition-colors duration-300"></div>
@@ -1416,7 +1316,7 @@ const AboutSecretAreaSection: React.FC = () => {
                         {t('The idea behind')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">{t('SecretArea')}</span>
                     </h2>
                     
-                    <div className="space-y-4 text-sm sm:text-base text-slate-600 dark:text-slate-300 font-medium leading-relaxed transition-colors duration-300">
+                    <div className="space-y-4 text-sm sm:text-base text-black dark:text-white font-medium leading-relaxed transition-colors duration-300">
                         <p>{t('SecretArea is all about bringing together the best and most popular games in one place — not every game, but only the ones that are worth your time and are actually good.')}</p>
                         <p>{t('We focus on games from trusted sources, with no annoying ads and no viruses. We’re also gamers ourselves, and we created SecretArea because we used to spend too much time searching for good games instead of actually playing them.')}</p>
                         <p>{t('Our goal is simple: bring the best games together in one place, so you can spend less time searching and more time playing.')}</p>
@@ -1717,7 +1617,7 @@ const UpcomingListsDisplay: React.FC<{ lists: { [key: string]: string[] } }> = (
     const activeList = fullList.slice(startIndex, startIndex + itemsPerPage);
 
     return (
-        <div className="w-full bg-white dark:bg-[#1e232d] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 sm:p-6 md:p-8 relative overflow-hidden transition-colors">
+        <div className="w-full relative overflow-hidden transition-colors mt-8 mb-12">
             {/* Faded Background Image */}
             <div className="absolute top-0 end-0 bottom-0 w-full md:w-2/3 pointer-events-none opacity-20 dark:opacity-10 transition-opacity duration-500">
                 <motion.img 
@@ -2748,7 +2648,7 @@ const ResourceDetailModal: React.FC<{
                  {/* Steam & Download Actions */}
                  <div className="flex flex-col sm:flex-row items-center gap-4">
                       {item.category === 'architect' ? (
-                          <a href="https://t.me/nexa1337agency" target="_blank" rel="noreferrer" className="w-full sm:w-auto flex-1 flex items-center justify-between px-4 py-3 bg-[#2AABEE]/10 hover:bg-[#2AABEE]/20 rounded-xl border border-[#2AABEE]/30 transition-all text-slate-900 dark:text-white">
+                          <a href="https://t.me/secretarea1337" target="_blank" rel="noreferrer" className="w-full sm:w-auto flex-1 flex items-center justify-between px-4 py-3 bg-[#2AABEE]/10 hover:bg-[#2AABEE]/20 rounded-xl border border-[#2AABEE]/30 transition-all text-slate-900 dark:text-white">
                               <div className="flex items-center gap-3">
                                   <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRzS8azG7PVRzinq2bwi1bFK0wF9XYCyXR1IUnaj0hwWQ&s=10" alt="Telegram" className="w-6 h-6 object-contain rounded-full" />
                                   <div className="flex flex-col text-start">
@@ -3954,8 +3854,7 @@ const MostPopularRepacksSection: React.FC<{
 
     return (
         <>
-        <div id="popular-repacks-section" className="mt-12 bg-white dark:bg-slate-900/40 rounded-3xl p-5 sm:p-8 border border-slate-200 dark:border-slate-800/60 md:backdrop-blur-xl relative z-10 w-full overflow-hidden shadow-xl dark:shadow-2xl scroll-mt-24">
-            <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 via-transparent to-primary-500/5 pointer-events-none"></div>
+        <div id="popular-repacks-section" className="mt-12 relative z-10 w-full overflow-hidden scroll-mt-24">
             
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 sm:mb-10 relative z-10">
                 <div className="flex items-center gap-4">
@@ -4645,7 +4544,7 @@ const SecretArea: React.FC = () => {
                   className="w-5 h-5 object-contain" 
                  loading="lazy" />
                 <a 
-                  href="https://t.me/nexa1337agency" 
+                  href="https://t.me/secretarea1337" 
                   target="_blank" 
                   rel="noreferrer" 
                   className="text-blue-400 hover:text-blue-300 underline underline-offset-2 font-bold"
@@ -4661,7 +4560,7 @@ const SecretArea: React.FC = () => {
                   className="w-5 h-5 object-contain" 
                  loading="lazy" />
                 <a 
-                  href="https://discord.gg/MgqvMyZv2b" 
+                  href="https://discord.gg/pygmDWFAHK" 
                   target="_blank" 
                   rel="noreferrer" 
                   className="text-blue-400 hover:text-blue-300 underline underline-offset-2 font-bold"
@@ -4677,7 +4576,7 @@ const SecretArea: React.FC = () => {
                   className="w-5 h-5 object-contain" 
                  loading="lazy" />
                 <a 
-                  href="https://www.reddit.com/r/SecretArea1337" 
+                  href="https://www.reddit.com/r/SecretArea1337/" 
                   target="_blank" 
                   rel="noreferrer" 
                   className="text-blue-400 hover:text-blue-300 underline underline-offset-2 font-bold"
@@ -5105,7 +5004,7 @@ const SecretArea: React.FC = () => {
         if (upcomingPlatform === 'Xbox S/X') return p.includes('xbox') || p.includes('series');
         if (upcomingPlatform === 'Steam') return p.includes('steam') || p.includes('pc');
         return false;
-    });
+    }).reverse();
   }, [upcomingPlatform, upcomingGames]);
 
   useEffect(() => {
@@ -6084,7 +5983,7 @@ const SecretArea: React.FC = () => {
                   initialScrollTarget={selectedResourceAction}
                />
              )}
-             <Footer onSupportClick={() => setShowDonateModal(true)} />
+             
           </div>
       );
   }
@@ -6335,7 +6234,7 @@ const SecretArea: React.FC = () => {
         games={allResources['game']?.slice(0, 8) || []}
         onSelectGame={(game, action) => { setSelectedResource(game); setSelectedResourceAction(action); }}
       />
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-24 pb-40 relative z-10">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-24 pb-4 md:pb-8 relative z-10">
         
         <header className="flex flex-col gap-6 lg:gap-8 mb-12 relative z-[9999] pointer-events-auto">
           <div className="space-y-4">
@@ -6524,22 +6423,33 @@ const SecretArea: React.FC = () => {
                      {t('Get access to premium mastergifts and free accounts. Elevate your gaming experience with our exclusive collection.')}
                   </p>
                   
-                  <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start pt-2">
-                     <button onClick={(e) => { e.preventDefault(); setShowSteamModal(true); }} className="px-8 py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white dark:text-slate-900 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-amber-500/30 transition-all active:scale-95 flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start pt-2">
+                     <button onClick={(e) => { e.preventDefault(); setShowSteamModal(true); }} className="relative px-8 py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white dark:text-slate-900 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-amber-500/30 transition-all active:scale-95 flex items-center gap-2">
+                        {steamAccounts && steamAccounts.length > 0 && (
+                            <span className="absolute -top-1.5 -end-1.5 flex h-3.5 w-3.5 items-center justify-center z-20">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>
+                            </span>
+                        )}
                         <Icon name="User" size={20} />
                         {t('Free Accounts')}
                      </button>
-                     <button onClick={(e) => { e.preventDefault(); setShowMasterGiftModal(true); }} className="px-8 py-3.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600 rounded-xl font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2 shadow-sm">
+                     <button onClick={(e) => { e.preventDefault(); setShowMasterGiftModal(true); }} className="relative px-8 py-3.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600 rounded-xl font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2 shadow-sm">
+                        {masterGifts && masterGifts.length > 0 && (
+                            <span className="absolute -top-1.5 -end-1.5 flex h-3.5 w-3.5 items-center justify-center z-20">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>
+                            </span>
+                        )}
                         <Icon name="Gift" size={20} className="text-amber-500 dark:text-amber-400" />
                         {t('Mastergift')}
                      </button>
                   </div>
                </div>
-
                {/* Right Side: Image */}
                <div className="flex-1 flex justify-center lg:justify-end relative mt-8 lg:mt-0 p-4 lg:p-0">
-                  <div className="absolute inset-0 bg-amber-500/10 dark:bg-amber-500/20 blur-[100px] rounded-full w-[300px] h-[300px] lg:w-[400px] lg:h-[400px] mx-auto lg:mr-10 rtl:lg:ml-10 rtl:lg:mr-auto"></div>
-                  <img src="/images/free_gifts.png" alt="Free Gifts" className="relative z-10 w-full max-w-[350px] lg:max-w-[450px] xl:max-w-[550px] h-auto object-contain drop-shadow-2xl hover:scale-105 hover:-translate-y-2 transition-transform duration-500" />
+                  <div className="absolute inset-0 bg-amber-500/10 dark:bg-amber-500/20 blur-[100px] rounded-full w-[250px] h-[250px] lg:w-[350px] lg:h-[350px] mx-auto lg:mr-10 rtl:lg:ml-10 rtl:lg:mr-auto"></div>
+                  <img src="/images/free_gifts.png" alt="Free Gifts" className="relative z-10 w-full max-w-[280px] lg:max-w-[320px] xl:max-w-[380px] h-auto object-contain drop-shadow-2xl hover:scale-105 hover:-translate-y-2 transition-transform duration-500" />
                </div>
             </div>
           </div>
@@ -7094,7 +7004,7 @@ const SecretArea: React.FC = () => {
             />
         </>
         )}
-        <div className="mt-8 mb-4 w-full flex justify-center">
+        <div className="mt-6 mb-4 w-full flex justify-center">
             <AdBanner 
                 desktopSrc={AD_CONFIG.banner3.desktop} 
                 mobileSrc={AD_CONFIG.banner3.mobile} 
@@ -7110,7 +7020,7 @@ const SecretArea: React.FC = () => {
                     onSeeAll={() => setShowAllProfiles(true)}
                     categoryType="games"
                 />
-                <div className="mt-8 mb-10 w-full flex justify-center">
+                <div className="mt-6 mb-6 w-full flex justify-center">
                     <AdBanner 
                         desktopSrc={AD_CONFIG.banner4.desktop} 
                         mobileSrc={AD_CONFIG.banner4.mobile} 
@@ -7118,7 +7028,7 @@ const SecretArea: React.FC = () => {
                     />
                 </div>
                 <TopGamesSection games={topGames} />
-                <div className="mt-8 mb-2 w-full flex justify-center">
+                <div className="mt-16 mb-16 w-full flex justify-center">
                     <AdBanner 
                         desktopSrc={AD_CONFIG.banner5.desktop} 
                         mobileSrc={AD_CONFIG.banner5.mobile} 
@@ -7135,7 +7045,7 @@ const SecretArea: React.FC = () => {
                     onSeeAll={() => setShowAllProfiles(true)}
                     categoryType="tools"
                 />
-                <div className="mt-8 mb-2 w-full flex justify-center">
+                <div className="mt-16 mb-16 w-full flex justify-center">
                     <AdBanner 
                         desktopSrc={AD_CONFIG.banner4.desktop} 
                         mobileSrc={AD_CONFIG.banner4.mobile} 
@@ -7180,7 +7090,7 @@ const SecretArea: React.FC = () => {
           />
       </div>
 
-      <Footer onSupportClick={() => setShowDonateModal(true)} />
+      
       </motion.div>
       )}
 

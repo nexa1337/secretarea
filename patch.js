@@ -1,4 +1,3 @@
-cat << 'INNEREOF' > patch.js
 const fs = require('fs');
 let content = fs.readFileSync('components/Footer.tsx', 'utf8');
 
@@ -28,5 +27,3 @@ const modalContent = `
 content = content.replace('      </div>\n    </footer>', modalContent);
 
 fs.writeFileSync('components/Footer.tsx', content);
-INNEREOF
-node patch.js
