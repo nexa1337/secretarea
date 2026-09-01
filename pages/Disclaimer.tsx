@@ -1,6 +1,8 @@
 import { useLanguage } from '../src/contexts/LanguageContext';
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import Icon from '../components/Icon';
 
 const Disclaimer: React.FC = () => {
   const { t } = useLanguage();
@@ -12,6 +14,13 @@ const Disclaimer: React.FC = () => {
     <div className="w-full pt-24 pb-24 min-h-screen px-4 sm:px-6 md:px-8 font-sans bg-[#f9f9f8] dark:bg-slate-950">
       <div className="max-w-4xl mx-auto w-full">
         
+        <div className="mb-8">
+          <Link to="/" className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors text-sm font-bold uppercase tracking-widest">
+             <Icon name="ArrowLeft" size={16} />
+             {t('Back to Dashboard')}
+          </Link>
+        </div>
+
         <motion.div
            initial={{ opacity: 0, y: 20 }}
            animate={{ opacity: 1, y: 0 }}

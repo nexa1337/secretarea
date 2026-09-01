@@ -954,6 +954,13 @@ const PersonalFinance: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
+        <div className="mb-8">
+          <Link to="/" className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors text-sm font-bold uppercase tracking-widest">
+             <Icon name="ArrowLeft" size={16} />
+             {t('Back to Dashboard')}
+          </Link>
+        </div>
+
         {/* HEADER */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-10 pb-6 border-b border-slate-200 dark:border-slate-800">
           <div className="mb-4 lg:mb-0">

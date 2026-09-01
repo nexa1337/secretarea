@@ -6424,7 +6424,7 @@ const SecretArea: React.FC = () => {
                   </p>
                   
                     <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start pt-2">
-                     <button onClick={(e) => { e.preventDefault(); setShowSteamModal(true); }} className="relative px-8 py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white dark:text-slate-900 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-amber-500/30 transition-all active:scale-95 flex items-center gap-2">
+                     <button onClick={(e) => { e.preventDefault(); setShowSteamModal(true); }} className="relative px-8 py-3.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-black uppercase tracking-widest shadow-lg transition-all active:scale-95 flex items-center gap-2">
                         {steamAccounts && steamAccounts.length > 0 && (
                             <span className="absolute -top-1.5 -end-1.5 flex h-3.5 w-3.5 items-center justify-center z-20">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -6434,7 +6434,7 @@ const SecretArea: React.FC = () => {
                         <Icon name="User" size={20} />
                         {t('Free Accounts')}
                      </button>
-                     <button onClick={(e) => { e.preventDefault(); setShowMasterGiftModal(true); }} className="relative px-8 py-3.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600 rounded-xl font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2 shadow-sm">
+                     <button onClick={(e) => { e.preventDefault(); setShowMasterGiftModal(true); }} className="relative px-8 py-3.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-black uppercase tracking-widest shadow-lg transition-all active:scale-95 flex items-center gap-2">
                         {masterGifts && masterGifts.length > 0 && (
                             <span className="absolute -top-1.5 -end-1.5 flex h-3.5 w-3.5 items-center justify-center z-20">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>

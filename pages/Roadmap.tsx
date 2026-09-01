@@ -38,6 +38,12 @@ const Roadmap: React.FC = () => {
              style={{ backgroundImage: 'linear-gradient(to right, #808080 1px, transparent 1px), linear-gradient(to bottom, #808080 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
         <div className="mb-24 text-start relative z-10">
+          <div className="mb-8">
+            <Link to="/" className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors text-sm font-bold uppercase tracking-widest">
+               <Icon name="ArrowLeft" size={16} />
+               {t('Back to Dashboard')}
+            </Link>
+          </div>
           <motion.div 
             initial={{ opacity: 0, width: 0 }}
             animate={{ opacity: 1, width: '40px' }}

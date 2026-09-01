@@ -19,10 +19,8 @@ const AnimatedGenreHero: React.FC<AnimatedGenreHeroProps> = ({ genre, games, onB
   const { t } = useLanguage();
   const animationGames = useMemo(() => {
     let shuffled = [...games].sort(() => 0.5 - Math.random());
-    // Limit to max 60 games for performance, but if fewer, tile them up so columns aren't empty
-    if (shuffled.length > 150) {
-      shuffled = shuffled.slice(0, 150);
-    } else if (shuffled.length > 1) {
+    // Ensure we have enough games to fill columns, but don't artificially limit to 150 anymore since the user wants to see all games.
+    if (shuffled.length > 1) {
       let tiled = [...shuffled];
       while(tiled.length < 30) {
         tiled = [...tiled, ...shuffled];
@@ -167,16 +165,16 @@ const AnimatedGenreHero: React.FC<AnimatedGenreHeroProps> = ({ genre, games, onB
         </div>
 
         {/* Right Side Animation */}
-        {/* Calculate duration: let's say 2.5 seconds per item in one column copy */}
+        {/* Calculate duration based on item count for smooth constant speed */}
         <div 
-            className="flex w-full lg:w-1/2 absolute -top-[10vh] -bottom-[10vh] end-0 overflow-hidden gap-3 sm:gap-4 p-2 sm:p-4 opacity-30 lg:opacity-100 mask-image-linear-gradient z-0 pointer-events-none"
-            style={{ '--duration': `${col1.length * 0.8}s` } as React.CSSProperties}
+            className="flex w-full lg:w-1/2 absolute -top-[10vh] -bottom-[10vh] end-0 overflow-hidden px-2 sm:px-4 opacity-30 lg:opacity-100 mask-image-linear-gradient z-0 pointer-events-none"
+            style={{ '--duration': `${Math.max(col1.length * 3, 20)}s` } as React.CSSProperties}
         >
             <style dangerouslySetInnerHTML={{__html: `
                 .mask-image-linear-gradient {
-                    mask-image: linear-gradient(to right, transparent 0%, black 40%, black 100%), linear-gradient(to bottom, black 0%, black 85%, transparent);
+                    mask-image: linear-gradient(to right, transparent 0%, black 40%, black 100%), linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
                     mask-composite: intersect;
-                    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 40%, black 100%), linear-gradient(to bottom, black 0%, black 85%, transparent);
+                    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 40%, black 100%), linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
                     -webkit-mask-composite: source-in;
                 }
                 @keyframes scroll-up {
@@ -196,28 +194,34 @@ const AnimatedGenreHero: React.FC<AnimatedGenreHeroProps> = ({ genre, games, onB
             `}} />
             
             {/* Column 1 (Scrolls Up) */}
-            <div className="flex-1 flex flex-col gap-3 sm:gap-4 animate-scroll-up">
+            <div className="flex-1 flex flex-col animate-scroll-up px-1.5 sm:px-2">
                 {col1Dup.map((game, idx) => (
-                    <div key={'col1-' + idx} className="w-full aspect-[3/4] rounded-2xl overflow-hidden shadow-xl border border-slate-200 dark:border-white/5 shrink-0 bg-slate-800">
-                        <img src={game.coverImage} alt={game.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
+                    <div key={'col1-' + idx} className="w-full pb-3 sm:pb-4 shrink-0">
+                        <div className="w-full aspect-[3/4] rounded-2xl overflow-hidden shadow-xl border border-slate-200 dark:border-white/5 bg-slate-800">
+                            <img src={game.coverImage} alt={game.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
+                        </div>
                     </div>
                 ))}
             </div>
 
             {/* Column 2 (Scrolls Down) */}
-            <div className="flex-1 flex flex-col gap-3 sm:gap-4 animate-scroll-down">
+            <div className="flex-1 flex flex-col animate-scroll-down px-1.5 sm:px-2">
                 {col2Dup.map((game, idx) => (
-                    <div key={'col2-' + idx} className="w-full aspect-[3/4] rounded-2xl overflow-hidden shadow-xl border border-slate-200 dark:border-white/5 shrink-0 bg-slate-800">
-                        <img src={game.coverImage} alt={game.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
+                    <div key={'col2-' + idx} className="w-full pb-3 sm:pb-4 shrink-0">
+                        <div className="w-full aspect-[3/4] rounded-2xl overflow-hidden shadow-xl border border-slate-200 dark:border-white/5 bg-slate-800">
+                            <img src={game.coverImage} alt={game.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
+                        </div>
                     </div>
                 ))}
             </div>
             
             {/* Column 3 (Scrolls Up) - visible on larger screens */}
-            <div className="hidden md:flex flex-1 flex-col gap-3 sm:gap-4 animate-scroll-up" style={{ animationDelay: `-${(col1.length * 0.8) / 2}s` }}>
+            <div className="hidden md:flex flex-1 flex-col animate-scroll-up px-1.5 sm:px-2" style={{ animationDelay: `-${Math.max(col1.length * 3, 20) / 2}s` }}>
                 {col3Dup.map((game, idx) => (
-                    <div key={'col3-' + idx} className="w-full aspect-[3/4] rounded-2xl overflow-hidden shadow-xl border border-slate-200 dark:border-white/5 shrink-0 bg-slate-800">
-                        <img src={game.coverImage} alt={game.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
+                    <div key={'col3-' + idx} className="w-full pb-3 sm:pb-4 shrink-0">
+                        <div className="w-full aspect-[3/4] rounded-2xl overflow-hidden shadow-xl border border-slate-200 dark:border-white/5 bg-slate-800">
+                            <img src={game.coverImage} alt={game.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
+                        </div>
                     </div>
                 ))}
             </div>
