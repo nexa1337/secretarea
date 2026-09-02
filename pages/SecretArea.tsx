@@ -2391,7 +2391,10 @@ const ResourceDetailModal: React.FC<{
   showGuestNotification?: () => void;
   globalSpecs?: { ram: number, os: string, cpuModel: string, gpuModel: string, isActive: boolean };
   initialScrollTarget?: string;
-}> = ({ item, onClose, isHypervisor, stash, toggleStash, onCompanyClick, onGenreClick, resolvedDev, isGuestMode, showGuestNotification, globalSpecs, initialScrollTarget }) => {
+  onDonateClick?: () => void;
+  allResources?: Record<string, ResourceItem[]>;
+  onItemSelect?: (item: ResourceItem) => void;
+}> = ({ item, onClose, isHypervisor, stash, toggleStash, onCompanyClick, onGenreClick, resolvedDev, isGuestMode, showGuestNotification, globalSpecs, initialScrollTarget, onDonateClick, allResources, onItemSelect }) => {
   const { dir, t } = useLanguage();
   const [showTrailer, setShowTrailer] = useState(false);
   const [showHypervisorGuide, setShowHypervisorGuide] = useState(false);
@@ -2426,6 +2429,66 @@ const ResourceDetailModal: React.FC<{
   const isSteamTool = item.category === 'steamtools';
   const isExtra = item.category === 'extra';
 
+  const recommendedScrollRef = React.useRef<HTMLDivElement>(null);
+  const handleScrollRecommended = (direction: 'left' | 'right') => {
+      if (recommendedScrollRef.current) {
+          const scrollAmount = recommendedScrollRef.current.clientWidth * 0.6;
+          const modifier = dir === 'rtl' ? -1 : 1;
+          const actualDirection = direction === 'left' ? -scrollAmount : scrollAmount;
+          recommendedScrollRef.current.scrollBy({ left: actualDirection * modifier, behavior: 'smooth' });
+      }
+  };
+
+  const recommendedItems = React.useMemo(() => {
+      if (!allResources || !allResources[item.category]) return [];
+      
+      let recommendations: ResourceItem[] = [];
+      
+      if (item.category === 'game' || item.category === 'hypervisor') {
+          const firstGenre = item.genres ? item.genres.split(',')[0].trim().toLowerCase() : '';
+          if (firstGenre) {
+              recommendations = allResources[item.category].filter(resource => {
+                  if (resource.id === item.id) return false;
+                  const resourceFirstGenre = resource.genres ? resource.genres.split(',')[0].trim().toLowerCase() : '';
+                  return resourceFirstGenre === firstGenre;
+              });
+          }
+      } else {
+          // For non-game categories like steamtools, extra (Architect/tools), etc.
+          // Use smart name/keyword matching
+          const itemWords = item.name.toLowerCase().split(/[\s\-_]+/).filter(w => w.length > 2);
+          recommendations = allResources[item.category].filter(resource => {
+              if (resource.id === item.id) return false;
+              const resourceWords = resource.name.toLowerCase().split(/[\s\-_]+/).filter(w => w.length > 2);
+              return itemWords.some(w => resourceWords.includes(w));
+          });
+      }
+      
+      // Randomize the matched recommendations so users see fresh items on reload or when choosing another game
+      recommendations = [...recommendations].sort(() => 0.5 - Math.random());
+      
+      // Smart fallback: if we don't have enough recommendations (less than 8), 
+      // fill the rest with other items in the same category automatically to ensure the section is never empty.
+      if (recommendations.length < 8) {
+          const existingIds = new Set(recommendations.map(r => r.id));
+          existingIds.add(item.id);
+          const fillers = allResources[item.category].filter(r => !existingIds.has(r.id));
+          // Randomize fallbacks as well
+          const randomizedFillers = [...fillers].sort(() => 0.5 - Math.random());
+          recommendations = [...recommendations, ...randomizedFillers];
+      }
+      
+      // Return ALL items to show the true number of matching products
+      return recommendations;
+  }, [item, allResources]);
+
+  React.useEffect(() => {
+    const container = document.getElementById('modal-scroll-container');
+    if (container) {
+      container.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  }, [item.id]);
+
   React.useEffect(() => {
     if (initialScrollTarget) {
       setTimeout(() => {
@@ -2439,7 +2502,7 @@ const ResourceDetailModal: React.FC<{
         }
       }, 350);
     }
-  }, [initialScrollTarget, item]);
+  }, [initialScrollTarget]);
 
   return (
     <motion.div 
@@ -2448,7 +2511,7 @@ const ResourceDetailModal: React.FC<{
       exit={{ opacity: 0 }}
       dir={dir} 
       id="modal-scroll-container"
-      className="fixed inset-0 z-[100] bg-slate-50 dark:bg-[#0B1120] overflow-y-auto custom-scrollbar flex flex-col w-full h-full"
+      className="fixed top-16 left-0 right-0 bottom-0 z-40 bg-slate-50 dark:bg-[#0B1120] overflow-y-auto custom-scrollbar flex flex-col w-full h-full pb-20 md:pb-0"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Header with Breadcrumb and Close Button */}
@@ -2866,6 +2929,61 @@ const ResourceDetailModal: React.FC<{
                       </div>
                   </div>
 
+                  {/* Streamer Section */}
+                  <div className="py-6 sm:py-12 border-b border-slate-200 dark:border-slate-800" dir={dir}>
+                      <div className="bg-slate-50 dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xl flex flex-col lg:flex-row">
+                          {/* Image Column */}
+                          <div className="w-full lg:w-5/12 relative bg-[#09090b] flex items-center justify-center min-h-[300px] lg:min-h-[500px]">
+                              <img 
+                                  src="/images/streamer.png" 
+                                  alt="Streamer" 
+                                  className="absolute inset-0 w-full h-full object-contain opacity-100 z-0"
+                              />
+                              {/* Mobile/Tablet bottom gradient */}
+                              <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate-50 to-transparent dark:from-slate-900 pointer-events-none lg:hidden z-10" />
+                              {/* Desktop side gradient */}
+                              <div className={`hidden lg:block absolute inset-y-0 ${dir === 'rtl' ? 'left-0 w-40 bg-gradient-to-r' : 'right-0 w-40 bg-gradient-to-l'} from-slate-50 to-transparent dark:from-slate-900 pointer-events-none z-10`} />
+                          </div>
+                          
+                          {/* Content Column */}
+                          <div className="w-full lg:w-7/12 p-8 lg:p-12 flex flex-col justify-center bg-slate-50 dark:bg-slate-900 z-10 relative">
+                              <h4 className="text-primary-500 font-black tracking-widest uppercase text-xs sm:text-sm mb-4">
+                                  {t('ONE PASSION. ONE COMMUNITY. FREEDOM TO PLAY.')}
+                              </h4>
+                              <h2 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white mb-6 uppercase leading-tight">
+                                  {t("WE DON'T JUST PLAY GAMES, WE LIVE THEM.")}
+                              </h2>
+                              <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base leading-relaxed mb-8">
+                                  {t('Different players. Same passion. Same freedom. Come join a community where gaming brings us together, friendships grow, and everyone is free to play their way. No limits. No judgment. Just gaming, fun & good vibes.')}
+                              </p>
+                              
+                              <div className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-widest uppercase mb-4 flex items-center gap-2">
+                                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0"></span>
+                                  {t('LIVE ON KICK • TIKTOK • YOUTUBE')}
+                              </div>
+                              
+                              <div className="flex flex-wrap gap-3 mb-6">
+                                  <a href="https://kick.com/secretarea1337" target="_blank" rel="noreferrer" className="flex items-center gap-2 px-6 py-3 bg-[#53FC18] hover:bg-[#4AE315] text-black rounded-xl font-bold uppercase tracking-wider text-sm transition-transform active:scale-95 shadow-lg shadow-[#53FC18]/20">
+                                      <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M5 2h4v8h2V6h2V4h6v6h-2v2h-2v2h2v2h2v6h-6v-2h-2v-4h-2v6H5V2z"/></svg>
+                                      {t('WATCH LIVE')}
+                                  </a>
+                                  <a href="https://www.tiktok.com/@secretarea1337" target="_blank" rel="noreferrer" className="flex items-center gap-2 px-6 py-3 bg-black hover:bg-slate-900 text-white rounded-xl font-bold uppercase tracking-wider text-sm transition-transform active:scale-95 shadow-lg border border-slate-700">
+                                      <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 15.68l.01.02a6.33 6.33 0 0 0 11.23 4.04 6.27 6.27 0 0 0 1.54-4.2V8.65a8.21 8.21 0 0 0 3.84 1.34V6.52a5.06 5.06 0 0 1-2.03-.83Z"/></svg>
+                                      {t('FOLLOW US')}
+                                  </a>
+                                  <a href="https://www.youtube.com/@SecretArea1337" target="_blank" rel="noreferrer" className="flex items-center gap-2 px-6 py-3 bg-[#FF0000] hover:bg-[#E60000] text-white rounded-xl font-bold uppercase tracking-wider text-sm transition-transform active:scale-95 shadow-lg shadow-[#FF0000]/20">
+                                      <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M21.582 6.186a2.6 2.6 0 0 0-1.826-1.834C18.145 3.9 12 3.9 12 3.9s-6.145 0-7.756.452a2.6 2.6 0 0 0-1.826 1.834C2 7.8 2 12 2 12s0 4.2.418 5.814a2.6 2.6 0 0 0 1.826 1.834C5.855 20.1 12 20.1 12 20.1s6.145 0 7.756-.452a2.6 2.6 0 0 0 1.826-1.834C22 16.2 22 12 22 12s0-4.2-.418-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                                      {t('SUBSCRIBE')}
+                                  </a>
+                              </div>
+                              
+                              <p className="text-slate-500 dark:text-slate-400 text-xs font-medium">
+                                  {t('Your support keeps the stream alive.')} <span className="font-bold text-slate-800 dark:text-slate-200">{t('Your passion belongs here.')}</span>
+                              </p>
+                          </div>
+                      </div>
+                  </div>
+
                   {/* Download Channels */}
                   {(item.links.full || (item.links.mirrors && item.links.mirrors.length > 0) || (item.links.parts && item.links.parts.length > 0) || (item.links.ankerParts && item.links.ankerParts.length > 0)) && (
                   <div className="py-6 sm:py-12" id="download">
@@ -3038,7 +3156,126 @@ const ResourceDetailModal: React.FC<{
 
               </div>
           </div>
+
+          {/* Support Us Section */}
+          <div className="w-full" dir={dir}>
+            <div className="bg-slate-50 dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xl flex flex-col lg:flex-row">
+                {/* Content Column */}
+                <div className="w-full lg:w-1/2 p-8 lg:p-12 flex flex-col justify-center bg-slate-50 dark:bg-slate-900 z-10 relative">
+                    <h4 className="text-primary-500 font-black tracking-widest uppercase text-xs sm:text-sm mb-4">
+                        {t('YOUR SUPPORT MATTERS')}
+                    </h4>
+                    <h2 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white mb-6 uppercase leading-tight">
+                        {t('KEEP THE GAME ALIVE')}
+                    </h2>
+                    <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base leading-relaxed mb-8">
+                        {t('Every contribution goes directly into server upgrades, faster downloads, and exclusive new features. Join the elite supporters who make this community possible.')}
+                    </p>
+                    
+                    <div className="flex flex-wrap gap-3 mb-6">
+                        <button onClick={(e) => { e.preventDefault(); if (onDonateClick) onDonateClick(); }} className="flex items-center justify-center gap-2 px-8 py-4 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold uppercase tracking-wider text-sm transition-transform active:scale-95 shadow-lg shadow-primary-500/20">
+                            <Icon name="Heart" size={18} />
+                            {t('Support Us')}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Image Column */}
+                <div className="w-full lg:w-1/2 relative bg-[#f8fafc] dark:bg-[#09090b] flex items-center justify-center p-6 lg:p-10">
+                    <img 
+                        src="/images/supportus.png" 
+                        alt="Support Us" 
+                        className="w-full h-auto object-contain opacity-100 z-0 drop-shadow-2xl hover:scale-105 transition-transform duration-500 rounded-2xl"
+                    />
+                    {/* Mobile/Tablet bottom gradient */}
+                    <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-50 to-transparent dark:from-slate-900 pointer-events-none lg:hidden z-10" />
+                    {/* Desktop side gradient */}
+                    <div className={`hidden lg:block absolute inset-y-0 ${dir === 'rtl' ? 'right-0 w-32 bg-gradient-to-l' : 'left-0 w-32 bg-gradient-to-r'} from-slate-50 to-transparent dark:from-slate-900 pointer-events-none z-10`} />
+                </div>
+            </div>
           </div>
+          </div>
+
+          {/* Recommended For You Section */}
+          {recommendedItems.length > 0 && (
+              <div className="max-w-7xl mx-auto w-full px-4 sm:px-8 pb-8 mt-4 pt-10 border-t border-slate-200 dark:border-slate-800/50" dir={dir}>
+                  <div className="flex items-center justify-between mb-8">
+                      <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-primary-500/10 text-primary-500 rounded-2xl flex items-center justify-center shadow-inner">
+                              <Icon name="Sparkles" size={24} />
+                          </div>
+                          <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-widest">
+                              {t('Recommended For You')}
+                              <span className="text-slate-400 dark:text-slate-500 ms-2">({recommendedItems.length})</span>
+                          </h3>
+                      </div>
+                      <div className="hidden sm:flex items-center gap-3">
+                          <button 
+                              onClick={() => handleScrollRecommended('left')}
+                              className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center hover:bg-primary-500 hover:text-white transition-colors border border-slate-200 dark:border-slate-700 shadow-sm"
+                          >
+                              <Icon name={dir === 'rtl' ? 'ChevronRight' : 'ChevronLeft'} size={20} />
+                          </button>
+                          <button 
+                              onClick={() => handleScrollRecommended('right')}
+                              className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center hover:bg-primary-500 hover:text-white transition-colors border border-slate-200 dark:border-slate-700 shadow-sm"
+                          >
+                              <Icon name={dir === 'rtl' ? 'ChevronLeft' : 'ChevronRight'} size={20} />
+                          </button>
+                      </div>
+                  </div>
+                  <div 
+                      ref={recommendedScrollRef}
+                      className="flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory scroll-smooth [&::-webkit-scrollbar]:hidden" 
+                      dir={dir}
+                      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                  >
+                      {(() => {
+                          const isGame = item.category === 'game';
+                          const itemsToRender = isGame ? recommendedItems.slice(0, 8) : recommendedItems;
+                          const hasMore = isGame && recommendedItems.length > 8;
+
+                          return (
+                              <>
+                                  {itemsToRender.map(rec => (
+                                      <div 
+                                          key={rec.id} 
+                                          className="shrink-0 snap-start cursor-pointer group transition-all duration-300 w-[200px] sm:w-[240px] md:w-[280px] lg:w-[320px]"
+                                          onClick={() => { if(onItemSelect) onItemSelect(rec); }}
+                                      >
+                                          <div className="aspect-[2/3] rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl group-hover:shadow-2xl group-hover:-translate-y-1 group-hover:brightness-110 transition-all duration-300">
+                                              <img src={rec.coverImage} alt={rec.name} className="w-full h-full object-cover" />
+                                          </div>
+                                      </div>
+                                  ))}
+                                  {hasMore && (
+                                      <div 
+                                          className="shrink-0 snap-start cursor-pointer group transition-all duration-300 w-[200px] sm:w-[240px] md:w-[280px] lg:w-[320px]"
+                                          onClick={() => {
+                                              const firstGenre = item.genres ? item.genres.split(',')[0].trim() : '';
+                                              if (firstGenre && onGenreClick) {
+                                                  onGenreClick(firstGenre);
+                                              } else {
+                                                  onClose();
+                                              }
+                                          }}
+                                      >
+                                          <div className="aspect-[2/3] rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 shadow-xl group-hover:shadow-2xl group-hover:-translate-y-1 group-hover:border-primary-500/50 transition-all duration-300 flex flex-col items-center justify-center gap-4 text-slate-500 hover:text-primary-500">
+                                              <div className="w-16 h-16 rounded-full bg-slate-200/80 dark:bg-slate-700/80 flex items-center justify-center transition-transform group-hover:scale-110">
+                                                  <Icon name="ArrowRight" size={32} className={dir === 'rtl' ? 'rotate-180' : ''} />
+                                              </div>
+                                              <span className="font-bold uppercase tracking-wider text-sm">{t('See More')}</span>
+                                              <span className="text-xs text-slate-400 dark:text-slate-500">+{recommendedItems.length - 8} {t('Games')}</span>
+                                          </div>
+                                      </div>
+                                  )}
+                              </>
+                          );
+                      })()}
+                  </div>
+              </div>
+          )}
+
           <div className="max-w-7xl mx-auto w-full px-4 sm:px-8 pb-8">
 {/* Comments Section */}
           <CommentsSection itemId={item.id} itemTitle={item.title || item.name} itemCategory={item.category} />
@@ -5981,8 +6218,11 @@ const SecretArea: React.FC = () => {
                   stash={stash}
                   toggleStash={toggleStash}
                   initialScrollTarget={selectedResourceAction}
-               />
-             )}
+                  onDonateClick={() => setShowDonateModal(true)}
+              allResources={allResources}
+              onItemSelect={(rec) => { setSelectedResource(rec); setSelectedResourceAction(undefined); }}
+           />
+         )}
              
           </div>
       );
@@ -6148,6 +6388,9 @@ const SecretArea: React.FC = () => {
               isGuestMode={isGuestMode}
               showGuestNotification={showGuestNotification}
               initialScrollTarget={selectedResourceAction}
+              onDonateClick={() => setShowDonateModal(true)}
+              allResources={allResources}
+              onItemSelect={(rec) => { setSelectedResource(rec); setSelectedResourceAction(undefined); setOpenedViaRandom(false); }}
             />
             {openedViaRandom && (
               <motion.div
