@@ -2394,7 +2394,8 @@ const ResourceDetailModal: React.FC<{
   onDonateClick?: () => void;
   allResources?: Record<string, ResourceItem[]>;
   onItemSelect?: (item: ResourceItem) => void;
-}> = ({ item, onClose, isHypervisor, stash, toggleStash, onCompanyClick, onGenreClick, resolvedDev, isGuestMode, showGuestNotification, globalSpecs, initialScrollTarget, onDonateClick, allResources, onItemSelect }) => {
+  currentGenreContext?: string | null;
+}> = ({ item, onClose, isHypervisor, stash, toggleStash, onCompanyClick, onGenreClick, resolvedDev, isGuestMode, showGuestNotification, globalSpecs, initialScrollTarget, onDonateClick, allResources, onItemSelect, currentGenreContext }) => {
   const { dir, t } = useLanguage();
   const [showTrailer, setShowTrailer] = useState(false);
   const [showHypervisorGuide, setShowHypervisorGuide] = useState(false);
@@ -2445,14 +2446,34 @@ const ResourceDetailModal: React.FC<{
       let recommendations: ResourceItem[] = [];
       
       if (item.category === 'game' || item.category === 'hypervisor') {
-          const firstGenre = item.genres ? item.genres.split(',')[0].trim().toLowerCase() : '';
-          if (firstGenre) {
-              recommendations = allResources[item.category].filter(resource => {
-                  if (resource.id === item.id) return false;
-                  const resourceFirstGenre = resource.genres ? resource.genres.split(',')[0].trim().toLowerCase() : '';
-                  return resourceFirstGenre === firstGenre;
-              });
-          }
+          const itemGenres = item.genres ? item.genres.split(',').map(g => g.trim().toLowerCase()).filter(Boolean) : [];
+          
+          let exactMatches: ResourceItem[] = [];
+          let partialMatches: ResourceItem[] = [];
+          
+          // Priority 1: Use context genre if user was browsing a specific genre
+          // Priority 2: Fallback to the game's first genre
+          const targetGenre = currentGenreContext 
+              ? currentGenreContext.toLowerCase() 
+              : (itemGenres[0] || '');
+              
+          allResources[item.category].forEach(resource => {
+              if (resource.id === item.id) return;
+              if (!resource.genres) return;
+              
+              const resourceGenres = resource.genres.split(',').map(g => g.trim().toLowerCase()).filter(Boolean);
+              
+              if (targetGenre && resourceGenres.includes(targetGenre)) {
+                  exactMatches.push(resource);
+              } else if (itemGenres.some(g => resourceGenres.includes(g))) {
+                  partialMatches.push(resource);
+              }
+          });
+          
+          exactMatches = exactMatches.sort(() => 0.5 - Math.random());
+          partialMatches = partialMatches.sort(() => 0.5 - Math.random());
+          
+          recommendations = [...exactMatches, ...partialMatches];
       } else {
           // For non-game categories like steamtools, extra (Architect/tools), etc.
           // Use smart name/keyword matching
@@ -2462,10 +2483,10 @@ const ResourceDetailModal: React.FC<{
               const resourceWords = resource.name.toLowerCase().split(/[\s\-_]+/).filter(w => w.length > 2);
               return itemWords.some(w => resourceWords.includes(w));
           });
+          
+          // Randomize keyword matches
+          recommendations = [...recommendations].sort(() => 0.5 - Math.random());
       }
-      
-      // Randomize the matched recommendations so users see fresh items on reload or when choosing another game
-      recommendations = [...recommendations].sort(() => 0.5 - Math.random());
       
       // Smart fallback: if we don't have enough recommendations (less than 8), 
       // fill the rest with other items in the same category automatically to ensure the section is never empty.
@@ -3233,7 +3254,7 @@ const ResourceDetailModal: React.FC<{
                       {(() => {
                           const isGame = item.category === 'game';
                           const itemsToRender = isGame ? recommendedItems.slice(0, 8) : recommendedItems;
-                          const hasMore = isGame && recommendedItems.length > 8;
+                          const hasMore = isGame;
 
                           return (
                               <>
@@ -3252,9 +3273,11 @@ const ResourceDetailModal: React.FC<{
                                       <div 
                                           className="shrink-0 snap-start cursor-pointer group transition-all duration-300 w-[200px] sm:w-[240px] md:w-[280px] lg:w-[320px]"
                                           onClick={() => {
-                                              const firstGenre = item.genres ? item.genres.split(',')[0].trim() : '';
-                                              if (firstGenre && onGenreClick) {
-                                                  onGenreClick(firstGenre);
+                                              const targetGenre = currentGenreContext 
+                                                  ? currentGenreContext 
+                                                  : (item.genres ? item.genres.split(',')[0].trim() : '');
+                                              if (targetGenre && onGenreClick) {
+                                                  onGenreClick(targetGenre);
                                               } else {
                                                   onClose();
                                               }
@@ -3265,7 +3288,9 @@ const ResourceDetailModal: React.FC<{
                                                   <Icon name="ArrowRight" size={32} className={dir === 'rtl' ? 'rotate-180' : ''} />
                                               </div>
                                               <span className="font-bold uppercase tracking-wider text-sm">{t('See More')}</span>
-                                              <span className="text-xs text-slate-400 dark:text-slate-500">+{recommendedItems.length - 8} {t('Games')}</span>
+                                              <span className="text-xs text-slate-400 dark:text-slate-500">
+                                                  {recommendedItems.length > 8 ? `+${recommendedItems.length - 8} ${t('Games')}` : t('Explore Genre')}
+                                              </span>
                                           </div>
                                       </div>
                                   )}
@@ -6219,10 +6244,20 @@ const SecretArea: React.FC = () => {
                   toggleStash={toggleStash}
                   initialScrollTarget={selectedResourceAction}
                   onDonateClick={() => setShowDonateModal(true)}
-              allResources={allResources}
-              onItemSelect={(rec) => { setSelectedResource(rec); setSelectedResourceAction(undefined); }}
-           />
-         )}
+                  allResources={allResources}
+                  onItemSelect={(rec) => { setSelectedResource(rec); setSelectedResourceAction(undefined); }}
+                  currentGenreContext={selectedGenreView}
+                  resolvedDev={getResolvedDeveloper(selectedResource)}
+                  onCompanyClick={handleCompanyClick}
+                  isGuestMode={isGuestMode}
+                  showGuestNotification={showGuestNotification}
+                  onGenreClick={(genre) => {
+                      setSelectedGenreView(genre);
+                      setSelectedResource(null);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+               />
+             )}
              
           </div>
       );
@@ -6376,13 +6411,12 @@ const SecretArea: React.FC = () => {
               stash={stash}
               toggleStash={toggleStash}
               onCompanyClick={handleCompanyClick}
+              currentGenreContext={selectedGenreView}
               onGenreClick={(genre) => {
-                setSearchQuery(genre);
-                if (['game', 'hypervisor', 'steamtools'].includes(selectedResource.category.toLowerCase())) {
-                    setActiveTab(selectedResource.category.toLowerCase() as any);
-                }
+                setSelectedGenreView(genre);
                 setSelectedResource(null);
                 setOpenedViaRandom(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
               resolvedDev={getResolvedDeveloper(selectedResource)}
               isGuestMode={isGuestMode}
@@ -7120,7 +7154,7 @@ const SecretArea: React.FC = () => {
                                 )}
                             </div>
                             {item.category === 'game' && item.links?.ankerParts && item.links.ankerParts.length > 0 && (
-                                <div className="absolute top-2 start-1/2 -translate-x-1/2 px-1.5 py-0.5 sm:px-2 sm:py-1 bg-indigo-500/20 dark:bg-indigo-500/10 backdrop-blur-md border border-indigo-500/30 dark:border-indigo-400/20 shadow-[0_4px_30px_rgba(0,0,0,0.1)] text-indigo-900 dark:text-indigo-100 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest shadow-xl flex items-center gap-1 z-30 pointer-events-none whitespace-nowrap">
+                                <div className="absolute top-2 start-1/2 -translate-x-1/2 px-2 py-1 bg-indigo-600/90 dark:bg-indigo-900/80 backdrop-blur-md border border-indigo-500/30 shadow-lg text-white rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest flex items-center gap-1 z-30 pointer-events-none whitespace-nowrap">
                                 <Icon name="Zap" size={10} className="text-amber-400" /> <span>{t('Pre-installed')}</span>
                             </div>
                             )}
@@ -7339,7 +7373,7 @@ const SecretArea: React.FC = () => {
 
       {/* Scroll to Top Button */}
       <AnimatePresence>
-        {showScrollTop && (
+        {showScrollTop && !selectedResource && !selectedCompanyProfile && !showAllProfiles && !showRequestModal && !showDonateModal && !showSteamModal && !showMasterGiftModal && !showDisclaimer && !showIntelPanel && (
           <motion.button 
             initial={{ opacity: 0, scale: 0.8, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}

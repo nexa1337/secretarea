@@ -7,6 +7,9 @@ interface ResourceItem {
   id: string;
   name: string;
   coverImage: string;
+  links?: {
+    ankerParts?: any[];
+  };
 }
 
 interface AnimatedGenreHeroProps {
@@ -17,17 +20,58 @@ interface AnimatedGenreHeroProps {
 
 const AnimatedGenreHero: React.FC<AnimatedGenreHeroProps> = ({ genre, games, onBack }) => {
   const { t } = useLanguage();
-  const animationGames = useMemo(() => {
-    let shuffled = [...games].sort(() => 0.5 - Math.random());
-    // Ensure we have enough games to fill columns, but don't artificially limit to 150 anymore since the user wants to see all games.
-    if (shuffled.length > 1) {
-      let tiled = [...shuffled];
-      while(tiled.length < 30) {
-        tiled = [...tiled, ...shuffled];
-      }
-      shuffled = tiled;
-    }
-    return shuffled;
+  const { cols, durations, preInstalledCount } = useMemo(() => {
+    // 1. Get the count of pre-installed games
+    const preInstalledCount = games.filter(g => g.links?.ankerParts && g.links.ankerParts.length > 0).length;
+
+    // 2. Prepare the base array (shuffle it once)
+    const allGames = [...games].sort(() => 0.5 - Math.random());
+    
+    // Shift array helper to offset games across columns
+    const shiftArray = (arr: ResourceItem[], offset: number) => {
+        if (arr.length === 0) return arr;
+        const shift = offset % arr.length;
+        return [...arr.slice(shift), ...arr.slice(0, shift)];
+    };
+
+    // Create 3 offset arrays so all games are in each column but staggered
+    const offset2 = Math.max(1, Math.floor(allGames.length / 3));
+    const offset3 = Math.max(2, Math.floor((allGames.length * 2) / 3));
+    
+    const c1 = shiftArray(allGames, 0);
+    const c2 = shiftArray(allGames, offset2);
+    const c3 = shiftArray(allGames, offset3);
+
+    // Pad arrays so they are long enough for a seamless loop screen-fill
+    const padToMin = (col: ResourceItem[], min: number) => {
+        if (col.length === 0) return [];
+        let padded = [...col];
+        while (padded.length < min) {
+            padded = [...padded, ...col];
+        }
+        return padded;
+    };
+
+    const minItems = 12; // Minimum items required to ensure the column is taller than the screen
+    const b1 = padToMin(c1, minItems);
+    const b2 = padToMin(c2, minItems);
+    const b3 = padToMin(c3, minItems);
+
+    return {
+        preInstalledCount,
+        // Duplicate exactly once to allow a seamless 50% translation loop
+        cols: [
+            [...b1, ...b1], 
+            [...b2, ...b2],
+            [...b3, ...b3]
+        ],
+        // Duration proportional to the base length for constant scroll speed
+        durations: [
+            b1.length * 4.5,
+            b2.length * 4.5,
+            b3.length * 4.5
+        ]
+    };
   }, [games]);
 
   if (games.length === 0) return null;
@@ -77,17 +121,6 @@ const AnimatedGenreHero: React.FC<AnimatedGenreHeroProps> = ({ genre, games, onB
     );
   }
 
-  // Split into 3 columns
-  const colSize = Math.ceil(animationGames.length / 3);
-  const col1 = animationGames.slice(0, colSize);
-  const col2 = animationGames.slice(colSize, colSize * 2);
-  const col3 = animationGames.slice(colSize * 2);
-
-  // Duplicate for smooth infinite scroll
-  const col1Dup = [...col1, ...col1];
-  const col2Dup = [...col2, ...col2];
-  const col3Dup = [...col3, ...col3];
-
   return (
     <div className="w-full bg-transparent flex flex-col md:flex-row items-center relative mb-12 min-h-[500px] -mt-16 pt-24 lg:px-8">
         {/* Left Side Content */}
@@ -125,7 +158,10 @@ const AnimatedGenreHero: React.FC<AnimatedGenreHeroProps> = ({ genre, games, onB
                     </div>
                     <div className="w-px h-10 bg-slate-300 dark:bg-slate-800"></div>
                     <div>
-                        <div className="text-3xl font-black text-slate-900 dark:text-white flex items-center"><Icon name="Zap" size={24} className="text-emerald-500 me-1" /></div>
+                        <div className="text-3xl font-black text-slate-900 dark:text-white flex items-center">
+                            <Icon name="Zap" size={24} className="text-emerald-500 me-2" />
+                            {preInstalledCount}
+                        </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mt-1">{t('Pre-installed')}</div>
                     </div>
                 </div>
@@ -165,10 +201,8 @@ const AnimatedGenreHero: React.FC<AnimatedGenreHeroProps> = ({ genre, games, onB
         </div>
 
         {/* Right Side Animation */}
-        {/* Calculate duration based on item count for smooth constant speed */}
         <div 
             className="flex w-full lg:w-1/2 absolute -top-[10vh] -bottom-[10vh] end-0 overflow-hidden px-2 sm:px-4 opacity-30 lg:opacity-100 mask-image-linear-gradient z-0 pointer-events-none"
-            style={{ '--duration': `${Math.max(col1.length * 3, 20)}s` } as React.CSSProperties}
         >
             <style dangerouslySetInnerHTML={{__html: `
                 .mask-image-linear-gradient {
@@ -186,18 +220,28 @@ const AnimatedGenreHero: React.FC<AnimatedGenreHeroProps> = ({ genre, games, onB
                     100% { transform: translateY(0); }
                 }
                 .animate-scroll-up {
-                    animation: scroll-up var(--duration) linear infinite;
+                    animation-name: scroll-up;
+                    animation-timing-function: linear;
+                    animation-iteration-count: infinite;
                 }
                 .animate-scroll-down {
-                    animation: scroll-down var(--duration) linear infinite;
+                    animation-name: scroll-down;
+                    animation-timing-function: linear;
+                    animation-iteration-count: infinite;
+                }
+                .pause-on-hover:hover {
+                    animation-play-state: paused;
                 }
             `}} />
             
             {/* Column 1 (Scrolls Up) */}
-            <div className="flex-1 flex flex-col animate-scroll-up px-1.5 sm:px-2">
-                {col1Dup.map((game, idx) => (
+            <div 
+                className="flex-1 flex flex-col h-max animate-scroll-up pause-on-hover pointer-events-auto px-1.5 sm:px-2"
+                style={{ animationDuration: `${durations[0]}s` }}
+            >
+                {cols[0].map((game, idx) => (
                     <div key={'col1-' + idx} className="w-full pb-3 sm:pb-4 shrink-0">
-                        <div className="w-full aspect-[3/4] rounded-2xl overflow-hidden shadow-xl border border-slate-200 dark:border-white/5 bg-slate-800">
+                        <div className="w-full aspect-[3/4] rounded-2xl overflow-hidden shadow-xl border border-slate-200 dark:border-white/5 bg-slate-800 transition-transform duration-300 hover:scale-105">
                             <img src={game.coverImage} alt={game.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
                         </div>
                     </div>
@@ -205,10 +249,13 @@ const AnimatedGenreHero: React.FC<AnimatedGenreHeroProps> = ({ genre, games, onB
             </div>
 
             {/* Column 2 (Scrolls Down) */}
-            <div className="flex-1 flex flex-col animate-scroll-down px-1.5 sm:px-2">
-                {col2Dup.map((game, idx) => (
+            <div 
+                className="flex-1 flex flex-col h-max animate-scroll-down pause-on-hover pointer-events-auto px-1.5 sm:px-2"
+                style={{ animationDuration: `${durations[1]}s` }}
+            >
+                {cols[1].map((game, idx) => (
                     <div key={'col2-' + idx} className="w-full pb-3 sm:pb-4 shrink-0">
-                        <div className="w-full aspect-[3/4] rounded-2xl overflow-hidden shadow-xl border border-slate-200 dark:border-white/5 bg-slate-800">
+                        <div className="w-full aspect-[3/4] rounded-2xl overflow-hidden shadow-xl border border-slate-200 dark:border-white/5 bg-slate-800 transition-transform duration-300 hover:scale-105">
                             <img src={game.coverImage} alt={game.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
                         </div>
                     </div>
@@ -216,10 +263,16 @@ const AnimatedGenreHero: React.FC<AnimatedGenreHeroProps> = ({ genre, games, onB
             </div>
             
             {/* Column 3 (Scrolls Up) - visible on larger screens */}
-            <div className="hidden md:flex flex-1 flex-col animate-scroll-up px-1.5 sm:px-2" style={{ animationDelay: `-${Math.max(col1.length * 3, 20) / 2}s` }}>
-                {col3Dup.map((game, idx) => (
+            <div 
+                className="hidden md:flex flex-1 flex-col h-max animate-scroll-up pause-on-hover pointer-events-auto px-1.5 sm:px-2" 
+                style={{ 
+                    animationDuration: `${durations[2]}s`, 
+                    animationDelay: `-${durations[2] / 2}s` 
+                }}
+            >
+                {cols[2].map((game, idx) => (
                     <div key={'col3-' + idx} className="w-full pb-3 sm:pb-4 shrink-0">
-                        <div className="w-full aspect-[3/4] rounded-2xl overflow-hidden shadow-xl border border-slate-200 dark:border-white/5 bg-slate-800">
+                        <div className="w-full aspect-[3/4] rounded-2xl overflow-hidden shadow-xl border border-slate-200 dark:border-white/5 bg-slate-800 transition-transform duration-300 hover:scale-105">
                             <img src={game.coverImage} alt={game.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
                         </div>
                     </div>

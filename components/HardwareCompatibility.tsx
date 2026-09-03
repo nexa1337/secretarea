@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Icon from './Icon';
 import { analyzeRequirements, checkCompatibilityStatus } from '../pages/SecretArea';
@@ -209,9 +210,10 @@ const HardwareCompatibility: React.FC<{
         </div>
       </div>
 
+      {typeof document !== 'undefined' && createPortal(
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -226,10 +228,16 @@ const HardwareCompatibility: React.FC<{
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               className="relative w-full max-w-3xl bg-white dark:bg-[#111721] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
             >
-              <div className="p-6 md:p-8 flex items-start gap-6 border-b border-slate-200 dark:border-slate-800/50 shrink-0">
+              <div className="p-4 sm:p-6 md:p-8 flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 border-b border-slate-200 dark:border-slate-800/50 shrink-0 text-center sm:text-start relative">
+                <button 
+                  onClick={() => setIsOpen(false)}
+                  className="absolute top-4 end-4 p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors shrink-0 sm:hidden"
+                >
+                  <Icon name="X" size={20} />
+                </button>
                 <CircularProgress progress={score} colorClass={colorClass} />
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
+                <div className="flex-1 w-full flex flex-col items-center sm:items-start">
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3 mb-2">
                     <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t('Can I Run It?')}</h2>
                     <span className={`${badgeColor} text-white text-xs font-bold px-2.5 py-1 rounded uppercase tracking-wider`}>
                       {statusText === 'POOR' ? "WON'T RUN" : statusText}
@@ -241,7 +249,7 @@ const HardwareCompatibility: React.FC<{
                 </div>
                 <button 
                   onClick={() => setIsOpen(false)}
-                  className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors shrink-0"
+                  className="hidden sm:block p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors shrink-0"
                 >
                   <Icon name="X" size={20} />
                 </button>
@@ -266,7 +274,7 @@ const HardwareCompatibility: React.FC<{
             </motion.div>
           </div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>, document.body)}
     </>
   );
 };
