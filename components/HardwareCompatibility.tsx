@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from "react-router-dom";
 import Icon from './Icon';
 import { analyzeRequirements, checkCompatibilityStatus } from '../pages/SecretArea';
 import { getCpuTier, getGpuTier } from '../src/data/systemSpecs';
@@ -30,7 +31,7 @@ const CircularProgress: React.FC<{ progress: number; colorClass: string }> = ({ 
     <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
       <svg className="w-full h-full transform -rotate-90" viewBox="0 0 48 48">
         <circle
-          className="text-slate-800"
+          className="text-slate-200 dark:text-slate-800"
           strokeWidth="4"
           stroke="currentColor"
           fill="transparent"
@@ -51,7 +52,7 @@ const CircularProgress: React.FC<{ progress: number; colorClass: string }> = ({ 
           cy="24"
         />
       </svg>
-      <span className="absolute text-sm font-bold text-white">{progress}%</span>
+      <span className="absolute text-sm font-bold text-slate-900 dark:text-white">{progress}%</span>
     </div>
   );
 };
@@ -63,6 +64,22 @@ const HardwareCompatibility: React.FC<{
   const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [parsedSpecs, setParsedSpecs] = useState<any>(null);
+
+  if (globalSpecs && !globalSpecs.isActive) {
+    return (
+      <Link to="/settings" state={{ tab: 'Hardware' }} className="block relative group cursor-pointer overflow-hidden rounded-xl bg-slate-50 dark:bg-[#0f151e] border border-slate-200 dark:border-slate-800/50 hover:border-primary-500/50 transition-colors p-4 flex flex-col items-center text-center gap-3">
+        <div className="p-3 bg-white dark:bg-slate-800 rounded-full shadow-sm text-slate-400 group-hover:text-primary-500 transition-colors">
+          <Icon name="Cpu" size={24} />
+        </div>
+        <div>
+          <h3 className="text-slate-900 dark:text-white font-bold">{t('Can I Run It?')}</h3>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{t('Click here to enable compatibility checker in your hardware settings.')}</p>
+        </div>
+      </Link>
+    );
+  }
+
+
 
   useEffect(() => {
     if (!requirements || requirements.length === 0) return;
@@ -266,10 +283,10 @@ const HardwareCompatibility: React.FC<{
               </div>
 
               <div className="px-6 py-4 bg-slate-50 dark:bg-[#0d1219] border-t border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
-                <button className="flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors text-sm font-medium">
+                <Link to="/settings" state={{ tab: 'Hardware' }} className="flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors text-sm font-medium">
                   <Icon name="Tools" size={16} />
-                  {t('System requirements are based on the global filter')}
-                </button>
+                  {t('Update your PC Specifications')}
+                </Link>
               </div>
             </motion.div>
           </div>

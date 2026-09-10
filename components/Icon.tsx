@@ -17,7 +17,7 @@ import {
   TbTarget, TbEye, TbBookmark, TbRadar, TbTerminal, TbBell, TbHistory, TbFilter, TbMenu2, TbDots,
   TbHash, TbFolder, TbDeviceFloppy, TbChartPie, TbCircleX, TbLogout, TbMessageCircle, TbBuildingMosque,
   TbCurrencyBitcoin, TbCurrencyEthereum, TbCurrencyMonero, TbCoin, TbWallet, TbStar
-} from 'react-icons/tb';
+, TbShare} from 'react-icons/tb';
 
 import {
   SiAutodesk, SiBlender, SiSketchup, SiUnrealengine, SiUnity,
@@ -39,6 +39,8 @@ interface IconProps {
 }
 
 const ICON_MAP: Record<string, React.ElementType> = {
+  Share: TbShare,
+  Share2: TbShare,
   Home: TbHome,
   Map: TbMap,
   Bot: TbRobot,

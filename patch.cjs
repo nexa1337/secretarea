@@ -1,29 +1,45 @@
 const fs = require('fs');
-let content = fs.readFileSync('components/Footer.tsx', 'utf8');
+let code = fs.readFileSync('components/HeroSlider.tsx', 'utf8');
 
-// Add imports
-content = content.replace("import { useLanguage } from '../src/contexts/LanguageContext';", "import { useLanguage } from '../src/contexts/LanguageContext';\nimport { useState } from 'react';\nimport { AnimatePresence } from 'framer-motion';\nimport DonateModal from './DonateModal';");
+const target = \`  if (games.length === 0) return null;
 
-// Add state
-content = content.replace("const Footer: React.FC = () => {\n  const { dir, t } = useLanguage();", "const Footer: React.FC = () => {\n  const { dir, t } = useLanguage();\n  const [showDonateModal, setShowDonateModal] = useState(false);");
+  const currentItem = games[currentIndex];
+  
+  // Decide what image to use as background. Usually coverImage or a galleryImage.
+  const bgImage = currentItem.galleryImages && currentItem.galleryImages.length > 0 
+    ? currentItem.galleryImages[0] 
+    : currentItem.coverImage;
 
-// Replace ko-fi link with button
-const oldLink = '<a href="https://ko-fi.com/mrwolfzonex" target="_blank" rel="noreferrer" className="h-10 px-4 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 flex items-center gap-2 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 hover:scale-105 transition-all shadow-sm">';
-const newBtn = '<button onClick={(e) => { e.preventDefault(); setShowDonateModal(true); }} className="h-10 px-4 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 flex items-center gap-2 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 hover:scale-105 transition-all shadow-sm cursor-pointer z-50 relative">';
-content = content.replace(oldLink, newBtn);
-content = content.replace('<span className="text-sm font-bold">{t(\'Support Us\')}</span>\n              </a>\n            </div>', '<span className="text-sm font-bold">{t(\'Support Us\')}</span>\n              </button>\n            </div>');
+  const handleNext = () => setCurrentIndex((prev) => (prev + 1) % games.length);
+  const handlePrev = () => setCurrentIndex((prev) => (prev - 1 + games.length) % games.length);
 
-// Add DonateModal to end of Footer
-const modalContent = `
-        {/* Modals */}
-        <AnimatePresence>
-          {showDonateModal && (
-            <DonateModal open={showDonateModal} onClose={() => setShowDonateModal(false)} />
-          )}
-        </AnimatePresence>
-      </div>
-    </footer>
-`;
-content = content.replace('      </div>\n    </footer>', modalContent);
+  useEffect(() => {
+    if (games.length === 0) return;
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % games.length);
+    }, 8000);
+    return () => clearInterval(timer);
+  }, [games.length, currentIndex]);\`;
 
-fs.writeFileSync('components/Footer.tsx', content);
+const replacement = \`  const handleNext = () => setCurrentIndex((prev) => (prev + 1) % games.length);
+  const handlePrev = () => setCurrentIndex((prev) => (prev - 1 + games.length) % games.length);
+
+  useEffect(() => {
+    if (games.length === 0) return;
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % games.length);
+    }, 8000);
+    return () => clearInterval(timer);
+  }, [games.length, currentIndex]);
+
+  if (games.length === 0) return null;
+
+  const currentItem = games[currentIndex];
+  
+  // Decide what image to use as background. Usually coverImage or a galleryImage.
+  const bgImage = currentItem.galleryImages && currentItem.galleryImages.length > 0 
+    ? currentItem.galleryImages[0] 
+    : currentItem.coverImage;\`;
+
+code = code.replace(target, replacement);
+fs.writeFileSync('components/HeroSlider.tsx', code);

@@ -22,7 +22,10 @@ const AnimatedGenreHero: React.FC<AnimatedGenreHeroProps> = ({ genre, games, onB
   const { t } = useLanguage();
   const { cols, durations, preInstalledCount } = useMemo(() => {
     // 1. Get the count of pre-installed games
-    const preInstalledCount = games.filter(g => g.links?.ankerParts && g.links.ankerParts.length > 0).length;
+    const preInstalledCount = games.filter(g => 
+        (g.links?.ankerParts && g.links.ankerParts.length > 0) || 
+        (g.links?.preInstalled?.download || g.links?.preInstalled?.cloudDrop || g.links?.preInstalled?.torrent)
+    ).length;
 
     // 2. Prepare the base array (shuffle it once)
     const allGames = [...games].sort(() => 0.5 - Math.random());

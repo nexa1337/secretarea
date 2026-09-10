@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { auth, logOut } from '../src/firebase';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -61,11 +62,9 @@ const DiscoverGameButton = () => {
 };
 
 
-const MoreMenu = ({ isUnlocked, handleLogout, t }: { isUnlocked: boolean, handleLogout: () => void, t: any }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => document.documentElement.classList.contains('dark') ? 'dark' : 'light');
 
+const ThemeToggle = () => {
+  const [theme, setTheme] = useState(() => document.documentElement.classList.contains('dark') ? 'dark' : 'light');
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {
@@ -75,16 +74,7 @@ const MoreMenu = ({ isUnlocked, handleLogout, t }: { isUnlocked: boolean, handle
       setTheme('light');
       document.documentElement.classList.remove('dark');
     }
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
@@ -97,16 +87,79 @@ const MoreMenu = ({ isUnlocked, handleLogout, t }: { isUnlocked: boolean, handle
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <button onClick={toggleTheme} className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-300">
+      {theme === 'light' ? <TbMoon size={22} /> : <TbSun size={22} />}
+    </button>
+  );
+};
+
+const NotificationBell = () => {
+  const [hasNew, setHasNew] = useState(false);
+  
+  useEffect(() => {
+    const handleIntelUpdate = (e: any) => {
+      const latestTimestamp = e.detail;
+      const lastSeen = localStorage.getItem('last_seen_intel');
+      if (latestTimestamp && latestTimestamp !== lastSeen) {
+        setHasNew(true);
+      }
+    };
+    
+    const handleIntelOpened = () => {
+      setHasNew(false);
+    };
+
+    window.addEventListener('intel-updated', handleIntelUpdate);
+    window.addEventListener('intel-opened', handleIntelOpened);
+    
+    return () => {
+      window.removeEventListener('intel-updated', handleIntelUpdate);
+      window.removeEventListener('intel-opened', handleIntelOpened);
+    };
+  }, []);
+
+  return (
+    <button 
+      onClick={() => window.dispatchEvent(new Event('open-intel-panel'))} 
+      className="relative w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-300"
+    >
+      <Icon name="Bell" size={22} className={hasNew ? "animate-pulse" : ""} />
+      {hasNew && (
+        <span className="absolute top-1 right-1.5 sm:top-2 sm:right-2.5 w-2 h-2 bg-red-500 rounded-full border border-white dark:border-slate-900"></span>
+      )}
+    </button>
+  );
+};
+
+const UserDropdown = ({ isUnlocked, handleLogout, t, user, dir }: { isUnlocked: boolean, handleLogout: () => void, t: any, user: any, dir: string }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  if (!isUnlocked && !user) return null;
+
+  const initial = user?.displayName?.[0] || user?.email?.[0] || 'A';
+  const bgColor = user ? '#29b6f6' : '#64748b'; // Light blue color for the avatar
+
+  return (
+    <div className="relative" ref={dropdownRef} dir={dir}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors focus:outline-none border-2 border-transparent hover:border-slate-300 dark:hover:border-slate-600"
-        title="Menu"
+        className="w-8 h-8 sm:w-10 sm:h-10 rounded-full text-white flex items-center justify-center font-bold text-lg overflow-hidden border-2 border-transparent hover:border-slate-300 dark:hover:border-slate-500 transition-all ml-1 sm:ml-2"
+        style={{ backgroundColor: bgColor }}
       >
-        <Icon name="Menu" size={20} className="sm:hidden" />
-        <Icon name="Menu" size={24} className="hidden sm:block" />
+        {user?.photoURL ? <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" /> : initial.toUpperCase()}
       </button>
-
+      
       <AnimatePresence>
         {isOpen && (
           <motion.div 
@@ -114,35 +167,30 @@ const MoreMenu = ({ isUnlocked, handleLogout, t }: { isUnlocked: boolean, handle
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-full end-0 mt-2 w-48 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden z-50 py-1"
+            className={`absolute top-full end-0 mt-3 w-56 bg-white dark:bg-[#111623] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 overflow-hidden z-50 py-2 text-slate-700 dark:text-[#94a3b8] font-medium text-[15px]`}
           >
-            <button
-              onClick={() => { toggleTheme(); setIsOpen(false); }}
-              className="w-full text-start px-4 py-3 text-sm flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-700 dark:text-slate-300"
-            >
-              {theme === 'light' ? <TbMoon size={18} /> : <TbSun size={18} />}
-              {theme === 'light' ? t('Dark Mode') : t('Light Mode')}
-            </button>
-            
-            {isUnlocked && (
-              <button
-                onClick={() => { handleLogout(); setIsOpen(false); }}
-                className="w-full text-start px-4 py-3 text-sm flex items-center gap-3 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors text-red-600 dark:text-red-500"
-              >
-                <Icon name="Logout" size={18} />
-                {t('Logout')}
-              </button>
-            )}
+            <Link to="/profile" onClick={() => setIsOpen(false)} className="block px-5 py-3 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-colors text-start">{t('My profile') || 'My profile'}</Link>
+            <div className="h-px bg-slate-200 dark:bg-slate-700/50 my-2 mx-4" />
+            <Link to="/roadmap" onClick={() => setIsOpen(false)} className="block px-5 py-3 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-colors text-start">{t('Roadmap') || 'Roadmap'}</Link>
+            <Link to="/personal-space" onClick={() => setIsOpen(false)} className="block px-5 py-3 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-colors text-start">{t('Personal Space') || 'Personal Space'}</Link>
+            <div className="h-px bg-slate-200 dark:bg-slate-700/50 my-2 mx-4" />
+            <Link to="/settings" onClick={() => setIsOpen(false)} className="block px-5 py-3 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-colors text-start">{t('Settings') || 'Settings'}</Link>
+            <button onClick={() => { handleLogout(); setIsOpen(false); }} className="w-full text-start px-5 py-3 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-red-500 dark:hover:text-red-400 transition-colors">{t('Logout') || 'Logout'}</button>
           </motion.div>
         )}
       </AnimatePresence>
     </div>
   );
 };
-
 const Header: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const location = useLocation();
+  const [user, setUser] = useState<any>(null);
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(setUser);
+    return () => unsubscribe();
+  }, []);
+
   const [isUnlocked, setIsUnlocked] = React.useState(() => localStorage.getItem('secret_area_unlocked') === 'true');
 
   React.useEffect(() => {
@@ -160,10 +208,11 @@ const Header: React.FC = () => {
   }, []);
 
   const handleLogout = () => {
+    auth.signOut();
     localStorage.removeItem('secret_area_unlocked');
     setIsUnlocked(false);
     window.dispatchEvent(new Event('authChange'));
-    window.location.reload();
+    window.location.href = '/';
   };
 
   return (
@@ -192,11 +241,13 @@ const Header: React.FC = () => {
           </Link>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-1 sm:gap-3 md:gap-4">
+          <div className="flex items-center gap-1 sm:gap-2">
             <Flags />
             <DiscoverGameButton />
             <LanguageSwitcher />
-            <MoreMenu isUnlocked={isUnlocked} handleLogout={handleLogout} t={t} />
+            <ThemeToggle />
+            <NotificationBell />
+            <UserDropdown isUnlocked={isUnlocked} handleLogout={handleLogout} t={t} user={user} dir={dir} />
           </div>
 
         </div>

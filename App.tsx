@@ -12,6 +12,8 @@ import CategoryDetail from './pages/CategoryDetail';
 import SecretArea from './pages/SecretArea';
 import PersonalFinance from './pages/PersonalFinance';
 import Disclaimer from './pages/Disclaimer';
+import Profile from './pages/Profile';
+import Settings from './pages/Settings';
 
 // Logic to handle initial redirect and scrolling
 const AppBehavior = () => {
@@ -33,6 +35,31 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/" replace />;
   }
   return <>{children}</>;
+};
+
+const MainContent = () => {
+  const location = useLocation();
+  const isDashboard = location.pathname === '/';
+
+  return (
+    <main className="flex-grow">
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white"><div className="animate-pulse flex flex-col items-center"><div className="w-12 h-12 border-4 border-slate-300 dark:border-slate-700 border-t-blue-500 rounded-full animate-spin"></div><div className="mt-4 text-slate-500 font-mono text-sm tracking-widest uppercase">Loading Core...</div></div></div>}>
+        <div style={{ display: isDashboard ? 'block' : 'none' }}>
+          <SecretArea />
+        </div>
+        <Routes>
+          <Route path="/" element={<div />} />
+          <Route path="/roadmap" element={<ProtectedRoute><Roadmap /></ProtectedRoute>} />
+          <Route path="/roadmap/:id" element={<ProtectedRoute><CategoryDetail /></ProtectedRoute>} />
+          <Route path="/personal-space" element={<ProtectedRoute><PersonalFinance /></ProtectedRoute>} />
+          <Route path="/disclaimer" element={<Disclaimer />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+        </Routes>
+      </Suspense>
+      <Footer />
+    </main>
+  );
 };
 
 const App: React.FC = () => {
@@ -92,18 +119,7 @@ const App: React.FC = () => {
         </Helmet>
         <Header />
         
-        <main className="flex-grow">
-          <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white"><div className="animate-pulse flex flex-col items-center"><div className="w-12 h-12 border-4 border-slate-300 dark:border-slate-700 border-t-blue-500 rounded-full animate-spin"></div><div className="mt-4 text-slate-500 font-mono text-sm tracking-widest uppercase">Loading Core...</div></div></div>}>
-            <Routes>
-              <Route path="/" element={<SecretArea />} />
-              <Route path="/roadmap" element={<ProtectedRoute><Roadmap /></ProtectedRoute>} />
-              <Route path="/roadmap/:id" element={<ProtectedRoute><CategoryDetail /></ProtectedRoute>} />
-              <Route path="/personal-space" element={<ProtectedRoute><PersonalFinance /></ProtectedRoute>} />
-              <Route path="/disclaimer" element={<Disclaimer />} />
-            </Routes>
-          </Suspense>
-          <Footer />
-        </main>
+        <MainContent />
 
         <BottomNav />
       </div>

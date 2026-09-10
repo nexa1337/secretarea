@@ -2,6 +2,9 @@
 import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { signInWithGoogle, signInWithDiscord, db, auth } from '../src/firebase';
+import { doc, getDoc, updateDoc, setDoc, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../src/contexts/LanguageContext';
 import { GPU_DATA, CPU_DATA, getGpuTier, getCpuTier } from '../src/data/systemSpecs';
@@ -102,6 +105,85 @@ const DISCLAIMER_CONTENT: Record<string, DisclaimerData> = {
   }
 };
 
+
+const UploaderProfilePopup: React.FC<{ isOpen: boolean, onClose: () => void, user: any }> = ({ isOpen, onClose, user }) => {
+    const { t } = useLanguage();
+    const navigate = useNavigate();
+    const [userData, setUserData] = useState<any>(null);
+
+    useEffect(() => {
+        if (isOpen && user) {
+            getDoc(doc(db, 'SecretArea', user.uid)).then(snap => {
+                if (snap.exists()) {
+                    setUserData(snap.data());
+                }
+            });
+        }
+    }, [isOpen, user]);
+
+    if (!isOpen) return null;
+
+    return createPortal(
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
+            <motion.div 
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="relative bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl"
+            >
+                <div className="relative h-32 bg-gradient-to-r from-blue-600 to-indigo-600">
+                    <button onClick={onClose} className="absolute top-4 end-4 w-8 h-8 flex items-center justify-center rounded-full bg-black/20 text-white hover:bg-black/40 transition-colors">
+                        <Icon name="X" size={16} />
+                    </button>
+                </div>
+                <div className="px-6 pb-6 pt-0 relative">
+                    <div className="flex justify-between items-end -mt-12 mb-4">
+                        <div className="w-24 h-24 rounded-full border-4 border-white dark:border-[#0b1120] bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden relative z-10 shadow-lg">
+                            {user?.photoURL ? (
+                                <img src={user.photoURL} alt={user.displayName} className="w-full h-full object-cover" />
+                            ) : (
+                                <span className="text-3xl font-black text-slate-400">{user?.displayName?.charAt(0).toUpperCase() || 'A'}</span>
+                            )}
+                        </div>
+                        <div className="flex flex-col items-end mb-2">
+                            <span className="bg-primary-500/10 text-primary-600 dark:text-primary-400 font-black text-xs px-2.5 py-1 rounded-full border border-primary-500/20 uppercase tracking-widest">Admin</span>
+                        </div>
+                    </div>
+                    <h3 className="text-xl font-black text-slate-900 dark:text-white mb-1">{user?.displayName || 'Admin'}</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-4">{userData?.bio || "No intel available."}</p>
+                    
+                    <div className="grid grid-cols-2 gap-3 mb-6">
+                        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3 border border-slate-100 dark:border-slate-800">
+                            <div className="text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">Points</div>
+                            <div className="text-lg font-black text-slate-800 dark:text-slate-200">{userData?.points || 0}</div>
+                        </div>
+                        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3 border border-slate-100 dark:border-slate-800">
+                            <div className="text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">Rank</div>
+                            <div className="text-sm font-black text-slate-800 dark:text-slate-200">
+                                {userData?.points >= 600000 ? 'Alpha Wolf' : 
+                                 userData?.points >= 450000 ? 'Beta Wolf' : 
+                                 userData?.points >= 250000 ? 'Subordinate Wolf' : 
+                                 userData?.points >= 100000 ? 'Juvenile Wolf' : 
+                                 userData?.points >= 50000 ? 'Pup Wolf' : 'Cub Wolf'}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button 
+                        onClick={() => { onClose(); navigate('/profile'); }}
+                        className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm transition-colors shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2"
+                    >
+                        See Full Profile <Icon name="ArrowRight" size={16} />
+                    </button>
+                </div>
+            </motion.div>
+        </div>,
+        document.body
+    );
+};
+
+
 // --- TYPES ---
 interface Requirement {
   label: string;
@@ -156,11 +238,15 @@ interface ResourceItem {
     ankerParts: { id: number, link: string, note?: string }[];
     full?: string;
     fullNote?: string;
-    tutorial?: string; 
+        tutorial?: string; 
     dlc?: string;
     trailer?: string;
-  };
-}
+    preInstalled?: {
+        download?: string;
+        cloudDrop?: string;
+        torrent?: string;
+    };
+  };}
 
 interface CompanyProfile {
   id: string;
@@ -664,190 +750,6 @@ const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: 
     );
 };
 
-// DONATE MODAL
-const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (data: any) => Promise<void>; initialTitle?: string; allResources?: Record<string, ResourceItem[]> }> = ({ open, onClose, onSubmit, initialTitle = '', allResources = {} }) => {
-    const { dir, t } = useLanguage();
-    const [formData, setFormData] = useState({ title: initialTitle, category: 'Game', image: '', message: '' });
-    const [loading, setLoading] = useState(false);
-    const [duplicateItem, setDuplicateItem] = useState<ResourceItem | null>(null);
-    const [autoCategorized, setAutoCategorized] = useState(false);
-
-    useEffect(() => {
-        if (open) {
-            setFormData(prev => ({ ...prev, title: initialTitle }));
-        }
-    }, [open, initialTitle]);
-
-    // Smart Features Effect
-    useEffect(() => {
-        if (!formData.title || formData.title.length < 3) {
-            setDuplicateItem(null);
-            return;
-        }
-
-        const query = formData.title.toLowerCase();
-
-        // 1. Duplicate Detection
-        let foundMatch = null;
-        for (const category in allResources) {
-            const match = allResources[category].find(item => item.name.toLowerCase() === query || item.name.toLowerCase().includes(query));
-            if (match) {
-                foundMatch = match;
-                break;
-            }
-        }
-        setDuplicateItem(foundMatch || null);
-
-        // 2. Auto-Categorization
-        const toolKeywords = ['adobe', 'autocad', 'photoshop', 'illustrator', 'office', 'windows', 'software', 'revit', 'sketchup', 'blender', '3ds max', 'lumion', 'v-ray', 'unreal engine', 'd5 render', 'twinmotion', 'archicad', 'intellij', 'webstorm', 'pycharm', 'clip studio'];
-        const steamToolKeywords = ['steam', 'bypass', 'tool', 'unlocker', 'greenluma', 'koalageddon', 'creamapi', 'autocreamapi', 'goldberg', 'steamworks'];
-        const hypervisorKeywords = ['hypervisor', 'kvm', 'qemu', 'vmware', 'virtualbox', 'anti-cheat bypass', 'hyper-v', 'vt-x', 'amd-v'];
-        const saveKeywords = ['save', 'savegame', '100%', 'completed', 'completion', 'platinum', 'unlock all'];
-
-        let suggestedCategory = 'Game';
-        if (saveKeywords.some(kw => query.includes(kw))) {
-            suggestedCategory = 'SaveGame';
-        } else if (hypervisorKeywords.some(kw => query.includes(kw))) {
-            suggestedCategory = 'Hypervisor';
-        } else if (toolKeywords.some(kw => query.includes(kw))) {
-            suggestedCategory = 'Tools';
-        } else if (steamToolKeywords.some(kw => query.includes(kw))) {
-            suggestedCategory = 'SteamTools';
-        }
-
-        if (suggestedCategory !== formData.category && !autoCategorized) {
-            setFormData(prev => ({ ...prev, category: suggestedCategory }));
-            setAutoCategorized(true);
-        }
-
-    }, [formData.title, allResources]);
-
-    const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setFormData({...formData, category: e.target.value});
-        setAutoCategorized(true); // Prevent auto-changing it again
-    };
-
-    if (!open) return null;
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        await onSubmit(formData);
-        setLoading(false);
-        setFormData({ title: '', category: 'Game', image: '', message: '' });
-        setAutoCategorized(false);
-        onClose();
-    };
-
-    return (
-        <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            dir={dir} className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-4"
-        >
-            <motion.div 
-                initial={{ scale: 0.9, y: 20 }}
-                animate={{ scale: 1, y: 0 }}
-                className="bg-white dark:bg-slate-900 w-[95%] sm:w-full max-w-md rounded-3xl overflow-hidden shadow-2xl border border-blue-500/30 flex flex-col max-h-[90vh]"
-            >
-                <div className="bg-slate-50 dark:bg-slate-950 p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center shrink-0">
-                    <h3 className="text-lg font-black uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-                        <Icon name="Plus" size={20} className="text-blue-500" /> {t('Request Item')}
-                    </h3>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors">
-                        <Icon name="X" size={18} />
-                    </button>
-                </div>
-                
-                <div className="overflow-y-auto p-6 space-y-4">
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label className="block text-xs font-bold text-slate-900 dark:text-slate-300 uppercase tracking-wide mb-1">{t('Item Title *')}</label>
-                            <input 
-                                type="text" 
-                                required 
-                                className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors"
-                                placeholder="e.g. Call of Duty: Black Ops 6"
-                                value={formData.title}
-                                onChange={(e) => setFormData({...formData, title: e.target.value})}
-                            />
-                        </div>
-
-                        {/* Smart Duplicate Warning */}
-                        <AnimatePresence>
-                            {duplicateItem && (
-                                <motion.div 
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-start gap-3 overflow-hidden"
-                                >
-                                    <Icon name="AlertTriangle" size={18} className="text-amber-500 shrink-0 mt-0.5" />
-                                    <div>
-                                        <p className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-1">{t('Already in Area?')}</p>
-                                        <p className="text-xs text-slate-600 dark:text-slate-300">
-                                            {t('We found a similar item in that section. Are you sure you want to request it?')}
-                                        </p>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
-                        <div>
-                            <label className="block text-xs font-bold text-slate-900 dark:text-slate-300 uppercase tracking-wide mb-1">{t('Section')}</label>
-                            <select 
-                                className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors"
-                                value={formData.category}
-                                onChange={handleCategoryChange}
-                            >
-                                <option value="Game">Game</option>
-                                <option value="Hypervisor">Hypervisor</option>
-                                <option value="SteamTools">SteamTools</option>
-                                <option value="Tools">Tools</option>
-                                <option value="SaveGame">SaveGame</option>
-                            </select>
-                            {autoCategorized && formData.title.length > 2 && (
-                                <p className="text-[10px] text-blue-500 mt-1.5 flex items-center gap-1 font-bold uppercase tracking-wider">
-                                    <Icon name="Sparkles" size={10} /> {t('Auto-categorized based on title')}
-                                </p>
-                            )}
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold text-slate-900 dark:text-slate-300 uppercase tracking-wide mb-1">{t('Image URL (Optional)')}</label>
-                            <input 
-                                type="url" 
-                                className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors"
-                                placeholder="https://..."
-                                value={formData.image}
-                                onChange={(e) => setFormData({...formData, image: e.target.value})}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold text-slate-900 dark:text-slate-300 uppercase tracking-wide mb-1">{t('Message to Admin (Optional)')}</label>
-                            <textarea 
-                                rows={3}
-                                className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors resize-none"
-                                placeholder={t('Any specific version or details?')}
-                                value={formData.message}
-                                onChange={(e) => setFormData({...formData, message: e.target.value})}
-                            ></textarea>
-                        </div>
-
-                        <button 
-                            type="submit" 
-                            disabled={loading}
-                            className="w-full py-4 mt-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-xl font-bold text-sm uppercase tracking-widest shadow-lg shadow-blue-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        >
-                            {loading ? <Icon name="Loader" size={18} className="animate-spin" /> : <Icon name="Send" size={18} />}
-                            {loading ? t('Transmitting...') : t('Send Request')}
-                        </button>
-                    </form>
-                </div>
-            </motion.div>
-        </motion.div>
-    );
-};
 const AdBanner: React.FC<{ desktopSrc: string, mobileSrc: string, link: string, className?: string }> = ({ desktopSrc, mobileSrc, link, className }) => {
   const { dir, t } = useLanguage();
   return (
@@ -1109,7 +1011,7 @@ const RecentProductsCarousel: React.FC<{
                                             <Icon name="Gift" size={10} /> {t('Free')}
                                         </div>
                                     )}
-                                    {item.category === 'game' && item.links?.ankerParts && item.links.ankerParts.length > 0 && (
+                                    {item.category === 'game' && ((item.links?.ankerParts && item.links.ankerParts.length > 0) || (item.links?.preInstalled?.download || item.links?.preInstalled?.cloudDrop || item.links?.preInstalled?.torrent)) && (
                                         <div className="px-2 py-1 bg-indigo-500/90 backdrop-blur-md text-white rounded-lg text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1">
                                             <Icon name="Zap" size={10} /> {t('Pre-installed')}
                                         </div>
@@ -1122,7 +1024,7 @@ const RecentProductsCarousel: React.FC<{
                                          ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
                                          : 'bg-black/40 text-white/70 hover:bg-white/20 hover:text-white border border-white/10'
                                     }`}
-                                    title={stash.includes(item.id) ? t(t('Remove from Stash')) : t(t('Add to Stash'))}
+                                    title={stash.includes(item.id) ? t('Remove from Favorites') : t('Add to Favorites')}
                                 >
                                     <Icon name="Bookmark" size={16} className={stash.includes(item.id) ? "fill-current" : ""} />
                                 </button>
@@ -1211,7 +1113,7 @@ const GenreDetailView: React.FC<{
                                             <Icon name="Gift" size={10} /> {t('Free')}
                                         </div>
                                     )}
-                                    {item.category === 'game' && item.links?.ankerParts && item.links.ankerParts.length > 0 && (
+                                    {item.category === 'game' && ((item.links?.ankerParts && item.links.ankerParts.length > 0) || (item.links?.preInstalled?.download || item.links?.preInstalled?.cloudDrop || item.links?.preInstalled?.torrent)) && (
                                         <div className="px-2 py-1 bg-indigo-500/90 backdrop-blur-md text-white rounded-lg text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1">
                                             <Icon name="Zap" size={10} /> {t('Pre-installed')}
                                         </div>
@@ -1225,7 +1127,7 @@ const GenreDetailView: React.FC<{
                                          ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
                                          : 'bg-black/40 text-white/70 hover:bg-white/20 hover:text-white border border-white/10'
                                     }`}
-                                    title={stash.includes(item.id) ? t(t('Remove from Stash')) : t(t('Add to Stash'))}
+                                    title={stash.includes(item.id) ? t('Remove from Favorites') : t('Add to Favorites')}
                                 >
                                     <Icon name="Bookmark" size={14} className={stash.includes(item.id) ? "fill-current" : ""} />
                                 </button>
@@ -2378,6 +2280,78 @@ const CompanyProfileModal: React.FC<{
   );
 };
 
+const LikeButton = ({ item, t }: { item: ResourceItem, t: any }) => {
+    const [isLiked, setIsLiked] = useState(false);
+    const [isLiking, setIsLiking] = useState(false);
+    
+    useEffect(() => {
+        if (!auth.currentUser) return;
+        const docRef = doc(db, 'SecretArea', auth.currentUser?.uid);
+        getDoc(docRef).then(snap => {
+            if (snap.exists()) {
+                const likedGames = snap.data().likedGames || [];
+                setIsLiked(likedGames.some((g: any) => g.id === item.id));
+            }
+        });
+    }, [item.id]);
+
+    const handleLike = async () => {
+        if (!auth.currentUser || isLiking) return;
+        setIsLiking(true);
+        const docRef = doc(db, 'SecretArea', auth.currentUser?.uid);
+        
+        try {
+            if (isLiked) {
+                const snap = await getDoc(docRef);
+                if (snap.exists()) {
+                    const likedGames = snap.data().likedGames || [];
+                    const gameToRemove = likedGames.find((g: any) => g.id === item.id);
+                    if (gameToRemove) {
+                        await updateDoc(docRef, {
+                            likedGames: arrayRemove(gameToRemove),
+                            contentLiked: increment(-1)
+                        });
+                    }
+                }
+                setIsLiked(false);
+            } else {
+                const gameToAdd = {
+                    id: item.id,
+                    name: item.name,
+                    coverImage: item.coverImage,
+                    timestamp: new Date().toISOString()
+                };
+                await updateDoc(docRef, {
+                    likedGames: arrayUnion(gameToAdd),
+                    contentLiked: increment(1)
+                });
+                setIsLiked(true);
+            }
+        } catch (error) {
+            console.error("Error toggling like:", error);
+        }
+        setIsLiking(false);
+    };
+
+    if (!auth.currentUser) return null;
+
+    return (
+        <motion.button
+            whileTap={{ scale: 0.85 }}
+            onClick={(e) => { e.stopPropagation(); handleLike(); }}
+            className={`absolute top-4 end-4 z-30 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all backdrop-blur-md shadow-lg border ${
+                isLiked
+                ? 'bg-red-500/30 border-red-500/50 text-red-500 shadow-red-500/20'
+                : 'bg-black/40 border-white/20 text-white hover:bg-black/60 hover:scale-105 hover:text-red-400'
+            }`}
+        >
+            <motion.div animate={isLiked ? { scale: [1, 1.4, 1] } : {}} transition={{ duration: 0.4 }}>
+                <Icon name="Heart" size={22} className={isLiked ? "fill-current" : ""} />
+            </motion.div>
+        </motion.button>
+    );
+};
+
 const ResourceDetailModal: React.FC<{ 
   item: ResourceItem; 
   onClose: () => void; 
@@ -2397,7 +2371,67 @@ const ResourceDetailModal: React.FC<{
   currentGenreContext?: string | null;
 }> = ({ item, onClose, isHypervisor, stash, toggleStash, onCompanyClick, onGenreClick, resolvedDev, isGuestMode, showGuestNotification, globalSpecs, initialScrollTarget, onDonateClick, allResources, onItemSelect, currentGenreContext }) => {
   const { dir, t } = useLanguage();
+  const [showUploaderPopup, setShowUploaderPopup] = useState(false);
+  const currentUser = auth.currentUser;
+
+  useEffect(() => {
+    if (isGuestMode || !auth.currentUser) return;
+    const uid = auth.currentUser?.uid;
+    const updateProfileView = async () => {
+      try {
+        const docRef = doc(db, 'SecretArea', uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          let points = data.points || 0;
+          let gamesViewed = data.gamesViewed || 0;
+          let recentGames = data.recentGames || [];
+          
+          const shortItem = {
+            id: item.id || '',
+            name: item.name || '',
+            coverImage: item.coverImage || '',
+            timestamp: new Date().toISOString()
+          };
+          const newRecent = [shortItem, ...recentGames.filter((g) => g.id !== item.id)].slice(0, 20);
+          
+          let updateData: any = {
+             points: points + 5,
+             gamesViewed: gamesViewed + 1,
+             recentGames: newRecent
+          };
+          if (auth.currentUser.email === 'marouananouar02@gmail.com' && data.role !== 'admin') {
+             updateData.role = 'admin';
+          }
+          
+          await updateDoc(docRef, updateData);
+        } else {
+          await setDoc(docRef, {
+             email: auth.currentUser.email,
+             displayName: auth.currentUser.displayName,
+             createdAt: new Date().toISOString(),
+             role: auth.currentUser?.email === 'marouananouar02@gmail.com' ? 'admin' : 'visitor',
+             points: 5,
+             gamesViewed: 1,
+             contentLiked: 0,
+             recentGames: [{ id: item.id || '', name: item.name || '', coverImage: item.coverImage || '', timestamp: new Date().toISOString() }],
+             likedGames: [],
+             libraryGames: [],
+             favoriteGames: []
+          });
+        }
+      } catch (e) {
+         console.error("Error updating profile view stats:", e);
+      }
+    };
+    
+    // Check if we just viewed it recently to avoid spam (in local state)
+    // Actually, running it once per modal open is fine for now
+    updateProfileView();
+  }, [item.id, isGuestMode]);
+
   const [showTrailer, setShowTrailer] = useState(false);
+  const [showFavoriteDropdown, setShowFavoriteDropdown] = useState(false);
   const [showHypervisorGuide, setShowHypervisorGuide] = useState(false);
   const [noteModalContent, setNoteModalContent] = useState<string | null>(null);
   const [torrentWarningLink, setTorrentWarningLink] = useState<string | null>(null);
@@ -2554,7 +2588,8 @@ const ResourceDetailModal: React.FC<{
           <div className="flex flex-col lg:flex-row gap-8">
               {/* Left Column (Cover + Trailer) */}
               <div className="w-full lg:w-[320px] flex-shrink-0 flex flex-col gap-4">
-                  <div className="aspect-[2/3] rounded-xl overflow-hidden shadow-2xl relative border border-slate-200 dark:border-slate-800">
+                  <div className="aspect-[2/3] rounded-xl overflow-hidden shadow-2xl relative border border-slate-200 dark:border-slate-800 group">
+                      <LikeButton item={item} t={t} />
                       <img src={item.coverImage} alt={item.name} className="w-full h-full object-cover" />
                       {item.category === 'hypervisor' && (
                          <div className="absolute top-3 start-3 bg-red-600/90 backdrop-blur text-white px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest shadow-lg border border-red-500/50 z-20">
@@ -2643,7 +2678,24 @@ const ResourceDetailModal: React.FC<{
                             <Icon name={isCopiedGameId ? "Check" : "Copy"} size={14} />
                          </button>
                      )}
-                     {item.repackBy && (
+                     {item.repackBy === 'Fitgirl' && auth.currentUser ? (
+                         <div 
+                             onClick={() => setShowUploaderPopup(true)}
+                             className="flex items-center gap-2 ms-auto bg-slate-100 dark:bg-slate-800/50 p-1.5 pe-4 rounded-full border border-slate-200 dark:border-slate-700/50 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                         >
+                             <div className="w-6 h-6 rounded-full overflow-hidden bg-primary-500 flex items-center justify-center">
+                                {auth.currentUser.photoURL ? (
+                                    <img src={auth.currentUser.photoURL} alt={auth.currentUser.displayName} className="w-full h-full object-cover" />
+                                ) : (
+                                    <span className="text-white text-[10px]">{auth.currentUser.displayName?.charAt(0).toUpperCase() || 'A'}</span>
+                                )}
+                             </div>
+                             <div className="flex flex-col">
+                                <span className="text-[9px] uppercase tracking-widest text-blue-500 font-black leading-none">Admin</span>
+                                <span className="text-xs font-bold text-slate-900 dark:text-slate-200 leading-none">{auth.currentUser.displayName || 'Admin'}</span>
+                             </div>
+                         </div>
+                     ) : item.repackBy && (
                          <div className="flex items-center gap-2 ms-auto bg-slate-100 dark:bg-slate-800/50 p-1.5 pe-4 rounded-full border border-slate-200 dark:border-slate-700/50">
                              <div className="w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center text-white text-[10px]">
                                 {item.repackBy.charAt(0).toUpperCase()}
@@ -2667,9 +2719,54 @@ const ResourceDetailModal: React.FC<{
                          <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Latest
                      </div>
                      
-                     <button onClick={(e) => toggleStash(item.id, e)} className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-bold transition-all ${stash.includes(item.id) ? 'bg-primary-500 text-white border-primary-600' : 'bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>
-                         <Icon name="Bookmark" size={16} className={stash.includes(item.id) ? 'fill-current' : ''} /> {stash.includes(item.id) ? t('Remove from Stash') : t('Add to Stash')}
-                     </button>
+                                          <div className="relative">
+                         <button onClick={() => setShowFavoriteDropdown(!showFavoriteDropdown)} className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-bold transition-all ${stash.includes(item.id) ? 'bg-primary-500 text-white border-primary-600' : 'bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>
+                             <Icon name="Bookmark" size={16} className={stash.includes(item.id) ? 'fill-current' : ''} /> {stash.includes(item.id) ? t('Favorite') : t('Favorite')} <Icon name="ChevronDown" size={12} />
+                         </button>
+                         {showFavoriteDropdown && (
+                             <div className="absolute top-full start-0 mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-50 overflow-hidden text-sm font-medium">
+                                 <button onClick={(e) => { setShowFavoriteDropdown(false); toggleStash(item.id, e); }} className="w-full text-start px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                                     <Icon name="Bookmark" size={14} className={stash.includes(item.id) ? 'fill-current' : ''} /> {stash.includes(item.id) ? t('Remove Favorite') : t('Just Favorite')}
+                                 </button>
+                                 <div className="h-px bg-slate-200 dark:bg-slate-700 w-full"></div>
+                                                                  {['Playing', 'Plan to Play', 'Completed', 'On Hold', 'Dropped'].map((status) => (
+                                     <button key={status} onClick={async () => {
+                                         setShowFavoriteDropdown(false);
+                                         if (!auth.currentUser) return;
+                                         try {
+                                             const { doc, getDoc, updateDoc } = await import('firebase/firestore');
+                                             const docRef = doc(db, 'SecretArea', auth.currentUser?.uid);
+                                             const docSnap = await getDoc(docRef);
+                                             if (docSnap.exists()) {
+                                                 const data = docSnap.data();
+                                                 let library = data.libraryGames || [];
+                                                 const existing = library.find((g: any) => g.id === item.id);
+                                                 // Remove old if exists
+                                                 library = library.filter((g: any) => g.id !== item.id);
+                                                 
+                                                 if (existing && existing.status === status) {
+                                                     await updateDoc(docRef, { libraryGames: library });
+                                                     alert(t('Removed from Library'));
+                                                 } else {
+                                                     library.push({
+                                                         id: item.id,
+                                                         name: item.name,
+                                                         coverImage: item.coverImage,
+                                                         status: status,
+                                                         timestamp: new Date().toISOString()
+                                                     });
+                                                     await updateDoc(docRef, { libraryGames: library });
+                                                     alert(t('Added to ') + t(status));
+                                                 }
+                                             }
+                                         } catch(e) { console.error(e); }
+                                     }} className="w-full text-start px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                         {t(status)}
+                                     </button>
+                                 ))}
+                             </div>
+                         )}
+                     </div>
 
                      <button onClick={handleReportBrokenLink} className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 text-sm font-bold transition-all">
                          <Icon name="AlertTriangle" size={16} /> {t('Report')}
@@ -2693,7 +2790,14 @@ const ResourceDetailModal: React.FC<{
                  )}
                  {/* Metadata Boxes */}
                  <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-6">
-                     {item.repackBy && (
+                     {item.repackBy === 'Fitgirl' && auth.currentUser ? (
+                         <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+                             <span className="text-xs text-slate-500 dark:text-slate-400">{t('Release Group')} /</span>
+                             <span className="text-sm font-bold text-slate-900 dark:text-white">
+                                 {auth.currentUser.displayName || 'Admin'}
+                             </span>
+                         </div>
+                     ) : item.repackBy && (
                          <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
                              <span className="text-xs text-slate-500 dark:text-slate-400">{t('Release Group')} /</span>
                              <span className="text-sm font-bold text-slate-900 dark:text-white">
@@ -2765,9 +2869,31 @@ const ResourceDetailModal: React.FC<{
                           } else if (el) {
                               el.scrollIntoView({ behavior: 'smooth' });
                           }
+                          // Add to Library and grant points
+                          import('../src/firebase').then(({ auth, db }) => {
+                              if (auth.currentUser) {
+                                  import('firebase/firestore').then(({ doc, updateDoc, arrayUnion, increment }) => {
+                                      const docRef = doc(db, 'SecretArea', auth.currentUser?.uid);
+                                      const libGame = {
+                                          id: item.id || '',
+                                          name: item.name || '',
+                                          coverImage: item.coverImage || '',
+                                          timestamp: new Date().toISOString()
+                                      };
+                                      updateDoc(docRef, {
+                                          points: increment(10),
+                                          libraryGames: arrayUnion(libGame)
+                                      }).catch(console.error);
+                                  });
+                              }
+                          });
                       }} className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-primary-500/25">
                           {t('Download')} <Icon name="Download" size={20} className="rtl:rotate-180" />
                       </button>
+
+                      
+
+                      
                       {item.galleryImages && item.galleryImages.length > 0 && (
                       <button onClick={() => {
                           const el = document.getElementById('features');
@@ -3006,7 +3132,7 @@ const ResourceDetailModal: React.FC<{
                   </div>
 
                   {/* Download Channels */}
-                  {(item.links.full || (item.links.mirrors && item.links.mirrors.length > 0) || (item.links.parts && item.links.parts.length > 0) || (item.links.ankerParts && item.links.ankerParts.length > 0)) && (
+                  {(item.links.full || (item.links.mirrors && item.links.mirrors.length > 0) || (item.links.parts && item.links.parts.length > 0) || (item.links.ankerParts && item.links.ankerParts.length > 0) || (item.links.preInstalled && (item.links.preInstalled.download || item.links.preInstalled.cloudDrop || item.links.preInstalled.torrent))) && (
                   <div className="py-6 sm:py-12" id="download">
                       <div className="flex items-center gap-4 mb-6">
                           <div className="w-10 h-10 bg-primary-500/10 text-primary-500 rounded-xl flex items-center justify-center">
@@ -3037,7 +3163,53 @@ const ResourceDetailModal: React.FC<{
                           </div>
                       )}
 
-                                            {( (item.links.mirrors && item.links.mirrors.length > 0) || (item.links.parts && item.links.parts.length > 0) ) && (
+                                                                  {/* Pre-Installed / SteamUnlocked */}
+                      {item.links.preInstalled && (item.links.preInstalled.download || item.links.preInstalled.cloudDrop || item.links.preInstalled.torrent) && (
+                          <details className="mb-6 group">
+                              <summary className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2 cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 transition-colors select-none list-none">
+                                  <Icon name="ChevronRight" size={14} className="group-open:rotate-90 transition-transform" />
+                                  <img src="https://dka575ofm4ao0.cloudfront.net/pages-transactional_logos/retina/802345/unnamed-b4a32b8b-803c-454f-a411-5a9c33494c3c.jpg" alt="SteamUnlocked" className="w-4 h-4 rounded-sm object-contain" /> {t('Pre-Installed / SteamUnlocked')}
+                              </summary>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mt-3">
+                                  {item.links.preInstalled.download && (
+                                      <DownloadButton
+                                          label={`Download (${item.originalSize || item.repackSize || 'Size N/A'})`}
+                                          sub={t('Direct Link')}
+                                          href={item.links.preInstalled.download}
+                                          icon="Download"
+                                          imageUrl="https://dka575ofm4ao0.cloudfront.net/pages-transactional_logos/retina/802345/unnamed-b4a32b8b-803c-454f-a411-5a9c33494c3c.jpg"
+                                          secondary
+                                      />
+                                  )}
+                                  {item.links.preInstalled.cloudDrop && (
+                                      <DownloadButton
+                                          label="CloudDrop Mirror"
+                                          sub={t('Mirror Link')}
+                                          href={item.links.preInstalled.cloudDrop}
+                                          icon="Cloud"
+                                          imageUrl="https://dka575ofm4ao0.cloudfront.net/pages-transactional_logos/retina/802345/unnamed-b4a32b8b-803c-454f-a411-5a9c33494c3c.jpg"
+                                          secondary
+                                      />
+                                  )}
+                                  {item.links.preInstalled.torrent && (
+                                      <DownloadButton
+                                          label="utorrent File"
+                                          sub={t('Torrent')}
+                                          href={item.links.preInstalled.torrent}
+                                          icon="Magnet"
+                                          imageUrl="https://dka575ofm4ao0.cloudfront.net/pages-transactional_logos/retina/802345/unnamed-b4a32b8b-803c-454f-a411-5a9c33494c3c.jpg"
+                                          secondary
+                                          onClick={(e) => {
+                                              e.preventDefault();
+                                              setTorrentWarningLink(item.links.preInstalled?.torrent || null);
+                                          }}
+                                      />
+                                  )}
+                              </div>
+                          </details>
+                      )}
+                      
+                      {( (item.links.mirrors && item.links.mirrors.length > 0) || (item.links.parts && item.links.parts.length > 0) ) && (
                           <details className="mb-6 group">
                               <summary className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2 cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 transition-colors select-none list-none">
                                   <Icon name="ChevronRight" size={14} className="group-open:rotate-90 transition-transform" />
@@ -3612,6 +3784,7 @@ const ResourceDetailModal: React.FC<{
           <NoteModal content={noteModalContent} onClose={() => setNoteModalContent(null)} />
       )}
   </AnimatePresence>
+  <UploaderProfilePopup isOpen={showUploaderPopup} onClose={() => setShowUploaderPopup(false)} user={auth.currentUser} />
 </motion.div>
   );
 };
@@ -4479,7 +4652,20 @@ const BestStudiosCarousel: React.FC<{
 
 const SecretArea: React.FC = () => {
   const { dir, t } = useLanguage();
-  const [isUnlocked, setIsUnlocked] = useState(() => localStorage.getItem('secret_area_unlocked') === 'true' || localStorage.getItem('nexa_guest_mode') === 'true');
+  const [currentUser, setCurrentUser] = useState<any>(null); const [authChecked, setAuthChecked] = useState(false); const [isUnlocked, setIsUnlocked] = useState(() => localStorage.getItem('secret_area_unlocked') === 'true' || localStorage.getItem('nexa_guest_mode') === 'true');
+  useEffect(() => {
+    import('../src/firebase').then(({ auth }) => {
+      const unsubscribe = auth.onAuthStateChanged((user) => { setCurrentUser(user); setAuthChecked(true); 
+        if (user) {
+          setIsUnlocked(true);
+          localStorage.setItem('secret_area_unlocked', 'true');
+          window.dispatchEvent(new Event('authChange'));
+        }
+      });
+      return () => unsubscribe();
+    });
+  }, []);
+
   const [isGuestMode, setIsGuestMode] = useState(() => localStorage.getItem('nexa_guest_mode') === 'true');
   const [showHackerLoader, setShowHackerLoader] = useState(() => localStorage.getItem('secret_area_unlocked') === 'true' || localStorage.getItem('nexa_guest_mode') === 'true');
   const [hackerProgress, setHackerProgress] = useState(0);
@@ -4544,6 +4730,7 @@ const SecretArea: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<'game' | 'hypervisor' | 'steamtools' | 'architect' | 'extra' | 'stash'>('game');
   const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
   const [stash, setStash] = useState<string[]>([]);
   const [animateStashTab, setAnimateStashTab] = useState(false);
   const [showAllProfiles, setShowAllProfiles] = useState(false);
@@ -4577,9 +4764,13 @@ const SecretArea: React.FC = () => {
       e.stopPropagation();
       e.preventDefault();
     }
+    
+    // Perform state updates and side effects separately to avoid React Strict Mode double-invocation issues
     setStash(prev => {
       const isAdding = !prev.includes(id);
       const newStash = isAdding ? [...prev, id] : prev.filter(i => i !== id);
+      
+      // We do local storage and animation synchronously with state update (safe enough here)
       localStorage.setItem('myStash', JSON.stringify(newStash));
       if (isAdding) {
          setAnimateStashTab(true);
@@ -4587,15 +4778,113 @@ const SecretArea: React.FC = () => {
       }
       return newStash;
     });
+
+    // Fire-and-forget the Firestore sync outside the updater
+    const isAdding = !stash.includes(id);
+    import('../src/firebase').then(({ auth, db }) => {
+        if (auth.currentUser) {
+            let targetItem: ResourceItem | null = null;
+            for (const category in allResources) {
+                const match = allResources[category].find((r: any) => r.id === id);
+                if (match) {
+                    targetItem = match;
+                    break;
+                }
+            }
+
+            if (targetItem || !isAdding) {
+                import('firebase/firestore').then(({ doc, updateDoc, arrayUnion, arrayRemove, getDoc }) => {
+                    const docRef = doc(db, 'SecretArea', auth.currentUser!.uid);
+                    getDoc(docRef).then(snap => {
+                        if (snap.exists()) {
+                            const favoriteGames = snap.data().favoriteGames || [];
+                            if (isAdding && targetItem) {
+                                // Check if already exists in Firestore to prevent duplicates
+                                const alreadyExists = favoriteGames.some((g: any) => g.id === targetItem!.id);
+                                if (!alreadyExists) {
+                                    const gameToAdd = {
+                                        id: targetItem.id,
+                                        name: targetItem.name,
+                                        coverImage: targetItem.coverImage,
+                                        timestamp: new Date().toISOString()
+                                    };
+                                    updateDoc(docRef, { favoriteGames: arrayUnion(gameToAdd) });
+                                }
+                            } else if (!isAdding) {
+                                // Find all instances to remove (in case of previous duplicates)
+                                const gamesToRemove = favoriteGames.filter((g: any) => g.id === id);
+                                if (gamesToRemove.length > 0) {
+                                    updateDoc(docRef, { favoriteGames: arrayRemove(...gamesToRemove) });
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+        }
+    });
   };
 
   const [selectedResource, setSelectedResource] = useState<ResourceItem | null>(null);
   const [selectedResourceAction, setSelectedResourceAction] = useState<string | undefined>(undefined);
+
+  const location = window.location; // using window.location if useLocation is not imported
+  useEffect(() => {
+    // If there's a state passed via history
+    const state = window.history.state?.usr;
+    if (state?.openGameId && Object.keys(allResources).length > 0) {
+      const allItems = Object.values(allResources).flat();
+      const gameToOpen = allItems.find(g => g.id === state.openGameId);
+      if (gameToOpen) {
+        setSelectedResource(gameToOpen);
+        // Clear state so it doesn't reopen on refresh
+        window.history.replaceState({ usr: { ...state, openGameId: null } }, '');
+      }
+    }
+  }, [Object.keys(allResources).length]);
+
+  // Track user views and recent activity
+  useEffect(() => {
+    if (selectedResource) {
+      import('../src/firebase').then(({ auth, db }) => {
+        if (auth.currentUser) {
+            import('firebase/firestore').then(({ doc, updateDoc, getDoc, setDoc }) => {
+                const docRef = doc(db, 'SecretArea', auth.currentUser?.uid);
+                getDoc(docRef).then(snap => {
+                    if (snap.exists()) {
+                        const recentGame = {
+                            id: selectedResource.id || '',
+                            name: selectedResource.name || '',
+                            coverImage: selectedResource.coverImage || '',
+                            timestamp: new Date().toISOString()
+                        };
+                        
+                        let data = snap.data();
+                        let recentGames = data.recentGames || [];
+                        recentGames = recentGames.filter(g => g.id !== recentGame.id);
+                        recentGames.unshift(recentGame);
+                        if (recentGames.length > 20) recentGames.pop();
+
+                        let updateData: any = {
+                            gamesViewed: (data.gamesViewed || 0) + 1,
+                            points: (data.points || 0) + 5,
+                            recentGames: recentGames
+                        };
+                        if (auth.currentUser.email === 'marouananouar02@gmail.com' && data.role !== 'admin') {
+                            updateData.role = 'admin';
+                        }
+                        updateDoc(docRef, updateData);
+                    }
+                }).catch(e => console.error(e));
+            });
+        }
+      });
+    }
+  }, [selectedResource]);
   const [selectedGenreView, setSelectedGenreView] = useState<string | null>(null);
   const [selectedCompanyProfile, setSelectedCompanyProfile] = useState<CompanyProfile | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [visitorCount, setVisitorCount] = useState(2491);
-  const [showRequestModal, setShowRequestModal] = useState(false);
   const [showIntelPanel, setShowIntelPanel] = useState(false);
   const [notifications, setNotifications] = useState<Array<{id: number, title: string, text: string, time: string, isAr?: boolean}>>([]);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
@@ -4610,7 +4899,6 @@ const SecretArea: React.FC = () => {
   const [upcomingPlatform, setUpcomingPlatform] = useState('PlayStation 5');
   const [isUpcomingMissing, setIsUpcomingMissing] = useState(false);
   const [scriptError, setScriptError] = useState(false);
-  const [requestModalInitialTitle, setRequestModalInitialTitle] = useState('');
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [maintenanceConfig, setMaintenanceConfig] = useState<{active: boolean, endTime: string | null, message: string} | null | undefined>(() => {
     try {
@@ -4686,7 +4974,7 @@ const SecretArea: React.FC = () => {
     if (terminalMode === 'password') {
       newHistory.push({ type: 'user', text: `Please enter the Secret Code:\n${'*'.repeat(cmd.length)}` });
     } else {
-      newHistory.push({ type: 'user', text: `┌──(guest㉿nexa1337.com)-[~]\n└─$ ${cmd}` });
+      newHistory.push({ type: 'user', text: `┌──(guest㉿SecretArea1337)-[~]\n└─$ ${cmd}` });
     }
 
     const lowerCmd = cmd.toLowerCase();
@@ -4898,7 +5186,7 @@ const SecretArea: React.FC = () => {
         newHistory.push({ type: 'success', text: '💡 TIP: Type "help" to see available commands.' });
         setTerminalMode('normal');
       } else {
-        newHistory.push({ type: 'user', text: `┌──(guest㉿nexa1337.com)-[~]\n└─$ ${terminalInput}^C` });
+        newHistory.push({ type: 'user', text: `┌──(guest㉿SecretArea1337)-[~]\n└─$ ${terminalInput}^C` });
       }
       setTerminalHistory(newHistory);
       setTerminalInput('');
@@ -4936,6 +5224,27 @@ const SecretArea: React.FC = () => {
     isActive: false
   });
   const [showGlobalFilter, setShowGlobalFilter] = useState(false);
+  const [hideFailedGames, setHideFailedGames] = useState(false);
+
+  useEffect(() => {
+    if (currentUser) {
+        import('../src/firebase').then(({ db }) => {
+            import('firebase/firestore').then(({ doc, getDoc }) => {
+                const docRef = doc(db, 'SecretArea', currentUser.uid);
+                getDoc(docRef).then(snap => {
+                    if (snap.exists() && snap.data().pcSpecs) {
+                        const specs = snap.data().pcSpecs;
+                        setGlobalSpecs(prev => ({
+                            ...prev,
+                            ...specs
+                        }));
+                    }
+                });
+            });
+        });
+    }
+  }, [currentUser]);
+
   
   // Steam Accounts Feature
   const [steamAccounts, setSteamAccounts] = useState<SteamAccount[]>([]);
@@ -5635,9 +5944,14 @@ const SecretArea: React.FC = () => {
               ankerParts: ankerArr,
               full: getVal('full'), 
               fullNote: getVal('fullNote') || getVal('note'),
-              tutorial: getVal('tutorial'), 
+                            tutorial: getVal('tutorial'), 
               dlc: getVal('dlc'), 
-              trailer: getVal('trailer')
+              trailer: getVal('trailer'),
+              preInstalled: {
+                  download: getVal('unlock 01'),
+                  cloudDrop: getVal('unlock 02'),
+                  torrent: getVal('unlock 03')
+              }
             }
           };
         }).reverse();
@@ -5896,15 +6210,7 @@ const SecretArea: React.FC = () => {
   }, [allResources, isUnlocked]);
 
   const filteredData = useMemo(() => {
-    let currentTabData: ResourceItem[] = [];
-    if (activeTab === 'stash') {
-      const allItems = Object.values(allResources).flat();
-      currentTabData = allItems.filter(item => stash.includes(item.id));
-      // Remove duplicates
-      currentTabData = Array.from(new Map(currentTabData.map(item => [item.id, item])).values());
-    } else {
-      currentTabData = allResources[activeTab] || [];
-    }
+    let currentTabData: ResourceItem[] = allResources[activeTab] || [];
 
     const query = searchQuery.toLowerCase();
     const filtered = currentTabData.filter(item => 
@@ -5917,9 +6223,28 @@ const SecretArea: React.FC = () => {
         if (a.isPinned === b.isPinned) return 0;
         return a.isPinned ? -1 : 1;
     });
-  }, [allResources, activeTab, searchQuery, stash]);
+  }, [allResources, activeTab, searchQuery]);
 
-  const paginatedData = useMemo(() => {
+  
+  useEffect(() => {
+    const handleOpenIntelPanel = () => {
+        setShowIntelPanel(true);
+        if (intelItems.length > 0) {
+            localStorage.setItem('last_seen_intel', String(new Date(intelItems[0].timestamp || 0).getTime()));
+        }
+        window.dispatchEvent(new Event('intel-opened'));
+    };
+    window.addEventListener('open-intel-panel', handleOpenIntelPanel);
+    return () => window.removeEventListener('open-intel-panel', handleOpenIntelPanel);
+  }, [intelItems]);
+
+  useEffect(() => {
+    if (intelItems.length > 0) {
+        window.dispatchEvent(new CustomEvent('intel-updated', { detail: String(new Date(intelItems[0].timestamp || 0).getTime()) }));
+    }
+  }, [intelItems]);
+
+const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredData.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredData, currentPage]);
@@ -5936,45 +6261,6 @@ const SecretArea: React.FC = () => {
     } else {
       setError('AUTHORIZATION FAILED');
       setPassword('');
-    }
-  };
-
-  const handleRequestSubmit = async (requestData: any) => {
-    try {
-        await fetch(API_ENDPOINT, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: {
-                'Content-Type': 'text/plain',
-            },
-            body: JSON.stringify(requestData)
-        });
-        
-        const notifId = Date.now();
-        setNotifications(prev => [...prev, {
-            id: notifId,
-            title: 'Request Sent',
-            text: `Your request for "${requestData.title}" has been submitted to the admin team.`,
-            time: 'Just now'
-        }]);
-
-        // Auto remove alert after 5 seconds
-        setTimeout(() => {
-            setNotifications(prev => prev.filter(n => n.id !== notifId));
-        }, 5000);
-
-    } catch (err) {
-        console.error("Submission failed", err);
-        const notifId = Date.now();
-        setNotifications(prev => [...prev, {
-            id: notifId,
-            title: 'Request Error',
-            text: 'There was an issue sending your request. Please try again.',
-            time: 'Just now'
-        }]);
-        setTimeout(() => {
-            setNotifications(prev => prev.filter(n => n.id !== notifId));
-        }, 5000);
     }
   };
 
@@ -5996,7 +6282,7 @@ const SecretArea: React.FC = () => {
     }
   }
 
-  if (!isUnlocked) {
+  if (!authChecked && !showHackerLoader) { return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white"><div className="animate-pulse flex flex-col items-center"><div className="w-12 h-12 border-4 border-slate-300 dark:border-slate-700 border-t-blue-500 rounded-full animate-spin"></div><div className="mt-4 text-slate-500 font-mono text-sm tracking-widest uppercase">Authenticating...</div></div></div>; } if ((!isUnlocked || (!currentUser && !isGuestMode)) && !showHackerLoader) {
     return (
       <div dir="ltr" className={`w-full h-screen fixed inset-0 z-[200] bg-slate-50 dark:bg-slate-950 font-sans transition-colors duration-300 ${showMathGame ? 'overflow-y-auto' : 'overflow-hidden flex items-center justify-center p-4'}`}>
           <div className="fixed inset-0 z-0 pointer-events-none">
@@ -6145,7 +6431,7 @@ const SecretArea: React.FC = () => {
                             <div className="relative w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
                                 <Icon name="Wolf" className="w-full h-full text-white dark:text-white relative z-10" />
                             </div>
-                            <div className="text-[9px] sm:text-xs font-semibold text-slate-300 lowercase tracking-wide sm:tracking-widest font-mono truncate">guest@nexa1337:~/root</div>
+                            <div className="text-[9px] sm:text-xs font-semibold text-slate-300 lowercase tracking-wide sm:tracking-widest font-mono truncate">guest@SecretArea1337:~/root</div>
                         </div>
                         <div className="w-12"></div>
                       </div>
@@ -6155,7 +6441,7 @@ const SecretArea: React.FC = () => {
                       >
                         {!terminalCleared && (
                           <div className="mb-4">
-                             <span className="text-[#89B4FA] font-bold">┌──(</span><span className="text-[#E5E9F0] font-bold">guest㉿nexa1337</span><span className="text-[#89B4FA] font-bold">)-[</span><span className="text-[#E5E9F0] font-bold">~</span><span className="text-[#89B4FA] font-bold">]</span><br/>
+                             <span className="text-[#89B4FA] font-bold">┌──(</span><span className="text-[#E5E9F0] font-bold">guest㉿SecretArea1337</span><span className="text-[#89B4FA] font-bold">)-[</span><span className="text-[#E5E9F0] font-bold">~</span><span className="text-[#89B4FA] font-bold">]</span><br/>
                              <span className="text-[#89B4FA] font-bold">└─$</span> <span className="text-[#A6E3A1]">N E X A OS - System Online</span>
                           </div>
                         )}
@@ -6183,7 +6469,7 @@ const SecretArea: React.FC = () => {
                             </div>
                           ) : (
                             <div className="flex items-center text-[#89B4FA] font-bold">
-                               ┌──(<span className="text-[#E5E9F0]">guest㉿nexa1337.com</span>)-[<span className="text-[#E5E9F0]">~</span>]
+                               ┌──(<span className="text-[#E5E9F0]">guest㉿SecretArea1337</span>)-[<span className="text-[#E5E9F0]">~</span>]
                             </div>
                           )}
                           <div className="flex items-center items-stretch">
@@ -6210,6 +6496,35 @@ const SecretArea: React.FC = () => {
                 </div>
             )}
           </div>
+          
+          <div className="bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-4 sm:p-6 flex flex-col items-center">
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4">Visitor Login</span>
+            <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
+              <button 
+                onClick={async () => {
+                  try {
+                    await signInWithDiscord();
+                    navigate('/profile');
+                  } catch (e) { console.error(e); }
+                }}
+                className="flex items-center justify-center gap-2 px-6 py-3 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded-xl transition-colors text-sm w-full sm:w-auto"
+              >
+                <Icon name="Discord" size={18} /> Login with Discord
+              </button>
+              <button 
+                onClick={async () => {
+                  try {
+                    await signInWithGoogle();
+                    navigate('/profile');
+                  } catch (e) { console.error(e); }
+                }}
+                className="flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-bold rounded-xl transition-colors text-sm w-full sm:w-auto"
+              >
+                <Icon name="Mail" size={18} /> Login with Google
+              </button>
+            </div>
+          </div>
+          
         </motion.div>
         </div>
       </div>
@@ -6305,7 +6620,7 @@ const SecretArea: React.FC = () => {
                         <Icon name="Wolf" className="w-full h-full text-red-500 absolute inset-0 z-0 opacity-70 animate-[glitch_2s_infinite]" style={{ clipPath: 'polygon(0 0, 100% 0, 100% 45%, 0 45%)', transform: 'translate(-1px, 1px)' }} />
                         <Icon name="Wolf" className="w-full h-full text-cyan-500 absolute inset-0 z-0 opacity-70 animate-[glitch_3s_infinite_reverse]" style={{ clipPath: 'polygon(0 55%, 100% 55%, 100% 100%, 0 100%)', transform: 'translate(1px, -1px)' }} />
                      </div>
-                     <div className="text-[9px] sm:text-xs font-semibold text-slate-300 lowercase tracking-wide sm:tracking-widest font-mono truncate">guest@nexa1337:~/root</div>
+                     <div className="text-[9px] sm:text-xs font-semibold text-slate-300 lowercase tracking-wide sm:tracking-widest font-mono truncate">guest@SecretArea1337:~/root</div>
                   </div>
                   <div className="w-12"></div>
                 </div>
@@ -6467,17 +6782,6 @@ const SecretArea: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {showRequestModal && (
-            <RequestModal 
-                open={showRequestModal} 
-                onClose={() => setShowRequestModal(false)} 
-                onSubmit={handleRequestSubmit}
-                initialTitle={requestModalInitialTitle}
-                allResources={allResources}
-            />
-        )}
-      </AnimatePresence>
 
       <AnimatePresence>
         {showSteamModal && (
@@ -6864,7 +7168,7 @@ const SecretArea: React.FC = () => {
               <div className="flex flex-col gap-3 items-stretch justify-between">
                   <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between w-full min-w-0">
                       <div className="flex overflow-x-auto no-scrollbar p-1 bg-slate-100 dark:bg-slate-950 rounded-xl flex-1 gap-1">
-                        {(['game', 'hypervisor', 'steamtools', 'architect', 'extra', 'stash'] as const).map(tab => (
+                        {(['game', 'hypervisor', 'steamtools', 'architect', 'extra'] as const).map(tab => (
                           <button 
                               key={tab}
                               onClick={() => setActiveTab(tab as any)}
@@ -6885,16 +7189,6 @@ const SecretArea: React.FC = () => {
                                 t('TOOLS')
                               ) : tab === 'extra' ? (
                                 t('SAVEGAME')
-                              ) : tab === 'stash' ? (
-                                <>
-                                  <Icon name="Bookmark" size={14} className={activeTab === 'stash' ? 'text-primary-500' : ''} />
-                                  {t('MY STASH')}
-                                  {stash.length > 0 && (
-                                    <span className={`ms-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold transition-colors ${animateStashTab ? 'bg-primary-500 text-white animate-pulse' : 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-200'}`}>
-                                      {stash.length}
-                                    </span>
-                                  )}
-                                </>
                               ) : t(tab)}
                             </span>
                           </button>
@@ -6903,7 +7197,7 @@ const SecretArea: React.FC = () => {
 
                       <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto shrink-0 mt-2 lg:mt-0">
                           <button 
-                            onClick={() => setShowIntelPanel(true)}
+                            onClick={() => window.dispatchEvent(new Event('open-intel-panel'))}
                             className="relative flex items-center justify-center p-3 sm:p-3.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-200 rounded-xl transition-all flex-1 sm:flex-none"
                             title="{t('Latest Intel')} (Live Changelog)"
                           >
@@ -6929,8 +7223,7 @@ const SecretArea: React.FC = () => {
 
                           <button 
                             onClick={() => {
-                                setRequestModalInitialTitle(searchQuery);
-                                setShowRequestModal(true);
+                                navigate('/settings', { state: { tab: 'Request Item', requestTitle: searchQuery } });
                             }}
                             className="flex items-center justify-center gap-2 px-3 sm:px-4 py-3 sm:py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all w-full sm:w-auto sm:w-full md:w-auto"
                             title={t('Request a game or tool not listed here')}
@@ -6976,6 +7269,15 @@ const SecretArea: React.FC = () => {
                             <input type="checkbox" className="sr-only" checked={globalSpecs.isActive} onChange={(e) => setGlobalSpecs({...globalSpecs, isActive: e.target.checked})} />
                             <div className={`block w-10 h-6 rounded-full transition-colors ${globalSpecs.isActive ? 'bg-primary-500' : 'bg-slate-300 dark:bg-slate-600'}`}></div>
                             <div className={`dot absolute start-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${globalSpecs.isActive ? 'translate-x-4 rtl:-translate-x-4' : ''}`}></div>
+                          </div>
+                        </label>
+
+                        <label className="flex items-center gap-2 cursor-pointer self-start sm:self-auto ml-0 sm:ml-4 rtl:sm:ml-0 rtl:sm:mr-4 border-l-0 sm:border-l rtl:sm:border-l-0 rtl:sm:border-r border-slate-200 dark:border-slate-800 pl-0 sm:pl-4 rtl:sm:pl-0 rtl:sm:pr-4 mt-2 sm:mt-0">
+                          <span className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">{t('Hide Incompatible')}</span>
+                          <div className="relative">
+                            <input type="checkbox" className="sr-only" checked={hideFailedGames} onChange={(e) => setHideFailedGames(e.target.checked)} />
+                            <div className={`block w-10 h-6 rounded-full transition-colors ${hideFailedGames ? 'bg-primary-500' : 'bg-slate-300 dark:bg-slate-600'}`}></div>
+                            <div className={`dot absolute start-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${hideFailedGames ? 'translate-x-4 rtl:-translate-x-4' : ''}`}></div>
                           </div>
                         </label>
                       </div>
@@ -7064,8 +7366,7 @@ const SecretArea: React.FC = () => {
                <p className="text-slate-900 dark:text-slate-300 text-xs mb-6">{t('Try adjusting your search or category.')}</p>
                <button 
                  onClick={() => {
-                    setRequestModalInitialTitle(searchQuery);
-                    setShowRequestModal(true);
+                    navigate('/settings', { state: { tab: 'Request Item', requestTitle: searchQuery } });
                  }}
                  className="px-6 py-2.5 bg-blue-600 text-white font-bold uppercase tracking-wider text-xs rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20"
                >
@@ -7117,7 +7418,7 @@ const SecretArea: React.FC = () => {
                                         </div>
                                     )}
                                 </div>
-                                {item.isFree && (
+                                                                                                {item.isFree && (
                                     <div className="px-2 py-1 bg-emerald-500 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1">
                                         <Icon name="Gift" size={12} /> Free
                                     </div>
@@ -7153,7 +7454,7 @@ const SecretArea: React.FC = () => {
                                     </div>
                                 )}
                             </div>
-                            {item.category === 'game' && item.links?.ankerParts && item.links.ankerParts.length > 0 && (
+                            {item.category === 'game' && ((item.links?.ankerParts && item.links.ankerParts.length > 0) || (item.links?.preInstalled?.download || item.links?.preInstalled?.cloudDrop || item.links?.preInstalled?.torrent)) && (
                                 <div className="absolute top-2 start-1/2 -translate-x-1/2 px-2 py-1 bg-indigo-600/90 dark:bg-indigo-900/80 backdrop-blur-md border border-indigo-500/30 shadow-lg text-white rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest flex items-center gap-1 z-30 pointer-events-none whitespace-nowrap">
                                 <Icon name="Zap" size={10} className="text-amber-400" /> <span>{t('Pre-installed')}</span>
                             </div>
@@ -7195,7 +7496,7 @@ const SecretArea: React.FC = () => {
                                               ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
                                               : 'bg-black/40 text-white/70 hover:bg-black/60 hover:text-white border border-white/10'
                                           }`}
-                                          title={stash.includes(item.id) ? t(t('Remove from Stash')) : t(t('Add to Stash'))}
+                                          title={stash.includes(item.id) ? t('Remove from Favorites') : t('Add to Favorites')}
                                       >
                                           <Icon name="Bookmark" size={12} className={stash.includes(item.id) ? "fill-current" : ""} />
                                       </button>
@@ -7373,7 +7674,7 @@ const SecretArea: React.FC = () => {
 
       {/* Scroll to Top Button */}
       <AnimatePresence>
-        {showScrollTop && !selectedResource && !selectedCompanyProfile && !showAllProfiles && !showRequestModal && !showDonateModal && !showSteamModal && !showMasterGiftModal && !showDisclaimer && !showIntelPanel && (
+        {showScrollTop && !selectedResource && !selectedCompanyProfile && !showAllProfiles && !showDonateModal && !showSteamModal && !showMasterGiftModal && !showDisclaimer && !showIntelPanel && (
           <motion.button 
             initial={{ opacity: 0, scale: 0.8, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}

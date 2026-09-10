@@ -35,15 +35,6 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ games, onSelectGame }) => {
   // Removed duplicate useEffect
 
 
-  if (games.length === 0) return null;
-
-  const currentItem = games[currentIndex];
-  
-  // Decide what image to use as background. Usually coverImage or a galleryImage.
-  const bgImage = currentItem.galleryImages && currentItem.galleryImages.length > 0 
-    ? currentItem.galleryImages[0] 
-    : currentItem.coverImage;
-
   const handleNext = () => setCurrentIndex((prev) => (prev + 1) % games.length);
   const handlePrev = () => setCurrentIndex((prev) => (prev - 1 + games.length) % games.length);
 
@@ -55,8 +46,17 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ games, onSelectGame }) => {
     return () => clearInterval(timer);
   }, [games.length, currentIndex]);
 
+  if (games.length === 0) return null;
+
+  const currentItem = games[currentIndex];
   
-  const hasPreInstallation = currentItem.links?.ankerParts && currentItem.links.ankerParts.length > 0;
+  // Decide what image to use as background. Usually coverImage or a galleryImage.
+  const bgImage = currentItem.galleryImages && currentItem.galleryImages.length > 0 
+    ? currentItem.galleryImages[0] 
+    : currentItem.coverImage;
+
+  
+  const hasPreInstallation = (currentItem.links?.ankerParts && currentItem.links.ankerParts.length > 0) || (currentItem.links?.preInstalled?.download || currentItem.links?.preInstalled?.cloudDrop || currentItem.links?.preInstalled?.torrent);
 
   return (
     <div className="relative w-full min-h-[100svh] md:min-h-[80vh] lg:min-h-[100svh] overflow-hidden bg-slate-100 dark:bg-[#030712] group flex flex-col pt-20 md:pt-24">
