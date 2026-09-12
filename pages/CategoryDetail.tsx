@@ -1,5 +1,8 @@
 
 import React, { useState } from 'react';
+import { auth, db } from '../src/firebase';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+
 import { useParams, Navigate, Link } from 'react-router-dom';
 import { CATEGORIES } from '../constants';
 import Icon from '../components/Icon';
@@ -67,7 +70,7 @@ const MindMapRenderer: React.FC<{ data: MindMapSection }> = ({ data }) => {
 };
 
 // Nexa Project Detail Modal Component
-const NexaProjectModal: React.FC<{ project: NexaProject; onClose: () => void }> = ({ project, onClose }) => {
+const NexaProjectModal: React.FC<{ project: NexaProject; onClose: () => void; onTrack: (p: any, t: any) => void }> = ({ project, onClose, onTrack }) => {
     const [activeImage, setActiveImage] = useState(project.gallery[0]);
     const [includedOpen, setIncludedOpen] = useState(false);
 
@@ -175,6 +178,87 @@ const NexaProjectModal: React.FC<{ project: NexaProject; onClose: () => void }> 
 };
 
 const CategoryDetail: React.FC = () => {
+
+    const trackProjectInteraction = async (project: any, interactionType: 'view' | 'like' | 'favorite' | 'download' = 'view') => {
+    if (!auth.currentUser) return;
+    const docRef = doc(db, 'SecretArea', auth.currentUser.uid);
+    try {
+        const { setDoc } = await import('firebase/firestore');
+        const docSnap = await getDoc(docRef);
+        
+        let data = docSnap.exists() ? docSnap.data() : {
+            email: auth.currentUser.email,
+            displayName: auth.currentUser.displayName || 'Unknown',
+            createdAt: new Date().toISOString(),
+            role: auth.currentUser.email === 'marouananouar02@gmail.com' ? 'admin' : 'visitor',
+            points: 0,
+            gamesViewed: 0,
+            contentLiked: 0,
+            recentGames: [],
+            likedGames: [],
+            favoriteGames: [],
+            libraryGames: []
+        };
+        
+        let recentGames = data.recentGames || [];
+        let likedGames = data.likedGames || [];
+        let favoriteGames = data.favoriteGames || [];
+        let libraryGames = data.libraryGames || [];
+        let points = data.points || 0;
+        let gamesViewed = data.gamesViewed || 0;
+        let contentLiked = data.contentLiked || 0;
+        
+        const pId = project.id || project.title || project.name;
+        const pName = project.title || project.name;
+        const pImg = project.image || project.images?.[0] || '';
+        const pCategory = project.category || 'Game';
+        
+        if (interactionType === 'view') {
+            const existingIndex = recentGames.findIndex((g: any) => g.id === pId);
+            if (existingIndex !== -1) {
+                recentGames.splice(existingIndex, 1);
+            } else {
+                gamesViewed += 1;
+                points += 5; // +5 for viewing
+            }
+            recentGames.unshift({ id: pId, name: pName, image: pImg, timestamp: new Date().toISOString() });
+            if (recentGames.length > 50) recentGames = recentGames.slice(0, 50);
+        }
+        else if (interactionType === 'like') {
+            const existingIndex = likedGames.findIndex((g: any) => g.id === pId);
+            if (existingIndex === -1) {
+                likedGames.unshift({ id: pId, name: pName, image: pImg, timestamp: new Date().toISOString() });
+                contentLiked += 1;
+                points += 5; // +5 for like
+            } else {
+                likedGames.splice(existingIndex, 1);
+                contentLiked = Math.max(0, contentLiked - 1);
+                points = Math.max(0, points - 5);
+            }
+        }
+        else if (interactionType === 'favorite') {
+            const existingIndex = favoriteGames.findIndex((g: any) => g.id === pId);
+            if (existingIndex === -1) {
+                favoriteGames.unshift({ id: pId, name: pName, image: pImg, timestamp: new Date().toISOString() });
+                points += 2; // +2 for favorite
+            } else {
+                favoriteGames.splice(existingIndex, 1);
+                points = Math.max(0, points - 2);
+            }
+        }
+
+        await setDoc(docRef, { 
+            ...data,
+            email: data.email || auth.currentUser.email,
+            recentGames, likedGames, favoriteGames, libraryGames, 
+            points, gamesViewed, contentLiked 
+        }, { merge: true });
+        
+    } catch (err) {
+        console.error("Error tracking view", err);
+    }
+  };
+
   const { id } = useParams<{ id: string }>();
   const category = CATEGORIES.find(c => c.id === id);
 
@@ -221,6 +305,7 @@ const CategoryDetail: React.FC = () => {
 
   // Lightbox Handlers (Standard)
   const openLightbox = (project: Project, index: number = 0) => {
+    trackProjectInteraction(project, 'view');
     setActiveProject(project);
     setActiveImageIndex(index);
     setZoomLevel(1);
@@ -273,6 +358,7 @@ const CategoryDetail: React.FC = () => {
             <NexaProjectModal 
                 project={activeNexaProject} 
                 onClose={() => setActiveNexaProject(null)} 
+                onTrack={trackProjectInteraction} 
             />
         )}
       </AnimatePresence>
@@ -533,7 +619,7 @@ const CategoryDetail: React.FC = () => {
                          initial={{ opacity: 0, scale: 0.9 }}
                          animate={{ opacity: 1, scale: 1 }}
                          exit={{ opacity: 0, scale: 0.9 }}
-                         onClick={() => setActiveNexaProject(project)}
+                         onClick={() => { setActiveNexaProject(project); trackProjectInteraction(project, 'view'); }}
                          key={project.title} // Use unique key if possible
                          className="group relative bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all cursor-pointer"
                        >

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { auth, logOut } from '../src/firebase';
+import { createPortal } from 'react-dom';
+import { auth, logOut, signInWithGoogle, signInWithDiscord } from '../src/firebase';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -133,6 +134,7 @@ const NotificationBell = () => {
 
 const UserDropdown = ({ isUnlocked, handleLogout, t, user, dir }: { isUnlocked: boolean, handleLogout: () => void, t: any, user: any, dir: string }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -145,7 +147,83 @@ const UserDropdown = ({ isUnlocked, handleLogout, t, user, dir }: { isUnlocked: 
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  if (!isUnlocked && !user) return null;
+  // Always show login button if not logged in
+  // if (!isUnlocked && !user) return null;
+
+  if (!user) {
+    return (
+      <div className="relative ml-1 sm:ml-2">
+        <button 
+          onClick={() => setShowLoginModal(true)}
+          className="px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs sm:text-sm shadow transition-colors whitespace-nowrap"
+        >
+          {t('Login')}
+        </button>
+
+        {createPortal(
+          <AnimatePresence>
+            {showLoginModal && (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
+                onClick={() => setShowLoginModal(false)}
+                dir={dir}
+              >
+                <motion.div
+                  initial={{ scale: 0.9, y: 20 }}
+                  animate={{ scale: 1, y: 0 }}
+                  exit={{ scale: 0.9, y: 20 }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-800"
+                >
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white mb-6 text-center uppercase tracking-widest">{t('Join the Pack')}</h3>
+                  <div className="flex flex-col gap-4">
+                    <button 
+                      onClick={async () => {
+                        try {
+                          await signInWithGoogle();
+                          setShowLoginModal(false);
+                        } catch (error) {
+                          console.error(error);
+                        }
+                      }}
+                      className="flex items-center justify-center gap-3 w-full py-3.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold rounded-xl transition-colors"
+                    >
+                      <Icon name="Mail" size={20} />
+                      <span>{t('Login with Google')}</span>
+                    </button>
+                    <button 
+                      onClick={async () => {
+                        try {
+                          await signInWithDiscord();
+                          setShowLoginModal(false);
+                        } catch (error) {
+                          console.error(error);
+                        }
+                      }}
+                      className="flex items-center justify-center gap-3 w-full py-3.5 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded-xl transition-colors"
+                    >
+                      <Icon name="Discord" size={20} />
+                      <span>{t('Login with Discord')}</span>
+                    </button>
+                  </div>
+                  <button 
+                    onClick={() => setShowLoginModal(false)}
+                    className="mt-6 w-full py-3 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-bold transition-colors"
+                  >
+                    {t('Cancel')}
+                  </button>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
+      </div>
+    );
+  }
 
   const initial = user?.displayName?.[0] || user?.email?.[0] || 'A';
   const bgColor = user ? '#29b6f6' : '#64748b'; // Light blue color for the avatar

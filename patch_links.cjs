@@ -1,12 +1,13 @@
 const fs = require('fs');
-let content = fs.readFileSync('pages/SecretArea.tsx', 'utf-8');
+let code = fs.readFileSync('pages/SecretArea.tsx', 'utf8');
 
-if (!content.includes('const REDDIT_LINK')) {
-    content = content.replace(
-        "const TELEGRAM_LINK = 'https://t.me/nexa1337agency';",
-        "const TELEGRAM_LINK = 'https://t.me/nexa1337agency';\nconst REDDIT_LINK = 'https://www.reddit.com/r/SecretArea1337';"
-    );
+const target = "}> = ({ item, onClose, isHypervisor, stash, toggleStash, onCompanyClick, onGenreClick, resolvedDev, isGuestMode, showGuestNotification, globalSpecs, initialScrollTarget, onDonateClick, allResources, onItemSelect, currentGenreContext }) => {";
+const replacement = "}> = ({ item: _rawItem, onClose, isHypervisor, stash, toggleStash, onCompanyClick, onGenreClick, resolvedDev, isGuestMode, showGuestNotification, globalSpecs, initialScrollTarget, onDonateClick, allResources, onItemSelect, currentGenreContext }) => { const item = { ..._rawItem, links: _rawItem.links || {} as any };";
+
+if(code.includes(target)) {
+    code = code.replace(target, replacement);
+    fs.writeFileSync('pages/SecretArea.tsx', code);
+    console.log("Replaced safely");
+} else {
+    console.log("Target not found");
 }
-
-fs.writeFileSync('pages/SecretArea.tsx', content);
-console.log("Patched links");

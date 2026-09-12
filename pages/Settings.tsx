@@ -19,6 +19,7 @@ const Settings = () => {
     const [displayName, setDisplayName] = useState('');
     const [username, setUsername] = useState('');
     const [bio, setBio] = useState('');
+    const [banner, setBanner] = useState('');
     const [photoURL, setPhotoURL] = useState('');
     
     // Hardware form state
@@ -52,6 +53,7 @@ const Settings = () => {
                         setProfileData(data);
                         setUsername(data.username || currentUser.email?.split('@')[0] || '');
                         setBio(data.bio || '');
+                        setBanner(data.banner || '');
                         
                         if (data.pcSpecs) {
                             setGpuModel(data.pcSpecs.gpuModel || '');
@@ -81,7 +83,9 @@ const Settings = () => {
             const docRef = doc(db, 'SecretArea', user.uid);
             await updateDoc(docRef, {
                 username,
-                bio
+                bio,
+                banner,
+                photoURL
             });
         } catch (e) {
             console.error(e);
@@ -210,6 +214,14 @@ const Settings = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
                                 
                                 <div className="col-span-1 md:col-span-2 mb-4">
+                                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{t('Banner URL') || 'Banner URL'}</label>
+                                    <input 
+                                        type="text"
+                                        value={banner}
+                                        onChange={e => setBanner(e.target.value)}
+                                        className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none mb-6"
+                                        placeholder="https://example.com/banner.jpg"
+                                    />
                                     <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{t('Avatar URL') || 'Avatar URL'}</label>
                                     <div className="flex gap-4 items-center">
                                         <div 

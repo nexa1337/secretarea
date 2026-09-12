@@ -535,6 +535,11 @@ export const translations: Translations = {
     'Earn 100,000 points': { en: 'Earn 100,000 points', fr: 'Gagner 100 000 points', es: 'Ganar 100.000 puntos', ar: 'اربح 100,000 نقطة' },
     'Reach Alpha Wolf rank': { en: 'Reach Alpha Wolf rank', fr: 'Atteindre le rang Loup Alpha', es: 'Alcanzar el rango Lobo Alfa', ar: 'الوصول إلى رتبة ذئب ألفا' },
     'No recent activity yet. Go explore some games!': { en: 'No recent activity yet. Go explore some games!', fr: 'Aucune activité récente. Allez explorer des jeux !', es: 'Aún no hay actividad reciente. ¡Ve a explorar algunos juegos!', ar: 'لا يوجد نشاط أخير بعد. اذهب لاستكشاف بعض الألعاب!' },
+    'Login': { en: 'Login', fr: 'Connexion', es: 'Iniciar sesión', ar: 'تسجيل الدخول' },
+    'Join the Pack': { en: 'Join the Pack', fr: 'Rejoignez la meute', es: 'Únete a la manada', ar: 'انضم إلى القطيع' },
+    'Login with Google': { en: 'Login with Google', fr: 'Connexion avec Google', es: 'Iniciar sesión con Google', ar: 'تسجيل الدخول باستخدام Google' },
+    'Login with Discord': { en: 'Login with Discord', fr: 'Connexion avec Discord', es: 'Iniciar sesión con Discord', ar: 'تسجيل الدخول باستخدام Discord' },
+    'Cancel': { en: 'Cancel', fr: 'Annuler', es: 'Cancelar', ar: 'إلغاء' },
 };
 
 interface LanguageContextType {
