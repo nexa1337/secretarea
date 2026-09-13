@@ -1,0 +1,12 @@
+export const doc = (...args: any[]) => ({ id: args.join('/') });
+export const getDoc = async (...args: any[]) => ({ exists: () => false, data: () => ({}) });
+export const updateDoc = async (...args: any[]) => {};
+export const setDoc = async (...args: any[]) => {};
+export const arrayUnion = (...args: any[]) => args;
+export const arrayRemove = (...args: any[]) => args;
+export const increment = (...args: any[]) => args;
+export const onSnapshot = (...args: any[]) => { return () => {}; };
+export const collection = (...args: any[]) => [];
+export const getDocs = async (...args: any[]) => ({ docs: [] });
+export const deleteDoc = async (...args: any[]) => {};
+export const addDoc = async (...args: any[]) => {};

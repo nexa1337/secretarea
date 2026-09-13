@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { auth, logOut, signInWithGoogle, signInWithDiscord } from '../src/firebase';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -8,6 +7,7 @@ import { NAV_ITEMS } from '../constants';
 import { useLanguage } from '../src/contexts/LanguageContext';
 import Icon from './Icon';
 import { TbMoon, TbSun } from 'react-icons/tb';
+import { auth } from '../src/firebase';
 
 const Flags = () => {
   const { t } = useLanguage();
@@ -150,7 +150,7 @@ const UserDropdown = ({ isUnlocked, handleLogout, t, user, dir }: { isUnlocked: 
   // Always show login button if not logged in
   // if (!isUnlocked && !user) return null;
 
-  if (!user) {
+  if (!isUnlocked) {
     return (
       <div className="relative ml-1 sm:ml-2">
         <button 
@@ -178,36 +178,25 @@ const UserDropdown = ({ isUnlocked, handleLogout, t, user, dir }: { isUnlocked: 
                   onClick={(e) => e.stopPropagation()}
                   className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-800"
                 >
-                  <h3 className="text-xl font-black text-slate-900 dark:text-white mb-6 text-center uppercase tracking-widest">{t('Join the Pack')}</h3>
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white mb-6 text-center uppercase tracking-widest">{t('Enter Passcode')}</h3>
                   <div className="flex flex-col gap-4">
-                    <button 
-                      onClick={async () => {
-                        try {
-                          await signInWithGoogle();
-                          setShowLoginModal(false);
-                        } catch (error) {
-                          console.error(error);
+                    <input
+                      type="password"
+                      placeholder="Passcode"
+                      className="w-full px-4 py-3 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          const val = (e.target as HTMLInputElement).value;
+                          if (val === 'Wolfspace') {
+                            localStorage.setItem('secret_area_unlocked', 'true');
+                            window.dispatchEvent(new Event('authChange'));
+                            setShowLoginModal(false);
+                          } else {
+                            alert('Incorrect passcode');
+                          }
                         }
                       }}
-                      className="flex items-center justify-center gap-3 w-full py-3.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold rounded-xl transition-colors"
-                    >
-                      <Icon name="Mail" size={20} />
-                      <span>{t('Login with Google')}</span>
-                    </button>
-                    <button 
-                      onClick={async () => {
-                        try {
-                          await signInWithDiscord();
-                          setShowLoginModal(false);
-                        } catch (error) {
-                          console.error(error);
-                        }
-                      }}
-                      className="flex items-center justify-center gap-3 w-full py-3.5 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded-xl transition-colors"
-                    >
-                      <Icon name="Discord" size={20} />
-                      <span>{t('Login with Discord')}</span>
-                    </button>
+                    />
                   </div>
                   <button 
                     onClick={() => setShowLoginModal(false)}
@@ -225,8 +214,8 @@ const UserDropdown = ({ isUnlocked, handleLogout, t, user, dir }: { isUnlocked: 
     );
   }
 
-  const initial = user?.displayName?.[0] || user?.email?.[0] || 'A';
-  const bgColor = user ? '#29b6f6' : '#64748b'; // Light blue color for the avatar
+  const initial = 'W';
+  const bgColor = '#29b6f6';
 
   return (
     <div className="relative" ref={dropdownRef} dir={dir}>
@@ -235,7 +224,7 @@ const UserDropdown = ({ isUnlocked, handleLogout, t, user, dir }: { isUnlocked: 
         className="w-8 h-8 sm:w-10 sm:h-10 rounded-full text-white flex items-center justify-center font-bold text-lg overflow-hidden border-2 border-transparent hover:border-slate-300 dark:hover:border-slate-500 transition-all ml-1 sm:ml-2"
         style={{ backgroundColor: bgColor }}
       >
-        {user?.photoURL ? <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" /> : initial.toUpperCase()}
+        {initial.toUpperCase()}
       </button>
       
       <AnimatePresence>
@@ -263,11 +252,6 @@ const UserDropdown = ({ isUnlocked, handleLogout, t, user, dir }: { isUnlocked: 
 const Header: React.FC = () => {
   const { t, dir } = useLanguage();
   const location = useLocation();
-  const [user, setUser] = useState<any>(null);
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(setUser);
-    return () => unsubscribe();
-  }, []);
 
   const [isUnlocked, setIsUnlocked] = React.useState(() => localStorage.getItem('secret_area_unlocked') === 'true');
 
@@ -285,9 +269,16 @@ const Header: React.FC = () => {
     };
   }, []);
 
-  const handleLogout = () => {
-    auth.signOut();
+  const handleLogout = async () => {
     localStorage.removeItem('secret_area_unlocked');
+    localStorage.removeItem('nexa_guest_mode');
+    try {
+      if (auth && typeof auth.signOut === 'function') {
+        await auth.signOut();
+      }
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
     setIsUnlocked(false);
     window.dispatchEvent(new Event('authChange'));
     window.location.href = '/';
@@ -325,7 +316,7 @@ const Header: React.FC = () => {
             <LanguageSwitcher />
             <ThemeToggle />
             <NotificationBell />
-            <UserDropdown isUnlocked={isUnlocked} handleLogout={handleLogout} t={t} user={user} dir={dir} />
+            <UserDropdown isUnlocked={isUnlocked} handleLogout={handleLogout} t={t} user={null} dir={dir} />
           </div>
 
         </div>

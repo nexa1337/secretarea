@@ -1,15 +1,10 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import firebaseConfig from '../firebase-applet-config.json';
+export const auth = {
+    onAuthStateChanged: (cb: any) => { cb(null); return () => {}; },
+    signOut: () => {},
+    currentUser: null
+};
 
-const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
-export const auth = getAuth();
+export const db = {};
 
-export const googleProvider = new GoogleAuthProvider();
-export const discordProvider = new OAuthProvider('oidc.discord'); // Assuming OIDC setup in Firebase console
-
-export const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
-export const signInWithDiscord = () => signInWithPopup(auth, discordProvider);
-export const logOut = () => signOut(auth);
+export const signInWithGoogle = async () => {};
+export const signInWithDiscord = async () => {};

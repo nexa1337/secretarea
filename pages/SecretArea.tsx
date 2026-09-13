@@ -3,8 +3,8 @@ import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { signInWithGoogle, signInWithDiscord, db, auth } from '../src/firebase';
-import { doc, getDoc, updateDoc, setDoc, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { doc, getDoc, updateDoc, setDoc, arrayUnion, arrayRemove, increment } from '../src/firestoreMock';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../src/contexts/LanguageContext';
 import { GPU_DATA, CPU_DATA, getGpuTier, getCpuTier } from '../src/data/systemSpecs';
@@ -1011,7 +1011,7 @@ const RecentProductsCarousel: React.FC<{
                                             <Icon name="Gift" size={10} /> {t('Free')}
                                         </div>
                                     )}
-                                    {item.category === 'game' && ((item.links?.ankerParts && item.links?.ankerParts.length > 0) || (item.links?.preInstalled?.download || item.links?.preInstalled?.cloudDrop || item.links?.preInstalled?.torrent)) && (
+                                    {item.category === 'game' && ((item.links?.ankerParts && item.links.ankerParts.length > 0) || (item.links?.preInstalled?.download || item.links?.preInstalled?.cloudDrop || item.links?.preInstalled?.torrent)) && (
                                         <div className="px-2 py-1 bg-indigo-500/90 backdrop-blur-md text-white rounded-lg text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1">
                                             <Icon name="Zap" size={10} /> {t('Pre-installed')}
                                         </div>
@@ -1113,7 +1113,7 @@ const GenreDetailView: React.FC<{
                                             <Icon name="Gift" size={10} /> {t('Free')}
                                         </div>
                                     )}
-                                    {item.category === 'game' && ((item.links?.ankerParts && item.links?.ankerParts.length > 0) || (item.links?.preInstalled?.download || item.links?.preInstalled?.cloudDrop || item.links?.preInstalled?.torrent)) && (
+                                    {item.category === 'game' && ((item.links?.ankerParts && item.links.ankerParts.length > 0) || (item.links?.preInstalled?.download || item.links?.preInstalled?.cloudDrop || item.links?.preInstalled?.torrent)) && (
                                         <div className="px-2 py-1 bg-indigo-500/90 backdrop-blur-md text-white rounded-lg text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1">
                                             <Icon name="Zap" size={10} /> {t('Pre-installed')}
                                         </div>
@@ -1842,7 +1842,7 @@ export const checkCompatibilityStatus = (userSpecs: {ram: number, os: string, cp
   return status;
 };
 
-const SystemChecker: React.FC<{ reqs: {label: string, value: string}[], globalSpecs?: { ram: number, os: string, cpuModel: string, gpuModel: string, isActive: boolean } }> = ({ reqs, globalSpecs }) => {
+const SystemChecker: React.FC<{ reqs: {label: string, value: string}[] }> = ({ reqs }) => {
     const { dir, t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [userSpecs, setUserSpecs] = useState({
@@ -2352,7 +2352,7 @@ const LikeButton = ({ item, t }: { item: ResourceItem, t: any }) => {
     );
 };
 
-export const ResourceDetailModal: React.FC<{ 
+const ResourceDetailModal: React.FC<{ 
   item: ResourceItem; 
   onClose: () => void; 
   isHypervisor?: boolean; 
@@ -2369,7 +2369,7 @@ export const ResourceDetailModal: React.FC<{
   allResources?: Record<string, ResourceItem[]>;
   onItemSelect?: (item: ResourceItem) => void;
   currentGenreContext?: string | null;
-}> = ({ item: _rawItem, onClose, isHypervisor, stash, toggleStash, onCompanyClick, onGenreClick, resolvedDev, isGuestMode, showGuestNotification, globalSpecs, initialScrollTarget, onDonateClick, allResources, onItemSelect, currentGenreContext }) => { const item = { ..._rawItem, links: _rawItem.links || {} as any };
+}> = ({ item, onClose, isHypervisor, stash, toggleStash, onCompanyClick, onGenreClick, resolvedDev, isGuestMode, showGuestNotification, globalSpecs, initialScrollTarget, onDonateClick, allResources, onItemSelect, currentGenreContext }) => {
   const { dir, t } = useLanguage();
   const [showUploaderPopup, setShowUploaderPopup] = useState(false);
   const currentUser = auth.currentUser;
@@ -2625,7 +2625,7 @@ export const ResourceDetailModal: React.FC<{
                       </div>
                   )}
 
-                  {item.links?.trailer && (
+                  {item.links.trailer && (
                      <button onClick={() => setShowTrailer(true)} className="w-full py-3 sm:py-4 bg-slate-800 hover:bg-slate-700 text-white dark:bg-slate-800/50 dark:hover:bg-slate-800 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors border border-slate-700">
                         <Icon name="Youtube" size={20} className="text-primary-500 rtl:rotate-180" />
                         {t('Watch Trailer')}
@@ -2734,7 +2734,7 @@ export const ResourceDetailModal: React.FC<{
                                          setShowFavoriteDropdown(false);
                                          if (!auth.currentUser) return;
                                          try {
-                                             const { doc, getDoc, updateDoc } = await import('firebase/firestore');
+                                             const { doc, getDoc, updateDoc } = await import('../src/firestoreMock');
                                              const docRef = doc(db, 'SecretArea', auth.currentUser?.uid);
                                              const docSnap = await getDoc(docRef);
                                              if (docSnap.exists()) {
@@ -2872,7 +2872,7 @@ export const ResourceDetailModal: React.FC<{
                           // Add to Library and grant points
                           import('../src/firebase').then(({ auth, db }) => {
                               if (auth.currentUser) {
-                                  import('firebase/firestore').then(({ doc, updateDoc, arrayUnion, increment }) => {
+                                  import('../src/firestoreMock').then(({ doc, updateDoc, arrayUnion, increment }) => {
                                       const docRef = doc(db, 'SecretArea', auth.currentUser?.uid);
                                       const libGame = {
                                           id: item.id || '',
@@ -2913,14 +2913,14 @@ export const ResourceDetailModal: React.FC<{
           </div>
 
           {/* N E X A 1337 message note if available */}
-          {item.links?.fullNote && (
+          {item.links.fullNote && (
               <div className="w-full bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-900/30 rounded-xl p-4 flex gap-4">
                  <div className="text-blue-500 shrink-0">
                      <Icon name="Info" size={24} />
                  </div>
                  <div>
                      <h4 className="text-sm font-bold text-blue-900 dark:text-blue-400 uppercase tracking-widest mb-1">{t('N E X A 1337 Says')}</h4>
-                     <p className="text-sm text-blue-800 dark:text-blue-300">{item.links?.fullNote}</p>
+                     <p className="text-sm text-blue-800 dark:text-blue-300">{item.links.fullNote}</p>
                  </div>
               </div>
           )}
@@ -3132,7 +3132,7 @@ export const ResourceDetailModal: React.FC<{
                   </div>
 
                   {/* Download Channels */}
-                  {(item.links?.full || (item.links?.mirrors && item.links?.mirrors.length > 0) || (item.links?.parts && item.links?.parts.length > 0) || (item.links?.ankerParts && item.links?.ankerParts.length > 0) || (item.links?.preInstalled && (item.links?.preInstalled?.download || item.links?.preInstalled?.cloudDrop || item.links?.preInstalled?.torrent))) && (
+                  {(item.links.full || (item.links.mirrors && item.links.mirrors.length > 0) || (item.links.parts && item.links.parts.length > 0) || (item.links.ankerParts && item.links.ankerParts.length > 0) || (item.links.preInstalled && (item.links.preInstalled.download || item.links.preInstalled.cloudDrop || item.links.preInstalled.torrent))) && (
                   <div className="py-6 sm:py-12" id="download">
                       <div className="flex items-center gap-4 mb-6">
                           <div className="w-10 h-10 bg-primary-500/10 text-primary-500 rounded-xl flex items-center justify-center">
@@ -3141,7 +3141,7 @@ export const ResourceDetailModal: React.FC<{
                           <h3 className="text-xl font-bold text-slate-900 dark:text-white">{t('Download Channels')}</h3>
                       </div>
                       
-                      {item.links?.full && (
+                      {item.links.full && (
                           <div className="mb-6">
                               <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">{t('Direct Full Download')}</h4>
                               <div className="relative">
@@ -3151,12 +3151,12 @@ export const ResourceDetailModal: React.FC<{
                                   <DownloadButton
                                       label={item.category === 'architect' ? `${t('Full project')} (${item.repackSize || item.originalSize || 'Size N/A'})` : ['steamtools', 'extra'].includes(item.category) ? t('Game Files') : `${t('Master File Magnet')} (${item.repackSize || item.originalSize || 'Size N/A'})`}
                                       sub={t('Direct Link')}
-                                      href={item.links?.full}
+                                      href={item.links.full}
                                       icon={['steamtools', 'architect', 'extra'].includes(item.category) ? "Download" : "Magnet"}
                                       imageUrl={item.category === 'architect' ? "https://cdn-icons-png.flaticon.com/512/8767/8767957.png" : item.category === 'extra' ? "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRh4ru3ji2f7YFR6JYvKnvkM6LRna6RVfnz8J_M7_kbJA&s=10" : item.category === 'steamtools' ? "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTSLGNofupfGH5Rxt7lDZ4dKAzQhOJpRBo4GH5OIXr8pHW11lVdWcWyB1nr&s=10" : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQncl_6sUpjbAWmRH7VWRzcIHb6rN3ggXVQMESUax-qew&s=10"}
                                       onClick={['steamtools', 'architect', 'extra'].includes(item.category) ? undefined : (e) => {
                                         e.preventDefault();
-                                        setTorrentWarningLink(item.links?.full);
+                                        setTorrentWarningLink(item.links.full);
                                       }}
                                   />
                               </div>
@@ -3164,44 +3164,44 @@ export const ResourceDetailModal: React.FC<{
                       )}
 
                                                                   {/* Pre-Installed / SteamUnlocked */}
-                      {item.links?.preInstalled && (item.links?.preInstalled?.download || item.links?.preInstalled?.cloudDrop || item.links?.preInstalled?.torrent) && (
+                      {item.links.preInstalled && (item.links.preInstalled.download || item.links.preInstalled.cloudDrop || item.links.preInstalled.torrent) && (
                           <details className="mb-6 group">
                               <summary className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2 cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 transition-colors select-none list-none">
                                   <Icon name="ChevronRight" size={14} className="group-open:rotate-90 transition-transform" />
                                   <img src="https://dka575ofm4ao0.cloudfront.net/pages-transactional_logos/retina/802345/unnamed-b4a32b8b-803c-454f-a411-5a9c33494c3c.jpg" alt="SteamUnlocked" className="w-4 h-4 rounded-sm object-contain" /> {t('Pre-Installed / SteamUnlocked')}
                               </summary>
                               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mt-3">
-                                  {item.links?.preInstalled?.download && (
+                                  {item.links.preInstalled.download && (
                                       <DownloadButton
                                           label={`Download (${item.originalSize || item.repackSize || 'Size N/A'})`}
                                           sub={t('Direct Link')}
-                                          href={item.links?.preInstalled?.download}
+                                          href={item.links.preInstalled.download}
                                           icon="Download"
                                           imageUrl="https://dka575ofm4ao0.cloudfront.net/pages-transactional_logos/retina/802345/unnamed-b4a32b8b-803c-454f-a411-5a9c33494c3c.jpg"
                                           secondary
                                       />
                                   )}
-                                  {item.links?.preInstalled?.cloudDrop && (
+                                  {item.links.preInstalled.cloudDrop && (
                                       <DownloadButton
                                           label="CloudDrop Mirror"
                                           sub={t('Mirror Link')}
-                                          href={item.links?.preInstalled?.cloudDrop}
+                                          href={item.links.preInstalled.cloudDrop}
                                           icon="Cloud"
                                           imageUrl="https://dka575ofm4ao0.cloudfront.net/pages-transactional_logos/retina/802345/unnamed-b4a32b8b-803c-454f-a411-5a9c33494c3c.jpg"
                                           secondary
                                       />
                                   )}
-                                  {item.links?.preInstalled?.torrent && (
+                                  {item.links.preInstalled.torrent && (
                                       <DownloadButton
                                           label="utorrent File"
                                           sub={t('Torrent')}
-                                          href={item.links?.preInstalled?.torrent}
+                                          href={item.links.preInstalled.torrent}
                                           icon="Magnet"
                                           imageUrl="https://dka575ofm4ao0.cloudfront.net/pages-transactional_logos/retina/802345/unnamed-b4a32b8b-803c-454f-a411-5a9c33494c3c.jpg"
                                           secondary
                                           onClick={(e) => {
                                               e.preventDefault();
-                                              setTorrentWarningLink(item.links?.preInstalled?.torrent || null);
+                                              setTorrentWarningLink(item.links.preInstalled?.torrent || null);
                                           }}
                                       />
                                   )}
@@ -3209,14 +3209,14 @@ export const ResourceDetailModal: React.FC<{
                           </details>
                       )}
                       
-                      {( (item.links?.mirrors && item.links?.mirrors.length > 0) || (item.links?.parts && item.links?.parts.length > 0) ) && (
+                      {( (item.links.mirrors && item.links.mirrors.length > 0) || (item.links.parts && item.links.parts.length > 0) ) && (
                           <details className="mb-6 group">
                               <summary className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2 cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 transition-colors select-none list-none">
                                   <Icon name="ChevronRight" size={14} className="group-open:rotate-90 transition-transform" />
-                                  <img src={item.category === 'architect' ? "https://cdn-icons-png.flaticon.com/512/7063/7063204.png" : item.category === 'extra' ? "https://images.icon-icons.com/3053/PNG/512/google_backup_and_sync_macos_bigsur_icon_190135.png" : item.category === 'steamtools' ? "https://play-lh.googleusercontent.com/WNNDb4VyH2yXBwFME6OTWZKhVFPDnQt2xoJeXPcRZSBcnDoMD1JAHQc1GAzu9pH04wCUhFrxfGD1yEE2Bg9HXA=s0-br30" : "https://fitgirl-repacks.site/wp-content/uploads/2016/08/icon.jpg"} alt="Logo" className="w-4 h-4 rounded-sm object-contain" /> {['steamtools', 'architect', 'extra'].includes(item.category) ? t('Backup Server') : t('FitGirl Repack Links')} ({(item.links?.mirrors?.length || 0) + (item.links?.parts?.length || 0)})
+                                  <img src={item.category === 'architect' ? "https://cdn-icons-png.flaticon.com/512/7063/7063204.png" : item.category === 'extra' ? "https://images.icon-icons.com/3053/PNG/512/google_backup_and_sync_macos_bigsur_icon_190135.png" : item.category === 'steamtools' ? "https://play-lh.googleusercontent.com/WNNDb4VyH2yXBwFME6OTWZKhVFPDnQt2xoJeXPcRZSBcnDoMD1JAHQc1GAzu9pH04wCUhFrxfGD1yEE2Bg9HXA=s0-br30" : "https://fitgirl-repacks.site/wp-content/uploads/2016/08/icon.jpg"} alt="Logo" className="w-4 h-4 rounded-sm object-contain" /> {['steamtools', 'architect', 'extra'].includes(item.category) ? t('Backup Server') : t('FitGirl Repack Links')} ({(item.links.mirrors?.length || 0) + (item.links.parts?.length || 0)})
                               </summary>
                               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mt-3">
-                                  {item.links?.parts && item.links?.parts.map(part => (
+                                  {item.links.parts && item.links.parts.map(part => (
                                       <DownloadButton
                                           key={'part_'+part.id}
                                           label={['architect', 'extra'].includes(item.category) ? `Part ${String(part.id).padStart(2, '0')}` : item.category === 'steamtools' ? `Mirror Link ${String(part.id).padStart(2, '0')}` : (part.id === '1' || part.id === 1 ? 'DataNodes' : `DataNodes Part ${part.id}`)}
@@ -3230,7 +3230,7 @@ export const ResourceDetailModal: React.FC<{
                                           onNoteClick={(note) => setNoteModalContent(note)}
                                       />
                                   ))}
-                                  {item.links?.mirrors && item.links?.mirrors.map(part => (
+                                  {item.links.mirrors && item.links.mirrors.map(part => (
                                       <DownloadButton
                                           key={'mirror_'+part.id}
                                           label={['architect', 'extra'].includes(item.category) ? `Part ${String(part.id).padStart(2, '0')}` : item.category === 'steamtools' ? `Mirror Link ${String(part.id).padStart(2, '0')}` : (part.id === '1' || part.id === 1 ? 'FuckingFast' : `FuckingFast Part ${part.id}`)}
@@ -3248,14 +3248,14 @@ export const ResourceDetailModal: React.FC<{
                           </details>
                       )}
                       
-                      {item.links?.ankerParts && item.links?.ankerParts.length > 0 && (
+                      {item.links.ankerParts && item.links.ankerParts.length > 0 && (
                           <details className="mb-6 group">
                               <summary className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2 cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 transition-colors select-none list-none">
                                   <Icon name="ChevronRight" size={14} className="group-open:rotate-90 transition-transform" />
-                                  <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTYdQ_DlScM7nLh2AxH9ds27fTftrY9Jz1WhjBthb514jeSHnu2W6lT0Oo&s=10" alt="AnkerGames" className="w-4 h-4 rounded-sm object-contain" /> Pre-installed / AnkerGames ({item.links?.ankerParts.length})
+                                  <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTYdQ_DlScM7nLh2AxH9ds27fTftrY9Jz1WhjBthb514jeSHnu2W6lT0Oo&s=10" alt="AnkerGames" className="w-4 h-4 rounded-sm object-contain" /> Pre-installed / AnkerGames ({item.links.ankerParts.length})
                               </summary>
                               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mt-3">
-                                  {item.links?.ankerParts.map(part => (
+                                  {item.links.ankerParts.map(part => (
                                       <DownloadButton
                                           key={part.id}
                                           label={`Part ${part.id}`}
@@ -3479,7 +3479,8 @@ export const ResourceDetailModal: React.FC<{
   </div>
   
   {/* Modals for Trailer and Notes */}
-  <AnimatePresence>
+  {createPortal(
+    <AnimatePresence>
       {showHypervisorGuide && (
           <motion.div 
               initial={{ opacity: 0 }}
@@ -3744,7 +3745,7 @@ export const ResourceDetailModal: React.FC<{
               </motion.div>
           </motion.div>
       )}
-      {showTrailer && item.links?.trailer && (
+      {showTrailer && item.links.trailer && (
           <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -3767,7 +3768,7 @@ export const ResourceDetailModal: React.FC<{
                   </button>
                   <iframe 
                       className="w-full h-full"
-                      src={getYoutubeEmbedUrl(item.links?.trailer) || ''} 
+                      src={getYoutubeEmbedUrl(item.links.trailer) || ''} 
                       title="YouTube video player" 
                       frameBorder="0" 
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
@@ -3783,7 +3784,9 @@ export const ResourceDetailModal: React.FC<{
       {noteModalContent && (
           <NoteModal content={noteModalContent} onClose={() => setNoteModalContent(null)} />
       )}
-  </AnimatePresence>
+    </AnimatePresence>,
+    document.body
+  )}
   <UploaderProfilePopup isOpen={showUploaderPopup} onClose={() => setShowUploaderPopup(false)} user={auth.currentUser} />
 </motion.div>
   );
@@ -4793,7 +4796,7 @@ const SecretArea: React.FC = () => {
             }
 
             if (targetItem || !isAdding) {
-                import('firebase/firestore').then(({ doc, updateDoc, arrayUnion, arrayRemove, getDoc }) => {
+                import('../src/firestoreMock').then(({ doc, updateDoc, arrayUnion, arrayRemove, getDoc }) => {
                     const docRef = doc(db, 'SecretArea', auth.currentUser!.uid);
                     getDoc(docRef).then(snap => {
                         if (snap.exists()) {
@@ -4828,7 +4831,7 @@ const SecretArea: React.FC = () => {
   const [selectedResource, setSelectedResource] = useState<ResourceItem | null>(null);
   const [selectedResourceAction, setSelectedResourceAction] = useState<string | undefined>(undefined);
 
-  const location = useLocation();
+  const location = window.location; // using window.location if useLocation is not imported
   useEffect(() => {
     // If there's a state passed via history
     const state = window.history.state?.usr;
@@ -4848,7 +4851,7 @@ const SecretArea: React.FC = () => {
     if (selectedResource) {
       import('../src/firebase').then(({ auth, db }) => {
         if (auth.currentUser) {
-            import('firebase/firestore').then(({ doc, updateDoc, getDoc, setDoc }) => {
+            import('../src/firestoreMock').then(({ doc, updateDoc, getDoc, setDoc }) => {
                 const docRef = doc(db, 'SecretArea', auth.currentUser?.uid);
                 getDoc(docRef).then(snap => {
                     if (snap.exists()) {
@@ -5228,11 +5231,10 @@ const SecretArea: React.FC = () => {
 
   useEffect(() => {
     if (currentUser) {
-        let unsubscribe;
         import('../src/firebase').then(({ db }) => {
-            import('firebase/firestore').then(({ doc, onSnapshot }) => {
+            import('../src/firestoreMock').then(({ doc, getDoc }) => {
                 const docRef = doc(db, 'SecretArea', currentUser.uid);
-                unsubscribe = onSnapshot(docRef, snap => {
+                getDoc(docRef).then(snap => {
                     if (snap.exists() && snap.data().pcSpecs) {
                         const specs = snap.data().pcSpecs;
                         setGlobalSpecs(prev => ({
@@ -5243,7 +5245,6 @@ const SecretArea: React.FC = () => {
                 });
             });
         });
-        return () => { if (unsubscribe) unsubscribe(); };
     }
   }, [currentUser]);
 
@@ -7458,7 +7459,7 @@ const paginatedData = useMemo(() => {
                                     </div>
                                 )}
                             </div>
-                            {item.category === 'game' && ((item.links?.ankerParts && item.links?.ankerParts.length > 0) || (item.links?.preInstalled?.download || item.links?.preInstalled?.cloudDrop || item.links?.preInstalled?.torrent)) && (
+                            {item.category === 'game' && ((item.links?.ankerParts && item.links.ankerParts.length > 0) || (item.links?.preInstalled?.download || item.links?.preInstalled?.cloudDrop || item.links?.preInstalled?.torrent)) && (
                                 <div className="absolute top-2 start-1/2 -translate-x-1/2 px-2 py-1 bg-indigo-600/90 dark:bg-indigo-900/80 backdrop-blur-md border border-indigo-500/30 shadow-lg text-white rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest flex items-center gap-1 z-30 pointer-events-none whitespace-nowrap">
                                 <Icon name="Zap" size={10} className="text-amber-400" /> <span>{t('Pre-installed')}</span>
                             </div>

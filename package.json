@@ -1,5 +1,5 @@
 {
-  "name": "marouan-anouar-portfolio-02",
+  "name": "secretarea",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -13,8 +13,6 @@
     "@google/genai": "^2.16.0",
     "@xyflow/react": "^12.11.1",
     "express": "^5.2.1",
-    "firebase": "^12.18.0",
-    "firebase-admin": "^14.3.0",
     "framer-motion": "^12.24.11",
     "jspdf": "2.5.1",
     "lucide-react": "^1.40.0",

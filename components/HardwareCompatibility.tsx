@@ -65,6 +65,22 @@ const HardwareCompatibility: React.FC<{
   const [isOpen, setIsOpen] = useState(false);
   const [parsedSpecs, setParsedSpecs] = useState<any>(null);
 
+  if (globalSpecs && !globalSpecs.isActive) {
+    return (
+      <Link to="/settings" state={{ tab: 'Hardware' }} className="block relative group cursor-pointer overflow-hidden rounded-xl bg-slate-50 dark:bg-[#0f151e] border border-slate-200 dark:border-slate-800/50 hover:border-primary-500/50 transition-colors p-4 flex flex-col items-center text-center gap-3">
+        <div className="p-3 bg-white dark:bg-slate-800 rounded-full shadow-sm text-slate-400 group-hover:text-primary-500 transition-colors">
+          <Icon name="Cpu" size={24} />
+        </div>
+        <div>
+          <h3 className="text-slate-900 dark:text-white font-bold">{t('Can I Run It?')}</h3>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{t('Click here to enable compatibility checker in your hardware settings.')}</p>
+        </div>
+      </Link>
+    );
+  }
+
+
+
   useEffect(() => {
     if (!requirements || requirements.length === 0) return;
 
@@ -158,19 +174,6 @@ const HardwareCompatibility: React.FC<{
   if (!parsedSpecs) return null;
 
   if (!globalSpecs?.isActive) {
-    if (globalSpecs) {
-      return (
-        <Link to="/settings" state={{ tab: 'Hardware' }} className="block relative group cursor-pointer overflow-hidden rounded-xl bg-slate-50 dark:bg-[#0f151e] border border-slate-200 dark:border-slate-800/50 hover:border-primary-500/50 transition-colors p-4 flex flex-col items-center text-center gap-3">
-          <div className="p-3 bg-white dark:bg-slate-800 rounded-full shadow-sm text-slate-400 group-hover:text-primary-500 transition-colors">
-            <Icon name="Cpu" size={24} />
-          </div>
-          <div>
-            <h3 className="text-slate-900 dark:text-white font-bold">{t('Can I Run It?')}</h3>
-            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{t('Click here to enable compatibility checker in your hardware settings.')}</p>
-          </div>
-        </Link>
-      );
-    }
     return (
       <div className="relative overflow-hidden rounded-xl bg-white dark:bg-[#0f151e] border border-slate-200 dark:border-slate-800/50 p-4 flex items-center gap-4">
         <div className="w-[46px] h-[46px] rounded-[14px] bg-emerald-100 dark:bg-[#0c2a23] text-emerald-600 dark:text-[#22c55e] flex items-center justify-center shrink-0">

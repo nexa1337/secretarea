@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { auth, db } from '../src/firebase';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from '../src/firestoreMock';
 
 import { useParams, Navigate, Link } from 'react-router-dom';
 import { CATEGORIES } from '../constants';
@@ -183,7 +183,7 @@ const CategoryDetail: React.FC = () => {
     if (!auth.currentUser) return;
     const docRef = doc(db, 'SecretArea', auth.currentUser.uid);
     try {
-        const { setDoc } = await import('firebase/firestore');
+        const { setDoc } = await import('../src/firestoreMock');
         const docSnap = await getDoc(docRef);
         
         let data = docSnap.exists() ? docSnap.data() : {
