@@ -15,17 +15,18 @@ import {
   TbLoader, TbSend, TbCopy, TbGhost, TbShoppingCart, TbShieldExclamation, TbGift,
   TbBold, TbItalic, TbList, TbCheckbox, TbGridDots, TbSearch, TbCalculator, TbBulb, TbSparkles, TbRefresh, TbInfoCircle,
   TbTarget, TbEye, TbBookmark, TbRadar, TbTerminal, TbBell, TbHistory, TbFilter, TbMenu2, TbDots,
-  TbHash, TbFolder, TbDeviceFloppy, TbChartPie, TbCircleX, TbLogout, TbMessageCircle, TbBuildingMosque,
-  TbCurrencyBitcoin, TbCurrencyEthereum, TbCurrencyMonero, TbCoin, TbWallet, TbStar
-, TbShare} from 'react-icons/tb';
+  TbHash, TbFolder, TbDeviceFloppy, TbChartPie, TbCircleX, TbLogout, TbLogin, TbMessageCircle, TbBuildingMosque,
+  TbCurrencyBitcoin, TbCurrencyEthereum, TbCurrencyMonero, TbCoin, TbWallet, TbStar,
+  TbShare, TbBrandAdobe, TbBrandOpenai, TbMagnet
+} from 'react-icons/tb';
 
 import {
   SiAutodesk, SiBlender, SiSketchup, SiUnrealengine, SiUnity,
   SiPython, SiReact, SiPhp, SiLinux, SiAndroid, SiPlaystation,
-  SiSteam, SiGodotengine, SiAdobe,
+  SiSteam, SiGodotengine,
   SiLaravel, SiFlutter, SiDart, SiMysql, SiHackthebox, SiKalilinux, SiWireshark,
-  SiMetasploit, SiAdobelightroom, SiNotion, SiShopify, SiGoogleanalytics,
-  SiOpenai, SiLangchain, SiHuggingface, SiYcombinator, SiUdemy, SiPortswigger,
+  SiMetasploit, SiNotion, SiShopify, SiGoogleanalytics,
+  SiLangchain, SiHuggingface, SiYcombinator, SiUdemy, SiPortswigger,
   SiTryhackme, SiCisco, SiKick, SiN8N, SiWoocommerce, SiZapier
 } from 'react-icons/si';
 
@@ -36,6 +37,7 @@ interface IconProps {
   name: string;
   size?: number;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -105,6 +107,8 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Wolf: ({ size = 24, className = "" }) => <img src="/images/logo01.png" alt="Logo" width={size} height={size} className={`object-contain ${className}`} />,
   Lock: TbLock,
   Logout: TbLogout,
+  Login: TbLogin,
+  LogIn: TbLogin,
   Key: TbKey,
   Server: TbServer,
   Code: TbCode,
@@ -162,7 +166,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   BrandVRay: TbPhoto,
   BrandUnreal: SiUnrealengine,
   BrandD5: TbPhoto,
-  BrandAdobe: SiAdobe,
+  BrandAdobe: TbBrandAdobe,
   BrandUnity: SiUnity,
   BrandPython: SiPython,
   BrandReact: SiReact,
@@ -188,11 +192,11 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Kali: SiKalilinux,
   Wireshark: SiWireshark,
   Metasploit: SiMetasploit,
-  Lightroom: SiAdobelightroom,
+  Lightroom: TbPhoto,
   Notion: SiNotion,
   Shopify: SiShopify,
   GoogleAnalytics: SiGoogleanalytics,
-  OpenAI: SiOpenai,
+  OpenAI: TbBrandOpenai,
   LangChain: SiLangchain,
   HuggingFace: SiHuggingface,
   YCombinator: SiYcombinator,
@@ -238,12 +242,13 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Coin: TbCoin,
   Wallet: TbWallet,
   Star: TbStar,
+  Magnet: TbMagnet,
 };
 
-const Icon: React.FC<IconProps> = ({ name, size = 24, className }) => {
-  if (!name) return <TbHelp size={size} className={className} />;
+const Icon: React.FC<IconProps> = ({ name, size = 24, className, style }) => {
+  if (!name) return <TbHelp size={size} className={className} style={style} />;
   const IconComponent = ICON_MAP[name] || ICON_MAP[name.toUpperCase()] || TbHelp;
-  return <IconComponent size={size} className={className} />;
+  return <IconComponent size={size} className={className} style={style} />;
 };
 
 export default Icon;

@@ -1,191 +1,274 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../src/contexts/LanguageContext';
-
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { NAV_ITEMS, SOCIAL_LINKS } from '../constants';
 import Icon from './Icon';
+import { auth } from '../src/firebase';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const BottomNav: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const location = useLocation();
-  const [showMoreMobile, setShowMoreMobile] = useState(false);
+  const navigate = useNavigate();
 
-  // New mobile nav items defined directly here
-  const mobileNavItems = [
-    { label: 'Home', path: '/', iconName: 'Home', isExternal: false },
-    { label: 'Personal', path: '/personal-space', iconName: 'Activity', isExternal: false },
-    { label: 'Secret Area', path: '/', iconName: 'Wolf', isExternal: false, centerAction: true },
-    { label: 'Roadmap', path: '/roadmap', iconName: 'Rocket', isExternal: false },
-    { label: 'More', path: '#more', iconName: 'MoreHorizontal', isExternal: false, isMore: true }
-  ];
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const checkGuest = () =>
+    localStorage.getItem('nexa_guest_mode') === 'true' ||
+    localStorage.getItem('secret_area_unlocked') === 'guest';
+
+  const [isGuest, setIsGuest] = useState(checkGuest);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    const handleAuth = () => {
+      setIsGuest(checkGuest());
+    };
+    window.addEventListener('storage', handleAuth);
+    window.addEventListener('authChange', handleAuth);
+
+    const unsub = auth.onAuthStateChanged((user) => {
+      setCurrentUser(user);
+      if (user) {
+        setIsGuest(false);
+      } else {
+        setIsGuest(checkGuest());
+      }
+    });
+
+    return () => {
+      window.removeEventListener('storage', handleAuth);
+      window.removeEventListener('authChange', handleAuth);
+      unsub();
+    };
+  }, []);
+
+  // Close menu on outside click or navigation
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location.pathname]);
+
+  const handleReturnToTerminal = () => {
+    setIsMenuOpen(false);
+    localStorage.removeItem('secret_area_unlocked');
+    localStorage.removeItem('nexa_guest_mode');
+    window.dispatchEvent(new Event('authChange'));
+    window.dispatchEvent(new CustomEvent('return-to-terminal'));
+    navigate('/');
+  };
+
+  const handleOpenLogin = () => {
+    setIsMenuOpen(false);
+    window.dispatchEvent(new CustomEvent('open-login-modal'));
+  };
+
+  const handleLogout = async () => {
+    setIsMenuOpen(false);
+    localStorage.removeItem('secret_area_unlocked');
+    localStorage.removeItem('nexa_guest_mode');
+    try {
+      if (auth && typeof auth.signOut === 'function') {
+        await auth.signOut();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    window.dispatchEvent(new Event('authChange'));
+    navigate('/');
+  };
 
   return (
-    <>
-      <div className="md:hidden fixed bottom-0 start-0 end-0 bg-white/90 dark:bg-slate-900/90 md:backdrop-blur-md border-t border-slate-200 dark:border-slate-800 z-50 pb-safe">
-        <div className="flex justify-around items-center h-16 relative">
-          {mobileNavItems.map((item) => {
-            const isActive = !item.isExternal && !item.isMore && location.pathname === item.path;
-
-            if (item.isMore) {
-              return (
-                <button
-                  key={item.label}
-                  onClick={() => setShowMoreMobile(!showMoreMobile)}
-                  className={`flex flex-col items-center justify-center w-full h-full transition-colors group ${
-                    showMoreMobile 
-                      ? 'text-primary-600 dark:text-nexa-accent' 
-                      : 'text-slate-700 dark:text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                  }`}
-                >
-                  <Icon name={item.iconName} size={24} className={showMoreMobile ? 'animate-bounce-subtle' : ''} />
-                  <span className="text-[10px] mt-1 font-medium">{t(item.label)}</span>
-                </button>
-              );
-            }
-
-            if (item.centerAction) {
-              return (
-                <Link
-                  key={item.label}
-                  to={item.path}
-                   className="flex flex-col items-center justify-center w-full h-full transition-colors group"
-                >
-                  <div className="w-8 h-8 flex items-center justify-center">
-                     <Icon name={item.iconName} size={24} />
-                  </div>
-                  <span className="text-[10px] mt-1 font-bold text-slate-800 dark:text-slate-200">{t(item.label)}</span>
-                </Link>
-              );
-            }
-
-            return (
-              <Link 
-                key={item.label} 
-                to={item.path}
-                className={`flex flex-col items-center justify-center w-full h-full transition-colors group ${
-                  isActive 
-                    ? 'text-primary-600 dark:text-nexa-accent' 
-                    : 'text-slate-700 dark:text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                }`}
-              >
-                <Icon name={item.iconName} size={24} className={isActive ? 'animate-bounce-subtle' : ''} />
-                <span className="text-[10px] mt-1 font-medium">{t(item.label)}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-
+    <nav 
+      aria-label="Mobile Bottom Navigation" 
+      dir={dir} 
+      className="md:hidden fixed bottom-0 start-0 end-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 z-50 pb-safe shadow-lg transition-colors duration-300"
+    >
+      {/* Dropdown Menu Overlay */}
       <AnimatePresence>
-        {showMoreMobile && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowMoreMobile(false)}
-              className="md:hidden fixed inset-0 z-40 bg-slate-900/40 md:backdrop-blur-sm"
-            />
-            <motion.div 
-              initial={{ opacity: 0, y: 100 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 100 }}
-              className="md:hidden fixed inset-x-4 bottom-20 z-50 bg-white/95 dark:bg-slate-900/95 md:backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-3xl p-4 shadow-2xl flex flex-col items-stretch max-h-[85vh]"
-            >
-             <h3 className="text-slate-900 dark:text-white font-bold mb-3 px-2 tracking-tight">{t('N E X A 1337 Ecosystem')}</h3>
-             
-             <div className="flex flex-col gap-2 overflow-y-auto no-scrollbar px-2 pb-2">
-                <a href="https://instagram.com/nexa1337" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm transition-all group">
-                    <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-100 dark:border-blue-500/20 group-hover:scale-110 transition-transform">
-                            <Icon name="Briefcase" size={18} />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-slate-900 dark:text-white font-extrabold text-[13px] tracking-tight">{t('N E X A 1337')}</span>
-                            <span className="text-slate-700 dark:text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">{t('342K clicks')}</span>
-                        </div>
-                    </div>
-                    <Icon name="ExternalLink" size={14} className="text-slate-700 dark:text-slate-300 dark:text-slate-500 group-hover:text-blue-500 transition-colors" />
-                </a>
+        {isMenuOpen && (
+          <motion.div
+            ref={menuRef}
+            initial={{ opacity: 0, y: 15, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 15, scale: 0.96 }}
+            transition={{ duration: 0.18 }}
+            className="absolute bottom-full end-3 mb-2 w-72 max-w-[calc(100vw-1.5rem)] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 z-50 overflow-hidden"
+          >
+            {/* Header / Guest Mode Info */}
+            <div className="flex items-center justify-between pb-2.5 mb-2 border-b border-slate-100 dark:border-slate-800">
+              <span className="text-xs font-bold text-slate-900 dark:text-white">
+                {t('Account & Terminal')}
+              </span>
+              {isGuest && !currentUser && (
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/30 text-amber-600 dark:text-amber-400 font-bold text-[10px]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                  {t('Guest mode')}
+                </span>
+              )}
+            </div>
 
-                <a href="https://nexa1337.github.io/secretarea" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm transition-all group">
-                    <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-100 dark:border-indigo-500/20 group-hover:scale-110 transition-transform">
-                            <Icon name="Layout" size={18} />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-slate-900 dark:text-white font-extrabold text-[13px] tracking-tight">{t('N E X A 1337 - Secret Area')}</span>
-                            <span className="text-slate-700 dark:text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">{t('215K clicks')}</span>
-                        </div>
-                    </div>
-                    <Icon name="ExternalLink" size={14} className="text-slate-700 dark:text-slate-300 dark:text-slate-500 group-hover:text-indigo-500 transition-colors" />
-                </a>
+            <div className="space-y-1.5">
+              {/* Login Button (if not logged in with real account) */}
+              {!currentUser ? (
+                <button
+                  onClick={handleOpenLogin}
+                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md shadow-blue-500/20 active:scale-98 transition-all"
+                >
+                  <span className="flex items-center gap-2">
+                    <Icon name="LogIn" size={16} />
+                    <span>{t('Login')}</span>
+                  </span>
+                  <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-md uppercase font-semibold tracking-wider">
+                    Gmail / Discord
+                  </span>
+                </button>
+              ) : (
+                <div className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <div className="min-w-0 pr-2">
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                      {currentUser.displayName || currentUser.email || 'User'}
+                    </p>
+                    <p className="text-[10px] text-slate-500 truncate">
+                      {currentUser.email}
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="text-xs font-bold text-rose-500 hover:text-rose-600 px-2 py-1 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                  >
+                    {t('Logout')}
+                  </button>
+                </div>
+              )}
 
-                <a href="https://nexa1337.github.io/tool/" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm transition-all group">
-                    <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-500/20 group-hover:scale-110 transition-transform">
-                            <Icon name="Wrench" size={18} />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-slate-900 dark:text-white font-extrabold text-[13px] tracking-tight">{t('N E X A 1337 - Tool')}</span>
-                            <span className="text-slate-700 dark:text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">{t('189K clicks')}</span>
-                        </div>
-                    </div>
-                    <Icon name="ExternalLink" size={14} className="text-slate-700 dark:text-slate-300 dark:text-slate-500 group-hover:text-emerald-500 transition-colors" />
-                </a>
+              {/* Terminal Button */}
+              <button
+                onClick={handleReturnToTerminal}
+                className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-200 transition-colors text-start"
+              >
+                <div className="w-6 h-6 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center shrink-0">
+                  <Icon name="Terminal" size={14} className="text-slate-700 dark:text-slate-300" />
+                </div>
+                <div className="flex flex-col text-start">
+                  <span className="font-bold">{t('Terminal')}</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                    {t('Come back to terminal page')}
+                  </span>
+                </div>
+              </button>
 
-                <a href="https://nexa1337.github.io/toolv2/" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-slate-900 dark:bg-slate-950 active:scale-[0.98] rounded-2xl border border-purple-500/20 shadow-lg transition-all group overflow-hidden relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 opacity-50"></div>
-                    <div className="flex items-center gap-3 relative z-10">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 text-white flex items-center justify-center shrink-0 shadow-md group-hover:scale-110 transition-transform">
-                            <Icon name="Sparkles" size={18} />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-white font-extrabold text-[13px] tracking-tight">{t('N E X A 1337 - Tool v2')}</span>
-                            <span className="text-pink-400 font-bold text-[10px] uppercase tracking-wider flex items-center gap-1">
-                              <Icon name="TrendingUp" size={12} className="animate-pulse" /> 92K clicks
-                            </span>
-                        </div>
-                    </div>
-                    <Icon name="ExternalLink" size={14} className="text-slate-700 dark:text-slate-500 relative z-10 group-hover:text-purple-400 transition-colors" />
-                </a>
+              {/* Quick links to Profile & Settings */}
+              {currentUser && (
+                <Link
+                  to="/profile"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"
+                >
+                  <Icon name="User" size={15} />
+                  <span>{t('My profile')}</span>
+                </Link>
+              )}
 
-                <a href="https://school-lime-psi.vercel.app/" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm transition-all group">
-                    <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-100 dark:border-amber-500/20 group-hover:scale-110 transition-transform">
-                            <Icon name="GraduationCap" size={18} />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-slate-900 dark:text-white font-extrabold text-[13px] tracking-tight">{t('N E X A 1337 - School')}</span>
-                            <span className="text-slate-700 dark:text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">{t('54K clicks')}</span>
-                        </div>
-                    </div>
-                    <Icon name="ExternalLink" size={14} className="text-slate-700 dark:text-slate-300 dark:text-slate-500 group-hover:text-amber-500 transition-colors" />
-                </a>
-
-                <a href="https://digitalstore-iota-five.vercel.app/" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm transition-all group">
-                    <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-100 dark:border-rose-500/20 group-hover:scale-110 transition-transform">
-                            <Icon name="ShoppingCart" size={18} />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-slate-900 dark:text-white font-extrabold text-[13px] tracking-tight">{t('N E X A 1337 - Digital Store')}</span>
-                            <span className="text-slate-700 dark:text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">{t('Products & More')}</span>
-                        </div>
-                    </div>
-                    <Icon name="ExternalLink" size={14} className="text-slate-700 dark:text-slate-300 dark:text-slate-500 group-hover:text-rose-500 transition-colors" />
-                </a>
-             </div>
-
-             <button onClick={() => setShowMoreMobile(false)} className="mt-2 w-full py-3 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-600 dark:text-red-500 rounded-xl font-bold active:scale-95 transition-all outline-none text-sm">
-               Close Menu
-             </button>
+              <Link
+                to="/settings"
+                onClick={() => setIsMenuOpen(false)}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"
+              >
+                <Icon name="Settings" size={15} />
+                <span>{t('Settings')}</span>
+              </Link>
+            </div>
           </motion.div>
-          </>
         )}
       </AnimatePresence>
-    </>
+
+      {/* Main Navigation Bar */}
+      <div className="flex justify-around items-center h-16 relative max-w-md mx-auto px-1">
+        {/* Home */}
+        <Link 
+          to="/"
+          className={`flex flex-col items-center justify-center w-full h-full transition-colors group active:scale-95 ${
+            location.pathname === '/' 
+              ? 'text-blue-600 dark:text-blue-400 font-bold' 
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+          }`}
+        >
+          <Icon name="Home" size={20} className={location.pathname === '/' ? 'scale-110' : ''} />
+          <span className="text-[10px] mt-1 font-medium truncate max-w-[65px]">{t('Home')}</span>
+        </Link>
+
+        {/* Personal Space */}
+        <Link 
+          to="/personal-space"
+          className={`flex flex-col items-center justify-center w-full h-full transition-colors group active:scale-95 ${
+            location.pathname === '/personal-space' 
+              ? 'text-blue-600 dark:text-blue-400 font-bold' 
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+          }`}
+        >
+          <Icon name="Activity" size={20} className={location.pathname === '/personal-space' ? 'scale-110' : ''} />
+          <span className="text-[10px] mt-1 font-medium truncate max-w-[65px]">{t('Personal')}</span>
+        </Link>
+
+        {/* Center SecretArea */}
+        <Link
+          to="/"
+          className="flex flex-col items-center justify-center w-full h-full transition-all group active:scale-95"
+        >
+          <div className="w-9 h-9 rounded-xl bg-blue-600 dark:bg-blue-500 text-white flex items-center justify-center shadow-md shadow-blue-500/30 group-hover:scale-105 transition-transform">
+            <Icon name="Wolf" size={20} />
+          </div>
+          <span className="text-[10px] mt-1 font-bold text-slate-800 dark:text-slate-200 truncate max-w-[65px]">
+            {t('SecretArea')}
+          </span>
+        </Link>
+
+        {/* Roadmap */}
+        <Link 
+          to="/roadmap"
+          className={`flex flex-col items-center justify-center w-full h-full transition-colors group active:scale-95 ${
+            location.pathname === '/roadmap' 
+              ? 'text-blue-600 dark:text-blue-400 font-bold' 
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+          }`}
+        >
+          <Icon name="Rocket" size={20} className={location.pathname === '/roadmap' ? 'scale-110' : ''} />
+          <span className="text-[10px] mt-1 font-medium truncate max-w-[65px]">{t('Roadmap')}</span>
+        </Link>
+
+        {/* Menu Dropdown Trigger (with guest indicator if in guest mode) */}
+        <button
+          onClick={() => setIsMenuOpen((prev) => !prev)}
+          className={`relative flex flex-col items-center justify-center w-full h-full transition-colors group active:scale-95 ${
+            isMenuOpen
+              ? 'text-blue-600 dark:text-blue-400 font-bold'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+          }`}
+          aria-label={t('Menu')}
+          aria-expanded={isMenuOpen}
+        >
+          <div className="relative">
+            <Icon name={isMenuOpen ? "ChevronDown" : "Menu"} size={20} />
+            {isGuest && !currentUser && (
+              <span className="absolute -top-1 -end-1 w-2.5 h-2.5 rounded-full bg-amber-500 border-2 border-white dark:border-slate-900 animate-pulse" />
+            )}
+          </div>
+          <span className="text-[10px] mt-1 font-medium truncate max-w-[65px]">
+            {isGuest && !currentUser ? t('Guest mode') : t('Menu')}
+          </span>
+        </button>
+      </div>
+    </nav>
   );
 };
 

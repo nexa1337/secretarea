@@ -4,12 +4,12 @@ import { Helmet } from 'react-helmet-async';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { signInWithGoogle, signInWithDiscord, db, auth } from '../src/firebase';
 import { doc, getDoc, updateDoc, setDoc, arrayUnion, arrayRemove, increment } from '../src/firestoreMock';
-import { useNavigate } from 'react-router-dom';
+import { trackUserMovement, recordGameInteraction, getLocalProfile, removeGameFromLibrary, getCachedAdminAvatar, getCachedAdminName, subscribeAdminPublicProfile } from '../src/services/userService';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../src/contexts/LanguageContext';
 import { GPU_DATA, CPU_DATA, getGpuTier, getCpuTier } from '../src/data/systemSpecs';
 import { Link } from 'react-router-dom';
-import { GoogleGenAI } from "@google/genai";
 import Icon from '../components/Icon';
 import HeroSlider from '../components/HeroSlider';
 import AnimatedGenreHero from '../components/AnimatedGenreHero';
@@ -23,6 +23,7 @@ import MaintenancePage from '../components/MaintenancePage';
 import HardwareCompatibility from "../components/HardwareCompatibility";
 import { LowPolyBackground } from '../components/LowPolyBackground';
 import { FaFaceAngry } from 'react-icons/fa6';
+import { TbShieldCheck, TbCrown } from 'react-icons/tb';
 import backupData from '../data/backup_resources.json';
 
 // --- CONFIGURATION ---
@@ -31,6 +32,9 @@ const DISCORD_LINK = 'https://discord.gg/pygmDWFAHK';
 const TELEGRAM_LINK = 'https://t.me/secretarea1337';
 const REDDIT_LINK = 'https://www.reddit.com/r/SecretArea1337/';
 const INSTAGRAM_LINK = 'https://instagram.com/nexa1337';
+const KICK_LINK = 'https://kick.com/secretarea1337';
+const TIKTOK_LINK = 'https://www.tiktok.com/@secretarea1337';
+const YOUTUBE_LINK = 'https://www.youtube.com/@SecretArea1337';
 const ITEMS_PER_PAGE = 12; // Show 12 items per page for laptop grid (4x3)
 
 // --- ADVERTISEMENT CONFIGURATION ---
@@ -106,76 +110,184 @@ const DISCLAIMER_CONTENT: Record<string, DisclaimerData> = {
 };
 
 
-const UploaderProfilePopup: React.FC<{ isOpen: boolean, onClose: () => void, user: any }> = ({ isOpen, onClose, user }) => {
+const ADMIN_SOCIAL_LINKS = [
+    {
+        name: 'Reddit',
+        url: REDDIT_LINK,
+        icon: 'Reddit',
+        hoverColor: 'hover:text-[#FF4500] hover:border-[#FF4500]/50 hover:bg-[#FF4500]/10',
+        badgeColor: 'text-[#FF4500]',
+    },
+    {
+        name: 'Discord',
+        url: DISCORD_LINK,
+        icon: 'Discord',
+        hoverColor: 'hover:text-[#5865F2] hover:border-[#5865F2]/50 hover:bg-[#5865F2]/10',
+        badgeColor: 'text-[#5865F2]',
+    },
+    {
+        name: 'Telegram',
+        url: TELEGRAM_LINK,
+        icon: 'Telegram',
+        hoverColor: 'hover:text-[#2AABEE] hover:border-[#2AABEE]/50 hover:bg-[#2AABEE]/10',
+        badgeColor: 'text-[#2AABEE]',
+    },
+    {
+        name: 'Kick',
+        url: KICK_LINK,
+        icon: 'Kick',
+        hoverColor: 'hover:text-[#53FC18] hover:border-[#53FC18]/50 hover:bg-[#53FC18]/10',
+        badgeColor: 'text-[#53FC18]',
+    },
+    {
+        name: 'TikTok',
+        url: TIKTOK_LINK,
+        icon: 'Tiktok',
+        hoverColor: 'hover:text-[#FE2C55] hover:border-[#FE2C55]/50 hover:bg-[#FE2C55]/10',
+        badgeColor: 'text-[#FE2C55]',
+    },
+    {
+        name: 'YouTube',
+        url: YOUTUBE_LINK,
+        icon: 'Youtube',
+        hoverColor: 'hover:text-[#FF0000] hover:border-[#FF0000]/50 hover:bg-[#FF0000]/10',
+        badgeColor: 'text-[#FF0000]',
+    },
+];
+
+const UploaderProfilePopup: React.FC<{ isOpen: boolean; onClose: () => void; gameItem?: ResourceItem }> = ({ isOpen, onClose, gameItem }) => {
     const { t } = useLanguage();
-    const navigate = useNavigate();
-    const [userData, setUserData] = useState<any>(null);
+    const [adminAvatar, setAdminAvatar] = useState<string>(() => getCachedAdminAvatar());
+    const [adminDisplayName, setAdminDisplayName] = useState<string>(() => getCachedAdminName());
 
     useEffect(() => {
-        if (isOpen && user) {
-            getDoc(doc(db, 'SecretArea', user.uid)).then(snap => {
-                if (snap.exists()) {
-                    setUserData(snap.data());
-                }
-            });
-        }
-    }, [isOpen, user]);
+        if (!isOpen) return;
+        const unsub = subscribeAdminPublicProfile((data) => {
+            if (data.avatarURL) setAdminAvatar(data.avatarURL);
+            if (data.displayName) setAdminDisplayName(data.displayName);
+        });
+        return () => unsub();
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
+    const screenshotUrl = gameItem?.galleryImages?.[0] || gameItem?.coverImage;
+
     return createPortal(
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
+            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
             <motion.div 
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
                 className="relative bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl"
             >
-                <div className="relative h-32 bg-gradient-to-r from-blue-600 to-indigo-600">
-                    <button onClick={onClose} className="absolute top-4 end-4 w-8 h-8 flex items-center justify-center rounded-full bg-black/20 text-white hover:bg-black/40 transition-colors">
+                {/* Header: displays actual game screenshot, not a generic banner */}
+                <div className="relative h-32 bg-slate-900 overflow-hidden">
+                    {screenshotUrl ? (
+                        <img 
+                            src={screenshotUrl} 
+                            alt={gameItem?.name || "Screenshot"} 
+                            className="w-full h-full object-cover opacity-60 scale-105" 
+                        />
+                    ) : (
+                        <div className="w-full h-full bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 opacity-90" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0b1120] via-black/30 to-transparent" />
+                    <button onClick={onClose} className="absolute top-4 end-4 w-8 h-8 flex items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors z-20">
                         <Icon name="X" size={16} />
                     </button>
+                    {gameItem?.name && (
+                        <div className="absolute bottom-2 start-4 z-10 text-[11px] font-semibold text-slate-200 truncate max-w-[240px] drop-shadow">
+                            🎮 {gameItem.name}
+                        </div>
+                    )}
                 </div>
                 <div className="px-6 pb-6 pt-0 relative">
-                    <div className="flex justify-between items-end -mt-12 mb-4">
-                        <div className="w-24 h-24 rounded-full border-4 border-white dark:border-[#0b1120] bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden relative z-10 shadow-lg">
-                            {user?.photoURL ? (
-                                <img src={user.photoURL} alt={user.displayName} className="w-full h-full object-cover" />
-                            ) : (
-                                <span className="text-3xl font-black text-slate-400">{user?.displayName?.charAt(0).toUpperCase() || 'A'}</span>
-                            )}
-                        </div>
-                        <div className="flex flex-col items-end mb-2">
-                            <span className="bg-primary-500/10 text-primary-600 dark:text-primary-400 font-black text-xs px-2.5 py-1 rounded-full border border-primary-500/20 uppercase tracking-widest">Admin</span>
-                        </div>
-                    </div>
-                    <h3 className="text-xl font-black text-slate-900 dark:text-white mb-1">{user?.displayName || 'Admin'}</h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-4">{userData?.bio || "No intel available."}</p>
-                    
-                    <div className="grid grid-cols-2 gap-3 mb-6">
-                        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3 border border-slate-100 dark:border-slate-800">
-                            <div className="text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">Points</div>
-                            <div className="text-lg font-black text-slate-800 dark:text-slate-200">{userData?.points || 0}</div>
-                        </div>
-                        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3 border border-slate-100 dark:border-slate-800">
-                            <div className="text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">Rank</div>
-                            <div className="text-sm font-black text-slate-800 dark:text-slate-200">
-                                {userData?.points >= 600000 ? 'Alpha Wolf' : 
-                                 userData?.points >= 450000 ? 'Beta Wolf' : 
-                                 userData?.points >= 250000 ? 'Subordinate Wolf' : 
-                                 userData?.points >= 100000 ? 'Juvenile Wolf' : 
-                                 userData?.points >= 50000 ? 'Pup Wolf' : 'Cub Wolf'}
+                    <div className="flex justify-between items-end -mt-10 mb-4">
+                        <div className="relative group">
+                            <div className="w-20 h-20 rounded-2xl border-4 border-white dark:border-[#0b1120] bg-gradient-to-br from-amber-500/40 via-amber-400/20 to-blue-500/30 p-0.5 flex items-center justify-center overflow-hidden relative z-10 shadow-xl ring-2 ring-amber-500/30">
+                                <div className="w-full h-full rounded-[14px] overflow-hidden bg-slate-900 flex items-center justify-center relative">
+                                    {adminAvatar ? (
+                                        <img 
+                                            src={adminAvatar} 
+                                            alt={adminDisplayName || "Admin"} 
+                                            referrerPolicy="no-referrer"
+                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                            onError={() => {
+                                                setAdminAvatar('');
+                                            }}
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full bg-gradient-to-tr from-amber-600 via-amber-500 to-yellow-400 flex items-center justify-center text-slate-950 font-black text-2xl uppercase select-none shadow-inner">
+                                            {adminDisplayName ? adminDisplayName[0].toUpperCase() : 'W'}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            {/* Verified Admin Avatar Badge */}
+                            <div className="absolute -bottom-1 -end-1 z-20 w-6 h-6 rounded-full bg-gradient-to-tr from-amber-600 to-amber-400 text-slate-950 flex items-center justify-center shadow-md border-2 border-white dark:border-[#0b1120]" title={t('Verified Admin')}>
+                                <TbShieldCheck size={13} className="stroke-[2.5]" />
                             </div>
                         </div>
+                        <div className="flex flex-col items-end mb-1">
+                            <span className="bg-amber-500/15 text-amber-600 dark:text-amber-400 font-black text-xs px-3 py-1 rounded-full border border-amber-500/30 uppercase tracking-widest flex items-center gap-1 shadow-sm">
+                                <TbShieldCheck size={14} className="text-amber-500" /> Admin 🛡️
+                            </span>
+                        </div>
                     </div>
+                    <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-xl font-black text-slate-900 dark:text-white">{adminDisplayName || 'Wolf'}</h3>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-500 border border-blue-500/20">Verified Admin</span>
+                    </div>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-4">InternetForEveryone.</p>
                     
-                    <button 
-                        onClick={() => { onClose(); navigate('/profile'); }}
-                        className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm transition-colors shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2"
-                    >
-                        See Full Profile <Icon name="ArrowRight" size={16} />
-                    </button>
+                    <div className="grid grid-cols-3 gap-2.5 mb-4">
+                        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3 border border-slate-100 dark:border-slate-800 text-center">
+                            <div className="text-slate-400 text-[10px] uppercase font-bold tracking-wider mb-1">Points</div>
+                            <div className="text-base font-black text-slate-800 dark:text-slate-200">50,000</div>
+                        </div>
+                        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3 border border-slate-100 dark:border-slate-800 text-center">
+                            <div className="text-slate-400 text-[10px] uppercase font-bold tracking-wider mb-1">Rank</div>
+                            <div className="text-sm font-black text-rose-500 flex items-center justify-center gap-1">
+                                <TbCrown size={14} /> Fenrir
+                            </div>
+                        </div>
+                        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3 border border-slate-100 dark:border-slate-800 text-center">
+                            <div className="text-slate-400 text-[10px] uppercase font-bold tracking-wider mb-1">Role</div>
+                            <div className="text-xs font-black text-amber-500">Root Admin</div>
+                        </div>
+                    </div>
+
+                    {/* Admin Social Links */}
+                    <div className="pt-3.5 border-t border-slate-100 dark:border-slate-800/80">
+                        <div className="flex items-center justify-between mb-2.5">
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 dark:text-slate-500">
+                                {t('Official Socials')}
+                            </span>
+                            <span className="text-[10px] font-semibold text-amber-500 dark:text-amber-400 flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                {t('Real Links')}
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                            {ADMIN_SOCIAL_LINKS.map((social) => (
+                                <a
+                                    key={social.name}
+                                    href={social.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all duration-200 hover:scale-[1.03] shadow-2xs group ${social.hoverColor}`}
+                                    title={`${social.name} - SecretArea1337`}
+                                >
+                                    <span className={`${social.badgeColor} group-hover:scale-110 transition-transform shrink-0`}>
+                                        <Icon name={social.icon} size={14} />
+                                    </span>
+                                    <span className="truncate text-[11px]">{social.name}</span>
+                                </a>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </motion.div>
         </div>,
@@ -205,7 +317,7 @@ interface IntelItem {
   version?: string;
 }
 
-interface ResourceItem {
+export interface ResourceItem {
   title?: string;
   image?: string;
   id: string;
@@ -246,6 +358,7 @@ interface ResourceItem {
         cloudDrop?: string;
         torrent?: string;
     };
+    utorrent?: string;
   };}
 
 interface CompanyProfile {
@@ -1233,7 +1346,7 @@ const AboutSecretAreaSection: React.FC = () => {
                                 <span className="text-emerald-600 dark:text-emerald-400">90%</span>
                             </div>
                             <div className="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden transition-colors duration-300">
-                                <div className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full w-0 animate-[fillProgress_1.5s_ease-out_forwards]" style={{ '--target-width': '90%' }}></div>
+                                <div className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full w-0 animate-[fillProgress_1.5s_ease-out_forwards]" style={{ '--target-width': '90%' } as React.CSSProperties}></div>
                             </div>
                         </div>
                         {/* Ankergames */}
@@ -1243,7 +1356,7 @@ const AboutSecretAreaSection: React.FC = () => {
                                 <span className="text-blue-600 dark:text-blue-400">10%</span>
                             </div>
                             <div className="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden transition-colors duration-300">
-                                <div className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full w-0 animate-[fillProgress_1.5s_ease-out_forwards_0.3s]" style={{ '--target-width': '10%' }}></div>
+                                <div className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full w-0 animate-[fillProgress_1.5s_ease-out_forwards_0.3s]" style={{ '--target-width': '10%' } as React.CSSProperties}></div>
                             </div>
                         </div>
                         {/* Dodi */}
@@ -1628,6 +1741,7 @@ const UpcomingListsDisplay: React.FC<{ lists: { [key: string]: string[] } }> = (
 };
 
 const HypervisorGuideModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
+  const { t } = useLanguage();
   if (!open) return null;
 
   return (
@@ -2286,49 +2400,35 @@ const LikeButton = ({ item, t }: { item: ResourceItem, t: any }) => {
     
     useEffect(() => {
         if (!auth.currentUser) return;
-        const docRef = doc(db, 'SecretArea', auth.currentUser?.uid);
+        const local = getLocalProfile(auth.currentUser.uid);
+        if (local?.likedGames) {
+            setIsLiked(local.likedGames.some((g: any) => g.id === item.id));
+        }
+
+        const docRef = doc(db, 'users', auth.currentUser.uid);
         getDoc(docRef).then(snap => {
             if (snap.exists()) {
                 const likedGames = snap.data().likedGames || [];
                 setIsLiked(likedGames.some((g: any) => g.id === item.id));
             }
-        });
+        }).catch(() => {});
     }, [item.id]);
 
     const handleLike = async () => {
         if (!auth.currentUser || isLiking) return;
         setIsLiking(true);
-        const docRef = doc(db, 'SecretArea', auth.currentUser?.uid);
-        
+        const nextLiked = !isLiked;
+        setIsLiked(nextLiked);
+
         try {
-            if (isLiked) {
-                const snap = await getDoc(docRef);
-                if (snap.exists()) {
-                    const likedGames = snap.data().likedGames || [];
-                    const gameToRemove = likedGames.find((g: any) => g.id === item.id);
-                    if (gameToRemove) {
-                        await updateDoc(docRef, {
-                            likedGames: arrayRemove(gameToRemove),
-                            contentLiked: increment(-1)
-                        });
-                    }
-                }
-                setIsLiked(false);
-            } else {
-                const gameToAdd = {
-                    id: item.id,
-                    name: item.name,
-                    coverImage: item.coverImage,
-                    timestamp: new Date().toISOString()
-                };
-                await updateDoc(docRef, {
-                    likedGames: arrayUnion(gameToAdd),
-                    contentLiked: increment(1)
-                });
-                setIsLiked(true);
-            }
+            await recordGameInteraction(auth.currentUser.uid, {
+                id: item.id,
+                name: item.name,
+                coverImage: item.coverImage,
+                category: item.category
+            }, nextLiked ? 'like' : 'unlike');
         } catch (error) {
-            console.error("Error toggling like:", error);
+            console.warn("Error toggling like:", error);
         }
         setIsLiking(false);
     };
@@ -2352,12 +2452,12 @@ const LikeButton = ({ item, t }: { item: ResourceItem, t: any }) => {
     );
 };
 
-const ResourceDetailModal: React.FC<{ 
+export const ResourceDetailModal: React.FC<{ 
   item: ResourceItem; 
   onClose: () => void; 
   isHypervisor?: boolean; 
-  stash: string[];
-  toggleStash: (id: string, e?: React.MouseEvent) => void;
+  stash?: string[];
+  toggleStash?: (id: string, e?: React.MouseEvent) => void;
   onCompanyClick?: (companyName: string) => void;
   onGenreClick?: (genre: string) => void;
   resolvedDev?: string;
@@ -2369,74 +2469,128 @@ const ResourceDetailModal: React.FC<{
   allResources?: Record<string, ResourceItem[]>;
   onItemSelect?: (item: ResourceItem) => void;
   currentGenreContext?: string | null;
-}> = ({ item, onClose, isHypervisor, stash, toggleStash, onCompanyClick, onGenreClick, resolvedDev, isGuestMode, showGuestNotification, globalSpecs, initialScrollTarget, onDonateClick, allResources, onItemSelect, currentGenreContext }) => {
+}> = ({ item, onClose, isHypervisor, stash = [], toggleStash = () => {}, onCompanyClick, onGenreClick, resolvedDev, isGuestMode, showGuestNotification, globalSpecs, initialScrollTarget, onDonateClick, allResources, onItemSelect, currentGenreContext }) => {
   const { dir, t } = useLanguage();
   const [showUploaderPopup, setShowUploaderPopup] = useState(false);
   const currentUser = auth.currentUser;
+  const [adminAvatar, setAdminAvatar] = useState<string>(() => getCachedAdminAvatar());
+  const [adminDisplayName, setAdminDisplayName] = useState<string>(() => getCachedAdminName());
 
   useEffect(() => {
-    if (isGuestMode || !auth.currentUser) return;
+    const unsub = subscribeAdminPublicProfile((data) => {
+      if (data.avatarURL) setAdminAvatar(data.avatarURL);
+      if (data.displayName) setAdminDisplayName(data.displayName);
+    });
+    return () => unsub();
+  }, []);
+
+  // Ensure safe fallback for links to prevent uncaught TypeErrors if links object is missing
+  if (item && !item.links) {
+    (item as any).links = { parts: [], mirrors: [], ankerParts: [] };
+  }
+
+  useEffect(() => {
+    if (isGuestMode) return;
     const uid = auth.currentUser?.uid;
-    const updateProfileView = async () => {
-      try {
-        const docRef = doc(db, 'SecretArea', uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          let points = data.points || 0;
-          let gamesViewed = data.gamesViewed || 0;
-          let recentGames = data.recentGames || [];
-          
-          const shortItem = {
-            id: item.id || '',
-            name: item.name || '',
-            coverImage: item.coverImage || '',
-            timestamp: new Date().toISOString()
-          };
-          const newRecent = [shortItem, ...recentGames.filter((g) => g.id !== item.id)].slice(0, 20);
-          
-          let updateData: any = {
-             points: points + 5,
-             gamesViewed: gamesViewed + 1,
-             recentGames: newRecent
-          };
-          if (auth.currentUser.email === 'marouananouar02@gmail.com' && data.role !== 'admin') {
-             updateData.role = 'admin';
-          }
-          
-          await updateDoc(docRef, updateData);
-        } else {
-          await setDoc(docRef, {
-             email: auth.currentUser.email,
-             displayName: auth.currentUser.displayName,
-             createdAt: new Date().toISOString(),
-             role: auth.currentUser?.email === 'marouananouar02@gmail.com' ? 'admin' : 'visitor',
-             points: 5,
-             gamesViewed: 1,
-             contentLiked: 0,
-             recentGames: [{ id: item.id || '', name: item.name || '', coverImage: item.coverImage || '', timestamp: new Date().toISOString() }],
-             likedGames: [],
-             libraryGames: [],
-             favoriteGames: []
-          });
-        }
-      } catch (e) {
-         console.error("Error updating profile view stats:", e);
-      }
-    };
-    
-    // Check if we just viewed it recently to avoid spam (in local state)
-    // Actually, running it once per modal open is fine for now
-    updateProfileView();
-  }, [item.id, isGuestMode]);
+    if (!uid || !item?.id) return;
+
+    // Track profile view safely using local-first recordGameInteraction
+    recordGameInteraction(uid, {
+      id: item.id || '',
+      name: item.name || '',
+      coverImage: item.coverImage || '',
+      category: item.category || 'game'
+    }, 'view').catch((err) => {
+      console.warn("Notice updating profile view stats (handled):", err?.message);
+    });
+  }, [item?.id, isGuestMode]);
 
   const [showTrailer, setShowTrailer] = useState(false);
   const [showFavoriteDropdown, setShowFavoriteDropdown] = useState(false);
+  const [currentLibraryStatus, setCurrentLibraryStatus] = useState<string | null>(null);
+  const [libraryFeedback, setLibraryFeedback] = useState<string | null>(null);
+  const favoriteDropdownRef = useRef<HTMLDivElement>(null);
   const [showHypervisorGuide, setShowHypervisorGuide] = useState(false);
   const [noteModalContent, setNoteModalContent] = useState<string | null>(null);
   const [torrentWarningLink, setTorrentWarningLink] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
   const [isCopiedGameId, setIsCopiedGameId] = useState(false);
+
+  // Sync current library status with local & remote profile
+  useEffect(() => {
+    const syncLibraryStatus = () => {
+      const activeUid = auth.currentUser?.uid || (isGuestMode || localStorage.getItem('secret_area_unlocked') === 'true' ? 'guest' : null);
+      if (!activeUid) {
+        setCurrentLibraryStatus(null);
+        return;
+      }
+      const prof = getLocalProfile(activeUid);
+      const found = prof?.libraryGames?.find((g: any) => g.id === item.id);
+      setCurrentLibraryStatus(found ? found.status : null);
+    };
+
+    syncLibraryStatus();
+    window.addEventListener('secretarea_profile_sync', syncLibraryStatus);
+    return () => window.removeEventListener('secretarea_profile_sync', syncLibraryStatus);
+  }, [item.id, isGuestMode, currentUser]);
+
+  // Click outside to close favorite/library dropdown
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (favoriteDropdownRef.current && !favoriteDropdownRef.current.contains(e.target as Node)) {
+        setShowFavoriteDropdown(false);
+      }
+    };
+    if (showFavoriteDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showFavoriteDropdown]);
+
+  const handleSelectLibraryStatus = async (status: string) => {
+    setShowFavoriteDropdown(false);
+    const activeUid = auth.currentUser?.uid || (isGuestMode || localStorage.getItem('secret_area_unlocked') === 'true' ? 'guest' : null);
+    if (!activeUid) {
+      if (showGuestNotification) showGuestNotification();
+      return;
+    }
+
+    try {
+      if (currentLibraryStatus === status) {
+        // Clicking already active status removes it from Library
+        await removeGameFromLibrary(activeUid, item.id);
+        setCurrentLibraryStatus(null);
+        setLibraryFeedback(t('Removed from Library') || 'Removed from Library');
+        setTimeout(() => setLibraryFeedback(null), 2500);
+      } else {
+        await recordGameInteraction(activeUid, {
+          id: item.id,
+          name: item.name,
+          coverImage: item.coverImage || '',
+          category: item.category || 'Game'
+        }, 'library', status);
+        setCurrentLibraryStatus(status);
+        setLibraryFeedback(`${t('Added to Library') || 'Added to Library'}: ${t(status)}`);
+        setTimeout(() => setLibraryFeedback(null), 2500);
+      }
+    } catch (err) {
+      console.error("Error updating library status:", err);
+    }
+  };
+
+  const handleRemoveLibraryItem = async () => {
+    setShowFavoriteDropdown(false);
+    const activeUid = auth.currentUser?.uid || (isGuestMode || localStorage.getItem('secret_area_unlocked') === 'true' ? 'guest' : null);
+    if (!activeUid) return;
+    try {
+      await removeGameFromLibrary(activeUid, item.id);
+      setCurrentLibraryStatus(null);
+      setLibraryFeedback(t('Removed from Library') || 'Removed from Library');
+      setTimeout(() => setLibraryFeedback(null), 2500);
+    } catch (err) {
+      console.error("Error removing from library:", err);
+    }
+  };
 
   const handleCopyGameId = () => {
     if (item.gameId) {
@@ -2625,7 +2779,7 @@ const ResourceDetailModal: React.FC<{
                       </div>
                   )}
 
-                  {item.links.trailer && (
+                  {item.links?.trailer && (
                      <button onClick={() => setShowTrailer(true)} className="w-full py-3 sm:py-4 bg-slate-800 hover:bg-slate-700 text-white dark:bg-slate-800/50 dark:hover:bg-slate-800 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors border border-slate-700">
                         <Icon name="Youtube" size={20} className="text-primary-500 rtl:rotate-180" />
                         {t('Watch Trailer')}
@@ -2678,34 +2832,34 @@ const ResourceDetailModal: React.FC<{
                             <Icon name={isCopiedGameId ? "Check" : "Copy"} size={14} />
                          </button>
                      )}
-                     {item.repackBy === 'Fitgirl' && auth.currentUser ? (
-                         <div 
-                             onClick={() => setShowUploaderPopup(true)}
-                             className="flex items-center gap-2 ms-auto bg-slate-100 dark:bg-slate-800/50 p-1.5 pe-4 rounded-full border border-slate-200 dark:border-slate-700/50 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                         >
-                             <div className="w-6 h-6 rounded-full overflow-hidden bg-primary-500 flex items-center justify-center">
-                                {auth.currentUser.photoURL ? (
-                                    <img src={auth.currentUser.photoURL} alt={auth.currentUser.displayName} className="w-full h-full object-cover" />
-                                ) : (
-                                    <span className="text-white text-[10px]">{auth.currentUser.displayName?.charAt(0).toUpperCase() || 'A'}</span>
-                                )}
-                             </div>
-                             <div className="flex flex-col">
-                                <span className="text-[9px] uppercase tracking-widest text-blue-500 font-black leading-none">Admin</span>
-                                <span className="text-xs font-bold text-slate-900 dark:text-slate-200 leading-none">{auth.currentUser.displayName || 'Admin'}</span>
-                             </div>
+                     <div 
+                         onClick={() => setShowUploaderPopup(true)}
+                         className="flex items-center gap-2 ms-auto bg-amber-500/10 dark:bg-amber-500/15 hover:bg-amber-500/25 text-amber-600 dark:text-amber-400 px-3.5 py-1.5 rounded-full border border-amber-500/30 cursor-pointer transition-all shadow-xs group hover:scale-[1.03] active:scale-95"
+                         title={t('Verified Uploader & System Admin')}
+                     >
+                         <div className="w-6 h-6 rounded-full overflow-hidden border border-amber-500/50 bg-amber-500/20 flex items-center justify-center shrink-0 ring-1 ring-amber-500/40 shadow-xs">
+                            {adminAvatar ? (
+                               <img 
+                                  src={adminAvatar} 
+                                  alt={adminDisplayName || "Admin"} 
+                                  referrerPolicy="no-referrer"
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform" 
+                                  onError={() => setAdminAvatar('')}
+                               />
+                            ) : (
+                               <div className="w-full h-full bg-gradient-to-tr from-amber-600 to-yellow-400 text-slate-950 font-black text-[10px] flex items-center justify-center">
+                                   {adminDisplayName ? adminDisplayName[0].toUpperCase() : 'W'}
+                               </div>
+                            )}
                          </div>
-                     ) : item.repackBy && (
-                         <div className="flex items-center gap-2 ms-auto bg-slate-100 dark:bg-slate-800/50 p-1.5 pe-4 rounded-full border border-slate-200 dark:border-slate-700/50">
-                             <div className="w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center text-white text-[10px]">
-                                {item.repackBy.charAt(0).toUpperCase()}
-                             </div>
-                             <div className="flex flex-col">
-                                <span className="text-[9px] uppercase tracking-widest text-slate-500 dark:text-slate-500 leading-none">{t('Repacker')}</span>
-                                <span className="text-xs font-bold text-slate-900 dark:text-slate-200 leading-none">{item.repackBy}</span>
-                             </div>
+                         <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] uppercase tracking-wider text-amber-600 dark:text-amber-400 font-black flex items-center gap-1">
+                                <TbShieldCheck size={13} className="text-amber-500" />
+                                {t('Admin')}
+                            </span>
+                            <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{adminDisplayName || 'Wolf'}</span>
                          </div>
-                     )}
+                     </div>
                  </div>
 
                  {/* Action Buttons Row */}
@@ -2719,54 +2873,104 @@ const ResourceDetailModal: React.FC<{
                          <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Latest
                      </div>
                      
-                                          <div className="relative">
-                         <button onClick={() => setShowFavoriteDropdown(!showFavoriteDropdown)} className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-bold transition-all ${stash.includes(item.id) ? 'bg-primary-500 text-white border-primary-600' : 'bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>
-                             <Icon name="Bookmark" size={16} className={stash.includes(item.id) ? 'fill-current' : ''} /> {stash.includes(item.id) ? t('Favorite') : t('Favorite')} <Icon name="ChevronDown" size={12} />
-                         </button>
-                         {showFavoriteDropdown && (
-                             <div className="absolute top-full start-0 mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-50 overflow-hidden text-sm font-medium">
-                                 <button onClick={(e) => { setShowFavoriteDropdown(false); toggleStash(item.id, e); }} className="w-full text-start px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 text-slate-700 dark:text-slate-300">
-                                     <Icon name="Bookmark" size={14} className={stash.includes(item.id) ? 'fill-current' : ''} /> {stash.includes(item.id) ? t('Remove Favorite') : t('Just Favorite')}
-                                 </button>
-                                 <div className="h-px bg-slate-200 dark:bg-slate-700 w-full"></div>
-                                                                  {['Playing', 'Plan to Play', 'Completed', 'On Hold', 'Dropped'].map((status) => (
-                                     <button key={status} onClick={async () => {
-                                         setShowFavoriteDropdown(false);
-                                         if (!auth.currentUser) return;
-                                         try {
-                                             const { doc, getDoc, updateDoc } = await import('../src/firestoreMock');
-                                             const docRef = doc(db, 'SecretArea', auth.currentUser?.uid);
-                                             const docSnap = await getDoc(docRef);
-                                             if (docSnap.exists()) {
-                                                 const data = docSnap.data();
-                                                 let library = data.libraryGames || [];
-                                                 const existing = library.find((g: any) => g.id === item.id);
-                                                 // Remove old if exists
-                                                 library = library.filter((g: any) => g.id !== item.id);
-                                                 
-                                                 if (existing && existing.status === status) {
-                                                     await updateDoc(docRef, { libraryGames: library });
-                                                     alert(t('Removed from Library'));
-                                                 } else {
-                                                     library.push({
-                                                         id: item.id,
-                                                         name: item.name,
-                                                         coverImage: item.coverImage,
-                                                         status: status,
-                                                         timestamp: new Date().toISOString()
-                                                     });
-                                                     await updateDoc(docRef, { libraryGames: library });
-                                                     alert(t('Added to ') + t(status));
-                                                 }
-                                             }
-                                         } catch(e) { console.error(e); }
-                                     }} className="w-full text-start px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300">
-                                         {t(status)}
-                                     </button>
-                                 ))}
-                             </div>
-                         )}
-                     </div>
+                      <div className="relative" ref={favoriteDropdownRef}>
+                          <button 
+                              onClick={() => setShowFavoriteDropdown(!showFavoriteDropdown)} 
+                              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-bold transition-all shadow-sm ${
+                                  currentLibraryStatus
+                                      ? 'bg-[#29aaea] text-white border-[#29aaea] shadow-[#29aaea]/20'
+                                      : stash.includes(item.id) 
+                                          ? 'bg-amber-500 text-white border-amber-600 shadow-amber-500/20' 
+                                          : 'bg-slate-100 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                              }`}
+                          >
+                              <Icon name="Bookmark" size={16} className={stash.includes(item.id) ? "fill-current text-white" : ""} />
+                              <span>
+                                  {currentLibraryStatus 
+                                      ? t(currentLibraryStatus) 
+                                      : (stash.includes(item.id) ? t("Favorites") : t("Favorite"))}
+                              </span>
+                              {currentLibraryStatus && (
+                                  <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                              )}
+                              <Icon name="ChevronDown" size={12} className={`transition-transform duration-200 ${showFavoriteDropdown ? "rotate-180" : ""}`} />
+                          </button>
+
+                          {/* Feedback Toast */}
+                          {libraryFeedback && (
+                              <div className="absolute top-full start-0 mt-1.5 px-3 py-1 bg-slate-900/95 dark:bg-black/95 text-emerald-400 border border-emerald-500/40 rounded-lg text-xs font-semibold shadow-xl backdrop-blur-sm z-50 whitespace-nowrap">
+                                  ✓ {libraryFeedback}
+                              </div>
+                          )}
+
+                          {showFavoriteDropdown && (
+                              <div className="absolute top-full start-0 mt-2 w-56 bg-white dark:bg-[#151b28] border border-slate-200 dark:border-slate-700/80 rounded-xl shadow-2xl z-50 overflow-hidden text-sm font-medium py-1.5 backdrop-blur-md">
+                                  {/* Quick Favorite/Bookmark toggle */}
+                                  <button 
+                                      onClick={(e) => { toggleStash(item.id, e); }} 
+                                      className="w-full text-start px-3.5 py-2.5 hover:bg-slate-100 dark:hover:bg-slate-800/80 flex items-center justify-between transition-colors group"
+                                  >
+                                      <span className="flex items-center gap-2.5 text-slate-700 dark:text-slate-200 font-semibold text-xs sm:text-sm">
+                                          <Icon name="Bookmark" size={15} className={stash.includes(item.id) ? "fill-amber-400 text-amber-400" : "text-slate-400 group-hover:text-amber-400"} />
+                                          {stash.includes(item.id) ? t("Remove from Favorites") : t("Add to Favorites")}
+                                      </span>
+                                      {stash.includes(item.id) && (
+                                          <span className="text-[11px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold">★</span>
+                                      )}
+                                  </button>
+
+                                  <div className="px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5 border-t border-slate-200/80 dark:border-slate-700/70 mt-1">
+                                      <Icon name="Gamepad" size={12} className="text-[#29aaea]" />
+                                      {t("Library Status")}
+                                  </div>
+
+                                  {/* The 5 Library Statuses */}
+                                  {[
+                                      { id: "Playing", label: "Playing", dot: "bg-emerald-500", text: "text-emerald-500 dark:text-emerald-400", activeBg: "bg-emerald-500/10 dark:bg-emerald-500/15" },
+                                      { id: "Plan to Play", label: "Plan to Play", dot: "bg-sky-500", text: "text-sky-500 dark:text-sky-400", activeBg: "bg-sky-500/10 dark:bg-sky-500/15" },
+                                      { id: "Completed", label: "Completed", dot: "bg-purple-500", text: "text-purple-500 dark:text-purple-400", activeBg: "bg-purple-500/10 dark:bg-purple-500/15" },
+                                      { id: "On Hold", label: "On Hold", dot: "bg-amber-500", text: "text-amber-500 dark:text-amber-400", activeBg: "bg-amber-500/10 dark:bg-amber-500/15" },
+                                      { id: "Dropped", label: "Dropped", dot: "bg-rose-500", text: "text-rose-500 dark:text-rose-400", activeBg: "bg-rose-500/10 dark:bg-rose-500/15" },
+                                  ].map((status) => {
+                                      const isCurrent = currentLibraryStatus === status.id;
+                                      return (
+                                          <button 
+                                              key={status.id} 
+                                              onClick={() => handleSelectLibraryStatus(status.id)} 
+                                              className={`w-full text-start px-3.5 py-2 flex items-center justify-between text-xs sm:text-sm transition-colors ${
+                                                  isCurrent 
+                                                      ? `${status.activeBg} font-bold text-slate-900 dark:text-white` 
+                                                      : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+                                              }`}
+                                          >
+                                              <span className="flex items-center gap-2.5">
+                                                  <span className={`w-2 h-2 rounded-full ${status.dot} ${isCurrent ? "ring-2 ring-current" : "opacity-70"}`} />
+                                                  <span>{t(status.label)}</span>
+                                              </span>
+                                              {isCurrent && (
+                                                  <span className={`text-xs font-bold ${status.text} flex items-center gap-1`}>
+                                                      ✓ <span className="text-[10px] opacity-80 font-normal">({t("Library")})</span>
+                                                  </span>
+                                              )}
+                                          </button>
+                                      );
+                                  })}
+
+                                  {/* Remove from Library option */}
+                                  {currentLibraryStatus && (
+                                      <div className="pt-1 mt-1 border-t border-slate-200/80 dark:border-slate-700/70">
+                                          <button
+                                              onClick={handleRemoveLibraryItem}
+                                              className="w-full text-start px-3.5 py-2 text-xs text-rose-500 dark:text-rose-400 hover:bg-rose-500/10 flex items-center gap-2 transition-colors font-semibold"
+                                          >
+                                              <Icon name="X" size={13} />
+                                              {t("Remove from Library")}
+                                          </button>
+                                      </div>
+                                  )}
+                              </div>
+                          )}
+                      </div>
 
                      <button onClick={handleReportBrokenLink} className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 text-sm font-bold transition-all">
                          <Icon name="AlertTriangle" size={16} /> {t('Report')}
@@ -2790,21 +2994,6 @@ const ResourceDetailModal: React.FC<{
                  )}
                  {/* Metadata Boxes */}
                  <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-6">
-                     {item.repackBy === 'Fitgirl' && auth.currentUser ? (
-                         <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-                             <span className="text-xs text-slate-500 dark:text-slate-400">{t('Release Group')} /</span>
-                             <span className="text-sm font-bold text-slate-900 dark:text-white">
-                                 {auth.currentUser.displayName || 'Admin'}
-                             </span>
-                         </div>
-                     ) : item.repackBy && (
-                         <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-                             <span className="text-xs text-slate-500 dark:text-slate-400">{t('Release Group')} /</span>
-                             <span className="text-sm font-bold text-slate-900 dark:text-white">
-                                 {['steamtools', 'architect'].includes(item.category) && item.repackBy === 'NEXA' ? 'SecretArea' : item.repackBy}
-                             </span>
-                         </div>
-                     )}
                      {item.dateAdded && (
                          <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
                              <span className="text-xs text-slate-500 dark:text-slate-400">{t('Released')} /</span>
@@ -2873,7 +3062,7 @@ const ResourceDetailModal: React.FC<{
                           import('../src/firebase').then(({ auth, db }) => {
                               if (auth.currentUser) {
                                   import('../src/firestoreMock').then(({ doc, updateDoc, arrayUnion, increment }) => {
-                                      const docRef = doc(db, 'SecretArea', auth.currentUser?.uid);
+                                      const docRef = doc(db, 'users', auth.currentUser?.uid);
                                       const libGame = {
                                           id: item.id || '',
                                           name: item.name || '',
@@ -2883,7 +3072,9 @@ const ResourceDetailModal: React.FC<{
                                       updateDoc(docRef, {
                                           points: increment(10),
                                           libraryGames: arrayUnion(libGame)
-                                      }).catch(console.error);
+                                      }).catch((err) => {
+                                          console.warn("Library sync note (handled):", err?.message);
+                                      });
                                   });
                               }
                           });
@@ -2913,14 +3104,14 @@ const ResourceDetailModal: React.FC<{
           </div>
 
           {/* N E X A 1337 message note if available */}
-          {item.links.fullNote && (
+          {item.links?.fullNote && (
               <div className="w-full bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-900/30 rounded-xl p-4 flex gap-4">
                  <div className="text-blue-500 shrink-0">
                      <Icon name="Info" size={24} />
                  </div>
                  <div>
                      <h4 className="text-sm font-bold text-blue-900 dark:text-blue-400 uppercase tracking-widest mb-1">{t('N E X A 1337 Says')}</h4>
-                     <p className="text-sm text-blue-800 dark:text-blue-300">{item.links.fullNote}</p>
+                     <p className="text-sm text-blue-800 dark:text-blue-300">{item.links?.fullNote}</p>
                  </div>
               </div>
           )}
@@ -3132,7 +3323,7 @@ const ResourceDetailModal: React.FC<{
                   </div>
 
                   {/* Download Channels */}
-                  {(item.links.full || (item.links.mirrors && item.links.mirrors.length > 0) || (item.links.parts && item.links.parts.length > 0) || (item.links.ankerParts && item.links.ankerParts.length > 0) || (item.links.preInstalled && (item.links.preInstalled.download || item.links.preInstalled.cloudDrop || item.links.preInstalled.torrent))) && (
+                  {((item.links?.full) || (item.links?.mirrors && item.links.mirrors.length > 0) || (item.links?.parts && item.links.parts.length > 0) || (item.links?.ankerParts && item.links.ankerParts.length > 0) || (item.links?.preInstalled && (item.links.preInstalled.download || item.links.preInstalled.cloudDrop || item.links.preInstalled.torrent))) && (
                   <div className="py-6 sm:py-12" id="download">
                       <div className="flex items-center gap-4 mb-6">
                           <div className="w-10 h-10 bg-primary-500/10 text-primary-500 rounded-xl flex items-center justify-center">
@@ -3141,7 +3332,7 @@ const ResourceDetailModal: React.FC<{
                           <h3 className="text-xl font-bold text-slate-900 dark:text-white">{t('Download Channels')}</h3>
                       </div>
                       
-                      {item.links.full && (
+                      {item.links?.full && (
                           <div className="mb-6">
                               <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">{t('Direct Full Download')}</h4>
                               <div className="relative">
@@ -3151,12 +3342,12 @@ const ResourceDetailModal: React.FC<{
                                   <DownloadButton
                                       label={item.category === 'architect' ? `${t('Full project')} (${item.repackSize || item.originalSize || 'Size N/A'})` : ['steamtools', 'extra'].includes(item.category) ? t('Game Files') : `${t('Master File Magnet')} (${item.repackSize || item.originalSize || 'Size N/A'})`}
                                       sub={t('Direct Link')}
-                                      href={item.links.full}
+                                      href={item.links?.full}
                                       icon={['steamtools', 'architect', 'extra'].includes(item.category) ? "Download" : "Magnet"}
                                       imageUrl={item.category === 'architect' ? "https://cdn-icons-png.flaticon.com/512/8767/8767957.png" : item.category === 'extra' ? "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRh4ru3ji2f7YFR6JYvKnvkM6LRna6RVfnz8J_M7_kbJA&s=10" : item.category === 'steamtools' ? "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTSLGNofupfGH5Rxt7lDZ4dKAzQhOJpRBo4GH5OIXr8pHW11lVdWcWyB1nr&s=10" : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQncl_6sUpjbAWmRH7VWRzcIHb6rN3ggXVQMESUax-qew&s=10"}
                                       onClick={['steamtools', 'architect', 'extra'].includes(item.category) ? undefined : (e) => {
                                         e.preventDefault();
-                                        setTorrentWarningLink(item.links.full);
+                                        setTorrentWarningLink(item.links?.full || null);
                                       }}
                                   />
                               </div>
@@ -3164,44 +3355,44 @@ const ResourceDetailModal: React.FC<{
                       )}
 
                                                                   {/* Pre-Installed / SteamUnlocked */}
-                      {item.links.preInstalled && (item.links.preInstalled.download || item.links.preInstalled.cloudDrop || item.links.preInstalled.torrent) && (
+                      {item.links?.preInstalled && (item.links?.preInstalled?.download || item.links?.preInstalled?.cloudDrop || item.links?.preInstalled?.torrent) && (
                           <details className="mb-6 group">
                               <summary className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2 cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 transition-colors select-none list-none">
                                   <Icon name="ChevronRight" size={14} className="group-open:rotate-90 transition-transform" />
                                   <img src="https://dka575ofm4ao0.cloudfront.net/pages-transactional_logos/retina/802345/unnamed-b4a32b8b-803c-454f-a411-5a9c33494c3c.jpg" alt="SteamUnlocked" className="w-4 h-4 rounded-sm object-contain" /> {t('Pre-Installed / SteamUnlocked')}
                               </summary>
                               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mt-3">
-                                  {item.links.preInstalled.download && (
+                                  {item.links?.preInstalled?.download && (
                                       <DownloadButton
                                           label={`Download (${item.originalSize || item.repackSize || 'Size N/A'})`}
                                           sub={t('Direct Link')}
-                                          href={item.links.preInstalled.download}
+                                          href={item.links?.preInstalled?.download}
                                           icon="Download"
                                           imageUrl="https://dka575ofm4ao0.cloudfront.net/pages-transactional_logos/retina/802345/unnamed-b4a32b8b-803c-454f-a411-5a9c33494c3c.jpg"
                                           secondary
                                       />
                                   )}
-                                  {item.links.preInstalled.cloudDrop && (
+                                  {item.links?.preInstalled?.cloudDrop && (
                                       <DownloadButton
                                           label="CloudDrop Mirror"
                                           sub={t('Mirror Link')}
-                                          href={item.links.preInstalled.cloudDrop}
+                                          href={item.links?.preInstalled?.cloudDrop}
                                           icon="Cloud"
                                           imageUrl="https://dka575ofm4ao0.cloudfront.net/pages-transactional_logos/retina/802345/unnamed-b4a32b8b-803c-454f-a411-5a9c33494c3c.jpg"
                                           secondary
                                       />
                                   )}
-                                  {item.links.preInstalled.torrent && (
+                                  {item.links?.preInstalled?.torrent && (
                                       <DownloadButton
                                           label="utorrent File"
                                           sub={t('Torrent')}
-                                          href={item.links.preInstalled.torrent}
+                                          href={item.links?.preInstalled?.torrent}
                                           icon="Magnet"
                                           imageUrl="https://dka575ofm4ao0.cloudfront.net/pages-transactional_logos/retina/802345/unnamed-b4a32b8b-803c-454f-a411-5a9c33494c3c.jpg"
                                           secondary
                                           onClick={(e) => {
                                               e.preventDefault();
-                                              setTorrentWarningLink(item.links.preInstalled?.torrent || null);
+                                              setTorrentWarningLink(item.links?.preInstalled?.torrent || null);
                                           }}
                                       />
                                   )}
@@ -3209,18 +3400,18 @@ const ResourceDetailModal: React.FC<{
                           </details>
                       )}
                       
-                      {( (item.links.mirrors && item.links.mirrors.length > 0) || (item.links.parts && item.links.parts.length > 0) ) && (
+                      {( (item.links?.mirrors && item.links.mirrors.length > 0) || (item.links?.parts && item.links.parts.length > 0) ) && (
                           <details className="mb-6 group">
                               <summary className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2 cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 transition-colors select-none list-none">
                                   <Icon name="ChevronRight" size={14} className="group-open:rotate-90 transition-transform" />
-                                  <img src={item.category === 'architect' ? "https://cdn-icons-png.flaticon.com/512/7063/7063204.png" : item.category === 'extra' ? "https://images.icon-icons.com/3053/PNG/512/google_backup_and_sync_macos_bigsur_icon_190135.png" : item.category === 'steamtools' ? "https://play-lh.googleusercontent.com/WNNDb4VyH2yXBwFME6OTWZKhVFPDnQt2xoJeXPcRZSBcnDoMD1JAHQc1GAzu9pH04wCUhFrxfGD1yEE2Bg9HXA=s0-br30" : "https://fitgirl-repacks.site/wp-content/uploads/2016/08/icon.jpg"} alt="Logo" className="w-4 h-4 rounded-sm object-contain" /> {['steamtools', 'architect', 'extra'].includes(item.category) ? t('Backup Server') : t('FitGirl Repack Links')} ({(item.links.mirrors?.length || 0) + (item.links.parts?.length || 0)})
+                                  <img src={item.category === 'architect' ? "https://cdn-icons-png.flaticon.com/512/7063/7063204.png" : item.category === 'extra' ? "https://images.icon-icons.com/3053/PNG/512/google_backup_and_sync_macos_bigsur_icon_190135.png" : item.category === 'steamtools' ? "https://play-lh.googleusercontent.com/WNNDb4VyH2yXBwFME6OTWZKhVFPDnQt2xoJeXPcRZSBcnDoMD1JAHQc1GAzu9pH04wCUhFrxfGD1yEE2Bg9HXA=s0-br30" : "https://fitgirl-repacks.site/wp-content/uploads/2016/08/icon.jpg"} alt="Logo" className="w-4 h-4 rounded-sm object-contain" /> {['steamtools', 'architect', 'extra'].includes(item.category) ? t('Backup Server') : t('FitGirl Repack Links')} ({((item.links?.mirrors?.length || 0) + (item.links?.parts?.length || 0))})
                               </summary>
                               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mt-3">
-                                  {item.links.parts && item.links.parts.map(part => (
+                                  {item.links?.parts && item.links.parts.map(part => (
                                       <DownloadButton
                                           key={'part_'+part.id}
-                                          label={['architect', 'extra'].includes(item.category) ? `Part ${String(part.id).padStart(2, '0')}` : item.category === 'steamtools' ? `Mirror Link ${String(part.id).padStart(2, '0')}` : (part.id === '1' || part.id === 1 ? 'DataNodes' : `DataNodes Part ${part.id}`)}
-                                          badge={['steamtools', 'architect', 'extra'].includes(item.category) ? undefined : ((part.id === '1' || part.id === 1) ? '(Speed & Usability)' : undefined)}
+                                          label={['architect', 'extra'].includes(item.category) ? `Part ${String(part.id).padStart(2, '0')}` : item.category === 'steamtools' ? `Mirror Link ${String(part.id).padStart(2, '0')}` : (String(part.id) === '1' ? 'DataNodes' : `DataNodes Part ${part.id}`)}
+                                          badge={['steamtools', 'architect', 'extra'].includes(item.category) ? undefined : (String(part.id) === '1' ? '(Speed & Usability)' : undefined)}
                                           sub={t('Download')}
                                           href={part.link}
                                           icon="Archive"
@@ -3230,11 +3421,11 @@ const ResourceDetailModal: React.FC<{
                                           onNoteClick={(note) => setNoteModalContent(note)}
                                       />
                                   ))}
-                                  {item.links.mirrors && item.links.mirrors.map(part => (
+                                  {item.links?.mirrors && item.links.mirrors.map(part => (
                                       <DownloadButton
                                           key={'mirror_'+part.id}
-                                          label={['architect', 'extra'].includes(item.category) ? `Part ${String(part.id).padStart(2, '0')}` : item.category === 'steamtools' ? `Mirror Link ${String(part.id).padStart(2, '0')}` : (part.id === '1' || part.id === 1 ? 'FuckingFast' : `FuckingFast Part ${part.id}`)}
-                                          badge={['steamtools', 'architect', 'extra'].includes(item.category) ? undefined : ((part.id === '1' || part.id === 1) ? 'Really Fucking Fast' : undefined)}
+                                          label={['architect', 'extra'].includes(item.category) ? `Part ${String(part.id).padStart(2, '0')}` : item.category === 'steamtools' ? `Mirror Link ${String(part.id).padStart(2, '0')}` : (String(part.id) === '1' ? 'FuckingFast' : `FuckingFast Part ${part.id}`)}
+                                          badge={['steamtools', 'architect', 'extra'].includes(item.category) ? undefined : (String(part.id) === '1' ? 'Really Fucking Fast' : undefined)}
                                           sub={t('Download')}
                                           href={part.link}
                                           icon="Archive"
@@ -3248,7 +3439,7 @@ const ResourceDetailModal: React.FC<{
                           </details>
                       )}
                       
-                      {item.links.ankerParts && item.links.ankerParts.length > 0 && (
+                      {item.links?.ankerParts && item.links.ankerParts.length > 0 && (
                           <details className="mb-6 group">
                               <summary className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2 cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 transition-colors select-none list-none">
                                   <Icon name="ChevronRight" size={14} className="group-open:rotate-90 transition-transform" />
@@ -3745,7 +3936,7 @@ const ResourceDetailModal: React.FC<{
               </motion.div>
           </motion.div>
       )}
-      {showTrailer && item.links.trailer && (
+      {showTrailer && item.links?.trailer && (
           <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -3768,7 +3959,7 @@ const ResourceDetailModal: React.FC<{
                   </button>
                   <iframe 
                       className="w-full h-full"
-                      src={getYoutubeEmbedUrl(item.links.trailer) || ''} 
+                      src={getYoutubeEmbedUrl(item.links?.trailer || '') || ''} 
                       title="YouTube video player" 
                       frameBorder="0" 
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
@@ -3787,7 +3978,7 @@ const ResourceDetailModal: React.FC<{
     </AnimatePresence>,
     document.body
   )}
-  <UploaderProfilePopup isOpen={showUploaderPopup} onClose={() => setShowUploaderPopup(false)} user={auth.currentUser} />
+  <UploaderProfilePopup isOpen={showUploaderPopup} onClose={() => setShowUploaderPopup(false)} gameItem={item} />
 </motion.div>
   );
 };
@@ -4656,25 +4847,59 @@ const BestStudiosCarousel: React.FC<{
 const SecretArea: React.FC = () => {
   const { dir, t } = useLanguage();
   const [currentUser, setCurrentUser] = useState<any>(null); const [authChecked, setAuthChecked] = useState(false); const [isUnlocked, setIsUnlocked] = useState(() => localStorage.getItem('secret_area_unlocked') === 'true' || localStorage.getItem('nexa_guest_mode') === 'true');
+  const [isGuestMode, setIsGuestMode] = useState(() => localStorage.getItem('nexa_guest_mode') === 'true');
+
+  useEffect(() => {
+    const handleAuthChange = () => {
+      const isGuest = localStorage.getItem('nexa_guest_mode') === 'true' || localStorage.getItem('secret_area_unlocked') === 'guest';
+      const isTrue = localStorage.getItem('secret_area_unlocked') === 'true';
+      const unlocked = isTrue || isGuest;
+      setIsUnlocked(unlocked);
+      setIsGuestMode(isGuest);
+      if (!unlocked) {
+        setShowHackerLoader(false);
+      }
+    };
+
+    const handleReturnToTerminal = () => {
+      setIsUnlocked(false);
+      setIsGuestMode(false);
+      setShowHackerLoader(false);
+      setTerminalCleared(false);
+      setShowMathGame(false);
+    };
+
+    window.addEventListener('authChange', handleAuthChange);
+    window.addEventListener('return-to-terminal', handleReturnToTerminal);
+    return () => {
+      window.removeEventListener('authChange', handleAuthChange);
+      window.removeEventListener('return-to-terminal', handleReturnToTerminal);
+    };
+  }, []);
+
   useEffect(() => {
     import('../src/firebase').then(({ auth }) => {
       const unsubscribe = auth.onAuthStateChanged((user) => { setCurrentUser(user); setAuthChecked(true); 
         if (user) {
           setIsUnlocked(true);
+          setIsGuestMode(false);
           localStorage.setItem('secret_area_unlocked', 'true');
           window.dispatchEvent(new Event('authChange'));
+          import('../src/services/userService').then(({ ensureUserProfile }) => {
+            ensureUserProfile(user);
+          });
         }
       });
       return () => unsubscribe();
     });
   }, []);
-
-  const [isGuestMode, setIsGuestMode] = useState(() => localStorage.getItem('nexa_guest_mode') === 'true');
   const [showHackerLoader, setShowHackerLoader] = useState(() => localStorage.getItem('secret_area_unlocked') === 'true' || localStorage.getItem('nexa_guest_mode') === 'true');
   const [hackerProgress, setHackerProgress] = useState(0);
   const [terminalLines, setTerminalLines] = useState<string[]>([]);
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [authDomainError, setAuthDomainError] = useState<string | null>(null);
+  const [domainCopied, setDomainCopied] = useState(false);
   const [loading, setLoading] = useState(false);
   const [imagesLoading, setImagesLoading] = useState(false);
   const [imageProgress, setImageProgress] = useState(0);
@@ -4747,7 +4972,21 @@ const SecretArea: React.FC = () => {
         console.error("Failed to parse stash from local storage");
       }
     }
-  }, []);
+
+    if (currentUser) {
+      let unsub: (() => void) | null = null;
+      import('../src/services/userService').then(({ subscribeUserProfile }) => {
+        unsub = subscribeUserProfile(currentUser.uid, (data) => {
+          if (data.stash && Array.isArray(data.stash)) {
+            setStash(data.stash);
+          }
+        }, currentUser);
+      });
+      return () => {
+        if (unsub) unsub();
+      };
+    }
+  }, [currentUser]);
 
   const showGuestNotification = () => {
     const notifId = Date.now();
@@ -4786,6 +5025,11 @@ const SecretArea: React.FC = () => {
     const isAdding = !stash.includes(id);
     import('../src/firebase').then(({ auth, db }) => {
         if (auth.currentUser) {
+            const nextStashList = isAdding ? [...stash, id] : stash.filter(i => i !== id);
+            import('../src/services/userService').then(({ saveUserStash }) => {
+                saveUserStash(auth.currentUser!.uid, nextStashList);
+            });
+
             let targetItem: ResourceItem | null = null;
             for (const category in allResources) {
                 const match = allResources[category].find((r: any) => r.id === id);
@@ -4795,34 +5039,19 @@ const SecretArea: React.FC = () => {
                 }
             }
 
-            if (targetItem || !isAdding) {
-                import('../src/firestoreMock').then(({ doc, updateDoc, arrayUnion, arrayRemove, getDoc }) => {
-                    const docRef = doc(db, 'SecretArea', auth.currentUser!.uid);
-                    getDoc(docRef).then(snap => {
-                        if (snap.exists()) {
-                            const favoriteGames = snap.data().favoriteGames || [];
-                            if (isAdding && targetItem) {
-                                // Check if already exists in Firestore to prevent duplicates
-                                const alreadyExists = favoriteGames.some((g: any) => g.id === targetItem!.id);
-                                if (!alreadyExists) {
-                                    const gameToAdd = {
-                                        id: targetItem.id,
-                                        name: targetItem.name,
-                                        coverImage: targetItem.coverImage,
-                                        timestamp: new Date().toISOString()
-                                    };
-                                    updateDoc(docRef, { favoriteGames: arrayUnion(gameToAdd) });
-                                }
-                            } else if (!isAdding) {
-                                // Find all instances to remove (in case of previous duplicates)
-                                const gamesToRemove = favoriteGames.filter((g: any) => g.id === id);
-                                if (gamesToRemove.length > 0) {
-                                    updateDoc(docRef, { favoriteGames: arrayRemove(...gamesToRemove) });
-                                }
-                            }
-                        }
-                    });
-                });
+            if (targetItem) {
+                recordGameInteraction(auth.currentUser.uid, {
+                    id: targetItem.id,
+                    name: targetItem.name,
+                    coverImage: targetItem.coverImage,
+                    category: targetItem.category
+                }, isAdding ? 'favorite' : 'unfavorite');
+            } else if (!isAdding) {
+                recordGameInteraction(auth.currentUser.uid, {
+                    id: id,
+                    name: '',
+                    coverImage: ''
+                }, 'unfavorite');
             }
         }
     });
@@ -4831,55 +5060,95 @@ const SecretArea: React.FC = () => {
   const [selectedResource, setSelectedResource] = useState<ResourceItem | null>(null);
   const [selectedResourceAction, setSelectedResourceAction] = useState<string | undefined>(undefined);
 
-  const location = window.location; // using window.location if useLocation is not imported
+  const routerLocation = useLocation();
+
+  const handleCloseDetailModal = () => {
+    setSelectedResource(null);
+    setSelectedResourceAction(undefined);
+    setOpenedViaRandom(false);
+    if (routerLocation.pathname.startsWith('/game/')) {
+      navigate('/', { replace: true });
+    } else if (new URLSearchParams(window.location.search).get('item')) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('item');
+      window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+    }
+  };
+
   useEffect(() => {
-    // If there's a state passed via history
-    const state = window.history.state?.usr;
-    if (state?.openGameId && Object.keys(allResources).length > 0) {
+    // If there's a state passed via history or router state
+    const stateOpenId = (routerLocation.state as any)?.openGameId || window.history.state?.usr?.openGameId;
+    const searchParamId = new URLSearchParams(window.location.search).get('item');
+    const pathGameId = routerLocation.pathname.startsWith('/game/')
+      ? decodeURIComponent(routerLocation.pathname.replace(/^\/game\//, ''))
+      : null;
+    const targetId = stateOpenId || searchParamId || pathGameId;
+
+    if (targetId) {
       const allItems = Object.values(allResources).flat();
-      const gameToOpen = allItems.find(g => g.id === state.openGameId);
+      let gameToOpen = allItems.find(g => 
+        String(g.id) === String(targetId) || 
+        String(g.gameId) === String(targetId) || 
+        g.name?.toLowerCase() === String(targetId).toLowerCase()
+      );
+
+      // Fallback: check cached_secret_resources in localStorage
+      if (!gameToOpen) {
+        try {
+          const cached = localStorage.getItem('cached_secret_resources');
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            const flatCached = Object.values(parsed).flat() as any[];
+            gameToOpen = flatCached.find(g => 
+              String(g?.id) === String(targetId) || 
+              String(g?.gameId) === String(targetId) || 
+              g?.name?.toLowerCase() === String(targetId).toLowerCase()
+            );
+          }
+        } catch (e) {}
+      }
+
+      // Fallback: check state passed from profile
+      if (!gameToOpen && (routerLocation.state as any)?.gameData) {
+        const gd = (routerLocation.state as any).gameData;
+        gameToOpen = {
+          id: String(gd.id || targetId),
+          name: gd.name || targetId,
+          coverImage: gd.coverImage || gd.background_image || gd.image || '',
+          category: gd.category || 'game',
+          version: gd.version || 'Latest',
+          description: gd.description || gd.name || 'Detailed game specifications and direct download resources.',
+          repackSize: gd.repackSize || 'N/A',
+          originalSize: gd.originalSize || 'N/A',
+          genres: gd.genres || 'Action, Adventure',
+          languages: gd.languages || 'English',
+          repackBy: gd.repackBy || 'NEXA',
+          galleryImages: gd.galleryImages || [gd.coverImage || ''],
+          isFree: true,
+          links: gd.links || { parts: [], mirrors: [], ankerParts: [] }
+        } as ResourceItem;
+      }
+
       if (gameToOpen) {
         setSelectedResource(gameToOpen);
-        // Clear state so it doesn't reopen on refresh
-        window.history.replaceState({ usr: { ...state, openGameId: null } }, '');
+        if (window.history.state?.usr?.openGameId) {
+          window.history.replaceState({ usr: { ...window.history.state.usr, openGameId: null } }, '');
+        }
       }
     }
-  }, [Object.keys(allResources).length]);
+  }, [routerLocation.state, routerLocation.search, routerLocation.pathname, allResources]);
 
   // Track user views and recent activity
   useEffect(() => {
     if (selectedResource) {
-      import('../src/firebase').then(({ auth, db }) => {
+      import('../src/firebase').then(({ auth }) => {
         if (auth.currentUser) {
-            import('../src/firestoreMock').then(({ doc, updateDoc, getDoc, setDoc }) => {
-                const docRef = doc(db, 'SecretArea', auth.currentUser?.uid);
-                getDoc(docRef).then(snap => {
-                    if (snap.exists()) {
-                        const recentGame = {
-                            id: selectedResource.id || '',
-                            name: selectedResource.name || '',
-                            coverImage: selectedResource.coverImage || '',
-                            timestamp: new Date().toISOString()
-                        };
-                        
-                        let data = snap.data();
-                        let recentGames = data.recentGames || [];
-                        recentGames = recentGames.filter(g => g.id !== recentGame.id);
-                        recentGames.unshift(recentGame);
-                        if (recentGames.length > 20) recentGames.pop();
-
-                        let updateData: any = {
-                            gamesViewed: (data.gamesViewed || 0) + 1,
-                            points: (data.points || 0) + 5,
-                            recentGames: recentGames
-                        };
-                        if (auth.currentUser.email === 'marouananouar02@gmail.com' && data.role !== 'admin') {
-                            updateData.role = 'admin';
-                        }
-                        updateDoc(docRef, updateData);
-                    }
-                }).catch(e => console.error(e));
-            });
+          recordGameInteraction(auth.currentUser.uid, {
+            id: selectedResource.id || '',
+            name: selectedResource.name || '',
+            coverImage: selectedResource.coverImage || '',
+            category: selectedResource.category
+          }, 'view');
         }
       });
     }
@@ -4940,16 +5209,14 @@ const SecretArea: React.FC = () => {
   
   // Terminal State
   const [terminalHistory, setTerminalHistory] = useState<{type: string, text: React.ReactNode}[]>([
-    { type: 'system', text: 'N E X A 1337 OS v9.0.1 - SECURE terminal' },
-    { type: 'system', text: 'Unauthorized access is strictly prohibited.' },
-    { type: 'system', text: 'Type "help" for available commands.' },
-    { type: 'success', text: '💡 TIP: Type a command and press ENTER.' }
+    { type: 'system', text: 'N E X A 1337 OS v9.0.1 - SECURE TERMINAL' },
+    { type: 'system', text: 'Unauthorized CLI access is restricted.' },
+    { type: 'system', text: 'Type "help" for available protocols.' },
+    { type: 'success', text: '💡 TIP: To enter the area, use the Google, Discord, or Guest mode buttons below.' }
   ]);
   const [terminalInput, setTerminalInput] = useState('');
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState<number>(-1);
-  const [terminalMode, setTerminalMode] = useState<'normal' | 'password'>('normal');
-  const [failedAttempts, setFailedAttempts] = useState(0);
   const [terminalCleared, setTerminalCleared] = useState(false);
   const terminalEndRef = useRef<HTMLDivElement>(null);
 
@@ -4973,207 +5240,139 @@ const SecretArea: React.FC = () => {
     if (!cmd) return;
 
     const newHistory = [...terminalHistory];
-    
-    if (terminalMode === 'password') {
-      newHistory.push({ type: 'user', text: `Please enter the Secret Code:\n${'*'.repeat(cmd.length)}` });
-    } else {
-      newHistory.push({ type: 'user', text: `┌──(guest㉿SecretArea1337)-[~]\n└─$ ${cmd}` });
-    }
+    newHistory.push({ type: 'user', text: `┌──(guest㉿SecretArea1337)-[~]\n└─$ ${cmd}` });
 
     const lowerCmd = cmd.toLowerCase();
 
-    if (terminalMode === 'password') {
-      if (lowerCmd === 'exit' || lowerCmd === 'cancel' || lowerCmd === 'quit' || lowerCmd === 'abort' || lowerCmd === 'clear') {
-        setTerminalMode('normal');
-        setFailedAttempts(0);
-        if (lowerCmd === 'clear') {
-          setTerminalHistory([]);
-          setTerminalCleared(true);
-        } else {
-          newHistory.push({ type: 'error', text: 'Authentication aborted.' });
-          newHistory.push({ type: 'success', text: '💡 TIP: Type "help" to see available commands.' });
-        }
-        setTerminalInput('');
-        return;
-      } else if (cmd === 'Wolfspace') {
-        newHistory.push({ type: 'success', text: 'Access Granted. Decrypting Area...' });
-        setIsUnlocked(true);
-        setIsGuestMode(true);
-        setShowHackerLoader(true);
-        setHackerProgress(0);
-        localStorage.setItem('secret_area_unlocked', 'true');
-        localStorage.setItem('nexa_guest_mode', 'true');
-        fetchData();
-        setFailedAttempts(0);
-        setTerminalMode('normal');
-      } else if (lowerCmd === 'guest') {
-        newHistory.push({ type: 'success', text: 'Guest Access Granted. Loading limited preview...' });
-        setIsUnlocked(true);
-        setIsGuestMode(true);
-        setShowHackerLoader(true);
-        setHackerProgress(0);
-        localStorage.setItem('secret_area_unlocked', 'guest');
-        localStorage.setItem('nexa_guest_mode', 'true');
-        fetchData();
-        setFailedAttempts(0);
-        setTerminalMode('normal');
-      } else {
-        const fails = failedAttempts + 1;
-        setFailedAttempts(fails);
-        if (fails >= 2) {
-           newHistory.push({ 
-             type: 'error', 
-             text: (
-                <div className="flex flex-col items-center justify-center p-6 my-4 bg-red-950/20 border border-red-500/30 rounded-xl space-y-4">
-                  <FaFaceAngry className="text-red-500 text-6xl animate-bounce drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]" />
-                  <span className="text-red-500 font-black uppercase tracking-[0.2em] text-center text-sm md:text-base">you are a loser contact admin to request secret key</span>
-                </div>
-             ) 
-           });
-           setFailedAttempts(0);
-           setTerminalMode('normal');
-        } else {
-           newHistory.push({ type: 'error', text: 'Access Denied. Invalid secret code.' });
-           newHistory.push({ type: 'system', text: '💡 TIP: Try again, or type "exit" to abort authentication.' });
-           // stay in password mode
-        }
-      }
+    if (
+      lowerCmd === 'wolfspace' ||
+      cmd === 'Wolfspace' ||
+      lowerCmd === 'login' ||
+      lowerCmd === 'auth' ||
+      lowerCmd === 'login wolfspace' ||
+      lowerCmd === 'login guest' ||
+      lowerCmd === 'guest' ||
+      lowerCmd === 'code' ||
+      lowerCmd === 'passcode' ||
+      lowerCmd === 'password'
+    ) {
+      newHistory.push({ 
+        type: 'error', 
+        text: '⚠️ Terminal CLI login is disabled.\nPlease use the Visitor Login buttons below (Login with Google, Login with Discord, or Continue as Guest) to enter.' 
+      });
+    } else if (lowerCmd === 'help') {
+      newHistory.push({ type: 'system', text: '┌──────────────────────────────────┐' });
+      newHistory.push({ type: 'system', text: '│ AVAILABLE PROTOCOLS              │' });
+      newHistory.push({ type: 'system', text: '└──────────────────────────────────┘' });
+      newHistory.push({ type: 'info', text: '  [1] INQUIRE : What is inside?' });
+      newHistory.push({ type: 'info', text: '  [2] COMMS   : Contact Support' });
+      newHistory.push({ type: 'info', text: '  [3] NETWORK : Community & Socials' });
+      newHistory.push({ type: 'info', text: '  clear       : Flush memory' });
+      newHistory.push({ type: 'system', text: ' ' });
+      newHistory.push({ type: 'success', text: '  💡 TIP: Login with Google, Discord, or Guest mode using the buttons below.' });
+    } else if (lowerCmd === '1' || lowerCmd === 'inquire') {
+      newHistory.push({ type: 'system', text: '>>> AREA SUMMARY EXECUTED <<<' });
+      newHistory.push({ type: 'info', text: '  ██╗    ██╗ ██████╗ ██╗     ███████╗   ██╗██████╗ ██████╗ ███████╗' });
+      newHistory.push({ type: 'info', text: '  ██║    ██║██╔═══██╗██║     ██╔════╝  ███║╚════██╗╚════██╗╚════██║' });
+      newHistory.push({ type: 'info', text: '  ██║ █╗ ██║██║   ██║██║     █████╗    ╚██║ █████╔╝ █████╔╝    ██╔╝' });
+      newHistory.push({ type: 'info', text: '  ██║███╗██║██║   ██║██║     ██╔══╝     ██║ ╚═══██╗ ╚═══██╗   ██╔╝ ' });
+      newHistory.push({ type: 'info', text: '  ╚███╔███╔╝╚██████╔╝███████╗██║        ██║██████╔╝██████╔╝   ██║  ' });
+      newHistory.push({ type: 'info', text: '   ╚══╝╚══╝  ╚═════╝ ╚══════╝╚═╝        ╚═╝╚═════╝ ╚═════╝    ╚═╝  ' });
+      newHistory.push({ type: 'system', text: '────────────────────────────────────────────────────────────────────────────' });
+      newHistory.push({ type: 'info', text: '[-] 🎮 Hypervisors Games from FitGirl with easy UI to understand' });
+      newHistory.push({ type: 'info', text: '[-] 💿 Repacks Games from FitGirl with easy UI to understand' });
+      newHistory.push({ type: 'info', text: '[-] 🚂 Steam games With SteamTools One Click Get File without ADS' });
+      newHistory.push({ type: 'info', text: '[-] 🔓 Crack Apps From Popular Company' });
+      newHistory.push({ type: 'info', text: '[-] 💾 100% save games Files' });
+      newHistory.push({ type: 'info', text: '[-] 👤 Free Offline Steam Account' });
+      newHistory.push({ type: 'info', text: '[-] 🎁 Free Gifts like Netflix Accounts and more.' });
+      newHistory.push({ type: 'success', text: '[+] All this and more without adult pop-up ads and with an easy-to-use user interface.' });
+      newHistory.push({ type: 'system', text: '────────────────────────────────────────────────────────────────────────────' });
+      newHistory.push({ type: 'info', text: '💡 Ready to browse? Select a login option below to continue.' });
+    } else if (lowerCmd === '2' || lowerCmd === 'comms') {
+      newHistory.push({ type: 'system', text: 'ESTABLISHING SECURE COMMS...' });
+      newHistory.push({ 
+        type: 'info', 
+        text: (
+          <div className="flex flex-col space-y-2 mt-1 ms-2">
+            <div>[-] <a href="https://wa.me/212723242286" target="_blank" rel="noreferrer" className="text-blue-400 hover:text-blue-300 underline underline-offset-2">WhatsApp</a></div>
+            <div>[-] <a href="https://www.instagram.com/nexa1337" target="_blank" rel="noreferrer" className="text-pink-400 hover:text-pink-300 underline underline-offset-2">Instagram</a></div>
+            <div>[-] <a href="mailto:support@nexa1337.com" className="text-purple-400 hover:text-purple-300 underline underline-offset-2">Email (support@nexa1337.com)</a></div>
+            <div>[-] <a href="mailto:nexa1337agency@gmail.com" className="text-red-400 hover:text-red-300 underline underline-offset-2">Gmail (nexa1337agency@gmail.com)</a></div>
+            <div>[-] <a href="https://linktr.ee/nexa1337" target="_blank" rel="noreferrer" className="text-green-400 hover:text-green-300 underline underline-offset-2">N E X A 1337</a></div>
+          </div>
+        ) 
+      });
+    } else if (lowerCmd === '3' || lowerCmd === '4' || lowerCmd === 'network') {
+      newHistory.push({ 
+        type: 'info', 
+        text: (
+          <div className="flex flex-col space-y-3 mt-2 ms-2 font-mono">
+            <div className="text-[#a6e3a1] font-bold">{"\u003e\u003e\u003e SECURE NETWORKS DETECTED \u003c\u003c\u003c"}</div>
+            <div className="flex items-center space-x-2.5">
+              <img 
+                src="https://cdn.pixabay.com/photo/2021/12/27/10/50/telegram-6896827_1280.png" 
+                alt="Telegram" 
+                referrerPolicy="no-referrer" 
+                className="w-5 h-5 object-contain" 
+               loading="lazy" />
+              <a 
+                href="https://t.me/secretarea1337" 
+                target="_blank" 
+                rel="noreferrer" 
+                className="text-blue-400 hover:text-blue-300 underline underline-offset-2 font-bold"
+              >
+                Telegram Channel
+              </a>
+            </div>
+            <div className="flex items-center space-x-2.5">
+              <img 
+                src="https://pngimg.com/uploads/discord/discord_PNG8.png" 
+                alt="Discord" 
+                referrerPolicy="no-referrer" 
+                className="w-5 h-5 object-contain" 
+               loading="lazy" />
+              <a 
+                href="https://discord.gg/pygmDWFAHK" 
+                target="_blank" 
+                rel="noreferrer" 
+                className="text-blue-400 hover:text-blue-300 underline underline-offset-2 font-bold"
+              >
+                Discord Server
+              </a>
+            </div>
+            <div className="flex items-center space-x-2.5">
+              <img 
+                src="https://vectorseek.com/wp-content/uploads/2023/12/Reddit-New-2023-Icon-Logo-Vector.svg-.png" 
+                alt="Reddit" 
+                referrerPolicy="no-referrer" 
+                className="w-5 h-5 object-contain" 
+               loading="lazy" />
+              <a 
+                href="https://www.reddit.com/r/SecretArea1337/" 
+                target="_blank" 
+                rel="noreferrer" 
+                className="text-blue-400 hover:text-blue-300 underline underline-offset-2 font-bold"
+              >
+                Reddit Community
+              </a>
+            </div>
+          </div>
+        ) 
+      });
+    } else if (lowerCmd === 'clear') {
+      setTerminalHistory([]);
+      setTerminalCleared(true);
+      setTerminalInput('');
+      return;
     } else {
-      if (lowerCmd === 'help') {
-        newHistory.push({ type: 'system', text: '┌──────────────────────────────────┐' });
-        newHistory.push({ type: 'system', text: '│ AVAILABLE PROTOCOLS              │' });
-        newHistory.push({ type: 'system', text: '└──────────────────────────────────┘' });
-        newHistory.push({ type: 'info', text: '  [1] INQUIRE : What is inside?' });
-        newHistory.push({ type: 'info', text: '  [2] COMMS   : Contact Support' });
-        newHistory.push({ type: 'info', text: '  [3] AUTH    : Enter Secret Code' });
-        newHistory.push({ type: 'info', text: '  [4] NETWORK : Join Telegram' });
-        newHistory.push({ type: 'info', text: '  clear       : Flush memory' });
-        newHistory.push({ type: 'system', text: ' ' });
-        newHistory.push({ type: 'success', text: '  💡 TIP: Type a number (e.g. "3") or a command and press ENTER.' });
-      } else if (lowerCmd === '1') {
-        newHistory.push({ type: 'system', text: '>>> AREA SUMMARY EXECUTED <<<' });
-        newHistory.push({ type: 'info', text: '  ██╗    ██╗ ██████╗ ██╗     ███████╗   ██╗██████╗ ██████╗ ███████╗' });
-        newHistory.push({ type: 'info', text: '  ██║    ██║██╔═══██╗██║     ██╔════╝  ███║╚════██╗╚════██╗╚════██║' });
-        newHistory.push({ type: 'info', text: '  ██║ █╗ ██║██║   ██║██║     █████╗    ╚██║ █████╔╝ █████╔╝    ██╔╝' });
-        newHistory.push({ type: 'info', text: '  ██║███╗██║██║   ██║██║     ██╔══╝     ██║ ╚═══██╗ ╚═══██╗   ██╔╝ ' });
-        newHistory.push({ type: 'info', text: '  ╚███╔███╔╝╚██████╔╝███████╗██║        ██║██████╔╝██████╔╝   ██║  ' });
-        newHistory.push({ type: 'info', text: '   ╚══╝╚══╝  ╚═════╝ ╚══════╝╚═╝        ╚═╝╚═════╝ ╚═════╝    ╚═╝  ' });
-        newHistory.push({ type: 'system', text: '────────────────────────────────────────────────────────────────────────────' });
-        newHistory.push({ type: 'info', text: '[-] 🎮 Hypervisors Games from FitGirl with easy UI to understand' });
-        newHistory.push({ type: 'info', text: '[-] 💿 Repacks Games from FitGirl with easy UI to understand' });
-        newHistory.push({ type: 'info', text: '[-] 🚂 Steam games With SteamTools One Click Get File without ADS' });
-        newHistory.push({ type: 'info', text: '[-] 🔓 Crack Apps From Popular Company' });
-        newHistory.push({ type: 'info', text: '[-] 💾 100% save games Files' });
-        newHistory.push({ type: 'info', text: '[-] 👤 Free Offline Steam Account' });
-        newHistory.push({ type: 'info', text: '[-] 🎁 Free Gifts like Netflix Accounts and more.' });
-        newHistory.push({ type: 'success', text: '[+] All this and more without adult pop-up ads and with an easy-to-use user interface.' });
-        newHistory.push({ type: 'system', text: '────────────────────────────────────────────────────────────────────────────' });
-        newHistory.push({ type: 'error', text: 'Status: CLASSIFIED. Authentication required for decryption.' });
-      } else if (lowerCmd === '2') {
-        newHistory.push({ type: 'system', text: 'ESTABLISHING SECURE COMMS...' });
-        newHistory.push({ 
-          type: 'info', 
-          text: (
-            <div className="flex flex-col space-y-2 mt-1 ms-2">
-              <div>[-] <a href="https://wa.me/212723242286" target="_blank" rel="noreferrer" className="text-blue-400 hover:text-blue-300 underline underline-offset-2">WhatsApp</a></div>
-              <div>[-] <a href="https://www.instagram.com/nexa1337" target="_blank" rel="noreferrer" className="text-pink-400 hover:text-pink-300 underline underline-offset-2">Instagram</a></div>
-              <div>[-] <a href="mailto:support@nexa1337.com" className="text-purple-400 hover:text-purple-300 underline underline-offset-2">Email (support@nexa1337.com)</a></div>
-              <div>[-] <a href="mailto:nexa1337agency@gmail.com" className="text-red-400 hover:text-red-300 underline underline-offset-2">Gmail (nexa1337agency@gmail.com)</a></div>
-              <div>[-] <a href="https://linktr.ee/nexa1337" target="_blank" rel="noreferrer" className="text-green-400 hover:text-green-300 underline underline-offset-2">N E X A 1337</a></div>
-            </div>
-          ) 
-        });
-      } else if (lowerCmd === '4') {
-        newHistory.push({ 
-          type: 'info', 
-          text: (
-            <div className="flex flex-col space-y-3 mt-2 ms-2 font-mono">
-              <div className="text-[#a6e3a1] font-bold">{"\u003e\u003e\u003e SECURE NETWORKS DETECTED \u003c\u003c\u003c"}</div>
-              <div className="flex items-center space-x-2.5">
-                <img 
-                  src="https://cdn.pixabay.com/photo/2021/12/27/10/50/telegram-6896827_1280.png" 
-                  alt="Telegram" 
-                  referrerPolicy="no-referrer" 
-                  className="w-5 h-5 object-contain" 
-                 loading="lazy" />
-                <a 
-                  href="https://t.me/secretarea1337" 
-                  target="_blank" 
-                  rel="noreferrer" 
-                  className="text-blue-400 hover:text-blue-300 underline underline-offset-2 font-bold"
-                >
-                  Telegram Channel
-                </a>
-              </div>
-              <div className="flex items-center space-x-2.5">
-                <img 
-                  src="https://pngimg.com/uploads/discord/discord_PNG8.png" 
-                  alt="Discord" 
-                  referrerPolicy="no-referrer" 
-                  className="w-5 h-5 object-contain" 
-                 loading="lazy" />
-                <a 
-                  href="https://discord.gg/pygmDWFAHK" 
-                  target="_blank" 
-                  rel="noreferrer" 
-                  className="text-blue-400 hover:text-blue-300 underline underline-offset-2 font-bold"
-                >
-                  Discord Server
-                </a>
-              </div>
-              <div className="flex items-center space-x-2.5">
-                <img 
-                  src="https://vectorseek.com/wp-content/uploads/2023/12/Reddit-New-2023-Icon-Logo-Vector.svg-.png" 
-                  alt="Reddit" 
-                  referrerPolicy="no-referrer" 
-                  className="w-5 h-5 object-contain" 
-                 loading="lazy" />
-                <a 
-                  href="https://www.reddit.com/r/SecretArea1337/" 
-                  target="_blank" 
-                  rel="noreferrer" 
-                  className="text-blue-400 hover:text-blue-300 underline underline-offset-2 font-bold"
-                >
-                  Reddit Community
-                </a>
-              </div>
-            </div>
-          ) 
-        });
-      } else if (lowerCmd === '3' || lowerCmd === 'auth') {
-        setTerminalMode('password');
-      } else if (lowerCmd === 'clear') {
-        setTerminalHistory([]);
-        setTerminalCleared(true);
-        setTerminalInput('');
-        return;
-      } else if (lowerCmd === 'login wolfspace' || cmd === 'Wolfspace') {
-        newHistory.push({ type: 'success', text: 'Access Granted. Decrypting Area...' });
-        setIsUnlocked(true);
-        setIsGuestMode(true);
-        setShowHackerLoader(true);
-        setHackerProgress(0);
-        localStorage.setItem('secret_area_unlocked', 'true');
-        localStorage.setItem('nexa_guest_mode', 'true');
-        fetchData();
-      } else if (lowerCmd === 'login guest' || lowerCmd === 'guest') {
-        newHistory.push({ type: 'success', text: 'Guest Access Granted. Loading limited preview...' });
-        setIsUnlocked(true);
-        setIsGuestMode(true);
-        setShowHackerLoader(true);
-        setHackerProgress(0);
-        localStorage.setItem('secret_area_unlocked', 'guest');
-        localStorage.setItem('nexa_guest_mode', 'true');
-        fetchData();
-      } else {
-        newHistory.push({ type: 'error', text: `Command not found: ${cmd}. Type "help" for options.` });
-      }
+      newHistory.push({ type: 'error', text: `Command not found: ${cmd}. Type "help" for options.` });
     }
 
     setTerminalHistory(newHistory);
     setTerminalInput('');
     
-    if (terminalMode !== 'password' && cmd) {
+    if (cmd) {
       setCommandHistory(prev => [...prev, cmd]);
     }
     setHistoryIndex(-1);
@@ -5183,20 +5382,13 @@ const SecretArea: React.FC = () => {
     if (e.ctrlKey && e.key === 'c') {
       e.preventDefault();
       const newHistory = [...terminalHistory];
-      if (terminalMode === 'password') {
-        newHistory.push({ type: 'user', text: `Please enter the Secret Code:\n^C` });
-        newHistory.push({ type: 'error', text: 'Authentication aborted.' });
-        newHistory.push({ type: 'success', text: '💡 TIP: Type "help" to see available commands.' });
-        setTerminalMode('normal');
-      } else {
-        newHistory.push({ type: 'user', text: `┌──(guest㉿SecretArea1337)-[~]\n└─$ ${terminalInput}^C` });
-      }
+      newHistory.push({ type: 'user', text: `┌──(guest㉿SecretArea1337)-[~]\n└─$ ${terminalInput}^C` });
       setTerminalHistory(newHistory);
       setTerminalInput('');
       setHistoryIndex(-1);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      if (terminalMode !== 'password' && commandHistory.length > 0) {
+      if (commandHistory.length > 0) {
         const nextIndex = historyIndex + 1;
         if (nextIndex < commandHistory.length) {
           setHistoryIndex(nextIndex);
@@ -5205,7 +5397,7 @@ const SecretArea: React.FC = () => {
       }
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
-      if (terminalMode !== 'password' && historyIndex >= 0) {
+      if (historyIndex >= 0) {
         const nextIndex = historyIndex - 1;
         if (nextIndex >= 0) {
           setHistoryIndex(nextIndex);
@@ -5231,9 +5423,16 @@ const SecretArea: React.FC = () => {
 
   useEffect(() => {
     if (currentUser) {
+        const local = getLocalProfile(currentUser.uid);
+        if (local?.pcSpecs) {
+            setGlobalSpecs(prev => ({
+                ...prev,
+                ...local.pcSpecs
+            }));
+        }
         import('../src/firebase').then(({ db }) => {
             import('../src/firestoreMock').then(({ doc, getDoc }) => {
-                const docRef = doc(db, 'SecretArea', currentUser.uid);
+                const docRef = doc(db, 'users', currentUser.uid);
                 getDoc(docRef).then(snap => {
                     if (snap.exists() && snap.data().pcSpecs) {
                         const specs = snap.data().pcSpecs;
@@ -5242,9 +5441,13 @@ const SecretArea: React.FC = () => {
                             ...specs
                         }));
                     }
+                }).catch((err) => {
+                    if (err?.code !== 'permission-denied' && !err?.message?.includes('permissions')) {
+                        console.warn("PC specs sync note (handled):", err?.message);
+                    }
                 });
-            });
-        });
+            }).catch(() => {});
+        }).catch(() => {});
     }
   }, [currentUser]);
 
@@ -5566,8 +5769,6 @@ const SecretArea: React.FC = () => {
   };
 
   const copyAndCloseMath = () => {
-    setPassword('Wolfspace'); // Pre-fill
-    navigator.clipboard.writeText('Wolfspace'); // Copy
     setShowMathGame(false); // Close game
   };
 
@@ -5963,6 +6164,11 @@ const SecretArea: React.FC = () => {
     });
     
     setAllResources(transformed);
+    try {
+      localStorage.setItem('cached_transformed_resources', JSON.stringify(transformed));
+    } catch (e) {
+      console.warn("Writing transformed cache failed:", e);
+    }
   };
 
   const fetchData = async (silent = false) => {
@@ -6256,17 +6462,7 @@ const paginatedData = useMemo(() => {
 
   const handleUnlock = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'Wolfspace') {
-      setIsUnlocked(true);
-      setIsGuestMode(true);
-      setShowHackerLoader(true);
-      setHackerProgress(0);
-      localStorage.setItem('secret_area_unlocked', 'true');
-      localStorage.setItem('nexa_guest_mode', 'true');
-    } else {
-      setError('AUTHORIZATION FAILED');
-      setPassword('');
-    }
+    setError('Please use the Visitor Login buttons (Google, Discord, or Guest mode) to enter.');
   };
 
   if (maintenanceConfig === undefined) {
@@ -6398,14 +6594,14 @@ const paginatedData = useMemo(() => {
                         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="space-y-6 relative z-10">
                             <div className="text-emerald-900 dark:text-emerald-500 flex justify-center"><Icon name="CheckCircle" size={48} /></div>
                             <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-200 px-4">
-                                "Intelligence confirmed. Welcome to the inner circle."
+                                "Intelligence confirmed. Welcome to the platform."
                             </p>
                             <div className="bg-emerald-500/10 border border-emerald-500/30 p-4 rounded-xl">
-                                <span className="block text-[10px] uppercase tracking-widest text-emerald-600 dark:text-emerald-700 dark:text-emerald-400 mb-1">Secret Key</span>
-                                <span className="font-mono text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-700 dark:text-emerald-400 select-all">Wolfspace</span>
+                                <span className="block text-[10px] uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-1">Challenge Status</span>
+                                <span className="font-mono text-base sm:text-lg font-bold text-emerald-600 dark:text-emerald-400">Security Check Passed</span>
                             </div>
-                            <button onClick={copyAndCloseMath} className="w-full py-3 sm:py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 text-xs sm:text-sm">
-                                <Icon name="Copy" size={18} /> Copy & Enter
+                            <button onClick={copyAndCloseMath} className="w-full py-3 sm:py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 text-xs sm:text-sm">
+                                <Icon name="CheckCircle" size={18} /> Proceed to Login
                             </button>
                         </motion.div>
                     )}
@@ -6468,24 +6664,16 @@ const paginatedData = useMemo(() => {
                           </motion.div>
                         ))}
                         <form onSubmit={handleTerminalSubmit} className="flex flex-col mt-2">
-                          {terminalMode === 'password' ? (
-                            <div className="flex items-center text-[#89B4FA] font-bold mb-1">
-                               Please enter the Secret Code:
-                            </div>
-                          ) : (
-                            <div className="flex items-center text-[#89B4FA] font-bold">
-                               ┌──(<span className="text-[#E5E9F0]">guest㉿SecretArea1337</span>)-[<span className="text-[#E5E9F0]">~</span>]
-                            </div>
-                          )}
+                          <div className="flex items-center text-[#89B4FA] font-bold">
+                             ┌──(<span className="text-[#E5E9F0]">guest㉿SecretArea1337</span>)-[<span className="text-[#E5E9F0]">~</span>]
+                          </div>
                           <div className="flex items-center items-stretch">
-                            {terminalMode === 'password' ? null : (
-                              <span className="text-[#89B4FA] font-bold me-2 shrink-0 drop-shadow-sm flex items-center">
-                                 └─$
-                              </span>
-                            )}
+                            <span className="text-[#89B4FA] font-bold me-2 shrink-0 drop-shadow-sm flex items-center">
+                               └─$
+                            </span>
                             <input 
                               id="terminal-input"
-                              type={terminalMode === 'password' ? 'password' : 'text'} 
+                              type="text" 
                               value={terminalInput}
                               onChange={(e) => setTerminalInput(e.target.value)}
                               onKeyDown={handleTerminalKeyDown}
@@ -6504,30 +6692,118 @@ const paginatedData = useMemo(() => {
           
           <div className="bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-4 sm:p-6 flex flex-col items-center">
             <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4">Visitor Login</span>
-            <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 w-full justify-center items-center">
               <button 
                 onClick={async () => {
+                  setAuthDomainError(null);
                   try {
                     await signInWithDiscord();
+                    window.dispatchEvent(new Event('authChange'));
                     navigate('/profile');
-                  } catch (e) { console.error(e); }
+                  } catch (err: any) {
+                    const isUnauthorized = 
+                      err?.code === 'auth/unauthorized-domain' || 
+                      String(err?.message || '').includes('unauthorized-domain');
+                    if (isUnauthorized) {
+                      setAuthDomainError(window.location.hostname);
+                    } else if (err?.code !== 'auth/popup-closed-by-user' && err?.code !== 'auth/cancelled-popup-request') {
+                      console.warn('Auth issue:', err?.message || err);
+                    }
+                  }
                 }}
-                className="flex items-center justify-center gap-2 px-6 py-3 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded-xl transition-colors text-sm w-full sm:w-auto"
+                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded-xl transition-colors text-sm w-full sm:w-auto"
               >
                 <Icon name="Discord" size={18} /> Login with Discord
               </button>
               <button 
                 onClick={async () => {
+                  setAuthDomainError(null);
                   try {
                     await signInWithGoogle();
+                    window.dispatchEvent(new Event('authChange'));
                     navigate('/profile');
-                  } catch (e) { console.error(e); }
+                  } catch (err: any) {
+                    const isUnauthorized = 
+                      err?.code === 'auth/unauthorized-domain' || 
+                      String(err?.message || '').includes('unauthorized-domain');
+                    if (isUnauthorized) {
+                      setAuthDomainError(window.location.hostname);
+                    } else if (err?.code !== 'auth/popup-closed-by-user' && err?.code !== 'auth/cancelled-popup-request') {
+                      console.warn('Auth issue:', err?.message || err);
+                    }
+                  }
                 }}
-                className="flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-bold rounded-xl transition-colors text-sm w-full sm:w-auto"
+                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-bold rounded-xl transition-colors text-sm w-full sm:w-auto"
               >
                 <Icon name="Mail" size={18} /> Login with Google
               </button>
+              <button 
+                onClick={() => {
+                  localStorage.setItem('secret_area_unlocked', 'guest');
+                  localStorage.setItem('nexa_guest_mode', 'true');
+                  setIsUnlocked(true);
+                  setIsGuestMode(true);
+                  setShowHackerLoader(true);
+                  setHackerProgress(0);
+                  window.dispatchEvent(new Event('authChange'));
+                  fetchData();
+                }}
+                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-colors text-sm w-full sm:w-auto"
+              >
+                <Icon name="User" size={18} /> Continue as Guest
+              </button>
             </div>
+
+            {authDomainError && (
+              <div className="mt-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs w-full max-w-lg space-y-2.5 text-left">
+                <div className="flex items-center gap-2 font-bold text-amber-400">
+                  <Icon name="AlertTriangle" size={16} />
+                  <span>Firebase Authorized Domain Required</span>
+                </div>
+                <p className="text-slate-300 leading-relaxed">
+                  Firebase Authentication requires your preview domain to be added to authorized domains in Firebase Console:
+                </p>
+                <div className="flex items-center gap-2 bg-black/40 p-2 rounded-lg border border-white/10 font-mono text-xs select-all text-white overflow-x-auto">
+                  <span className="flex-1 truncate">{authDomainError}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(authDomainError);
+                      setDomainCopied(true);
+                      setTimeout(() => setDomainCopied(false), 2000);
+                    }}
+                    className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded text-[11px] transition-colors whitespace-nowrap"
+                  >
+                    {domainCopied ? 'Copied!' : 'Copy Domain'}
+                  </button>
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px]">
+                  <a
+                    href="https://console.firebase.google.com/project/secretarea-1337/authentication/settings"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:underline inline-flex items-center gap-1"
+                  >
+                    Open Firebase Console Settings &rarr;
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      localStorage.setItem('secret_area_unlocked', 'guest');
+                      localStorage.setItem('nexa_guest_mode', 'true');
+                      setIsUnlocked(true);
+                      setIsGuestMode(true);
+                      setShowHackerLoader(true);
+                      setHackerProgress(0);
+                      fetchData();
+                    }}
+                    className="text-slate-400 hover:text-white underline"
+                  >
+                    Bypass & Enter as Guest &rarr;
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
           
         </motion.div>
@@ -6559,7 +6835,7 @@ const paginatedData = useMemo(() => {
              />
              {selectedResource && (
                <ResourceDetailModal globalSpecs={globalSpecs} item={selectedResource} 
-                  onClose={() => { setSelectedResource(null); setSelectedResourceAction(undefined); }}
+                  onClose={handleCloseDetailModal}
                   stash={stash}
                   toggleStash={toggleStash}
                   initialScrollTarget={selectedResourceAction}
@@ -6726,7 +7002,7 @@ const paginatedData = useMemo(() => {
             <ResourceDetailModal 
               globalSpecs={globalSpecs}
               item={selectedResource} 
-              onClose={() => { setSelectedResource(null); setSelectedResourceAction(undefined); setOpenedViaRandom(false); }} 
+              onClose={handleCloseDetailModal} 
               isHypervisor={selectedResource.category === 'hypervisor'}
               stash={stash}
               toggleStash={toggleStash}

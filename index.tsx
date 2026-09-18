@@ -5,8 +5,17 @@ import { LanguageProvider } from './src/contexts/LanguageContext';
 import App from './App';
 import "./index.css";
 
-window.addEventListener("error", (e) => { if (e.message && e.message.includes("WebSocket")) e.preventDefault(); });
-window.addEventListener("unhandledrejection", (e) => { if (e.reason && (String(e.reason).includes("WebSocket") || (e.reason.message && e.reason.message.includes("WebSocket")))) e.preventDefault(); });
+window.addEventListener("error", (e) => { 
+  if (e.message && (e.message.includes("WebSocket") || e.message.includes("unauthorized-domain"))) {
+    e.preventDefault(); 
+  }
+});
+window.addEventListener("unhandledrejection", (e) => { 
+  const reasonStr = String(e.reason?.message || e.reason || "");
+  if (reasonStr.includes("WebSocket") || reasonStr.includes("unauthorized-domain")) {
+    e.preventDefault(); 
+  }
+});
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

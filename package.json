@@ -7,12 +7,15 @@
     "dev": "tsx server.ts",
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
     "start": "node dist/server.cjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
     "@google/genai": "^2.16.0",
     "@xyflow/react": "^12.11.1",
     "express": "^5.2.1",
+    "firebase": "^12.19.0",
+    "firebase-admin": "^14.4.0",
     "framer-motion": "^12.24.11",
     "jspdf": "2.5.1",
     "lucide-react": "^1.40.0",

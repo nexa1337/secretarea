@@ -1,35 +1,19 @@
-import { GoogleGenAI } from "@google/genai";
-import { CATEGORIES } from '../constants';
-
-// Initialize the API client
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-const SYSTEM_INSTRUCTION = `
-You are NEXA, the AI assistant for N E X A 1337's personal portfolio website (N E X A 1337).
-Your goal is to answer questions about N E X A 1337 based on the portfolio data.
-
-Here is the context about N E X A 1337:
-- Brand: N E X A 1337
-- Interests: Architecture, IT, Cybersecurity, Gaming, Business, AI, Superbikes.
-- Details:
-${JSON.stringify(CATEGORIES.map(c => ({ title: c.title, role: c.role, bio: c.bio, skills: c.skills.map(s => s.name).join(', ') })))}
-
-Tone: Professional, enthusiastic, futuristic, and helpful.
-If asked about contact info, refer them to the Contact page.
-Keep answers concise (under 100 words) unless asked for details.
-`;
-
 export const chatWithNexa = async (message: string) => {
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: message,
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify({ message }),
     });
 
-    return response.text;
+    if (!response.ok) {
+      throw new Error(`Server responded with ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.text || "No response received.";
   } catch (error) {
     console.error("Gemini API Error:", error);
     return "I encountered a glitch in the matrix. Please try again later.";

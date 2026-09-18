@@ -1,1 +1,6 @@
-export const updateProfile = async (...args: any[]) => {};
+export {
+  updateProfile,
+  updateEmail,
+  signOut
+} from 'firebase/auth';
+

@@ -30,7 +30,10 @@ const AppBehavior = () => {
 
 // Protected routes logic
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const isUnlocked = localStorage.getItem('secret_area_unlocked') === 'true';
+  const isUnlocked =
+    localStorage.getItem('secret_area_unlocked') === 'true' ||
+    localStorage.getItem('secret_area_unlocked') === 'guest' ||
+    localStorage.getItem('nexa_guest_mode') === 'true';
   if (!isUnlocked) {
     return <Navigate to="/" replace />;
   }
@@ -49,6 +52,7 @@ const MainContent = () => {
         </div>
         <Routes>
           <Route path="/" element={<div />} />
+          <Route path="/game/*" element={<Navigate to="/" replace />} />
           <Route path="/roadmap" element={<ProtectedRoute><Roadmap /></ProtectedRoute>} />
           <Route path="/roadmap/:id" element={<ProtectedRoute><CategoryDetail /></ProtectedRoute>} />
           <Route path="/personal-space" element={<ProtectedRoute><PersonalFinance /></ProtectedRoute>} />
