@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { signInWithGoogle, signInWithDiscord, db, auth } from '../src/firebase';
-import { doc, getDoc, updateDoc, setDoc, arrayUnion, arrayRemove, increment } from '../src/firestoreMock';
+import { doc, getDoc, updateDoc, setDoc, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
 import { trackUserMovement, recordGameInteraction, getLocalProfile, removeGameFromLibrary, getCachedAdminAvatar, getCachedAdminName, subscribeAdminPublicProfile } from '../src/services/userService';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -3002,7 +3002,7 @@ export const ResourceDetailModal: React.FC<{
                      )}
                      {resolvedDev && (
                          <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-                             <span className="text-xs text-slate-500 dark:text-slate-400">{t('Game Studio')} /</span>
+                             <span className="text-xs text-slate-500 dark:text-slate-400">{['architect', 'extra'].includes(item.category) ? t('Dev Studio') : t('Game Studio')} /</span>
                              <span className="text-sm font-bold text-slate-900 dark:text-white cursor-pointer hover:text-primary-500 transition-colors" onClick={(e) => { e.stopPropagation(); if(onCompanyClick) onCompanyClick(resolvedDev); }}>{resolvedDev}</span>
                          </div>
                      )}
@@ -3061,7 +3061,7 @@ export const ResourceDetailModal: React.FC<{
                           // Add to Library and grant points
                           import('../src/firebase').then(({ auth, db }) => {
                               if (auth.currentUser) {
-                                  import('../src/firestoreMock').then(({ doc, updateDoc, arrayUnion, increment }) => {
+                                  import('firebase/firestore').then(({ doc, updateDoc, arrayUnion, increment }) => {
                                       const docRef = doc(db, 'users', auth.currentUser?.uid);
                                       const libGame = {
                                           id: item.id || '',
@@ -3323,7 +3323,7 @@ export const ResourceDetailModal: React.FC<{
                   </div>
 
                   {/* Download Channels */}
-                  {((item.links?.full) || (item.links?.mirrors && item.links.mirrors.length > 0) || (item.links?.parts && item.links.parts.length > 0) || (item.links?.ankerParts && item.links.ankerParts.length > 0) || (item.links?.preInstalled && (item.links.preInstalled.download || item.links.preInstalled.cloudDrop || item.links.preInstalled.torrent))) && (
+                  {((item.links?.full) || (item.links?.utorrent) || (item.links?.mirrors && item.links.mirrors.length > 0) || (item.links?.parts && item.links.parts.length > 0) || (item.links?.ankerParts && item.links.ankerParts.length > 0) || (item.links?.preInstalled && (item.links.preInstalled.download || item.links.preInstalled.cloudDrop || item.links.preInstalled.torrent))) && (
                   <div className="py-6 sm:py-12" id="download">
                       <div className="flex items-center gap-4 mb-6">
                           <div className="w-10 h-10 bg-primary-500/10 text-primary-500 rounded-xl flex items-center justify-center">
@@ -3348,6 +3348,30 @@ export const ResourceDetailModal: React.FC<{
                                       onClick={['steamtools', 'architect', 'extra'].includes(item.category) ? undefined : (e) => {
                                         e.preventDefault();
                                         setTorrentWarningLink(item.links?.full || null);
+                                      }}
+                                  />
+                              </div>
+                          </div>
+                      )}
+
+                      {/* Magnet / Torrent Download for Tools (Architect) */}
+                      {item.category === 'architect' && item.links?.utorrent && (
+                          <div className="mb-6">
+                              <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">{t('Torrent / Magnet Download')}</h4>
+                              <div className="relative">
+                                  {!item.links?.full && (
+                                      <div className="absolute -top-3 end-4 z-10 bg-amber-500 text-white shadow-[0_0_15px_rgba(245,158,11,0.4)] text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-md">
+                                          {t('Recommendation')}
+                                      </div>
+                                  )}
+                                  <DownloadButton
+                                      label={`${t('Master File Magnet')} (${item.repackSize || item.originalSize || 'Size N/A'})`}
+                                      sub={t('Torrent')}
+                                      href={item.links.utorrent}
+                                      icon="Magnet"
+                                      onClick={(e) => {
+                                          e.preventDefault();
+                                          setTorrentWarningLink(item.links?.utorrent || null);
                                       }}
                                   />
                               </div>
@@ -4953,6 +4977,28 @@ const SecretArea: React.FC = () => {
               if (matched) return profile.name;
           }
       }
+
+      // Automatic fallback matching: match brand/studio names from known company profiles in item title
+      const itemName = String(item.name || '').trim().toLowerCase();
+      if (itemName) {
+          const cleanItemTitle = itemName.replace(/[^a-z0-9]/g, ' ');
+          for (const profile of companyProfiles) {
+              const profName = String(profile.name || '').trim().toLowerCase();
+              if (!profName || profName === 'unknown' || profName.length < 3) continue;
+              
+              // Only consider profiles that have items registered in this category or generic software studios
+              const catIds = (profile[key] as string[]) || [];
+              const hasCatRelevance = catIds.length > 0 || ['architect', 'extra'].includes(item.category);
+              if (!hasCatRelevance) continue;
+
+              const cleanProfName = profName.replace(/[^a-z0-9]/g, ' ');
+              const regex = new RegExp(`(^|\\s)${cleanProfName.replace(/\s+/g, '\\s+')}(\\s|$)`, 'i');
+              if (regex.test(cleanItemTitle) || cleanItemTitle.startsWith(cleanProfName)) {
+                  return profile.name;
+              }
+          }
+      }
+
       return '';
   };
 
@@ -5431,7 +5477,7 @@ const SecretArea: React.FC = () => {
             }));
         }
         import('../src/firebase').then(({ db }) => {
-            import('../src/firestoreMock').then(({ doc, getDoc }) => {
+            import('firebase/firestore').then(({ doc, getDoc }) => {
                 const docRef = doc(db, 'users', currentUser.uid);
                 getDoc(docRef).then(snap => {
                     if (snap.exists() && snap.data().pcSpecs) {
@@ -6155,7 +6201,16 @@ const SecretArea: React.FC = () => {
                   download: getVal('unlock 01'),
                   cloudDrop: getVal('unlock 02'),
                   torrent: getVal('unlock 03')
-              }
+              },
+              utorrent: (
+                getVal('utorrent') ||
+                getVal('torrent') ||
+                getVal('magnet') ||
+                getVal('utorrentlink') ||
+                getVal('magnetlink') ||
+                (row && (row['µTorrent'] || row['utorrent'] || row['magnet'] || row['Torrent'])) ||
+                ''
+              ).toString().trim() || undefined
             }
           };
         }).reverse();
@@ -6330,13 +6385,21 @@ const SecretArea: React.FC = () => {
               ) || numericIds.some(id => itemIdsToMatch.includes(id));
           }
           
-          // Fallback strict matching if no IDs were provided (e.g. for temporary profiles)
+          // Fallback strict matching if no IDs were provided or for unmapped items
           const dev = String(item.developer || '').trim().toLowerCase();
           const rep = String(item.repackBy || '').trim().toLowerCase();
           const pname = String(profile.name || '').trim().toLowerCase();
           
           if (dev && pname && (dev === pname || dev.includes(pname) || pname.includes(dev))) return true;
           if (rep && pname && (rep === pname || rep.includes(pname) || pname.includes(rep))) return true;
+
+          // Also check if item name begins with or contains company name for architect/extra items
+          if (['architect', 'extra'].includes(item.category) && pname && pname.length >= 3) {
+              const cleanItemName = String(item.name || '').toLowerCase().replace(/[^a-z0-9]/g, ' ');
+              const cleanProfName = pname.replace(/[^a-z0-9]/g, ' ');
+              const regex = new RegExp(`(^|\\s)${cleanProfName.replace(/\\s+/g, '\\s+')}(\\s|$)`, 'i');
+              if (regex.test(cleanItemName) || cleanItemName.startsWith(cleanProfName)) return true;
+          }
           
           return false;
       };

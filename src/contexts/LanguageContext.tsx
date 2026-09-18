@@ -88,6 +88,8 @@ export const translations: Translations = {
     'Release Group': { en: 'Release Group', fr: 'Groupe de publication', es: 'Grupo de lanzamiento', ar: 'مجموعة الإصدار' },
     'Released': { en: 'Released', fr: 'Sorti le', es: 'Publicado', ar: 'تاريخ الإصدار' },
     'Game Studio': { en: 'Game Studio', fr: 'Studio de jeu', es: 'Estudio de juegos', ar: 'استوديو اللعبة' },
+    'Dev Studio': { en: 'Dev Studio', fr: 'Studio de développement', es: 'Estudio de desarrollo', ar: 'استوديو التطوير' },
+    'Developer': { en: 'Developer', fr: 'Développeur', es: 'Desarrollador', ar: 'المطور' },
     'Genres': { en: 'Genres', fr: 'Genres', es: 'Géneros', ar: 'الأنواع' },
     'Get it on SteamDB': { en: 'Get it on SteamDB', fr: 'Obtenez-le sur SteamDB', es: 'Consíguelo en SteamDB', ar: 'احصل عليه على SteamDB' },
     'Game Features': { en: 'Game Features', fr: 'Caractéristiques du jeu', es: 'Características del juego', ar: 'مميزات اللعبة' },
