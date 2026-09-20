@@ -44,3 +44,30 @@ body {
     transform: translateY(0);
   }
 }
+
+@keyframes partnerMarqueeLtr {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes partnerMarqueeRtl {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(50%); }
+}
+
+.animate-partner-marquee-ltr {
+  display: flex;
+  width: max-content;
+  animation: partnerMarqueeLtr 34s linear infinite;
+}
+
+.animate-partner-marquee-rtl {
+  display: flex;
+  width: max-content;
+  animation: partnerMarqueeRtl 34s linear infinite;
+}
+
+.pause-on-hover:hover {
+  animation-play-state: paused !important;
+}
+

@@ -65,5 +65,6 @@ export const signInWithDiscord = async () => {
 // Export standalone auth methods for flexibility
 export const onAuthStateChanged = (cb: (user: any) => void) => firebaseOnAuthStateChanged(auth, cb);
 export const signOut = () => firebaseSignOut(auth);
+export const logout = signOut;
 
 export default app;

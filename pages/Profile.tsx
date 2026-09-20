@@ -37,7 +37,8 @@ import {
   TbBolt,
   TbTrophy,
   TbMap,
-  TbStar
+  TbStar,
+  TbRadar
 } from 'react-icons/tb';
 import { FaAngleLeft, FaAngleRight, FaArrowLeft } from 'react-icons/fa6';
 import { auth } from '../src/firebase';
@@ -215,9 +216,69 @@ const Profile: React.FC = () => {
         }
     };
 
+    const buildGamesMap = (flatItems: any[]) => {
+        const map = new Map<string, any>();
+        flatItems.forEach(item => {
+            if (!item) return;
+            const rawId = String(item.id || '').toLowerCase();
+            if (rawId) {
+                map.set(rawId, item);
+                map.set(rawId.replace(/[-_]/g, ''), item);
+                const match = rawId.match(/^([a-z]+)[-_]?(\d+)$/);
+                if (match) {
+                    map.set(`${match[1]}${match[2]}`, item);
+                    map.set(`${match[1]}-${match[2]}`, item);
+                    map.set(match[2], item);
+                }
+            }
+            const numOnlyMatch = String(item.id || '').match(/\d+/);
+            if (numOnlyMatch) {
+                map.set(numOnlyMatch[0], item);
+                map.set(`game-${numOnlyMatch[0]}`, item);
+                map.set(`g${numOnlyMatch[0]}`, item);
+                map.set(`g-${numOnlyMatch[0]}`, item);
+            }
+            const rawGameId = String(item.gameId || '').toLowerCase();
+            if (rawGameId) {
+                map.set(rawGameId, item);
+                map.set(rawGameId.replace(/[-_]/g, ''), item);
+            }
+            const rawName = String(item.name || '').toLowerCase().trim();
+            if (rawName) {
+                map.set(rawName, item);
+                map.set(rawName.replace(/[^a-z0-9]/g, ''), item);
+            }
+        });
+        return map;
+    };
+
     // Detail modal state
     const [selectedGame, setSelectedGame] = useState<ResourceItem | null>(null);
-    const [allResources, setAllResources] = useState<Record<string, ResourceItem[]>>({ game: [], hypervisor: [], steamtools: [], architect: [], extra: [] });
+    const [allResources, setAllResources] = useState<Record<string, ResourceItem[]>>(() => {
+        try {
+            const raw = localStorage.getItem('cached_transformed_resources');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (parsed.architect && !parsed.tools) parsed.tools = parsed.architect;
+                if (parsed.extra && !parsed.savegame) parsed.savegame = parsed.extra;
+                return parsed;
+            }
+        } catch (e) {}
+        return { game: [], hypervisor: [], steamtools: [], architect: [], extra: [] };
+    });
+
+    const [cachedGamesMap, setCachedGamesMap] = useState<Map<string, any>>(() => {
+        try {
+            const raw = localStorage.getItem('cached_transformed_resources');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                const flatItems = Object.values(parsed).flat() as any[];
+                return buildGamesMap(flatItems);
+            }
+        } catch (e) {}
+        return new Map();
+    });
+
     const [stash, setStash] = useState<string[]>(() => {
         try {
             const saved = localStorage.getItem('stash');
@@ -228,55 +289,120 @@ const Profile: React.FC = () => {
     });
     const [librarySearch, setLibrarySearch] = useState('');
 
-    const toggleStash = (id: string, e?: React.MouseEvent) => {
+    const toggleStash = (id: string, e?: React.MouseEvent, itemObj?: ResourceItem) => {
         if (e) e.stopPropagation();
-        setStash(prev => {
-            const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+        const activeUid = currentUser?.uid || (isUnlocked ? 'guest' : null);
+        const isAdding = !stash.some(s => s.toLowerCase() === id.toLowerCase());
+        const next = isAdding ? [...stash.filter(x => x.toLowerCase() !== id.toLowerCase()), id] : stash.filter(x => x.toLowerCase() !== id.toLowerCase());
+        setStash(next);
+        try {
             localStorage.setItem('stash', JSON.stringify(next));
             localStorage.setItem('myStash', JSON.stringify(next));
-            if (currentUser) {
-                saveUserStash(currentUser.uid, next);
-            }
-            return next;
-        });
+        } catch {}
+        if (activeUid) {
+            saveUserStash(activeUid, next);
+            const targetItem = itemObj || resolveGameInfo(id);
+            recordGameInteraction(activeUid, targetItem, isAdding ? 'favorite' : 'unfavorite');
+        }
     };
 
-    const [cachedGamesMap, setCachedGamesMap] = useState<Map<string, any>>(new Map());
-
     useEffect(() => {
-        try {
-            const transformedRaw = localStorage.getItem('cached_transformed_resources');
-            if (transformedRaw) {
-                const parsed = JSON.parse(transformedRaw);
-                setAllResources(parsed);
-                const flatItems = Object.values(parsed).flat() as any[];
-                const map = new Map<string, any>();
-                flatItems.forEach(item => {
-                    if (!item) return;
-                    if (item.id) map.set(String(item.id).toLowerCase(), item);
-                    if (item.gameId) map.set(String(item.gameId).toLowerCase(), item);
-                    if (item.name) map.set(String(item.name).toLowerCase().trim(), item);
-                });
-                setCachedGamesMap(map);
-                return;
-            }
+        const loadResources = async () => {
+            try {
+                const transformedRaw = localStorage.getItem('cached_transformed_resources');
+                if (transformedRaw) {
+                    const parsed = JSON.parse(transformedRaw);
+                    if (parsed.architect && !parsed.tools) parsed.tools = parsed.architect;
+                    if (parsed.extra && !parsed.savegame) parsed.savegame = parsed.extra;
+                    setAllResources(parsed);
+                    const flatItems = Object.values(parsed).flat() as any[];
+                    setCachedGamesMap(buildGamesMap(flatItems));
+                    return;
+                }
 
-            const cachedRaw = localStorage.getItem('cached_secret_resources');
-            if (cachedRaw) {
-                const parsed = JSON.parse(cachedRaw);
-                const flatItems = Object.values(parsed).flat() as any[];
-                const map = new Map<string, any>();
-                flatItems.forEach(item => {
-                    if (!item) return;
-                    if (item.id) map.set(String(item.id).toLowerCase(), item);
-                    if (item.gameId) map.set(String(item.gameId).toLowerCase(), item);
-                    if (item.name) map.set(String(item.name).toLowerCase().trim(), item);
-                });
-                setCachedGamesMap(map);
+                let rawData: any = null;
+                const cachedRaw = localStorage.getItem('cached_secret_resources');
+                if (cachedRaw) {
+                    try { rawData = JSON.parse(cachedRaw); } catch (e) {}
+                }
+                if (!rawData) {
+                    const res = await fetch('https://script.google.com/macros/s/AKfycbx7nzBZc_tIhbAUK5OvOzgifGVzaVorzjn5OXNe8ENC0p7Pjia7O-u4WggxjRZipt4v/exec', {
+                        method: 'GET',
+                        cache: 'no-store'
+                    });
+                    if (res.ok) {
+                        rawData = await res.json();
+                        localStorage.setItem('cached_secret_resources', JSON.stringify(rawData));
+                    }
+                }
+                if (rawData) {
+                    const transformed: Record<string, ResourceItem[]> = { game: [], hypervisor: [], steamtools: [], architect: [], extra: [] };
+                    Object.keys(rawData).forEach(tabKey => {
+                        const normalizedKey = tabKey.toLowerCase();
+                        let targetKey = '';
+                        if (normalizedKey.includes('hypervisor')) targetKey = 'hypervisor';
+                        else if (normalizedKey.includes('game') && !normalizedKey.includes('savegame')) targetKey = 'game';
+                        else if (normalizedKey.includes('steamtools')) targetKey = 'steamtools';
+                        else if (normalizedKey.includes('architect') || normalizedKey.includes('tool')) targetKey = 'architect';
+                        else if (normalizedKey.includes('extra') || normalizedKey.includes('savegame')) targetKey = 'extra';
+
+                        if (targetKey && Array.isArray(rawData[tabKey])) {
+                            const idPrefix = targetKey === 'game' ? 'G' :
+                                             targetKey === 'hypervisor' ? 'H' :
+                                             targetKey === 'steamtools' ? 'S' :
+                                             targetKey === 'architect' ? 'A' : 'E';
+                            const newItems = rawData[tabKey].map((row: any, idx: number) => {
+                                const getVal = (key: string) => {
+                                    const normalizedSearchKey = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+                                    const foundKey = Object.keys(row).find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedSearchKey);
+                                    return foundKey ? row[foundKey] : '';
+                                };
+                                const rawRowId = getVal('id');
+                                const idVal = rawRowId ? (String(rawRowId).match(/^[A-Za-z]/) ? String(rawRowId) : `${idPrefix}${rawRowId}`) : `${idPrefix}${idx + 1}`;
+                                const nameVal = getVal('name') || getVal('title') || 'Item';
+                                const coverVal = getVal('coverimage') || getVal('image') || getVal('img') || '';
+                                return {
+                                    id: String(idVal),
+                                    category: targetKey,
+                                    name: nameVal,
+                                    version: getVal('version') || '1.0',
+                                    repackSize: getVal('repacksize') || getVal('size') || '',
+                                    originalSize: getVal('originalsize') || '',
+                                    genres: getVal('genres') || getVal('category') || '',
+                                    languages: getVal('languages') || 'ENG',
+                                    repackBy: getVal('repackby') || 'NEXA',
+                                    coverImage: coverVal,
+                                    galleryImages: (getVal('galleryimages') || '').toString().split(/[,\n\|]/).map((s: string) => s.trim()).filter(Boolean),
+                                    description: getVal('description') || '',
+                                    gameId: getVal('gameid') || '',
+                                    developer: getVal('developer') || '',
+                                    isFree: true,
+                                    links: {
+                                        parts: [],
+                                        mirrors: [],
+                                        ankerParts: [],
+                                        full: getVal('link') || getVal('downloadlink') || undefined
+                                    }
+                                };
+                            });
+                            transformed[targetKey] = [...transformed[targetKey], ...newItems];
+                        }
+                    });
+                    transformed.tools = transformed.architect;
+                    transformed.savegame = transformed.extra;
+                    setAllResources(transformed);
+                    try {
+                        localStorage.setItem('cached_transformed_resources', JSON.stringify(transformed));
+                    } catch (err) {}
+                    const flatItems = Object.values(transformed).flat() as any[];
+                    setCachedGamesMap(buildGamesMap(flatItems));
+                }
+            } catch (e) {
+                console.warn("Could not parse or load resources for profile:", e);
             }
-        } catch (e) {
-            console.warn("Could not parse cached resources for profile:", e);
-        }
+        };
+
+        loadResources();
     }, []);
 
     const isUnlocked = localStorage.getItem('secret_area_unlocked') === 'true' || localStorage.getItem('nexa_guest_mode') === 'true';
@@ -304,21 +430,9 @@ const Profile: React.FC = () => {
                     user
                 );
             } else {
-                // If not logged in but unlocked via guest mode
-                if (!isUnlocked) {
-                    navigate('/');
-                } else {
-                    // Load local guest profile
-                    const savedGuest = localStorage.getItem('nexa_guest_profile');
-                    if (savedGuest) {
-                        try {
-                            setProfileData({ ...DEFAULT_PROFILE, ...JSON.parse(savedGuest) });
-                        } catch (e) {
-                            setProfileData(DEFAULT_PROFILE);
-                        }
-                    }
-                    setIsLoadingProfile(false);
-                }
+                // Guests and unauthenticated users cannot access profile - redirect to home
+                setIsLoadingProfile(false);
+                navigate('/', { replace: true });
             }
         });
 
@@ -334,21 +448,27 @@ const Profile: React.FC = () => {
     // Listen for local profile sync updates from modals / interactions
     useEffect(() => {
         const handleProfileSync = (e: any) => {
-            const uid = currentUser?.uid || (isUnlocked ? 'guest' : null);
+            const uid = currentUser?.uid;
             if (uid) {
                 if (e.detail?.uid === uid && e.detail?.profile) {
                     setProfileData(e.detail.profile);
+                    if (e.detail.profile.stash && Array.isArray(e.detail.profile.stash)) {
+                        setStash(e.detail.profile.stash);
+                    }
                 } else {
                     const updated = getLocalProfile(uid);
                     if (updated) {
                         setProfileData(prev => ({ ...prev, ...updated }));
+                        if (updated.stash && Array.isArray(updated.stash)) {
+                            setStash(updated.stash);
+                        }
                     }
                 }
             }
         };
         window.addEventListener('secretarea_profile_sync', handleProfileSync);
         return () => window.removeEventListener('secretarea_profile_sync', handleProfileSync);
-    }, [currentUser, isUnlocked]);
+    }, [currentUser]);
 
     const isAdmin = isUserAdmin(currentUser?.email || profileData.email, profileData.role);
 
@@ -372,13 +492,41 @@ const Profile: React.FC = () => {
         }
     }, [isAdmin]);
 
-    if (!isUnlocked && !currentUser) return null;
+    // Auto-sanitize mock 9,999 in profile data to real-time history count
+    useEffect(() => {
+        const uid = currentUser?.uid;
+        if (uid && (profileData.gamesViewed === 9999 || profileData.gamesViewed === 99999)) {
+            const historyItems = (profileData.gameHistory && profileData.gameHistory.length > 0)
+                ? profileData.gameHistory
+                : (profileData.recentGames || []);
+            updateUserProfileData(uid, { gamesViewed: historyItems.length });
+        }
+    }, [currentUser?.uid, profileData.gamesViewed, profileData.gameHistory, profileData.recentGames]);
+
+    if (!currentUser) {
+        if (isLoadingProfile) {
+            return (
+                <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-white">
+                    <div className="animate-pulse flex flex-col items-center">
+                        <div className="w-10 h-10 border-4 border-slate-300 dark:border-slate-700 border-t-blue-500 rounded-full animate-spin"></div>
+                    </div>
+                </div>
+            );
+        }
+        return null;
+    }
 
     const earnedBadges = isAdmin ? ALL_BADGES : ALL_BADGES.filter(b => b.condition(profileData));
-    const liked = profileData.likedGames || [];
-    const library = profileData.libraryGames || [];
-    const history = profileData.recentGames || [];
-    const favorites = profileData.favoriteGames || [];
+    const liked = (profileData.liked && profileData.liked.length > 0) ? profileData.liked : (profileData.likedGames || []);
+    const library = (profileData.library && profileData.library.length > 0) ? profileData.library : (profileData.libraryGames || []);
+    const history = (profileData.gameHistory && profileData.gameHistory.length > 0) ? profileData.gameHistory : (profileData.recentGames || []);
+    const favorites = (profileData.favorites && profileData.favorites.length > 0) 
+        ? profileData.favorites 
+        : (profileData.favoriteGames && profileData.favoriteGames.length > 0)
+            ? profileData.favoriteGames
+            : (profileData.stash && profileData.stash.length > 0)
+                ? profileData.stash
+                : stash;
     const activities = profileData.activities || [];
     const libraryFiltered = library.filter((g: any) => {
         const matchesStatus = libraryTab === 'All' || g.status === libraryTab;
@@ -452,16 +600,26 @@ const Profile: React.FC = () => {
 
     const activeUid = currentUser?.uid || (isUnlocked ? 'guest' : null);
 
-    // Auto-sanitize mock 9,999 in profile data to real-time history count
-    useEffect(() => {
-        if (activeUid && (profileData.gamesViewed === 9999 || profileData.gamesViewed === 99999)) {
-            updateUserProfileData(activeUid, { gamesViewed: history.length });
-        }
-    }, [activeUid, profileData.gamesViewed, history.length]);
-
     const handleUnlikeGame = async (e: React.MouseEvent, game: any) => {
         e.stopPropagation();
         if (activeUid) {
+            const rawId = typeof game === 'string' ? game : (game?.id || game?.gameId || '');
+            const rawName = typeof game === 'string' ? game : (game?.name || '');
+            setProfileData(prev => ({
+                ...prev,
+                liked: (prev.liked || prev.likedGames || []).filter((g: any) => {
+                    if (typeof g === 'string') return g.toLowerCase() !== rawId.toLowerCase();
+                    return String(g.id || '').toLowerCase() !== rawId.toLowerCase() &&
+                           String(g.gameId || '').toLowerCase() !== rawId.toLowerCase() &&
+                           String(g.name || '').toLowerCase().trim() !== rawName.toLowerCase().trim();
+                }),
+                likedGames: (prev.likedGames || []).filter((g: any) => {
+                    if (typeof g === 'string') return g.toLowerCase() !== rawId.toLowerCase();
+                    return String(g.id || '').toLowerCase() !== rawId.toLowerCase() &&
+                           String(g.gameId || '').toLowerCase() !== rawId.toLowerCase() &&
+                           String(g.name || '').toLowerCase().trim() !== rawName.toLowerCase().trim();
+                })
+            }));
             await recordGameInteraction(activeUid, game, 'unlike');
         }
     };
@@ -469,14 +627,52 @@ const Profile: React.FC = () => {
     const handleUnfavoriteGame = async (e: React.MouseEvent, game: any) => {
         e.stopPropagation();
         if (activeUid) {
+            const rawId = typeof game === 'string' ? game : (game?.id || game?.gameId || '');
+            const rawName = typeof game === 'string' ? game : (game?.name || '');
+            setStash(prev => prev.filter(s => s.toLowerCase() !== rawId.toLowerCase()));
+            setProfileData(prev => ({
+                ...prev,
+                stash: (prev.stash || []).filter(s => s.toLowerCase() !== rawId.toLowerCase()),
+                favorites: (prev.favorites || prev.favoriteGames || []).filter((g: any) => {
+                    if (typeof g === 'string') return g.toLowerCase() !== rawId.toLowerCase();
+                    return String(g.id || '').toLowerCase() !== rawId.toLowerCase() &&
+                           String(g.gameId || '').toLowerCase() !== rawId.toLowerCase() &&
+                           String(g.name || '').toLowerCase().trim() !== rawName.toLowerCase().trim();
+                }),
+                favoriteGames: (prev.favoriteGames || []).filter((g: any) => {
+                    if (typeof g === 'string') return g.toLowerCase() !== rawId.toLowerCase();
+                    return String(g.id || '').toLowerCase() !== rawId.toLowerCase() &&
+                           String(g.gameId || '').toLowerCase() !== rawId.toLowerCase() &&
+                           String(g.name || '').toLowerCase().trim() !== rawName.toLowerCase().trim();
+                })
+            }));
             await recordGameInteraction(activeUid, game, 'unfavorite');
         }
     };
 
-    const handleRemoveFromLibrary = async (e: React.MouseEvent, gameId: string) => {
+    const handleRemoveFromLibrary = async (e: React.MouseEvent, gameId: any) => {
         e.stopPropagation();
         if (activeUid) {
-            await removeGameFromLibrary(activeUid, gameId);
+            const targetId = typeof gameId === 'string' ? gameId : String(gameId?.id || gameId?.gameId || '');
+            const rawName = typeof gameId === 'string' ? gameId : (gameId?.name || '');
+            if (targetId) {
+                setProfileData(prev => ({
+                    ...prev,
+                    library: (prev.library || prev.libraryGames || []).filter((g: any) => {
+                        if (typeof g === 'string') return g.toLowerCase() !== targetId.toLowerCase();
+                        return String(g.id || '').toLowerCase() !== targetId.toLowerCase() &&
+                               String(g.gameId || '').toLowerCase() !== targetId.toLowerCase() &&
+                               String(g.name || '').toLowerCase().trim() !== rawName.toLowerCase().trim();
+                    }),
+                    libraryGames: (prev.libraryGames || []).filter((g: any) => {
+                        if (typeof g === 'string') return g.toLowerCase() !== targetId.toLowerCase();
+                        return String(g.id || '').toLowerCase() !== targetId.toLowerCase() &&
+                               String(g.gameId || '').toLowerCase() !== targetId.toLowerCase() &&
+                               String(g.name || '').toLowerCase().trim() !== rawName.toLowerCase().trim();
+                    })
+                }));
+                await removeGameFromLibrary(activeUid, targetId);
+            }
         }
     };
 
@@ -528,49 +724,117 @@ const Profile: React.FC = () => {
             };
         }
 
-        const idKey = game.id ? String(game.id).toLowerCase() : '';
-        const gameIdKey = game.gameId ? String(game.gameId).toLowerCase() : '';
-        const nameKey = game.name ? String(game.name).toLowerCase().trim() : '';
+        const isString = typeof game === 'string';
+        const rawId = isString ? game : (game.id || game.gameId || '');
+        const idKey = rawId ? String(rawId).toLowerCase() : '';
+        const idNoDash = idKey ? idKey.replace(/[-_]/g, '') : '';
+        const numMatch = idKey.match(/\d+/);
+        const idNum = numMatch ? numMatch[0] : '';
+        const gameIdKey = (!isString && game.gameId) ? String(game.gameId).toLowerCase() : '';
+        const nameKey = (!isString && (game.name || game.title)) ? String(game.name || game.title).toLowerCase().trim() : (isString ? game.toLowerCase().trim() : '');
+        const nameClean = nameKey ? nameKey.replace(/[^a-z0-9]/g, '') : '';
 
-        const matched = (idKey && cachedGamesMap.get(idKey)) ||
-                        (gameIdKey && cachedGamesMap.get(gameIdKey)) ||
-                        (nameKey && cachedGamesMap.get(nameKey)) ||
-                        null;
+        let matched = (idKey && cachedGamesMap.get(idKey)) ||
+                      (idNoDash && cachedGamesMap.get(idNoDash)) ||
+                      (gameIdKey && cachedGamesMap.get(gameIdKey)) ||
+                      (idNum && cachedGamesMap.get(idNum)) ||
+                      (nameKey && cachedGamesMap.get(nameKey)) ||
+                      (nameClean && cachedGamesMap.get(nameClean)) ||
+                      null;
 
-        const resolvedId = String(matched?.id || game.id || game.gameId || ('game-' + (game.name || 'item').replace(/\s+/g, '-')));
-        const coverImage = matched?.coverImage || game.coverImage || game.background_image || game.image || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&auto=format&fit=crop&q=80';
-        const name = matched?.name || game.name || game.title || 'Game Details';
-        const category = matched?.category || game.category || 'game';
+        if (!matched && (idKey || idNum || nameKey) && allResources) {
+            for (const cat of Object.keys(allResources)) {
+                if (Array.isArray(allResources[cat])) {
+                    const found = allResources[cat].find((r: any) => {
+                        if (!r) return false;
+                        const rid = String(r.id || '').toLowerCase();
+                        if (idKey && (rid === idKey || rid.replace(/[-_]/g, '') === idNoDash)) return true;
+                        if (idNum && rid.match(/\d+/)?.[0] === idNum) return true;
+                        const rName = String(r.name || '').toLowerCase().trim();
+                        if (nameKey && (rName === nameKey || rName.replace(/[^a-z0-9]/g, '') === nameClean)) return true;
+                        return false;
+                    });
+                    if (found) {
+                        matched = found;
+                        break;
+                    }
+                }
+            }
+        }
 
-        const resolvedItem: ResourceItem = {
-            id: resolvedId,
-            name: name,
-            category: category,
-            coverImage: coverImage,
-            description: matched?.description || game.description || 'Full game information and download package from SecretArea.',
-            version: matched?.version || game.version || 'v1.0',
-            repackSize: matched?.repackSize || game.repackSize || 'N/A',
-            originalSize: matched?.originalSize || game.originalSize || 'N/A',
-            genres: matched?.genres || game.genres || matched?.category || game.category || 'Game',
-            languages: matched?.languages || game.languages || 'ENG',
-            repackBy: matched?.repackBy || game.repackBy || 'NEXA',
-            galleryImages: matched?.galleryImages || (coverImage ? [coverImage] : []),
-            developer: matched?.developer || game.developer || '',
-            ratingPositive: matched?.ratingPositive || game.ratingPositive || '95%',
-            ratingNegative: matched?.ratingNegative || game.ratingNegative || '5%',
-            dateAdded: matched?.dateAdded || game.dateAdded || game.timestamp || '',
-            hasDenuvo: matched?.hasDenuvo ?? false,
-            hasExternalLauncher: matched?.hasExternalLauncher ?? false,
-            systemReqs: matched?.systemReqs || game.systemReqs || [],
-            installSteps: matched?.installSteps || game.installSteps || [],
-            isFree: matched?.isFree ?? true,
-            links: matched?.links || game.links || {
+        const isIdLike = (str?: string) => {
+            if (!str) return true;
+            const trimmed = String(str).trim();
+            if (trimmed === 'Game Details' || trimmed === 'Item' || trimmed === 'Secure Fragment' || trimmed === 'Game') return true;
+            if (rawId && trimmed.toLowerCase() === String(rawId).toLowerCase()) return true;
+            if (/^[A-Za-z]{0,4}[-_ ]?\d+$/i.test(trimmed)) return true;
+            if (/^\d+$/.test(trimmed)) return true;
+            return false;
+        };
+
+        const resolvedId = String(matched?.id || (!isString ? (game.id || game.gameId) : rawId) || ('game-' + (matched?.name || (!isString ? game.name : rawId) || 'item').replace(/\s+/g, '-')));
+        const coverImage = (matched?.coverImage && !matched.coverImage.includes('unsplash.com')) 
+            ? matched.coverImage 
+            : ((!isString && game.coverImage && !game.coverImage.includes('unsplash.com')) 
+                ? game.coverImage 
+                : (matched?.coverImage || (!isString ? (game.coverImage || game.background_image || game.image) : '') || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&auto=format&fit=crop&q=80'));
+
+        let name = '';
+        if (matched?.name && !isIdLike(matched.name)) {
+            name = matched.name;
+        } else if (!isString && game.name && !isIdLike(game.name)) {
+            name = game.name;
+        } else if (!isString && game.title && !isIdLike(game.title)) {
+            name = game.title;
+        } else if (matched?.name) {
+            name = matched.name;
+        } else if (!isString && game.name && game.name !== 'Item') {
+            name = game.name;
+        } else {
+            name = isIdLike(rawId) ? 'Game Details' : rawId;
+        }
+
+        const category = (matched?.category && matched.category !== 'game') 
+            ? matched.category 
+            : ((!isString && game.category) ? game.category : (matched?.category || 'game'));
+        const gameIdVal = (!isString && game.gameId) ? game.gameId : (matched?.gameId || '');
+        const toolsNeeded = (!isString && game.toolsNeeded) ? game.toolsNeeded : (matched?.toolsNeeded || []);
+
+        const resolvedLinks = (matched?.links && (matched.links.full || matched.links.mirrors?.length || matched.links.parts?.length)) 
+            ? matched.links 
+            : ((!isString && game.links) ? game.links : (matched?.links || {
                 parts: [],
                 mirrors: [],
                 ankerParts: [],
-                full: game.downloadUrl || undefined,
-                trailer: game.trailer || undefined
-            }
+                full: (!isString ? game.downloadUrl : undefined),
+                trailer: (!isString ? game.trailer : undefined)
+            }));
+
+        const resolvedItem: ResourceItem = {
+            id: resolvedId,
+            gameId: gameIdVal,
+            toolsNeeded: toolsNeeded,
+            name: name,
+            category: category,
+            coverImage: coverImage,
+            description: (!isString && game.description) ? game.description : (matched?.description || 'Full game information and download package from SecretArea.'),
+            version: (!isString && game.version) ? game.version : (matched?.version || 'v1.0'),
+            repackSize: (!isString && game.repackSize) ? game.repackSize : (matched?.repackSize || 'N/A'),
+            originalSize: (!isString && game.originalSize) ? game.originalSize : (matched?.originalSize || 'N/A'),
+            genres: (!isString && game.genres) ? game.genres : (matched?.genres || matched?.category || 'Game'),
+            languages: (!isString && game.languages) ? game.languages : (matched?.languages || 'ENG'),
+            repackBy: (!isString && game.repackBy) ? game.repackBy : (matched?.repackBy || 'NEXA'),
+            galleryImages: (!isString && Array.isArray(game.galleryImages) && game.galleryImages.length > 0) ? game.galleryImages : (matched?.galleryImages || (coverImage ? [coverImage] : [])),
+            developer: (!isString && game.developer) ? game.developer : (matched?.developer || ''),
+            ratingPositive: (!isString && game.ratingPositive) ? game.ratingPositive : (matched?.ratingPositive || '95%'),
+            ratingNegative: (!isString && game.ratingNegative) ? game.ratingNegative : (matched?.ratingNegative || '5%'),
+            dateAdded: (!isString && game.dateAdded) ? game.dateAdded : (matched?.dateAdded || game.timestamp || ''),
+            hasDenuvo: (!isString && game.hasDenuvo !== undefined) ? game.hasDenuvo : (matched?.hasDenuvo ?? false),
+            hasExternalLauncher: (!isString && game.hasExternalLauncher !== undefined) ? game.hasExternalLauncher : (matched?.hasExternalLauncher ?? false),
+            systemReqs: (!isString && game.systemReqs) ? game.systemReqs : (matched?.systemReqs || []),
+            installSteps: (!isString && game.installSteps) ? game.installSteps : (matched?.installSteps || []),
+            isFree: (!isString && game.isFree !== undefined) ? game.isFree : (matched?.isFree ?? true),
+            links: resolvedLinks
         };
 
         if (!resolvedItem.links) {
@@ -583,6 +847,9 @@ const Profile: React.FC = () => {
     const handleOpenGameDetail = (game: any) => {
         const resolved = resolveGameInfo(game);
         setSelectedGame(resolved);
+        if (activeUid) {
+            recordGameInteraction(activeUid, resolved, 'view').catch(() => {});
+        }
     };
 
     const GameGrid = ({ 
@@ -609,8 +876,8 @@ const Profile: React.FC = () => {
 
                     return (
                         <div 
-                            key={resolved.id || i} 
-                            onClick={() => onGameClick(rawGame)} 
+                            key={`${resolved.id || rawGame?.id || 'game'}-${i}`} 
+                            onClick={() => onGameClick(resolved)} 
                             className="relative aspect-[3/4] rounded-xl overflow-hidden group cursor-pointer bg-white dark:bg-[#111623] border border-slate-200 dark:border-slate-800 hover:ring-2 hover:ring-[#29aaea] transition-all shadow-sm flex flex-col justify-end"
                         >
                             <img 
@@ -1049,9 +1316,9 @@ const Profile: React.FC = () => {
 
                                         {activities.length > 0 ? (
                                             <div className="space-y-2.5">
-                                                {activities.slice(0, 5).map((act) => (
+                                                {activities.slice(0, 5).map((act, actIdx) => (
                                                     <div 
-                                                        key={act.id}
+                                                        key={act.id ? `${act.id}-${actIdx}` : `act-${actIdx}`}
                                                         className="p-3.5 rounded-xl bg-white dark:bg-[#111623] border border-slate-200 dark:border-slate-800/80 flex items-center justify-between gap-4 shadow-sm hover:border-[#29aaea]/40 transition-colors"
                                                     >
                                                         <div className="flex items-center gap-3 min-w-0">
@@ -1207,7 +1474,7 @@ const Profile: React.FC = () => {
 
                                     {/* Library Overview Summary Cards */}
                                     {library.length > 0 && (
-                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
                                             <div className="bg-slate-50 dark:bg-[#111623] p-3 rounded-xl border border-slate-200/60 dark:border-slate-800/70">
                                                 <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t("Total Games")}</div>
                                                 <div className="text-xl font-black text-slate-900 dark:text-white mt-1">{library.length}</div>
@@ -1220,6 +1487,14 @@ const Profile: React.FC = () => {
                                                     {library.filter((g: any) => g.status === 'Playing').length}
                                                 </div>
                                             </div>
+                                            <div className="bg-sky-500/5 dark:bg-sky-500/10 p-3 rounded-xl border border-sky-500/20">
+                                                <div className="text-[11px] font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider flex items-center gap-1.5">
+                                                    <span className="w-2 h-2 rounded-full bg-sky-500" /> {t("Plan to Play")}
+                                                </div>
+                                                <div className="text-xl font-black text-sky-600 dark:text-sky-400 mt-1">
+                                                    {library.filter((g: any) => g.status === 'Plan to Play').length}
+                                                </div>
+                                            </div>
                                             <div className="bg-purple-500/5 dark:bg-purple-500/10 p-3 rounded-xl border border-purple-500/20">
                                                 <div className="text-[11px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
                                                     <span className="w-2 h-2 rounded-full bg-purple-500" /> {t("Completed")}
@@ -1228,12 +1503,20 @@ const Profile: React.FC = () => {
                                                     {library.filter((g: any) => g.status === 'Completed').length}
                                                 </div>
                                             </div>
-                                            <div className="bg-sky-500/5 dark:bg-sky-500/10 p-3 rounded-xl border border-sky-500/20">
-                                                <div className="text-[11px] font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider flex items-center gap-1.5">
-                                                    <span className="w-2 h-2 rounded-full bg-sky-500" /> {t("Plan to Play")}
+                                            <div className="bg-amber-500/5 dark:bg-amber-500/10 p-3 rounded-xl border border-amber-500/20">
+                                                <div className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                                                    <span className="w-2 h-2 rounded-full bg-amber-500" /> {t("On Hold")}
                                                 </div>
-                                                <div className="text-xl font-black text-sky-600 dark:text-sky-400 mt-1">
-                                                    {library.filter((g: any) => g.status === 'Plan to Play').length}
+                                                <div className="text-xl font-black text-amber-600 dark:text-amber-400 mt-1">
+                                                    {library.filter((g: any) => g.status === 'On Hold').length}
+                                                </div>
+                                            </div>
+                                            <div className="bg-rose-500/5 dark:bg-rose-500/10 p-3 rounded-xl border border-rose-500/20">
+                                                <div className="text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
+                                                    <span className="w-2 h-2 rounded-full bg-rose-500" /> {t("Dropped")}
+                                                </div>
+                                                <div className="text-xl font-black text-rose-600 dark:text-rose-400 mt-1">
+                                                    {library.filter((g: any) => g.status === 'Dropped').length}
                                                 </div>
                                             </div>
                                         </div>
@@ -1270,7 +1553,7 @@ const Profile: React.FC = () => {
                                         <GameGrid 
                                             games={libraryFiltered} 
                                             onGameClick={handleOpenGameDetail}
-                                            onRemove={(e, g) => handleRemoveFromLibrary(e, g.id)}
+                                            onRemove={(e, g) => handleRemoveFromLibrary(e, g)}
                                             removeIcon={<TbTrash size={16} />}
                                             isLibrary={true}
                                             onUpdateStatus={handleUpdateLibraryStatus}
@@ -1381,9 +1664,9 @@ const Profile: React.FC = () => {
 
                                     {activities.length > 0 ? (
                                         <div className="space-y-3">
-                                            {currentMovements.map((act) => (
+                                            {currentMovements.map((act, actIdx) => (
                                                 <div 
-                                                    key={act.id}
+                                                    key={act.id ? `${act.id}-${actIdx}` : `move-${actIdx}`}
                                                     className="p-4 rounded-xl bg-white dark:bg-[#111623] border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4 shadow-sm hover:border-[#29aaea]/40 transition-colors"
                                                 >
                                                     <div className="flex items-center gap-3.5 min-w-0">
@@ -1733,7 +2016,7 @@ const Profile: React.FC = () => {
                                                                     <div className="space-y-2 max-h-[300px] overflow-y-auto pe-1">
                                                                         {userActivities.map((act, actIdx) => (
                                                                             <div 
-                                                                                key={act.id || actIdx}
+                                                                                key={act.id ? `${act.id}-${actIdx}` : `uact-${actIdx}`}
                                                                                 className="p-3 rounded-xl bg-white dark:bg-[#111623] border border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between gap-3 text-xs"
                                                                             >
                                                                                 <div className="flex items-center gap-3 min-w-0">

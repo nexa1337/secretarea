@@ -75,7 +75,7 @@ service cloud.firestore {
 
       allow update: if isSignedIn() && (
         isAdmin() ? (
-          !isDocAdmin(resource.data) || request.resource.data.role in ['admin', 'Admin']
+          !isDocAdmin(resource.data) || request.auth.uid == userId || request.resource.data.role in ['admin', 'Admin']
         ) : (
           request.auth.uid == userId &&
           !isRestricted(resource.data) &&
@@ -96,6 +96,18 @@ service cloud.firestore {
           isCallerActive()
         );
       }
+    }
+
+    // System collection (Global Banner, System Config, Admin Profile):
+    // Publicly readable, admin writable
+    match /system/{docId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Banned Identifiers: Admin only
+    match /banned_identifiers/{docId} {
+      allow read, write: if isAdmin();
     }
 
     // Requests collection:

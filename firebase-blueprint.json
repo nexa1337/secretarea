@@ -78,6 +78,30 @@
         "ipAddress": {
           "type": "string",
           "description": "Last detected IP address."
+        },
+        "liked": {
+          "type": "array",
+          "description": "List of liked games and resources."
+        },
+        "favorites": {
+          "type": "array",
+          "description": "List of favorited games and resources."
+        },
+        "library": {
+          "type": "array",
+          "description": "User game library with status (Playing, Plan to Play, Completed, On Hold, Dropped)."
+        },
+        "gameHistory": {
+          "type": "array",
+          "description": "Recently viewed or played game history records."
+        },
+        "activities": {
+          "type": "array",
+          "description": "Real-time user actions, telemetry, and live movement history."
+        },
+        "pcSpecs": {
+          "type": "object",
+          "description": "User PC hardware configuration specs (GPU, CPU, RAM, OS)."
         }
       },
       "required": ["email", "role"]

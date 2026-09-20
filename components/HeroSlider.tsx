@@ -28,15 +28,66 @@ interface HeroSliderProps {
   onSelectGame: (game: ResourceItem, action?: 'download' | 'details') => void;
 }
 
+const KNOWN_GAME_WALLPAPERS: Record<string, string> = {
+  'grand theft auto': 'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/271590/ss_32aa18ab3175e3002217862dd5917646d298ab6b.1920x1080.jpg?t=1765387725',
+  'gta 5': 'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/271590/ss_32aa18ab3175e3002217862dd5917646d298ab6b.1920x1080.jpg?t=1765387725',
+  'gta v': 'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/271590/ss_32aa18ab3175e3002217862dd5917646d298ab6b.1920x1080.jpg?t=1765387725',
+};
+
+const resolveBackgroundCandidates = (item: ResourceItem | undefined): string[] => {
+  if (!item) return ['https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop'];
+
+  const candidates: string[] = [];
+  const lowerName = (item.name || '').toLowerCase();
+
+  for (const [key, url] of Object.entries(KNOWN_GAME_WALLPAPERS)) {
+    if (lowerName.includes(key)) {
+      candidates.push(url);
+      break;
+    }
+  }
+
+  // Safe gallery images (exclude hostnames known to block cross-origin or 404)
+  if (item.galleryImages && item.galleryImages.length > 0) {
+    item.galleryImages.forEach(img => {
+      if (img && !img.includes('wallpaperswide.com') && !img.includes('7wallpapers.net')) {
+        candidates.push(img);
+      }
+    });
+  }
+
+  // Pinterest or other gallery fallbacks
+  const pin = item.galleryImages?.find(img => img && img.includes('pinimg.com'));
+  if (pin && !candidates.includes(pin)) {
+    candidates.push(pin);
+  }
+
+  // Cover image as reliable fallback
+  if (item.coverImage && !candidates.includes(item.coverImage)) {
+    candidates.push(item.coverImage);
+  }
+
+  // High quality default gaming backdrop
+  candidates.push('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop');
+
+  return candidates;
+};
+
 const HeroSlider: React.FC<HeroSliderProps> = ({ games, onSelectGame }) => {
   const { t } = useLanguage();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [candidateIndex, setCandidateIndex] = useState(0);
 
-  // Removed duplicate useEffect
+  const scrollToLibrary = () => {
+    const el = document.getElementById('secretarea-library');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
-
-  const handleNext = () => setCurrentIndex((prev) => (prev + 1) % games.length);
-  const handlePrev = () => setCurrentIndex((prev) => (prev - 1 + games.length) % games.length);
+  useEffect(() => {
+    setCandidateIndex(0);
+  }, [currentIndex]);
 
   useEffect(() => {
     if (games.length === 0) return;
@@ -49,26 +100,31 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ games, onSelectGame }) => {
   if (games.length === 0) return null;
 
   const currentItem = games[currentIndex];
-  
-  // Decide what image to use as background. Usually coverImage or a galleryImage.
-  const bgImage = currentItem.galleryImages && currentItem.galleryImages.length > 0 
-    ? currentItem.galleryImages[0] 
-    : currentItem.coverImage;
+  const candidates = resolveBackgroundCandidates(currentItem);
+  const bgImage = candidates[candidateIndex] || candidates[0];
 
-  
+  const handleNext = () => setCurrentIndex((prev) => (prev + 1) % games.length);
+  const handlePrev = () => setCurrentIndex((prev) => (prev - 1 + games.length) % games.length);
+
+  const handleImageError = () => {
+    if (candidateIndex + 1 < candidates.length) {
+      setCandidateIndex(prev => prev + 1);
+    }
+  };
+
   const hasPreInstallation = (currentItem.links?.ankerParts && currentItem.links.ankerParts.length > 0) || (currentItem.links?.preInstalled?.download || currentItem.links?.preInstalled?.cloudDrop || currentItem.links?.preInstalled?.torrent);
 
   return (
     <div className="relative w-full min-h-[100svh] md:min-h-[80vh] lg:min-h-[100svh] overflow-hidden bg-slate-100 dark:bg-[#030712] group flex flex-col pt-20 md:pt-24">
       <AnimatePresence initial={false}>
         <motion.div
-          key={currentIndex}
-          initial={{ opacity: 0, scale: 1.15 }}
-          animate={{ opacity: 1, scale: 1.05 }}
+          key={`${currentIndex}-${candidateIndex}`}
+          initial={{ opacity: 0, scale: 1.12 }}
+          animate={{ opacity: 1, scale: 1.02 }}
           exit={{ opacity: 0, scale: 1 }}
           transition={{ 
-            opacity: { duration: 1.2, ease: "easeInOut" },
-            scale: { duration: 10, ease: "easeOut" }
+            opacity: { duration: 0.9, ease: "easeInOut" },
+            scale: { duration: 9, ease: "easeOut" }
           }}
           className="absolute inset-0 z-0"
         >
@@ -77,10 +133,11 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ games, onSelectGame }) => {
             alt={currentItem.name} 
             className="w-full h-full object-cover" 
             referrerPolicy="no-referrer"
+            onError={handleImageError}
           />
-          {/* Gradient Overlay for text readability (adapts to light/dark) */}
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-100/95 via-slate-100/80 to-transparent dark:from-[#030712]/95 dark:via-[#030712]/80 dark:to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-100/90 via-transparent to-slate-100/30 dark:from-[#030712]/90 dark:via-transparent dark:to-[#030712]/30" />
+          {/* Subtle balanced gradient overlays so background art remains vivid while preserving text readability */}
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-100/85 via-slate-100/50 to-transparent dark:from-[#030712]/85 dark:via-[#030712]/50 dark:to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-100/80 via-transparent to-slate-100/20 dark:from-[#030712]/80 dark:via-transparent dark:to-[#030712]/20" />
         </motion.div>
       </AnimatePresence>
 
@@ -191,46 +248,63 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ games, onSelectGame }) => {
       </div>
       </div>
 
-      {/* Slide Navigation (Bottom) */}
-      <div className="relative z-20 flex justify-center items-center gap-4 sm:gap-8 px-4 pb-6 md:pb-8 mt-auto w-full">
-        
-        {/* Progress Bars */}
-        <div className="flex items-center gap-1.5 sm:gap-2 max-w-[200px] sm:max-w-sm w-full">
-          {games.map((_, idx) => (
-            <div 
-              key={idx}
-              onClick={() => setCurrentIndex(idx)}
-              className="flex-1 h-1 sm:h-1.5 rounded-full bg-slate-300/50 dark:bg-white/20 cursor-pointer overflow-hidden backdrop-blur-sm transition-all hover:bg-slate-400/50 dark:hover:bg-white/40"
+      {/* Slide Navigation & Scroll Indicator (Bottom) */}
+      <div className="relative z-20 flex flex-col items-center gap-3 px-4 pb-4 md:pb-6 mt-auto w-full">
+        <div className="flex justify-center items-center gap-4 sm:gap-8 w-full">
+          {/* Progress Bars */}
+          <div className="flex items-center gap-1.5 sm:gap-2 max-w-[200px] sm:max-w-sm w-full">
+            {games.map((_, idx) => (
+              <div 
+                key={idx}
+                onClick={() => setCurrentIndex(idx)}
+                className="flex-1 h-1 sm:h-1.5 rounded-full bg-slate-300/50 dark:bg-white/20 cursor-pointer overflow-hidden backdrop-blur-sm transition-all hover:bg-slate-400/50 dark:hover:bg-white/40"
+              >
+                {idx === currentIndex && (
+                  <motion.div 
+                    key={'progress-' + idx + '-' + currentIndex}
+                    className="h-full bg-[#38BDF8]"
+                    initial={{ width: 0 }}
+                    animate={{ width: '100%' }}
+                    transition={{ duration: 8, ease: "linear" }}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Prev / Next Arrows */}
+          <div className="flex items-center gap-2 shrink-0">
+            <button 
+              onClick={handlePrev}
+              className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-200/80 hover:bg-slate-300 dark:bg-slate-800/80 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white flex items-center justify-center backdrop-blur-md transition-colors"
             >
-              {idx === currentIndex && (
-                <motion.div 
-                  key={'progress-' + idx + '-' + currentIndex}
-                  className="h-full bg-[#38BDF8]"
-                  initial={{ width: 0 }}
-                  animate={{ width: '100%' }}
-                  transition={{ duration: 8, ease: "linear" }}
-                />
-              )}
-            </div>
-          ))}
+              <Icon name="ChevronLeft" size={18} className="rtl:rotate-180" />
+            </button>
+            <button 
+              onClick={handleNext}
+              className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-200/80 hover:bg-slate-300 dark:bg-slate-800/80 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white flex items-center justify-center backdrop-blur-md transition-colors"
+            >
+              <Icon name="ChevronRight" size={18} className="rtl:rotate-180" />
+            </button>
+          </div>
         </div>
 
-        {/* Prev / Next Arrows */}
-        <div className="flex items-center gap-2 shrink-0">
-          <button 
-            onClick={handlePrev}
-            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-200/80 hover:bg-slate-300 dark:bg-slate-800/80 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white flex items-center justify-center backdrop-blur-md transition-colors"
+        {/* Scroll Indicator Button to SecretArea Library */}
+        <button
+          onClick={scrollToLibrary}
+          className="group inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-full bg-slate-900/70 hover:bg-slate-900/95 dark:bg-black/70 dark:hover:bg-black/95 text-slate-200 hover:text-white border border-white/15 hover:border-primary-500/60 shadow-lg backdrop-blur-md transition-all active:scale-95 cursor-pointer"
+          title={t('SecretArea Library')}
+          aria-label={t('SecretArea Library')}
+        >
+          <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider">{t('SecretArea Library')}</span>
+          <motion.span
+            animate={{ y: [0, 3, 0] }}
+            transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+            className="text-primary-400 group-hover:text-primary-300 flex items-center"
           >
-            <Icon name="ChevronLeft" size={18} className="rtl:rotate-180" />
-          </button>
-          <button 
-            onClick={handleNext}
-            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-200/80 hover:bg-slate-300 dark:bg-slate-800/80 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-white flex items-center justify-center backdrop-blur-md transition-colors"
-          >
-            <Icon name="ChevronRight" size={18} className="rtl:rotate-180" />
-          </button>
-        </div>
-
+            <Icon name="ChevronDown" size={13} />
+          </motion.span>
+        </button>
       </div>
 
     </div>

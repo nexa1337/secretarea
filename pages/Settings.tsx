@@ -12,9 +12,11 @@ import {
     subscribeUserProfile,
     isUserAdmin,
     subscribeGlobalBanner,
-    saveGlobalBanner 
+    saveGlobalBanner,
+    getStoredHardwareSpecs 
 } from '../src/services/userService';
 import { TbShieldCheck } from 'react-icons/tb';
+import { NetworkDiagnostic } from '../components/NetworkDiagnostic';
 
 const Settings = () => {
     const { t, dir } = useLanguage();
@@ -32,12 +34,37 @@ const Settings = () => {
     const [photoURL, setPhotoURL] = useState('');
     const [bannerURL, setBannerURL] = useState('/images/userprofile.png');
     
-    // Hardware form state
-    const [gpuModel, setGpuModel] = useState('');
-    const [cpuModel, setCpuModel] = useState('');
-    const [ram, setRam] = useState(16);
-    const [os, setOs] = useState('10');
-    const [isActive, setIsActive] = useState(true);
+    // Hardware form state - initialized from stored specs or defaults
+    const initialSpecs = getStoredHardwareSpecs();
+    const [gpuModel, setGpuModel] = useState(initialSpecs.gpuModel);
+    const [cpuModel, setCpuModel] = useState(initialSpecs.cpuModel);
+    const [ram, setRam] = useState(initialSpecs.ram);
+    const [os, setOs] = useState(initialSpecs.os);
+    const [isActive, setIsActive] = useState(initialSpecs.isActive);
+
+    const updateHardwareSpecs = (patch: Partial<{ gpuModel: string; cpuModel: string; ram: number; os: string; isActive: boolean }>) => {
+        const nextGpu = patch.gpuModel !== undefined ? patch.gpuModel : gpuModel;
+        const nextCpu = patch.cpuModel !== undefined ? patch.cpuModel : cpuModel;
+        const nextRam = patch.ram !== undefined ? patch.ram : ram;
+        const nextOs = patch.os !== undefined ? patch.os : os;
+        const nextIsActive = patch.isActive !== undefined ? patch.isActive : isActive;
+
+        if (patch.gpuModel !== undefined) setGpuModel(nextGpu);
+        if (patch.cpuModel !== undefined) setCpuModel(nextCpu);
+        if (patch.ram !== undefined) setRam(nextRam);
+        if (patch.os !== undefined) setOs(nextOs);
+        if (patch.isActive !== undefined) setIsActive(nextIsActive);
+
+        const updated = {
+            gpuModel: nextGpu,
+            cpuModel: nextCpu,
+            ram: nextRam,
+            os: nextOs,
+            isActive: nextIsActive
+        };
+        // Persist and broadcast immediately in real-time
+        saveUserHardwareSpecs(user?.uid || '', updated);
+    };
 
     // Request Item form state
     const [requestTitle, setRequestTitle] = useState(location.state?.requestTitle || '');
@@ -51,6 +78,12 @@ const Settings = () => {
     const [saveSuccessMessage, setSaveSuccessMessage] = useState<string | null>(null);
 
     const isAdmin = isUserAdmin(user?.email, profileData?.role);
+
+    useEffect(() => {
+        if (location.state?.tab) {
+            setActiveTab(location.state.tab === 'Cloud Database' ? 'Profile' : location.state.tab);
+        }
+    }, [location.state?.tab]);
 
     useEffect(() => {
         const unsubBanner = subscribeGlobalBanner((url) => {
@@ -194,17 +227,17 @@ const Settings = () => {
     };
 
     const handleSaveHardware = async () => {
-        if (!user) return;
         setIsSaving(true);
+        const specs = {
+            gpuModel,
+            cpuModel,
+            ram,
+            os,
+            isActive
+        };
         try {
-            await saveUserHardwareSpecs(user.uid, {
-                gpuModel,
-                cpuModel,
-                ram,
-                os,
-                isActive
-            });
-            triggerSuccess(t('Hardware specs saved to Firestore!'));
+            await saveUserHardwareSpecs(user?.uid || '', specs);
+            triggerSuccess(user ? t('Hardware specs saved to Firestore!') : t('Hardware specs saved locally!'));
         } catch (e) {
             console.error("Error saving hardware:", e);
         } finally {
@@ -219,26 +252,6 @@ const Settings = () => {
                     <div className="w-10 h-10 border-4 border-slate-300 dark:border-slate-700 border-t-[#29aaea] rounded-full animate-spin"></div>
                     <span className="text-xs text-slate-500 font-mono tracking-widest uppercase">Loading Settings...</span>
                 </div>
-            </div>
-        );
-    }
-
-    if (!user) {
-        return (
-            <div dir={dir} className="max-w-md mx-auto px-4 py-24 text-center mt-16">
-                <div className="w-16 h-16 rounded-2xl bg-blue-500/10 text-[#29aaea] flex items-center justify-center mx-auto mb-4">
-                    <Icon name="Lock" size={32} />
-                </div>
-                <h2 className="text-2xl font-bold mb-2 text-slate-900 dark:text-white">{t('Sign In Required')}</h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-                    {t('Please sign in with Google in SecretArea to configure and save your profile & hardware settings.')}
-                </p>
-                <button
-                    onClick={() => navigate('/')}
-                    className="px-6 py-3 rounded-xl bg-[#29aaea] text-white font-bold text-sm shadow-lg shadow-[#29aaea]/20 hover:bg-[#2094ce] transition-colors"
-                >
-                    {t('Go to SecretArea Login')} &rarr;
-                </button>
             </div>
         );
     }
@@ -282,17 +295,17 @@ const Settings = () => {
                         className="w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700 shadow-sm"
                         style={{ backgroundColor: bgColor }}
                     >
-                        {photoURL || user.photoURL ? (
-                            <img src={photoURL || user.photoURL} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        {photoURL || user?.photoURL ? (
+                            <img src={photoURL || user?.photoURL} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                         ) : (
                             <span className="text-white">{initial.toUpperCase()}</span>
                         )}
                     </div>
                     <div className="overflow-hidden">
                         <div className="font-bold text-slate-900 dark:text-white truncate text-sm">
-                            {displayName || user.displayName || user.email?.split('@')[0]}
+                            {displayName || user?.displayName || (user?.email ? user.email.split('@')[0] : t('Guest User'))}
                         </div>
-                        <div className="text-xs text-slate-500 truncate">@{username || 'gamer'}</div>
+                        <div className="text-xs text-slate-500 truncate">@{username || (user ? 'gamer' : 'guest')}</div>
                     </div>
                 </div>
 
@@ -300,6 +313,7 @@ const Settings = () => {
                     {[
                         { id: 'Profile', label: t('Profile'), icon: 'User' },
                         { id: 'Hardware', label: t('Hardware'), icon: 'Cpu' },
+                        { id: 'Telemetry', label: t('LIVE TELEMETRY'), icon: 'Activity' },
                         { id: 'Request Item', label: t('Request Item'), icon: 'Plus' }
                     ].map(tab => (
                         <button
@@ -315,6 +329,12 @@ const Settings = () => {
                                 <Icon name={tab.icon} size={18} />
                                 <span>{tab.label}</span>
                             </div>
+                            {tab.id === 'Telemetry' && (
+                                <span className="relative flex h-2 w-2">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                </span>
+                            )}
                         </button>
                     ))}
                 </div>
@@ -510,15 +530,15 @@ const Settings = () => {
                                             type="checkbox" 
                                             className="sr-only" 
                                             checked={isActive} 
-                                            onChange={(e) => setIsActive(e.target.checked)} 
+                                            onChange={(e) => updateHardwareSpecs({ isActive: e.target.checked })} 
                                         />
                                         <div className={`block w-10 h-6 rounded-full transition-colors ${isActive ? 'bg-[#29aaea]' : 'bg-slate-300 dark:bg-slate-600'}`}></div>
                                         <div className={`dot absolute start-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${isActive ? 'translate-x-4 rtl:-translate-x-4' : ''}`}></div>
                                     </div>
                                 </label>
                             </div>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 max-w-lg">
-                                {t('Save your hardware specs to Firestore. They will display inside your profile and benchmark against game requirements.')}
+                            <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 max-w-xl">
+                                {t('Configure your hardware specs to power the "Can I Run It?" checker on item details and live compatibility badges across Games, Hypervisor, SteamTools, and Tools.')}
                             </p>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
@@ -526,7 +546,7 @@ const Settings = () => {
                                     <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">{t('Graphics Card (GPU)')}</label>
                                     <select 
                                         value={gpuModel} 
-                                        onChange={e => setGpuModel(e.target.value)}
+                                        onChange={e => updateHardwareSpecs({ gpuModel: e.target.value })}
                                         className="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#29aaea] outline-none text-sm"
                                     >
                                         <option value="">{t('Select GPU...') || 'Select GPU...'}</option>
@@ -546,7 +566,7 @@ const Settings = () => {
                                     <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">{t('Processor (CPU)')}</label>
                                     <select 
                                         value={cpuModel} 
-                                        onChange={e => setCpuModel(e.target.value)}
+                                        onChange={e => updateHardwareSpecs({ cpuModel: e.target.value })}
                                         className="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#29aaea] outline-none text-sm"
                                     >
                                         <option value="">{t('Select CPU...') || 'Select CPU...'}</option>
@@ -563,7 +583,7 @@ const Settings = () => {
                                     <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">{t('Memory (RAM)')}</label>
                                     <select 
                                         value={ram} 
-                                        onChange={e => setRam(parseInt(e.target.value))}
+                                        onChange={e => updateHardwareSpecs({ ram: parseInt(e.target.value) })}
                                         className="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#29aaea] outline-none text-sm"
                                     >
                                         <option value="4">4 GB</option>
@@ -578,7 +598,7 @@ const Settings = () => {
                                     <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">{t('Operating System')}</label>
                                     <select 
                                         value={os} 
-                                        onChange={e => setOs(e.target.value)}
+                                        onChange={e => updateHardwareSpecs({ os: e.target.value })}
                                         className="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#29aaea] outline-none text-sm"
                                     >
                                         <option value="7">Windows 7</option>
@@ -684,6 +704,31 @@ const Settings = () => {
                                     </button>
                                 </div>
                             </form>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'Telemetry' && (
+                    <div className="space-y-6 animate-fade-in">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+                            <div>
+                                <div className="flex items-center gap-2.5 mb-1">
+                                    <span className="relative flex h-3 w-3">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                                    </span>
+                                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+                                        {t('LIVE TELEMETRY')}
+                                    </h2>
+                                </div>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xl">
+                                    {t('Real-time network diagnostic, bandwidth speeds, latency, and performance telemetry.') || 'Real-time network diagnostic, bandwidth speeds, latency, and performance telemetry.'}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="w-full">
+                            <NetworkDiagnostic defaultVisible={true} />
                         </div>
                     </div>
                 )}

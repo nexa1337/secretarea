@@ -87,6 +87,24 @@ const BottomNav: React.FC = () => {
     navigate('/');
   };
 
+  const handleScrollToLibrary = () => {
+    setIsMenuOpen(false);
+    if (location.pathname === '/' || location.pathname === '') {
+      const el = document.getElementById('secretarea-library');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+    }
+    navigate('/');
+    setTimeout(() => {
+      const el = document.getElementById('secretarea-library');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 300);
+  };
+
   return (
     <nav 
       aria-label="Mobile Bottom Navigation" 
@@ -150,6 +168,22 @@ const BottomNav: React.FC = () => {
                   </button>
                 </div>
               )}
+
+              {/* SecretArea Library Button */}
+              <button
+                onClick={handleScrollToLibrary}
+                className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold bg-blue-500/10 hover:bg-blue-500/15 dark:bg-blue-500/15 dark:hover:bg-blue-500/20 text-slate-800 dark:text-slate-200 border border-blue-500/20 transition-all text-start active:scale-98 cursor-pointer"
+              >
+                <div className="w-6 h-6 rounded-lg bg-blue-500/20 flex items-center justify-center shrink-0">
+                  <Icon name="Gamepad2" size={14} className="text-blue-600 dark:text-blue-400" />
+                </div>
+                <div className="flex flex-col text-start">
+                  <span className="font-bold text-blue-600 dark:text-blue-400">{t('SecretArea Library')}</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                    {t('PC Games, Tools & Saves')}
+                  </span>
+                </div>
+              </button>
 
               {/* Terminal Button */}
               <button

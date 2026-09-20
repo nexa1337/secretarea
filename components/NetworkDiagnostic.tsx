@@ -7,8 +7,34 @@ interface QualityStatus {
   isTesting: boolean;
 }
 
-export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStatus) => void }> = ({ onStatusChange }) => {
-  const { t } = useLanguage();
+export const NetworkDiagnostic: React.FC<{ 
+  onStatusChange?: (status: QualityStatus) => void;
+  defaultVisible?: boolean;
+}> = ({ onStatusChange, defaultVisible = false }) => {
+  const { t, dir } = useLanguage();
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    if (typeof document !== 'undefined') {
+      return document.documentElement.classList.contains('dark');
+    }
+    return true;
+  });
+
+  useEffect(() => {
+    const checkDark = () => {
+      if (typeof document !== 'undefined') {
+        setIsDarkMode(document.documentElement.classList.contains('dark'));
+      }
+    };
+    checkDark();
+    const observer = new MutationObserver(checkDark);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    window.addEventListener('storage', checkDark);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('storage', checkDark);
+    };
+  }, []);
+
   const [ping, setPing] = useState<number>(0);
   const [jitter, setJitter] = useState<number>(0);
   const [downloadSpeed, setDownloadSpeed] = useState<number>(0);
@@ -24,7 +50,7 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
   
   const [selectedServer, setSelectedServer] = useState<string>('auto');
   const [activeServerDetails, setActiveServerDetails] = useState<string>('');
-  const [isVisible, setIsVisible] = useState<boolean>(false);
+  const [isVisible, setIsVisible] = useState<boolean>(defaultVisible);
   
   const servers = [
     { name: "Auto Select Best Server", url: "auto" },
@@ -576,12 +602,12 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
     if (label === 'Download') {
         if (val >= 10 && val < 50) color = '#e67e22'; // Orange for fair
         if (val >= 50 && val < 100) color = '#00c3ff'; // Cyan for good
-        if (val >= 100) color = '#00ff00'; // Green for excellent
+        if (val >= 100) color = '#10b981'; // Emerald for excellent
     } else {
         // Upload speeds are typically lower
         if (val >= 3 && val < 10) color = '#e67e22'; // Orange for fair
         if (val >= 10 && val < 25) color = '#00c3ff'; // Cyan for good
-        if (val >= 25) color = '#00ff00'; // Green for excellent
+        if (val >= 25) color = '#10b981'; // Emerald for excellent
     }
 
     const r = 70;
@@ -593,15 +619,16 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
     const strokeDashoffset = circumference - percent * circumference;
 
     return (
-      <div className="flex flex-col items-center my-2 relative w-full">
-        <div className="text-sm md:text-base font-medium mb-1 text-stone-600 dark:text-stone-300">{label}</div>
-        <svg width="100%" height={100} viewBox="0 0 200 100" className="drop-shadow-sm dark:drop-shadow-lg overflow-visible" preserveAspectRatio="xMidYMid meet">
+      <div className="flex flex-col items-center my-1 sm:my-2 relative w-full">
+        <div className="text-xs sm:text-sm md:text-base font-semibold mb-1 text-slate-700 dark:text-slate-200 text-center">
+          {t(label)}
+        </div>
+        <svg width="100%" height={100} viewBox="0 0 200 100" className="drop-shadow-sm overflow-visible max-w-[220px]" preserveAspectRatio="xMidYMid meet">
           {/* Background arc */}
           <path 
             d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`} 
             fill="none" 
-            stroke="currentColor" 
-            className="text-stone-200 dark:text-[#444]"
+            stroke={isDarkMode ? '#334155' : '#e2e8f0'} 
             strokeWidth={strokeWidth} 
             strokeLinecap="round" 
           />
@@ -617,14 +644,14 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
             className="transition-all duration-1000 ease-out"
           />
         </svg>
-        <div className="absolute bottom-1 flex flex-col items-center w-full text-center">
-            <span className="text-2xl md:text-3xl font-black tracking-tight transition-all duration-300" style={{ color: color, textShadow: `0 0 12px ${color}80` }}>
+        <div className="absolute bottom-1 flex flex-col items-center w-full text-center" dir="ltr">
+            <span className="text-2xl sm:text-3xl font-black tracking-tight tabular-nums transition-all duration-300" style={{ color: color, textShadow: isDarkMode ? `0 0 12px ${color}80` : `0 0 8px ${color}40` }}>
               {val > 0 ? val.toFixed(2) : '0.00'}
             </span>
         </div>
-        <div className="w-[180px] flex justify-between -mt-1 text-[10px] text-stone-400 dark:text-stone-500 font-mono">
+        <div className="w-[160px] sm:w-[180px] flex justify-between -mt-1 text-[10px] text-slate-400 dark:text-slate-500 font-mono" dir="ltr">
            <span>0</span>
-           <span className="translate-y-1 lowercase tracking-widest text-[#00a8ff]">Mbps</span>
+           <span className="translate-y-1 lowercase tracking-widest text-[#00a8ff] font-bold">Mbps</span>
            <span>{max}</span>
         </div>
       </div>
@@ -632,172 +659,225 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
   };
 
   return (
-    <div className="w-full flex flex-col items-center justify-center py-4 sm:px-4 md:px-6 relative group z-0">
-      <div className="w-full flex justify-center mb-2 transition-opacity duration-300">
+    <div className="w-full flex flex-col items-center justify-center py-2 sm:py-4 px-0 relative group z-0" dir={dir}>
+      <div className="w-full flex justify-center mb-3">
         <button
           onClick={() => setIsVisible(!isVisible)}
-          className="flex items-center gap-2 bg-gradient-to-b from-white to-stone-50 dark:from-[#2a2a2a] dark:to-[#1f1f1f] hover:from-stone-50 hover:to-stone-100 dark:hover:from-[#333] dark:hover:to-[#252525] text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-[#444] px-6 py-3 rounded-full text-xs font-bold tracking-widest uppercase transition-all shadow-sm hover:shadow active:scale-95"
+          className="flex items-center gap-2 bg-white dark:bg-[#111623] hover:bg-slate-50 dark:hover:bg-[#182033] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 px-5 sm:px-6 py-2.5 sm:py-3 rounded-2xl text-xs font-bold tracking-wider uppercase transition-all shadow-sm hover:shadow active:scale-95"
         >
-          {isVisible ? t('Hide Telemetry View') : t('Show Telemetry View')}
+          <span>{isVisible ? t('Hide Telemetry View') : t('Show Telemetry View')}</span>
           <span className="relative flex h-2.5 w-2.5 ms-1">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00ff00] opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#00ff00]"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
           </span>
         </button>
       </div>
-      
+
       {isVisible && (
-      <div className="w-full mt-4 max-w-full flex flex-col lg:flex-row bg-white dark:bg-[#1e1e1e] border border-stone-200 dark:border-stone-800 rounded-2xl lg:rounded-3xl overflow-hidden shadow-xl dark:shadow-2xl font-sans text-stone-900 dark:text-stone-100 h-auto lg:min-h-[600px] animate-in fade-in slide-in-from-top-4 duration-500">
+      <div className="w-full max-w-full flex flex-col lg:flex-row bg-white dark:bg-[#111623] border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg dark:shadow-2xl font-sans text-slate-900 dark:text-slate-100 h-auto lg:min-h-[580px] animate-in fade-in slide-in-from-top-4 duration-500">
         
         {/* Left Sidebar / Real-time Data */}
-        <div className="w-full lg:w-[320px] xl:w-[360px] bg-stone-50 dark:bg-[#252525] flex flex-col border-b lg:border-b-0 lg:border-e border-stone-200 dark:border-[#333] shrink-0 p-4 lg:p-6 shadow-inner relative overflow-y-auto overflow-x-hidden custom-scrollbar">
+        <div className="w-full lg:w-[320px] xl:w-[360px] bg-slate-50/80 dark:bg-[#151b2b] flex flex-col border-b lg:border-b-0 lg:border-e border-slate-200 dark:border-slate-800/80 shrink-0 p-4 sm:p-5 lg:p-6 shadow-inner relative overflow-y-auto overflow-x-hidden">
 
-          <div className="text-center mb-4 mt-2 relative z-10">
-            <h2 className="text-lg lg:text-xl font-bold tracking-tight text-stone-900 dark:text-white flex items-center justify-center gap-2">
+          <div className="text-center mb-4 mt-1 relative z-10">
+            <h2 className="text-base sm:text-lg lg:text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center justify-center gap-2">
               <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00ff00] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-[#00ff00]"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
               </span>
-              {t('LIVE TELEMETRY')}
+              <span>{t('LIVE TELEMETRY')}</span>
             </h2>
-            <div className="text-stone-500 dark:text-[#888] text-[10px] lg:text-xs font-mono mt-1 font-semibold uppercase tracking-widest">{testPhase}</div>
+            <div className="text-slate-500 dark:text-slate-400 text-[10px] lg:text-xs font-mono mt-1 font-semibold uppercase tracking-wider">
+              {t(testPhase)}
+            </div>
           </div>
           
+          {/* Server Selector */}
           <div className="mb-4 text-center">
              <select 
                 value={selectedServer}
                 onChange={(e) => setSelectedServer(e.target.value)}
-                className="w-full bg-white dark:bg-[#1a1a1a] text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-[#333] rounded-xl px-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#00c3ff]/50 shadow-sm transition-all mb-1"
+                className="w-full bg-white dark:bg-[#0f1422] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80 rounded-xl px-3 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#00c3ff]/40 shadow-sm transition-all mb-1 cursor-pointer text-start"
+                dir={dir}
              >
                 {servers.map(s => (
-                   <option key={s.url} value={s.url}>{s.name}</option>
+                   <option key={s.url} value={s.url} className="bg-white dark:bg-[#0f1422] text-slate-800 dark:text-slate-200">
+                     {t(s.name)}
+                   </option>
                 ))}
              </select>
              {selectedServer === 'auto' && activeServerDetails && (
-                 <div className="text-[10px] text-stone-400 font-mono">Testing via: {activeServerDetails}</div>
+                 <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-1 truncate" title={activeServerDetails}>
+                   {t('Testing via:')} {activeServerDetails.startsWith('Cloudflare') ? t(activeServerDetails) : activeServerDetails}
+                 </div>
              )}
           </div>
           
-          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 mb-4 border border-stone-200 dark:border-[#333] flex flex-col items-center shadow-sm dark:shadow-inner">
-             <div className="text-stone-500 dark:text-[#888] text-xs uppercase tracking-widest mb-2 font-semibold">Latency & Loss</div>
-             <div className="flex gap-6 w-full justify-center">
+          {/* Latency & Loss Card */}
+          <div className="bg-white dark:bg-[#0f1422] rounded-2xl p-4 mb-3.5 border border-slate-200 dark:border-slate-800/80 flex flex-col items-center shadow-sm">
+             <div className="text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider mb-2.5 font-semibold text-center">
+               {t('Latency & Loss')}
+             </div>
+             <div className="flex gap-4 sm:gap-6 w-full justify-center items-center">
                  <div className="flex flex-col items-center">
-                     <div className="flex items-baseline gap-1">
-                        <span className="text-[#00c3ff] dark:text-[#00ffff] text-3xl font-black tabular-nums transition-all duration-300">{ping}</span>
-                        <span className="text-stone-400 dark:text-stone-500 font-bold text-xs">ms</span>
+                     <div className="flex items-baseline gap-1" dir="ltr">
+                        <span className="text-[#00c3ff] dark:text-[#00ffff] text-2xl sm:text-3xl font-black tabular-nums transition-all duration-300">{ping}</span>
+                        <span className="text-slate-400 dark:text-slate-500 font-bold text-xs">ms</span>
                      </div>
-                     <div className="text-stone-400 text-[10px] font-mono mt-1">±{jitter} ms jitter</div>
+                     <div className="text-slate-400 dark:text-slate-500 text-[10px] font-mono mt-0.5" dir="ltr">
+                       ±{jitter} {t('ms jitter')}
+                     </div>
                  </div>
-                 <div className="w-[1px] bg-stone-200 dark:bg-[#333]"></div>
+                 <div className="w-[1px] h-9 bg-slate-200 dark:bg-slate-800"></div>
                  <div className="flex flex-col items-center">
-                     <div className="flex items-baseline gap-1">
-                        <span className={`text-3xl font-black tabular-nums transition-all duration-300 ${packetLoss > 2 ? 'text-red-500' : 'text-[#00ff00]'}`}>{packetLoss}</span>
-                        <span className="text-stone-400 dark:text-stone-500 font-bold text-xs">%</span>
+                     <div className="flex items-baseline gap-1" dir="ltr">
+                        <span className={`text-2xl sm:text-3xl font-black tabular-nums transition-all duration-300 ${packetLoss > 2 ? 'text-rose-500' : 'text-emerald-500 dark:text-emerald-400'}`}>{packetLoss}</span>
+                        <span className="text-slate-400 dark:text-slate-500 font-bold text-xs">%</span>
                      </div>
-                     <div className="text-stone-400 text-[10px] font-mono mt-1">packet loss</div>
+                     <div className="text-slate-400 dark:text-slate-500 text-[10px] font-mono mt-0.5">
+                       {t('packet loss')}
+                     </div>
                  </div>
              </div>
           </div>
 
-          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 mb-4 border border-stone-200 dark:border-[#333] shadow-sm dark:shadow-inner flex flex-col items-center justify-center min-h-[60px]">
+          {/* Quality & Stability Card */}
+          <div className="bg-white dark:bg-[#0f1422] rounded-2xl p-4 mb-3.5 border border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col items-center justify-center min-h-[64px]">
              {quality && quality !== 'Analyzing...' ? (
                <div className="w-full flex items-center justify-between px-2">
-                 <div className="flex flex-col items-center">
-                     <div className="text-stone-500 dark:text-[#888] text-[10px] uppercase tracking-widest mb-1 font-semibold">Quality</div>
-                     <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-500 ${
-                        quality === 'Excellent' ? 'bg-[#00ff00]/10 text-[#00c800] dark:text-[#00ff00] shadow-[0_0_15px_rgba(0,255,0,0.1)]' :
-                        quality === 'Good' ? 'bg-[#00ffff]/10 text-[#0099cc] dark:text-[#00ffff] shadow-[0_0_15px_rgba(0,255,255,0.1)]' :
-                        quality === 'Fair' ? 'bg-[#e67e22]/10 text-[#d35400] dark:text-[#e67e22] shadow-[0_0_15px_rgba(230,126,34,0.1)]' :
-                        'bg-red-500/10 text-red-600 dark:text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.1)]'
+                 <div className="flex flex-col items-center flex-1">
+                     <div className="text-slate-500 dark:text-slate-400 text-[10px] uppercase tracking-wider mb-1.5 font-semibold">
+                       {t('Quality')}
+                     </div>
+                     <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all duration-300 border ${
+                        quality === 'Excellent' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' :
+                        quality === 'Good' ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/30' :
+                        quality === 'Fair' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30' :
+                        quality === 'Testing...' ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/30 animate-pulse' :
+                        'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30'
                      }`}>
-                       {quality}
+                       {t(quality)}
                      </div>
                  </div>
-                 <div className="w-[1px] h-8 bg-stone-200 dark:bg-[#333]"></div>
-                 <div className="flex flex-col items-center">
-                     <div className="text-stone-500 dark:text-[#888] text-[10px] uppercase tracking-widest mb-1 font-semibold">Stability</div>
-                     <div className="text-lg font-black text-stone-800 dark:text-stone-200">{stabilityScore}</div>
+                 <div className="w-[1px] h-8 bg-slate-200 dark:bg-slate-800"></div>
+                 <div className="flex flex-col items-center flex-1">
+                     <div className="text-slate-500 dark:text-slate-400 text-[10px] uppercase tracking-wider mb-1 font-semibold">
+                       {t('Stability')}
+                     </div>
+                     <div className="text-base sm:text-lg font-black text-slate-800 dark:text-slate-200" dir="ltr">
+                       {stabilityScore}
+                     </div>
                  </div>
                </div>
              ) : (
-                <div className="text-stone-400 dark:text-stone-500 animate-pulse text-xs tracking-widest uppercase">Analyzing...</div>
+                <div className="text-slate-400 dark:text-slate-500 animate-pulse text-xs tracking-wider uppercase">
+                  {t('Analyzing...')}
+                </div>
              )}
           </div>
 
-          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 mb-4 border border-stone-200 dark:border-[#333] shadow-sm dark:shadow-inner flex flex-col w-full">
-            <div className="text-stone-500 dark:text-[#888] text-[10px] uppercase tracking-widest mb-3 font-semibold text-center w-full">Diagnostics & Context</div>
+          {/* Diagnostics & Context */}
+          <div className="bg-white dark:bg-[#0f1422] rounded-2xl p-4 mb-3.5 border border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col w-full">
+            <div className="text-slate-500 dark:text-slate-400 text-[10px] uppercase tracking-wider mb-2.5 font-semibold text-center w-full">
+              {t('Diagnostics & Context')}
+            </div>
             <div className="flex justify-between items-center w-full px-2 mb-3">
                 <div className="flex flex-col">
-                    <div className="text-lg font-black">{confidenceScore !== null ? `${confidenceScore}%` : '--'}</div>
-                    <div className="text-[10px] text-stone-400 font-mono mt-0.5">Confidence</div>
+                    <div className="text-base sm:text-lg font-black text-slate-800 dark:text-slate-200" dir="ltr">
+                      {confidenceScore !== null ? `${confidenceScore}%` : '--'}
+                    </div>
+                    <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">
+                      {t('Confidence')}
+                    </div>
                 </div>
-                <div className="w-[1px] h-8 bg-stone-200 dark:bg-[#333]"></div>
+                <div className="w-[1px] h-8 bg-slate-200 dark:bg-slate-800"></div>
                 <div className="flex flex-col items-end">
-                    <div className={`text-sm font-black uppercase ${bufferbloat === 'High' ? 'text-red-500' : bufferbloat === 'Moderate' ? 'text-orange-500' : 'text-stone-700 dark:text-stone-300'}`}>{bufferbloat}</div>
-                    <div className="text-[10px] text-stone-400 font-mono mt-0.5">Bufferbloat</div>
+                    <div className={`text-xs sm:text-sm font-black uppercase ${
+                      bufferbloat === 'High' ? 'text-rose-600 dark:text-rose-400' :
+                      bufferbloat === 'Moderate' ? 'text-amber-600 dark:text-amber-400' :
+                      bufferbloat === 'Low' ? 'text-emerald-600 dark:text-emerald-400' :
+                      'text-slate-700 dark:text-slate-300'
+                    }`}>
+                      {t(bufferbloat)}
+                    </div>
+                    <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">
+                      {t('Bufferbloat')}
+                    </div>
                 </div>
             </div>
-            <div className="w-full h-[1px] bg-stone-200 dark:bg-[#333] mb-3"></div>
-            <div className="flex flex-col text-[10px] font-mono gap-1.5 px-1">
-                <div className="flex justify-between">
-                    <span className="text-stone-500">ISP</span>
-                    <span className="text-stone-700 dark:text-stone-300 font-semibold truncate max-w-[150px]" title={networkInfo.isp}>{networkInfo.isp || '--'}</span>
+            <div className="w-full h-[1px] bg-slate-200 dark:bg-slate-800 mb-3"></div>
+            <div className="flex flex-col text-[10px] font-mono gap-2 px-1">
+                <div className="flex justify-between items-center">
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">{t('ISP')}</span>
+                    <span className="text-slate-700 dark:text-slate-200 font-semibold truncate max-w-[160px]" title={networkInfo.isp}>
+                      {networkInfo.isp ? (networkInfo.isp === 'Unknown ISP' ? t('Unknown ISP') : networkInfo.isp) : '--'}
+                    </span>
                 </div>
-                <div className="flex justify-between">
-                    <span className="text-stone-500">IP</span>
-                    <span className="text-stone-700 dark:text-stone-300 font-semibold truncate max-w-[150px]">{networkInfo.ip || '--'}</span>
+                <div className="flex justify-between items-center">
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">{t('IP')}</span>
+                    <span className="text-slate-700 dark:text-slate-200 font-semibold truncate max-w-[160px]" dir="ltr">
+                      {networkInfo.ip || '--'}
+                    </span>
                 </div>
-                <div className="flex justify-between">
-                    <span className="text-stone-500">Location</span>
-                    <span className="text-stone-700 dark:text-stone-300 font-semibold truncate max-w-[150px]">{networkInfo.location || '--'}</span>
+                <div className="flex justify-between items-center">
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">{t('Location')}</span>
+                    <span className="text-slate-700 dark:text-slate-200 font-semibold truncate max-w-[160px]" title={networkInfo.location}>
+                      {networkInfo.location ? (networkInfo.location === 'Unknown Location' ? t('Unknown Location') : networkInfo.location) : '--'}
+                    </span>
                 </div>
             </div>
           </div>
 
-          <div className="flex-1 flex flex-row lg:flex-col items-center justify-center gap-2 lg:gap-6 w-full mt-2 lg:mt-0 pb-4 lg:pb-0">
-             <div className="flex-1 w-full"><Gauge value={downloadSpeed} label="Download" /></div>
-             <div className="flex-1 w-full"><Gauge value={uploadSpeed} label="Upload" /></div>
+          {/* Speed Gauges */}
+          <div className="flex-1 grid grid-cols-2 lg:grid-cols-1 items-center justify-center gap-2 lg:gap-4 w-full mt-2 lg:mt-0 pb-2 lg:pb-0">
+             <div className="w-full flex justify-center"><Gauge value={downloadSpeed} label="Download" /></div>
+             <div className="w-full flex justify-center"><Gauge value={uploadSpeed} label="Upload" /></div>
           </div>
         </div>
 
         {/* Right Content Area (Charts) */}
-        <div className="flex-1 flex flex-col bg-stone-50 dark:bg-[#1e1e1e] p-4 sm:p-6 lg:p-8 min-w-0 relative">
+        <div className="flex-1 flex flex-col bg-slate-50/50 dark:bg-[#111623] p-3 sm:p-5 lg:p-7 min-w-0 relative">
           
-           {/* Background Grid Pattern for high-tech look */}
-           <div className="absolute inset-0 z-0 opacity-[0.05] dark:opacity-[0.03] pointer-events-none" 
-              style={{ backgroundImage: 'linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)', backgroundSize: '30px 30px' }}
+           {/* Subtle high-tech grid */}
+           <div className="absolute inset-0 z-0 opacity-[0.04] dark:opacity-[0.03] pointer-events-none" 
+              style={{ backgroundImage: 'linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)', backgroundSize: '24px 24px' }}
            ></div>
 
            <div className="relative z-10 flex-1 flex flex-col gap-4 lg:gap-6">
              {/* Performance Chart */}
-             <div className="flex-1 flex flex-col bg-white dark:bg-[#252525] rounded-xl lg:rounded-2xl p-4 sm:p-6 border border-stone-200 dark:border-[#333] shadow-sm dark:shadow-lg">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-                  <h3 className="text-base lg:text-lg font-bold text-stone-800 dark:text-white tracking-wide">Bandwidth Timeline</h3>
-                  <div className="flex justify-center gap-3 lg:gap-4 text-[10px] lg:text-xs font-semibold uppercase tracking-wider bg-stone-100 dark:bg-[#1a1a1a] px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg border border-stone-200 dark:border-[#333]">
-                     <span className="flex items-center gap-1.5 lg:gap-2">
-                       <span className="w-2h-2 lg:w-2.5 lg:h-2.5 rounded-full bg-[#00a8ff]"></span> Download
+             <div className="flex-1 flex flex-col bg-white dark:bg-[#151b2b] rounded-xl sm:rounded-2xl p-3 sm:p-5 lg:p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 mb-4">
+                  <h3 className="text-sm sm:text-base lg:text-lg font-bold text-slate-800 dark:text-white tracking-wide">
+                    {t('Bandwidth Timeline')}
+                  </h3>
+                  <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 text-[10px] sm:text-xs font-semibold uppercase tracking-wider bg-slate-100 dark:bg-[#0f1422] px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800">
+                     <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                       <span className="w-2.5 h-2.5 rounded-full bg-[#00a8ff]"></span>
+                       <span>{t('Download')}</span>
                      </span>
-                     <span className="flex items-center gap-1.5 lg:gap-2">
-                       <span className="w-2h-2 lg:w-2.5 lg:h-2.5 rounded-full bg-[#b2bec3]"></span> Upload
+                     <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                       <span className="w-2.5 h-2.5 rounded-full bg-slate-400 dark:bg-slate-500"></span>
+                       <span>{t('Upload')}</span>
                      </span>
                   </div>
                 </div>
-                <div className="h-48 lg:flex-1 w-full min-h-[150px]">
-                  <ResponsiveContainer width="100%" height="100%" minHeight={150} minWidth={1}>
-                     <LineChart data={perfData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-stone-200 dark:text-[#333]" vertical={true} />
-                        <XAxis dataKey="time" stroke="currentColor" className="text-stone-400 dark:text-[#666]" tick={{ fill: 'currentColor', fontSize: 10 }} axisLine={false} tickLine={false} />
-                        <YAxis stroke="currentColor" className="text-stone-400 dark:text-[#666]" tick={{ fill: 'currentColor', fontSize: 10 }} axisLine={false} tickLine={false} />
+                <div className="h-44 sm:h-52 lg:flex-1 w-full min-h-[160px]">
+                  <ResponsiveContainer width="100%" height="100%" minHeight={160} minWidth={1}>
+                     <LineChart data={perfData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#1e293b' : '#e2e8f0'} vertical={true} />
+                        <XAxis dataKey="time" stroke={isDarkMode ? '#64748b' : '#94a3b8'} tick={{ fill: isDarkMode ? '#94a3b8' : '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
+                        <YAxis stroke={isDarkMode ? '#64748b' : '#94a3b8'} tick={{ fill: isDarkMode ? '#94a3b8' : '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
                         <Tooltip 
-                          contentStyle={{ backgroundColor: 'var(--tw-prose-body, #1a1a1a)', borderColor: 'var(--tw-prose-hr, #333)', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} 
                           content={(props: any) => {
                               if (props.active && props.payload && props.payload.length) {
                                   return (
-                                      <div className="bg-white dark:bg-[#1a1a1a] border border-stone-200 dark:border-[#333] p-2 rounded-lg shadow-lg">
-                                          <p className="text-[#888] text-[10px] mb-1">{props.label}</p>
+                                      <div className="bg-white dark:bg-[#0f1422] border border-slate-200 dark:border-slate-800 p-2.5 rounded-xl shadow-xl backdrop-blur-sm text-start" dir={dir}>
+                                          <p className="text-slate-400 dark:text-slate-500 text-[10px] mb-1 font-mono">{props.label}</p>
                                           {props.payload.map((entry: any, index: number) => (
-                                              <div key={index} className="text-xs font-bold" style={{ color: entry.color }}>
-                                                  {entry.name}: {entry.value}
+                                              <div key={index} className="text-xs font-bold flex items-center gap-1.5" style={{ color: entry.color }}>
+                                                  <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: entry.color }}></span>
+                                                  <span>{entry.name === 'download' ? t('Download') : entry.name === 'upload' ? t('Upload') : entry.name}:</span>
+                                                  <span className="font-mono">{entry.value} Mbps</span>
                                               </div>
                                           ))}
                                       </div>
@@ -805,43 +885,49 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
                               }
                               return null;
                           }}
-                          cursor={{ stroke: '#888', strokeWidth: 1, strokeDasharray: '5 5' }}
+                          cursor={{ stroke: isDarkMode ? '#475569' : '#cbd5e1', strokeWidth: 1, strokeDasharray: '4 4' }}
                         />
-                        <Line type="monotone" dataKey="download" stroke="#00a8ff" strokeWidth={3} dot={false} isAnimationActive={false} />
-                        <Line type="monotone" dataKey="upload" stroke="#b2bec3" strokeWidth={3} dot={false} isAnimationActive={false} />
+                        <Line type="monotone" dataKey="download" stroke="#00a8ff" strokeWidth={2.5} dot={false} isAnimationActive={false} name="download" />
+                        <Line type="monotone" dataKey="upload" stroke={isDarkMode ? '#94a3b8' : '#64748b'} strokeWidth={2.5} dot={false} isAnimationActive={false} name="upload" />
                      </LineChart>
                   </ResponsiveContainer>
                 </div>
              </div>
 
              {/* Latency Chart */}
-             <div className="flex-1 flex flex-col bg-white dark:bg-[#252525] rounded-xl lg:rounded-2xl p-4 sm:p-6 border border-stone-200 dark:border-[#333] shadow-sm dark:shadow-lg">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-                  <h3 className="text-base lg:text-lg font-bold text-stone-800 dark:text-white tracking-wide">Network Stability</h3>
-                  <div className="flex justify-center gap-3 lg:gap-4 text-[10px] lg:text-xs font-semibold uppercase tracking-wider bg-stone-100 dark:bg-[#1a1a1a] px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg border border-stone-200 dark:border-[#333]">
-                     <span className="flex items-center gap-1.5 lg:gap-2">
-                       <span className="w-2h-2 lg:w-2.5 lg:h-2.5 rounded-full bg-[#00c3ff] dark:bg-[#00ffff]"></span> Ping
+             <div className="flex-1 flex flex-col bg-white dark:bg-[#151b2b] rounded-xl sm:rounded-2xl p-3 sm:p-5 lg:p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 mb-4">
+                  <h3 className="text-sm sm:text-base lg:text-lg font-bold text-slate-800 dark:text-white tracking-wide">
+                    {t('Network Stability')}
+                  </h3>
+                  <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 text-[10px] sm:text-xs font-semibold uppercase tracking-wider bg-slate-100 dark:bg-[#0f1422] px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800">
+                     <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                       <span className="w-2.5 h-2.5 rounded-full bg-[#00c3ff]"></span>
+                       <span>{t('Ping')}</span>
                      </span>
-                     <span className="flex items-center gap-1.5 lg:gap-2">
-                       <span className="w-2h-2 lg:w-2.5 lg:h-2.5 rounded-full bg-[#e67e22]"></span> Jitter
+                     <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                       <span className="w-2.5 h-2.5 rounded-full bg-[#e67e22]"></span>
+                       <span>{t('Jitter')}</span>
                      </span>
                   </div>
                 </div>
-                <div className="h-48 lg:flex-1 w-full min-h-[150px]">
-                  <ResponsiveContainer width="100%" height="100%" minHeight={150} minWidth={1}>
-                     <LineChart data={latencyData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-stone-200 dark:text-[#333]" vertical={true} />
-                        <XAxis dataKey="time" stroke="currentColor" className="text-stone-400 dark:text-[#666]" tick={{ fill: 'currentColor', fontSize: 10 }} axisLine={false} tickLine={false} />
-                        <YAxis stroke="currentColor" className="text-stone-400 dark:text-[#666]" tick={{ fill: 'currentColor', fontSize: 10 }} axisLine={false} tickLine={false} />
+                <div className="h-44 sm:h-52 lg:flex-1 w-full min-h-[160px]">
+                  <ResponsiveContainer width="100%" height="100%" minHeight={160} minWidth={1}>
+                     <LineChart data={latencyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#1e293b' : '#e2e8f0'} vertical={true} />
+                        <XAxis dataKey="time" stroke={isDarkMode ? '#64748b' : '#94a3b8'} tick={{ fill: isDarkMode ? '#94a3b8' : '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
+                        <YAxis stroke={isDarkMode ? '#64748b' : '#94a3b8'} tick={{ fill: isDarkMode ? '#94a3b8' : '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
                         <Tooltip 
                           content={(props: any) => {
                               if (props.active && props.payload && props.payload.length) {
                                   return (
-                                      <div className="bg-white dark:bg-[#1a1a1a] border border-stone-200 dark:border-[#333] p-2 rounded-lg shadow-lg">
-                                          <p className="text-stone-500 dark:text-[#888] text-[10px] mb-1">{props.label}</p>
+                                      <div className="bg-white dark:bg-[#0f1422] border border-slate-200 dark:border-slate-800 p-2.5 rounded-xl shadow-xl backdrop-blur-sm text-start" dir={dir}>
+                                          <p className="text-slate-400 dark:text-slate-500 text-[10px] mb-1 font-mono">{props.label}</p>
                                           {props.payload.map((entry: any, index: number) => (
-                                              <div key={index} className="text-xs font-bold" style={{ color: entry.color }}>
-                                                  {entry.name}: {entry.value}
+                                              <div key={index} className="text-xs font-bold flex items-center gap-1.5" style={{ color: entry.color }}>
+                                                  <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: entry.color }}></span>
+                                                  <span>{entry.name === 'ping' ? t('Ping') : entry.name === 'jitter' ? t('Jitter') : entry.name}:</span>
+                                                  <span className="font-mono">{entry.value} ms</span>
                                               </div>
                                           ))}
                                       </div>
@@ -849,10 +935,10 @@ export const NetworkDiagnostic: React.FC<{ onStatusChange?: (status: QualityStat
                               }
                               return null;
                           }}
-                          cursor={{ stroke: '#888', strokeWidth: 1, strokeDasharray: '5 5' }}
+                          cursor={{ stroke: isDarkMode ? '#475569' : '#cbd5e1', strokeWidth: 1, strokeDasharray: '4 4' }}
                         />
-                        <Line type="monotone" dataKey="ping" stroke="#00c3ff" strokeWidth={3} dot={false} isAnimationActive={false} />
-                        <Line type="monotone" dataKey="jitter" stroke="#e67e22" strokeWidth={3} dot={false} isAnimationActive={false} />
+                        <Line type="monotone" dataKey="ping" stroke="#00c3ff" strokeWidth={2.5} dot={false} isAnimationActive={false} name="ping" />
+                        <Line type="monotone" dataKey="jitter" stroke="#e67e22" strokeWidth={2.5} dot={false} isAnimationActive={false} name="jitter" />
                      </LineChart>
                   </ResponsiveContainer>
                 </div>

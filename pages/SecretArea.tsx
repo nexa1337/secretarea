@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { signInWithGoogle, signInWithDiscord, db, auth } from '../src/firebase';
 import { doc, getDoc, updateDoc, setDoc, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
-import { trackUserMovement, recordGameInteraction, getLocalProfile, removeGameFromLibrary, getCachedAdminAvatar, getCachedAdminName, subscribeAdminPublicProfile } from '../src/services/userService';
+import { trackUserMovement, recordGameInteraction, getLocalProfile, removeGameFromLibrary, getCachedAdminAvatar, getCachedAdminName, subscribeAdminPublicProfile, getStoredHardwareSpecs, saveUserHardwareSpecs } from '../src/services/userService';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../src/contexts/LanguageContext';
@@ -13,6 +13,7 @@ import { Link } from 'react-router-dom';
 import Icon from '../components/Icon';
 import HeroSlider from '../components/HeroSlider';
 import AnimatedGenreHero from '../components/AnimatedGenreHero';
+import PartnersSection from '../components/PartnersSection';
 
 import { CommentsSection } from '../components/CommentsSection';
 import { BestGameSeriesSection } from '../components/BestGameSeriesSection';
@@ -556,114 +557,343 @@ const DisclaimerModal: React.FC<{ open: boolean; onClose: () => void }> = ({ ope
 };
 
 // STEAM ACCOUNTS MODAL
-const SteamAccountsModal: React.FC<{ open: boolean; onClose: () => void; accounts: SteamAccount[] }> = ({ open, onClose, accounts }) => {
+const SteamAccountsModal: React.FC<{ 
+    open: boolean; 
+    onClose: () => void; 
+    accounts: SteamAccount[];
+    isLockedForGuest?: boolean;
+    onLoginClick?: () => void;
+}> = ({ open, onClose, accounts, isLockedForGuest, onLoginClick }) => {
     const { dir, t } = useLanguage();
-    const [copiedIndex, setCopiedIndex] = useState<{idx: number, type: 'user' | 'pass'} | null>(null);
+    const [copiedIndex, setCopiedIndex] = useState<{idx: number, type: 'user' | 'pass' | 'all'} | null>(null);
+    const [revealedPasswords, setRevealedPasswords] = useState<Record<number, boolean>>({});
+    const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'online'>('all');
 
-    const handleCopy = (text: string, idx: number, type: 'user' | 'pass') => {
+    const toggleReveal = (idx: number) => {
+        setRevealedPasswords(prev => ({ ...prev, [idx]: !prev[idx] }));
+    };
+
+    const handleCopy = (text: string, idx: number, type: 'user' | 'pass' | 'all') => {
         navigator.clipboard.writeText(text);
         setCopiedIndex({ idx, type });
         setTimeout(() => setCopiedIndex(null), 2000);
     };
+
+    const isArabic = dir === 'rtl';
+
+    const filteredAccounts = accounts.filter(acc => {
+        const query = searchQuery.trim().toLowerCase();
+        const matchesQuery = !query || 
+            acc.username.toLowerCase().includes(query) || 
+            (acc.games && acc.games.toLowerCase().includes(query));
+        
+        if (!matchesQuery) return false;
+        if (statusFilter === 'online') {
+            const st = (acc.status || 'ONLINE').trim().toLowerCase();
+            return st !== 'offline' && st !== 'dead';
+        }
+        return true;
+    });
+
+    const onlineCount = accounts.filter(acc => {
+        const st = (acc.status || 'ONLINE').trim().toLowerCase();
+        return st !== 'offline' && st !== 'dead';
+    }).length;
 
     return (
         <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            dir={dir} className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-2 sm:p-4"
+            dir={dir}
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/80 dark:bg-black/85 backdrop-blur-xl p-3 sm:p-5 md:p-6"
             onClick={onClose}
         >
             <motion.div 
-                initial={{ scale: 0.9, y: 20 }}
+                initial={{ scale: 0.92, y: 24 }}
                 animate={{ scale: 1, y: 0 }}
-                className="bg-[#171a21] dark:bg-[#171a21] bg-white w-[95%] md:w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl border border-[#2a475e] dark:border-[#2a475e] border-slate-200 flex flex-col max-h-[85vh] sm:max-h-[85vh]"
+                exit={{ scale: 0.92, y: 24 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="bg-white dark:bg-[#0b1120] w-full max-w-3xl rounded-3xl overflow-hidden shadow-2xl border border-slate-200/90 dark:border-cyan-500/20 flex flex-col max-h-[90vh] sm:max-h-[85vh] relative"
                 onClick={e => e.stopPropagation()}
             >
-                {/* Steam Header */}
-                <div className="bg-gradient-to-r from-[#171a21] to-[#1b2838] p-4 sm:p-6 border-b border-[#2a475e] flex justify-between items-center relative overflow-hidden shrink-0">
-                    <div className="absolute inset-0 bg-[url('https://community.cloudflare.steamstatic.com/public/shared/images/header/globalheader_logo.png')] bg-no-repeat bg-end-bottom opacity-10 bg-contain pointer-events-none"></div>
-                    <div className="relative z-10">
-                        <h3 className="text-lg sm:text-xl font-black uppercase tracking-wider text-white flex items-center gap-3">
-                            <Icon name="BrandSteam" size={24} className="text-[#66c0f4] sm:w-7 sm:h-7" /> 
-                            <span className="truncate">{t('Free Accounts')}</span>
-                        </h3>
-                        <p className="text-[#c5c3c0] text-[10px] sm:text-xs font-bold mt-1">
-                            {t('Updated Daily')} • <span className="text-[#66c0f4]">{accounts.length} {t('Available')}</span>
-                        </p>
+                {/* Steam Cyber Header */}
+                <div className="relative overflow-hidden bg-gradient-to-r from-slate-900 via-[#0f213b] to-[#0a2f58] p-5 sm:p-6 border-b border-slate-800 dark:border-cyan-500/20 shrink-0 text-white">
+                    {/* Ambient glow & cyber lines */}
+                    <div className="absolute -top-12 -start-12 w-48 h-48 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none"></div>
+                    <div className="absolute -bottom-10 -end-10 w-48 h-48 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
+                    
+                    <div className="relative z-10 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3.5 sm:gap-4">
+                            <div className="relative">
+                                <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-2xl bg-gradient-to-br from-cyan-400/20 to-blue-600/30 border border-cyan-400/40 flex items-center justify-center shadow-lg shadow-cyan-500/20 backdrop-blur-sm">
+                                    <Icon name="BrandSteam" size={26} className="text-cyan-400 sm:w-7 sm:h-7" />
+                                </div>
+                                <span className="absolute -bottom-1 -end-1 flex h-3 w-3">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-500"></span>
+                                </span>
+                            </div>
+                            
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h3 
+                                        className="text-lg sm:text-2xl font-black uppercase tracking-tight text-white flex items-center gap-2"
+                                        style={{ fontFamily: isArabic ? "'Cairo', 'Amiri', sans-serif" : "'Oswald', sans-serif" }}
+                                    >
+                                        <span>{t('Free Accounts')}</span>
+                                    </h3>
+                                    <span className="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                                        Steam
+                                    </span>
+                                </div>
+                                
+                                <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1 text-[11px] sm:text-xs text-slate-300 font-medium">
+                                    <span className="inline-flex items-center gap-1">
+                                        <Icon name="Clock" size={12} className="text-cyan-400" />
+                                        {t('Updated Daily')}
+                                    </span>
+                                    <span className="opacity-40">•</span>
+                                    <span className="text-cyan-300 font-bold">
+                                        {accounts.length} {t('Available')}
+                                    </span>
+                                    {onlineCount > 0 && (
+                                        <>
+                                            <span className="opacity-40">•</span>
+                                            <span className="text-emerald-400 font-bold inline-flex items-center gap-1">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                                {onlineCount} {t('Online')}
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <button 
+                            onClick={onClose} 
+                            className="p-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white border border-white/10 transition-all active:scale-95 shrink-0"
+                            aria-label="Close"
+                        >
+                            <Icon name="X" size={20} />
+                        </button>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors text-[#c5c3c0] hover:text-white relative z-10 shrink-0">
-                        <Icon name="X" size={20} className="sm:w-6 sm:h-6" />
-                    </button>
                 </div>
-                
-                {/* List */}
-                <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1 custom-scrollbar bg-slate-50 dark:bg-[#171a21]">
-                    {accounts.length === 0 ? (
-                        <div className="text-center py-10 text-slate-900 dark:text-slate-300">
-                            <Icon name="Ghost" size={40} className="mx-auto mb-3 opacity-50"/>
-                            <p>{t('No accounts available right now. Check back later!')}</p>
+
+                {/* Smart Search & Filter Toolbar */}
+                {!isLockedForGuest && accounts.length > 0 && (
+                    <div className="px-4 sm:px-6 py-3 bg-slate-100/80 dark:bg-[#0d1629] border-b border-slate-200 dark:border-cyan-900/30 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0">
+                        <div className="relative flex-1">
+                            <Icon name="Search" size={16} className="absolute start-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input 
+                                type="text"
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                                placeholder={t('Search accounts or games...')}
+                                className="w-full ps-9 pe-8 py-2 rounded-xl bg-white dark:bg-[#070b14] border border-slate-200 dark:border-slate-800 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-cyan-500 transition-colors"
+                            />
+                            {searchQuery && (
+                                <button 
+                                    onClick={() => setSearchQuery('')}
+                                    className="absolute end-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                                >
+                                    <Icon name="X" size={14} />
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
+                            <button
+                                onClick={() => setStatusFilter('all')}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                                    statusFilter === 'all'
+                                        ? 'bg-cyan-500 text-slate-950 font-black shadow-sm'
+                                        : 'bg-white dark:bg-[#070b14] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800'
+                                }`}
+                            >
+                                {t('All Status')}
+                            </button>
+                            <button
+                                onClick={() => setStatusFilter('online')}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                                    statusFilter === 'online'
+                                        ? 'bg-emerald-500 text-slate-950 font-black shadow-sm'
+                                        : 'bg-white dark:bg-[#070b14] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800'
+                                }`}
+                            >
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                {t('Online')}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Account List / State Area */}
+                <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1 custom-scrollbar bg-slate-50/60 dark:bg-[#0b1120]">
+                    {isLockedForGuest ? (
+                        <div className="text-center py-10 sm:py-12 px-4 flex flex-col items-center justify-center space-y-5">
+                            <div className="relative">
+                                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-500/20 to-cyan-500/20 border-2 border-amber-500/40 flex items-center justify-center text-amber-400 shadow-xl shadow-amber-500/10 backdrop-blur-sm">
+                                    <Icon name="Lock" size={36} />
+                                </div>
+                                <div className="absolute -bottom-1 -end-1 w-7 h-7 rounded-full bg-cyan-500 text-slate-950 flex items-center justify-center shadow font-bold text-xs">
+                                    !
+                                </div>
+                            </div>
+
+                            <div className="max-w-md space-y-2">
+                                <h4 
+                                    className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight"
+                                    style={{ fontFamily: isArabic ? "'Cairo', 'Amiri', sans-serif" : "'Oswald', sans-serif" }}
+                                >
+                                    {t('Gmail Login Required')}
+                                </h4>
+                                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+                                    {t('Sign in with Google / Gmail to access Free Accounts and Master Gift rewards. Guest accounts cannot view these credentials.')}
+                                </p>
+                            </div>
+
+                            <button
+                                onClick={onLoginClick}
+                                className="group flex items-center justify-center gap-3 px-7 py-3.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 hover:from-blue-500 hover:via-indigo-500 hover:to-cyan-500 text-white font-black rounded-2xl shadow-xl shadow-blue-500/25 transition-all active:scale-95 text-xs sm:text-sm uppercase tracking-wider"
+                            >
+                                <svg className="w-5 h-5 shrink-0 bg-white rounded-full p-0.5 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                                </svg>
+                                <span>{t('Sign in with Google to view accounts')}</span>
+                            </button>
+                        </div>
+                    ) : filteredAccounts.length === 0 ? (
+                        <div className="text-center py-12 px-4 flex flex-col items-center justify-center space-y-3">
+                            <div className="w-16 h-16 rounded-2xl bg-slate-200 dark:bg-slate-800/80 flex items-center justify-center text-slate-400 dark:text-slate-500">
+                                <Icon name="Ghost" size={32} />
+                            </div>
+                            <h5 className="text-base font-bold text-slate-800 dark:text-slate-200">
+                                {searchQuery ? t('No matching accounts found') : t('No accounts available right now. Check back later!')}
+                            </h5>
+                            {searchQuery && (
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                    {t('Try resetting your search query or filters.')}
+                                </p>
+                            )}
                         </div>
                     ) : (
-                        accounts.map((acc, idx) => {
-                        const statusRaw = acc.status?.toString().trim() || 'ONLINE';
-                        const isOffline = statusRaw.toLowerCase() === 'offline';
+                        filteredAccounts.map((acc, idx) => {
+                            const statusRaw = acc.status?.toString().trim() || 'ONLINE';
+                            const isOffline = statusRaw.toLowerCase() === 'offline' || statusRaw.toLowerCase() === 'dead';
+                            const isPassRevealed = Boolean(revealedPasswords[idx]);
+                            const isCopiedUser = copiedIndex?.idx === idx && copiedIndex.type === 'user';
+                            const isCopiedPass = copiedIndex?.idx === idx && copiedIndex.type === 'pass';
+                            const isCopiedAll = copiedIndex?.idx === idx && copiedIndex.type === 'all';
+
                             return (
-                                <div key={idx} className="bg-white dark:bg-[#1b2838] border border-slate-200 dark:border-[#2a475e] rounded-xl p-4 sm:p-5 hover:border-[#66c0f4] transition-colors group shadow-lg relative">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-[#2a475e] dark:to-[#171a21] rounded-full flex items-center justify-center text-[#66c0f4] font-bold text-xs sm:text-sm">
-                                                {idx + 1}
+                                <div 
+                                    key={idx} 
+                                    className="bg-white dark:bg-[#111a2d] border border-slate-200/90 dark:border-slate-800/80 hover:border-cyan-500/50 dark:hover:border-cyan-500/40 rounded-2xl p-4 sm:p-5 transition-all shadow-sm hover:shadow-lg hover:shadow-cyan-500/5 group relative"
+                                >
+                                    {/* Top Bar inside Card */}
+                                    <div className="flex items-center justify-between gap-3 mb-4">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 font-black text-xs sm:text-sm flex items-center justify-center">
+                                                #{idx + 1}
+                                            </div>
+                                            <div className={`text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5 border ${
+                                                isOffline
+                                                    ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
+                                                    : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                                            }`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${isOffline ? 'bg-rose-500' : 'bg-emerald-500 animate-pulse'}`}></span>
+                                                {statusRaw}
                                             </div>
                                         </div>
-                                        {/* Status Badge */}
-                                        <div className={`text-[9px] sm:text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider border ${
-                                            isOffline 
-                                            ? 'bg-red-500/10 text-red-500 dark:text-red-400 border-red-500/20' 
-                                            : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-700 dark:text-emerald-400 border-emerald-500/20'
-                                        }`}>
-                                            {statusRaw || 'ONLINE'}
-                                        </div>
+
+                                        {/* 1-Click Copy All Credentials */}
+                                        <button
+                                            onClick={() => handleCopy(`${acc.username}:${acc.password}`, idx, 'all')}
+                                            className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-[10px] sm:text-xs font-bold transition-all border active:scale-95 ${
+                                                isCopiedAll
+                                                    ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-sm'
+                                                    : 'bg-slate-100 dark:bg-slate-800/80 hover:bg-cyan-500/15 text-slate-700 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-cyan-300 border-slate-200 dark:border-slate-700'
+                                            }`}
+                                            title={t('Copy All')}
+                                        >
+                                            <Icon name={isCopiedAll ? "Check" : "Copy"} size={13} />
+                                            <span>{isCopiedAll ? t('Copied!') : t('Copy All')}</span>
+                                        </button>
                                     </div>
 
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
+                                    {/* Credentials Fields */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3.5">
+                                        {/* Username Box */}
                                         <div className="space-y-1">
-                                            <label className="text-[9px] sm:text-[10px] font-bold text-slate-900 dark:text-slate-400 uppercase tracking-wider">{t('Username')}</label>
-                                            <div className="flex items-center gap-2 bg-slate-50 dark:bg-[#171a21] p-2 rounded border border-slate-200 dark:border-[#2a475e] group-hover:border-[#66c0f4]/50 transition-colors">
-                                                <span className="text-xs sm:text-sm font-mono text-slate-900 dark:text-white truncate flex-1 select-all">{acc.username}</span>
-                                                <button 
+                                            <label className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 ps-1">
+                                                {t('Username')}
+                                            </label>
+                                            <div className="flex items-center gap-2 p-2 sm:p-2.5 rounded-xl bg-slate-50 dark:bg-[#070c17] border border-slate-200 dark:border-slate-800/90 group-hover:border-cyan-500/30 transition-colors">
+                                                <Icon name="User" size={14} className="text-slate-400 shrink-0 ms-1" />
+                                                <span className="text-xs sm:text-sm font-mono font-bold text-slate-900 dark:text-slate-100 truncate flex-1 select-all">
+                                                    {acc.username}
+                                                </span>
+                                                <button
                                                     onClick={() => handleCopy(acc.username, idx, 'user')}
-                                                    className="text-[#66c0f4] hover:text-blue-600 dark:hover:text-white p-1.5 rounded hover:bg-[#66c0f4]/20 transition-all shrink-0"
-                                                    title={t("Copy Username")}
+                                                    className={`p-1.5 rounded-lg transition-all shrink-0 ${
+                                                        isCopiedUser 
+                                                            ? 'text-emerald-500 bg-emerald-500/10' 
+                                                            : 'text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-500/10'
+                                                    }`}
+                                                    title={t('Copy Username')}
                                                 >
-                                                    {copiedIndex?.idx === idx && copiedIndex.type === 'user' ? <Icon name="Check" size={14} className="text-emerald-900 dark:text-emerald-500 dark:text-emerald-700 dark:text-emerald-400" /> : <Icon name="Copy" size={14} />}
+                                                    <Icon name={isCopiedUser ? "Check" : "Copy"} size={14} />
                                                 </button>
                                             </div>
                                         </div>
+
+                                        {/* Password Box */}
                                         <div className="space-y-1">
-                                            <label className="text-[9px] sm:text-[10px] font-bold text-slate-900 dark:text-slate-400 uppercase tracking-wider">{t('Password')}</label>
-                                            <div className="flex items-center gap-2 bg-slate-50 dark:bg-[#171a21] p-2 rounded border border-slate-200 dark:border-[#2a475e] group-hover:border-[#66c0f4]/50 transition-colors">
-                                                <span className="text-xs sm:text-sm font-mono text-slate-900 dark:text-white truncate flex-1 select-none tracking-widest text-lg mt-1">••••••••</span>
-                                                <button 
+                                            <label className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 ps-1">
+                                                {t('Password')}
+                                            </label>
+                                            <div className="flex items-center gap-1.5 p-2 sm:p-2.5 rounded-xl bg-slate-50 dark:bg-[#070c17] border border-slate-200 dark:border-slate-800/90 group-hover:border-cyan-500/30 transition-colors">
+                                                <Icon name="Key" size={14} className="text-slate-400 shrink-0 ms-1" />
+                                                <span className="text-xs sm:text-sm font-mono font-bold text-slate-900 dark:text-slate-100 truncate flex-1">
+                                                    {isPassRevealed ? acc.password : '••••••••••••'}
+                                                </span>
+                                                <button
+                                                    onClick={() => toggleReveal(idx)}
+                                                    className="p-1.5 rounded-lg text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-500/10 transition-colors shrink-0"
+                                                    title={isPassRevealed ? t('Hide Password') : t('Show Password')}
+                                                >
+                                                    <Icon name={isPassRevealed ? "EyeOff" : "Eye"} size={14} />
+                                                </button>
+                                                <button
                                                     onClick={() => handleCopy(acc.password, idx, 'pass')}
-                                                    className="text-[#66c0f4] hover:text-blue-600 dark:hover:text-white p-1.5 rounded hover:bg-[#66c0f4]/20 transition-all shrink-0"
+                                                    className={`p-1.5 rounded-lg transition-all shrink-0 ${
+                                                        isCopiedPass 
+                                                            ? 'text-emerald-500 bg-emerald-500/10' 
+                                                            : 'text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-500/10'
+                                                    }`}
                                                     title={t('Copy Password')}
                                                 >
-                                                    {copiedIndex?.idx === idx && copiedIndex.type === 'pass' ? <Icon name="Check" size={14} className="text-emerald-900 dark:text-emerald-500 dark:text-emerald-700 dark:text-emerald-400" /> : <Icon name="Copy" size={14} />}
+                                                    <Icon name={isCopiedPass ? "Check" : "Copy"} size={14} />
                                                 </button>
                                             </div>
                                         </div>
                                     </div>
 
+                                    {/* Included Games / Library Tag */}
                                     {acc.games && (
-                                        <div className="pt-3 border-t border-slate-100 dark:border-[#2a475e]/50">
-                                            <div className="flex items-start gap-2">
-                                                <Icon name="Gamepad" size={16} className="text-slate-800 dark:text-slate-400 mt-0.5 shrink-0" />
-                                                <p className="text-[10px] sm:text-xs text-slate-600 dark:text-[#c5c3c0] leading-relaxed line-clamp-2 sm:line-clamp-none">
-                                                    <span className="text-slate-900 dark:text-slate-400 font-bold">{t('Includes:')} </span>
-                                                    {acc.games}
-                                                </p>
+                                        <div className="pt-3 border-t border-slate-100 dark:border-slate-800/60 flex items-start gap-2.5">
+                                            <div className="w-5 h-5 rounded-md bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0 mt-0.5">
+                                                <Icon name="Gamepad2" size={12} />
                                             </div>
+                                            <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                                                <span className="font-bold text-slate-800 dark:text-slate-300">{t('Includes:')} </span>
+                                                {acc.games}
+                                            </p>
                                         </div>
                                     )}
                                 </div>
@@ -671,10 +901,12 @@ const SteamAccountsModal: React.FC<{ open: boolean; onClose: () => void; account
                         })
                     )}
                 </div>
-                
-                <div className="p-3 sm:p-4 bg-slate-100 dark:bg-[#171a21] border-t border-slate-200 dark:border-[#2a475e] text-center shrink-0">
-                    <p className="text-[9px] sm:text-[10px] text-slate-900 dark:text-slate-400">
-                        {t('Please do not change passwords. These are community accounts.')}
+
+                {/* Footer Security Notice */}
+                <div className="p-3.5 sm:p-4 bg-slate-100/90 dark:bg-[#070c17] border-t border-slate-200 dark:border-slate-800/80 text-center shrink-0">
+                    <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 font-medium inline-flex items-center justify-center gap-1.5">
+                        <Icon name="ShieldCheck" size={13} className="text-cyan-500 shrink-0" />
+                        <span>{t('Please do not change passwords. These are community accounts.')}</span>
                     </p>
                 </div>
             </motion.div>
@@ -683,123 +915,386 @@ const SteamAccountsModal: React.FC<{ open: boolean; onClose: () => void; account
 };
 
 // MASTER GIFT MODAL
-const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: MasterGiftAccount[] }> = ({ open, onClose, accounts }) => {
+const MasterGiftModal: React.FC<{ 
+    open: boolean; 
+    onClose: () => void; 
+    accounts: MasterGiftAccount[];
+    isLockedForGuest?: boolean;
+    onLoginClick?: () => void;
+}> = ({ open, onClose, accounts, isLockedForGuest, onLoginClick }) => {
     const { dir, t } = useLanguage();
-    const [copiedIndex, setCopiedIndex] = useState<{idx: number, type: 'email' | 'pass'} | null>(null);
+    const [copiedIndex, setCopiedIndex] = useState<{idx: number, type: 'email' | 'pass' | 'all'} | null>(null);
+    const [revealedPasswords, setRevealedPasswords] = useState<Record<number, boolean>>({});
+    const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'online'>('all');
     const [currentPage, setCurrentPage] = useState(1);
-    const ITEMS_PER_PAGE = 4; // Show 4 items per page for Master Gift
+    const ITEMS_PER_PAGE = 4;
     
-    const handleCopy = (text: string, idx: number, type: 'email' | 'pass') => {
+    const isArabic = dir === 'rtl';
+
+    const toggleReveal = (idx: number) => {
+        setRevealedPasswords(prev => ({ ...prev, [idx]: !prev[idx] }));
+    };
+
+    const handleCopy = (text: string, idx: number, type: 'email' | 'pass' | 'all') => {
         navigator.clipboard.writeText(text);
         setCopiedIndex({ idx, type });
         setTimeout(() => setCopiedIndex(null), 2000);
     };
 
-    const totalPages = Math.ceil(accounts.length / ITEMS_PER_PAGE);
-    const currentAccounts = accounts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+    const filteredAccounts = accounts.filter(acc => {
+        const query = searchQuery.trim().toLowerCase();
+        const matchesQuery = !query || 
+            acc.name.toLowerCase().includes(query) || 
+            acc.email.toLowerCase().includes(query) ||
+            (acc.url && acc.url.toLowerCase().includes(query));
+
+        if (!matchesQuery) return false;
+        if (statusFilter === 'online') {
+            const st = (acc.status || 'ONLINE').trim().toLowerCase();
+            return st !== 'offline' && st !== 'dead';
+        }
+        return true;
+    });
+
+    const onlineCount = accounts.filter(acc => {
+        const st = (acc.status || 'ONLINE').trim().toLowerCase();
+        return st !== 'offline' && st !== 'dead';
+    }).length;
+
+    const totalPages = Math.max(1, Math.ceil(filteredAccounts.length / ITEMS_PER_PAGE));
+    const safeCurrentPage = Math.min(currentPage, totalPages);
+    const currentAccounts = filteredAccounts.slice((safeCurrentPage - 1) * ITEMS_PER_PAGE, safeCurrentPage * ITEMS_PER_PAGE);
 
     return (
         <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            dir={dir} className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 md:backdrop-blur-md p-2 sm:p-4"
+            dir={dir} 
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/80 dark:bg-black/85 backdrop-blur-xl p-3 sm:p-5 md:p-6"
             onClick={onClose}
         >
             <motion.div 
-                initial={{ scale: 0.9, y: 20 }}
+                initial={{ scale: 0.92, y: 24 }}
                 animate={{ scale: 1, y: 0 }}
-                className="bg-white dark:bg-zinc-950 w-[95%] md:w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-zinc-800 flex flex-col max-h-[85vh] sm:max-h-[85vh]"
+                exit={{ scale: 0.92, y: 24 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="bg-white dark:bg-[#0f0e17] w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl border border-slate-200/90 dark:border-violet-500/20 flex flex-col max-h-[90vh] sm:max-h-[85vh] relative"
                 onClick={e => e.stopPropagation()}
             >
-                {/* Header */}
-                <div className="bg-gradient-to-r from-violet-600 to-indigo-600 p-4 sm:p-6 flex justify-between items-center relative overflow-hidden shrink-0">
-                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none"></div>
-                    <div className="relative z-10">
-                        <h3 className="text-lg sm:text-2xl font-black uppercase tracking-wider text-white flex items-center gap-3">
-                            <Icon name="Gift" size={28} className="text-yellow-400 sm:w-8 sm:h-8 animate-pulse" /> 
-                            <span className="truncate">{t('Master Gift')}</span>
-                        </h3>
-                        <p className="text-violet-100 text-[10px] sm:text-sm font-bold mt-1">
-                            {t('Exclusive Premium Accounts')} • <span className="text-yellow-400">{accounts.length} {t('Available')}</span>
-                        </p>
-                    </div>
-                    <button onClick={onClose} className="p-2 bg-black/20 hover:bg-black/40 rounded-full transition-colors text-white relative z-10 shrink-0 shadow">
-                        <Icon name="X" size={20} className="sm:w-6 sm:h-6" />
-                    </button>
-                </div>
-                
-                {/* List */}
-                <div className="p-4 sm:p-6 overflow-y-auto flex-1 custom-scrollbar bg-slate-50 dark:bg-zinc-950">
-                    {accounts.length === 0 ? (
-                        <div className="text-center py-10 flex flex-col items-center justify-center h-full">
-                            <div className="w-20 h-20 bg-slate-200 dark:bg-zinc-900 rounded-full flex items-center justify-center mb-4 border border-slate-300 dark:border-zinc-800">
-                                <Icon name="Gift" size={40} className="text-slate-600 dark:text-slate-300 dark:text-zinc-600 opacity-50"/>
+                {/* Master Gift Luxury Vibe Header */}
+                <div className="relative overflow-hidden bg-gradient-to-r from-slate-950 via-[#1b1233] to-[#2e1065] p-5 sm:p-6 border-b border-slate-800 dark:border-violet-500/20 shrink-0 text-white">
+                    {/* Ambient Vibe Glow Orbs */}
+                    <div className="absolute -top-10 -start-10 w-48 h-48 bg-violet-600/30 rounded-full blur-3xl pointer-events-none"></div>
+                    <div className="absolute -bottom-10 -end-10 w-48 h-48 bg-fuchsia-600/25 rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div className="relative z-10 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3.5 sm:gap-4">
+                            <div className="relative">
+                                <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-2xl bg-gradient-to-br from-amber-400/20 via-violet-600/30 to-fuchsia-600/40 border border-amber-400/40 flex items-center justify-center shadow-lg shadow-violet-500/20 backdrop-blur-sm">
+                                    <Icon name="Gift" size={26} className="text-amber-400 sm:w-7 sm:h-7 animate-pulse" />
+                                </div>
+                                <span className="absolute -bottom-1 -end-1 flex h-3 w-3">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-400"></span>
+                                </span>
                             </div>
-                            <h4 className="text-lg font-bold text-slate-800 dark:text-zinc-300 mb-2">{t('No Gifts Right Now')}</h4>
-                            <p className="text-sm text-slate-900 dark:text-slate-300 dark:text-zinc-500">{t('We continuously restock new premium accounts. Check back later!')}</p>
+
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h3 
+                                        className="text-lg sm:text-2xl font-black uppercase tracking-tight text-white flex items-center gap-2"
+                                        style={{ fontFamily: isArabic ? "'Cairo', 'Amiri', sans-serif" : "'Oswald', sans-serif" }}
+                                    >
+                                        <span>{t('Master Gift')}</span>
+                                    </h3>
+                                    <span className="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500/20 to-fuchsia-500/20 text-amber-300 border border-amber-500/30">
+                                        VIP
+                                    </span>
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1 text-[11px] sm:text-xs text-slate-300 font-medium">
+                                    <span className="inline-flex items-center gap-1 text-violet-200">
+                                        <Icon name="Sparkles" size={12} className="text-amber-400" />
+                                        {t('Exclusive Premium Accounts')}
+                                    </span>
+                                    <span className="opacity-40">•</span>
+                                    <span className="text-amber-300 font-bold">
+                                        {accounts.length} {t('Available')}
+                                    </span>
+                                    {onlineCount > 0 && (
+                                        <>
+                                            <span className="opacity-40">•</span>
+                                            <span className="text-emerald-400 font-bold inline-flex items-center gap-1">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                                {onlineCount} {t('Online')}
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <button 
+                            onClick={onClose} 
+                            className="p-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white border border-white/10 transition-all active:scale-95 shrink-0"
+                            aria-label="Close"
+                        >
+                            <Icon name="X" size={20} />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Smart Search & Filter Toolbar */}
+                {!isLockedForGuest && accounts.length > 0 && (
+                    <div className="px-4 sm:px-6 py-3 bg-slate-100/80 dark:bg-[#151221] border-b border-slate-200 dark:border-violet-900/30 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0">
+                        <div className="relative flex-1">
+                            <Icon name="Search" size={16} className="absolute start-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input 
+                                type="text"
+                                value={searchQuery}
+                                onChange={e => {
+                                    setSearchQuery(e.target.value);
+                                    setCurrentPage(1);
+                                }}
+                                placeholder={t('Search gifts by service or email...')}
+                                className="w-full ps-9 pe-8 py-2 rounded-xl bg-white dark:bg-[#0b0a11] border border-slate-200 dark:border-slate-800 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-violet-500 transition-colors"
+                            />
+                            {searchQuery && (
+                                <button 
+                                    onClick={() => {
+                                        setSearchQuery('');
+                                        setCurrentPage(1);
+                                    }}
+                                    className="absolute end-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                                >
+                                    <Icon name="X" size={14} />
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
+                            <button
+                                onClick={() => {
+                                    setStatusFilter('all');
+                                    setCurrentPage(1);
+                                }}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                                    statusFilter === 'all'
+                                        ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-black shadow-sm'
+                                        : 'bg-white dark:bg-[#0b0a11] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800'
+                                }`}
+                            >
+                                {t('All Status')}
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setStatusFilter('online');
+                                    setCurrentPage(1);
+                                }}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                                    statusFilter === 'online'
+                                        ? 'bg-emerald-500 text-slate-950 font-black shadow-sm'
+                                        : 'bg-white dark:bg-[#0b0a11] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800'
+                                }`}
+                            >
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                {t('Online')}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Body Area */}
+                <div className="p-4 sm:p-6 overflow-y-auto flex-1 custom-scrollbar bg-slate-50/60 dark:bg-[#0f0e17]">
+                    {isLockedForGuest ? (
+                        <div className="text-center py-10 sm:py-12 px-4 flex flex-col items-center justify-center space-y-5">
+                            <div className="relative">
+                                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-500/20 to-violet-500/20 border-2 border-amber-500/40 flex items-center justify-center text-amber-400 shadow-xl shadow-violet-500/10 backdrop-blur-sm">
+                                    <Icon name="Lock" size={36} />
+                                </div>
+                                <div className="absolute -bottom-1 -end-1 w-7 h-7 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center shadow font-bold text-xs">
+                                    ★
+                                </div>
+                            </div>
+
+                            <div className="max-w-md space-y-2">
+                                <h4 
+                                    className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight"
+                                    style={{ fontFamily: isArabic ? "'Cairo', 'Amiri', sans-serif" : "'Oswald', sans-serif" }}
+                                >
+                                    {t('Gmail Login Required')}
+                                </h4>
+                                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+                                    {t('Sign in with Google / Gmail to access Free Accounts and Master Gift rewards. Guest accounts cannot view these credentials.')}
+                                </p>
+                            </div>
+
+                            <button
+                                onClick={onLoginClick}
+                                className="group flex items-center justify-center gap-3 px-7 py-3.5 bg-gradient-to-r from-violet-600 via-indigo-600 to-fuchsia-600 hover:from-violet-500 hover:via-indigo-500 hover:to-fuchsia-500 text-white font-black rounded-2xl shadow-xl shadow-violet-500/25 transition-all active:scale-95 text-xs sm:text-sm uppercase tracking-wider"
+                            >
+                                <svg className="w-5 h-5 shrink-0 bg-white rounded-full p-0.5 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                                </svg>
+                                <span>{t('Sign in with Google to view master gifts')}</span>
+                            </button>
+                        </div>
+                    ) : filteredAccounts.length === 0 ? (
+                        <div className="text-center py-12 px-4 flex flex-col items-center justify-center space-y-3">
+                            <div className="w-16 h-16 rounded-2xl bg-slate-200 dark:bg-slate-800/80 flex items-center justify-center text-slate-400 dark:text-slate-500">
+                                <Icon name="Gift" size={32} />
+                            </div>
+                            <h5 className="text-base font-bold text-slate-800 dark:text-slate-200">
+                                {searchQuery ? t('No matching gifts found') : t('No Gifts Right Now')}
+                            </h5>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm">
+                                {searchQuery ? t('Try resetting your search query or filters.') : t('We continuously restock new premium accounts. Check back later!')}
+                            </p>
                         </div>
                     ) : (
-                        <div className="flex flex-col h-full">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
+                        <div className="flex flex-col h-full space-y-4">
+                            {/* Cards Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {currentAccounts.map((acc, index) => {
-                                    const actualIndex = (currentPage - 1) * ITEMS_PER_PAGE + index;
-                                    const statusRaw = acc.status?.toString().trim() || 'Online';
+                                    const actualIndex = (safeCurrentPage - 1) * ITEMS_PER_PAGE + index;
+                                    const statusRaw = acc.status?.toString().trim() || 'ONLINE';
                                     const isOffline = statusRaw.toLowerCase() === 'offline' || statusRaw.toLowerCase() === 'dead';
+                                    const isPassRevealed = Boolean(revealedPasswords[actualIndex]);
+                                    const isCopiedEmail = copiedIndex?.idx === actualIndex && copiedIndex.type === 'email';
+                                    const isCopiedPass = copiedIndex?.idx === actualIndex && copiedIndex.type === 'pass';
+                                    const isCopiedAll = copiedIndex?.idx === actualIndex && copiedIndex.type === 'all';
+
                                     return (
-                                        <div key={actualIndex} className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-4 hover:border-violet-500/50 transition-all shadow-sm hover:shadow-violet-500/10 group relative flex flex-col h-full">
-                                            <div className="flex justify-between items-center mb-4">
-                                                <div className="flex items-center gap-3">
+                                        <div 
+                                            key={actualIndex} 
+                                            className="bg-white dark:bg-[#161424] border border-slate-200/90 dark:border-violet-900/30 hover:border-violet-500/50 dark:hover:border-violet-500/50 rounded-2xl p-4 sm:p-5 transition-all shadow-sm hover:shadow-lg hover:shadow-violet-500/10 group flex flex-col relative"
+                                        >
+                                            {/* Card Top Header */}
+                                            <div className="flex items-center justify-between gap-3 mb-3.5">
+                                                <div className="flex items-center gap-3 min-w-0">
                                                     {acc.logo ? (
-                                                        <div className="w-10 h-10 rounded-xl overflow-hidden bg-zinc-800 shrink-0 border border-zinc-700 shadow flex items-center justify-center">
-                                                            <img src={acc.logo} alt={acc.name} className="w-full h-full object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = '<span class="text-xs font-bold text-zinc-500 uppercase">' + acc.name.substring(0, 2) + '</span>'; }} />
+                                                        <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 dark:bg-zinc-800 shrink-0 border border-slate-200 dark:border-zinc-700 shadow-sm flex items-center justify-center p-1">
+                                                            <img 
+                                                                src={acc.logo} 
+                                                                alt={acc.name} 
+                                                                className="w-full h-full object-contain" 
+                                                                referrerPolicy="no-referrer"
+                                                                onError={(e) => { 
+                                                                    e.currentTarget.style.display = 'none'; 
+                                                                    if (e.currentTarget.parentElement) {
+                                                                        e.currentTarget.parentElement.innerHTML = '<span class="text-xs font-black text-violet-500 uppercase">' + acc.name.substring(0, 2) + '</span>'; 
+                                                                    }
+                                                                }} 
+                                                            />
                                                         </div>
                                                     ) : (
-                                                        <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-xs shrink-0 shadow">
+                                                        <div className="w-10 h-10 bg-gradient-to-br from-violet-500 via-purple-600 to-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-xs shrink-0 shadow-sm">
                                                             {acc.name.substring(0, 2).toUpperCase()}
                                                         </div>
                                                     )}
-                                                    <div>
-                                                        <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white capitalize tracking-tight line-clamp-1">{acc.name}</h4>
-                                                        {acc.url && <a href={acc.url} target="_blank" rel="noreferrer" className="text-[10px] text-violet-500 hover:text-violet-400 hover:underline flex items-center gap-1 font-semibold w-fit"><Icon name="ExternalLink" size={10} /> {t('Visit Service')}</a>}
+
+                                                    <div className="min-w-0">
+                                                        <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white capitalize tracking-tight truncate">
+                                                            {acc.name}
+                                                        </h4>
+                                                        {acc.url && (
+                                                            <a 
+                                                                href={acc.url} 
+                                                                target="_blank" 
+                                                                rel="noreferrer" 
+                                                                className="text-[11px] text-violet-600 dark:text-violet-400 hover:underline inline-flex items-center gap-1 font-semibold truncate"
+                                                            >
+                                                                <span>{t('Visit Service')}</span>
+                                                                <Icon name="ExternalLink" size={10} className="rtl:rotate-180 shrink-0" />
+                                                            </a>
+                                                        )}
                                                     </div>
                                                 </div>
-                                                {/* Status Badge */}
-                                                <div className={`text-[9px] sm:text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider border shrink-0 ${
-                                                    isOffline 
-                                                    ? 'bg-red-500/10 text-red-500 border-red-500/20' 
-                                                    : 'bg-emerald-500/10 text-emerald-900 dark:text-emerald-500 border-emerald-500/20'
-                                                }`}>
-                                                    {statusRaw}
+
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    {/* Status Badge */}
+                                                    <div className={`text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border flex items-center gap-1 ${
+                                                        isOffline 
+                                                            ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20' 
+                                                            : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                                                    }`}>
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${isOffline ? 'bg-rose-500' : 'bg-emerald-500 animate-pulse'}`}></span>
+                                                        {statusRaw}
+                                                    </div>
+
+                                                    {/* 1-Click Copy All */}
+                                                    <button
+                                                        onClick={() => handleCopy(`${acc.email}:${acc.password}`, actualIndex, 'all')}
+                                                        className={`p-1.5 rounded-xl border text-[10px] font-bold transition-all active:scale-95 flex items-center gap-1 ${
+                                                            isCopiedAll
+                                                                ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-sm'
+                                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-violet-500 border-slate-200 dark:border-slate-700'
+                                                        }`}
+                                                        title={t('Copy All')}
+                                                    >
+                                                        <Icon name={isCopiedAll ? "Check" : "Copy"} size={12} />
+                                                    </button>
                                                 </div>
                                             </div>
 
-                                            <div className="space-y-3 mt-auto">
+                                            {/* Credentials Fields */}
+                                            <div className="space-y-2.5 mt-auto">
+                                                {/* Email / Username Field */}
                                                 <div className="space-y-1">
-                                                    <label className="text-[9px] font-black text-slate-900 dark:text-slate-300 dark:text-zinc-500 uppercase tracking-widest ps-1">{t('Email / Username')}</label>
-                                                    <div className="flex items-center gap-2 bg-slate-50 dark:bg-zinc-950 p-2 rounded-lg border border-slate-200 dark:border-zinc-800 group-hover:border-violet-500/30 transition-colors">
-                                                        <Icon name="Mail" size={14} className="text-zinc-400 shrink-0 ms-1" />
-                                                        <span className="text-xs font-mono text-slate-900 dark:text-zinc-300 truncate flex-1 select-all">{acc.email}</span>
+                                                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 ps-1">
+                                                        {t('Email / Username')}
+                                                    </label>
+                                                    <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-[#0c0a13] border border-slate-200 dark:border-violet-950 group-hover:border-violet-500/30 transition-colors">
+                                                        <Icon name="Mail" size={14} className="text-slate-400 shrink-0 ms-1" />
+                                                        <span className="text-xs sm:text-sm font-mono font-bold text-slate-900 dark:text-slate-100 truncate flex-1 select-all">
+                                                            {acc.email}
+                                                        </span>
                                                         <button 
                                                             onClick={() => handleCopy(acc.email, actualIndex, 'email')}
-                                                            className="text-violet-500 hover:text-white hover:bg-violet-600 p-1.5 rounded transition-colors shrink-0 flex items-center justify-center w-7 h-7"
-                                                            title={t("Copy Email")}
+                                                            className={`p-1.5 rounded-lg transition-all shrink-0 ${
+                                                                isCopiedEmail 
+                                                                    ? 'text-emerald-500 bg-emerald-500/10' 
+                                                                    : 'text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-500/10'
+                                                            }`}
+                                                            title={t('Copy Email')}
                                                         >
-                                                            {copiedIndex?.idx === actualIndex && copiedIndex.type === 'email' ? <Icon name="Check" size={14} className="text-emerald-900 dark:text-emerald-500" /> : <Icon name="Copy" size={14} />}
+                                                            <Icon name={isCopiedEmail ? "Check" : "Copy"} size={14} />
                                                         </button>
                                                     </div>
                                                 </div>
+
+                                                {/* Password Field */}
                                                 <div className="space-y-1">
-                                                    <label className="text-[9px] font-black text-slate-900 dark:text-slate-300 dark:text-zinc-500 uppercase tracking-widest ps-1">{t('Password')}</label>
-                                                    <div className="flex items-center gap-2 bg-slate-50 dark:bg-zinc-950 p-2 rounded-lg border border-slate-200 dark:border-zinc-800 group-hover:border-violet-500/30 transition-colors">
-                                                        <Icon name="Key" size={14} className="text-zinc-400 shrink-0 ms-1" />
-                                                        <span className="text-xs font-mono text-slate-900 dark:text-zinc-300 truncate flex-1 select-none tracking-widest text-lg mt-1">••••••••</span>
+                                                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 ps-1">
+                                                        {t('Password')}
+                                                    </label>
+                                                    <div className="flex items-center gap-1.5 p-2 rounded-xl bg-slate-50 dark:bg-[#0c0a13] border border-slate-200 dark:border-violet-950 group-hover:border-violet-500/30 transition-colors">
+                                                        <Icon name="Key" size={14} className="text-slate-400 shrink-0 ms-1" />
+                                                        <span className="text-xs sm:text-sm font-mono font-bold text-slate-900 dark:text-slate-100 truncate flex-1">
+                                                            {isPassRevealed ? acc.password : '••••••••••••'}
+                                                        </span>
+                                                        <button
+                                                            onClick={() => toggleReveal(actualIndex)}
+                                                            className="p-1.5 rounded-lg text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-500/10 transition-colors shrink-0"
+                                                            title={isPassRevealed ? t('Hide Password') : t('Show Password')}
+                                                        >
+                                                            <Icon name={isPassRevealed ? "EyeOff" : "Eye"} size={14} />
+                                                        </button>
                                                         <button 
                                                             onClick={() => handleCopy(acc.password, actualIndex, 'pass')}
-                                                            className="text-violet-500 hover:text-white hover:bg-violet-600 p-1.5 rounded transition-colors shrink-0 flex items-center justify-center w-7 h-7"
+                                                            className={`p-1.5 rounded-lg transition-all shrink-0 ${
+                                                                isCopiedPass 
+                                                                    ? 'text-emerald-500 bg-emerald-500/10' 
+                                                                    : 'text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-500/10'
+                                                            }`}
                                                             title={t('Copy Password')}
                                                         >
-                                                            {copiedIndex?.idx === actualIndex && copiedIndex.type === 'pass' ? <Icon name="Check" size={14} className="text-emerald-900 dark:text-emerald-500" /> : <Icon name="Copy" size={14} />}
+                                                            <Icon name={isCopiedPass ? "Check" : "Copy"} size={14} />
                                                         </button>
                                                     </div>
                                                 </div>
@@ -808,42 +1303,47 @@ const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: 
                                     );
                                 })}
                             </div>
-                            
+
                             {/* Pagination Controls */}
                             {totalPages > 1 && (
-                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-slate-200 dark:border-zinc-800">
-                                    <div className="text-xs text-slate-900 dark:text-slate-300 dark:text-zinc-400 font-semibold">
-                                        {t('Showing')} <span className="font-bold text-violet-500">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> {t('to')} <span className="font-bold text-violet-500">{Math.min(currentPage * ITEMS_PER_PAGE, accounts.length)}</span> {t('of')} <span className="font-bold text-violet-500">{accounts.length}</span> {t('gifts')}
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-violet-950 shrink-0">
+                                    <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+                                        {t('Showing')} <span className="font-bold text-violet-600 dark:text-violet-400">{(safeCurrentPage - 1) * ITEMS_PER_PAGE + 1}</span> {t('to')} <span className="font-bold text-violet-600 dark:text-violet-400">{Math.min(safeCurrentPage * ITEMS_PER_PAGE, filteredAccounts.length)}</span> {t('of')} <span className="font-bold text-violet-600 dark:text-violet-400">{filteredAccounts.length}</span>
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    
+                                    <div className="flex items-center gap-1.5">
                                         <button 
                                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                            disabled={currentPage === 1}
-                                            className="px-4 py-2 rounded-lg bg-slate-100/50 dark:bg-zinc-900/50 hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 disabled:opacity-50 disabled:cursor-not-allowed border border-slate-200 dark:border-zinc-800 transition-colors text-xs font-bold uppercase tracking-wider flex items-center gap-2"
+                                            disabled={safeCurrentPage === 1}
+                                            className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-[#1a1727] hover:bg-slate-200 dark:hover:bg-violet-900/40 text-slate-700 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-200 dark:border-slate-800 transition-colors text-xs font-bold flex items-center gap-1.5"
                                         >
-                                            <Icon name="ChevronLeft" size={14} className="rtl:rotate-180" /> Prev
+                                            <Icon name="ChevronLeft" size={14} className="rtl:rotate-180" />
+                                            <span>{t('Prev')}</span>
                                         </button>
+
                                         <div className="flex items-center gap-1">
                                             {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                                                 <button
                                                     key={page}
                                                     onClick={() => setCurrentPage(page)}
-                                                    className={`w-8 h-8 rounded-lg text-xs font-bold transition-colors ${
-                                                        currentPage === page 
-                                                        ? 'bg-violet-600 text-white shadow shadow-violet-500/20' 
-                                                        : 'bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800'
+                                                    className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${
+                                                        safeCurrentPage === page 
+                                                            ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-sm' 
+                                                            : 'bg-white dark:bg-[#151221] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800'
                                                     }`}
                                                 >
                                                     {page}
                                                 </button>
                                             ))}
                                         </div>
+
                                         <button 
                                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                            disabled={currentPage === totalPages}
-                                            className="px-4 py-2 rounded-lg bg-slate-100/50 dark:bg-zinc-900/50 hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 disabled:opacity-50 disabled:cursor-not-allowed border border-slate-200 dark:border-zinc-800 transition-colors text-xs font-bold uppercase tracking-wider flex items-center gap-2"
+                                            disabled={safeCurrentPage === totalPages}
+                                            className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-[#1a1727] hover:bg-slate-200 dark:hover:bg-violet-900/40 text-slate-700 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-200 dark:border-slate-800 transition-colors text-xs font-bold flex items-center gap-1.5"
                                         >
-                                            Next <Icon name="ChevronRight" size={14} className="rtl:rotate-180" />
+                                            <span>{t('Next')}</span>
+                                            <Icon name="ChevronRight" size={14} className="rtl:rotate-180" />
                                         </button>
                                     </div>
                                 </div>
@@ -851,16 +1351,182 @@ const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: 
                         </div>
                     )}
                 </div>
-                
-                <div className="p-3 sm:p-4 bg-slate-100 dark:bg-zinc-900 border-t border-slate-200 dark:border-zinc-800 text-center shrink-0">
-                    <p className="text-[10px] text-slate-900 dark:text-slate-300 dark:text-zinc-400 font-semibold flex items-center justify-center gap-2">
-                        <Icon name="Info" size={12} className="text-violet-500" /> 
-                        These accounts belong to the community. Please don't change the passwords!
+
+                {/* Footer Security Notice */}
+                <div className="p-3.5 sm:p-4 bg-slate-100/90 dark:bg-[#0a0910] border-t border-slate-200 dark:border-slate-800/80 text-center shrink-0">
+                    <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 font-medium inline-flex items-center justify-center gap-1.5">
+                        <Icon name="ShieldCheck" size={13} className="text-violet-500 shrink-0" />
+                        <span>{t('Please do not change passwords. These are community accounts.')}</span>
                     </p>
                 </div>
             </motion.div>
         </motion.div>
     );
+};
+
+// REWARD LOGIN MODAL (Gmail Login Required for Free Accounts & Master Gift)
+const RewardLoginModal: React.FC<{
+  open: boolean;
+  onClose: () => void;
+  target: 'steam' | 'mastergift' | null;
+  onSuccess: () => void;
+}> = ({ open, onClose, target, onSuccess }) => {
+  const { dir, t } = useLanguage();
+  const [loadingGoogle, setLoadingGoogle] = useState(false);
+  const [authDomainError, setAuthDomainError] = useState<string | null>(null);
+  const [domainCopied, setDomainCopied] = useState(false);
+
+  if (!open || !target) return null;
+
+  const handleGoogleLogin = async () => {
+    setLoadingGoogle(true);
+    setAuthDomainError(null);
+    try {
+      await signInWithGoogle();
+      localStorage.setItem('secret_area_unlocked', 'true');
+      localStorage.removeItem('nexa_guest_mode');
+      window.dispatchEvent(new Event('authChange'));
+      onSuccess();
+    } catch (err: any) {
+      const isUnauthorized = 
+        err?.code === 'auth/unauthorized-domain' || 
+        String(err?.message || '').includes('unauthorized-domain');
+      if (isUnauthorized) {
+        setAuthDomainError(window.location.hostname);
+      } else if (err?.code !== 'auth/popup-closed-by-user' && err?.code !== 'auth/cancelled-popup-request') {
+        console.warn('Google sign-in error:', err?.message || err);
+      }
+    } finally {
+      setLoadingGoogle(false);
+    }
+  };
+
+  const isSteam = target === 'steam';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      dir={dir}
+      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 md:backdrop-blur-md p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.9, y: 20 }}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 relative overflow-hidden text-center"
+      >
+        {/* Glow backdrop accent */}
+        <div className="absolute top-0 start-1/2 -translate-x-1/2 w-64 h-32 bg-amber-500/10 dark:bg-amber-500/20 blur-3xl pointer-events-none -z-0"></div>
+
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 end-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors z-10"
+        >
+          <Icon name="X" size={18} />
+        </button>
+
+        {/* Header Icon */}
+        <div className="relative z-10 flex justify-center mb-4">
+          <div className="relative">
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-xl ${
+              isSteam 
+                ? 'bg-slate-900 text-[#66c0f4] border border-[#2a475e] shadow-blue-500/20' 
+                : 'bg-violet-900/80 text-yellow-400 border border-violet-700 shadow-violet-500/20'
+            }`}>
+              <Icon name={isSteam ? "BrandSteam" : "Gift"} size={32} />
+            </div>
+            <div className="absolute -bottom-1 -end-1 w-7 h-7 rounded-full bg-amber-500 text-black flex items-center justify-center shadow-md border-2 border-white dark:border-slate-900">
+              <Icon name="Lock" size={14} />
+            </div>
+          </div>
+        </div>
+
+        {/* Title and subtitle */}
+        <div className="relative z-10 space-y-2 mb-6">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-[11px] font-bold uppercase tracking-wider">
+            <Icon name="Lock" size={12} />
+            <span>{t('Exclusive for Registered Members')}</span>
+          </div>
+          <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase">
+            {t('Gmail Login Required')}
+          </h3>
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-sm mx-auto">
+            {t('Sign in with Google / Gmail to access Free Accounts and Master Gift rewards. Guest accounts cannot view these credentials.')}
+          </p>
+        </div>
+
+        {/* Key perks banner */}
+        <div className="relative z-10 mb-6 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 text-start flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
+            <Icon name="CheckCircle" size={18} />
+          </div>
+          <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
+            {t('Instant access to daily verified Steam & Master Gift accounts')}
+          </p>
+        </div>
+
+        {/* Google sign-in button */}
+        <div className="relative z-10 space-y-3">
+          <button
+            onClick={handleGoogleLogin}
+            disabled={loadingGoogle}
+            className="w-full flex items-center justify-center gap-3 px-5 py-3.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/90 text-slate-900 dark:text-white border-2 border-slate-300 dark:border-slate-600 font-black rounded-xl shadow-lg transition-all active:scale-[0.98] disabled:opacity-60 text-sm tracking-wide group"
+          >
+            {loadingGoogle ? (
+              <span className="w-5 h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></span>
+            ) : (
+              <svg className="w-5 h-5 shrink-0 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+            )}
+            <span>{isSteam ? t('Unlock Free Accounts') : t('Unlock Mastergift')}</span>
+          </button>
+
+          <button
+            onClick={onClose}
+            className="w-full py-2.5 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+          >
+            {t('Continue Browsing as Guest')}
+          </button>
+        </div>
+
+        {/* Auth domain error fallback */}
+        {authDomainError && (
+          <div className="mt-4 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs text-left space-y-2">
+            <div className="flex items-center gap-1.5 font-bold text-amber-400">
+              <Icon name="AlertTriangle" size={14} />
+              <span>Firebase Authorized Domain Required</span>
+            </div>
+            <p className="text-slate-300 text-[11px] leading-relaxed">
+              Add your preview domain to authorized domains in Firebase Console:
+            </p>
+            <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded-lg border border-white/10 font-mono text-[11px] select-all text-white overflow-x-auto">
+              <span className="flex-1 truncate">{authDomainError}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(authDomainError);
+                  setDomainCopied(true);
+                  setTimeout(() => setDomainCopied(false), 2000);
+                }}
+                className="px-2 py-0.5 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded text-[10px] transition-colors"
+              >
+                {domainCopied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+          </div>
+        )}
+      </motion.div>
+    </motion.div>
+  );
 };
 
 const AdBanner: React.FC<{ desktopSrc: string, mobileSrc: string, link: string, className?: string }> = ({ desktopSrc, mobileSrc, link, className }) => {
@@ -2399,41 +3065,82 @@ const LikeButton = ({ item, t }: { item: ResourceItem, t: any }) => {
     const [isLiking, setIsLiking] = useState(false);
     
     useEffect(() => {
-        if (!auth.currentUser) return;
-        const local = getLocalProfile(auth.currentUser.uid);
-        if (local?.likedGames) {
-            setIsLiked(local.likedGames.some((g: any) => g.id === item.id));
+        const syncLikeStatus = () => {
+            const activeUid = auth.currentUser?.uid || (localStorage.getItem('secret_area_unlocked') === 'true' ? 'guest' : null);
+            if (!activeUid) {
+                setIsLiked(false);
+                return;
+            }
+            const local = getLocalProfile(activeUid);
+            const likedList = local?.liked || local?.likedGames || [];
+            const found = likedList.some((g: any) => {
+                if (!g) return false;
+                if (typeof g === 'string') return g.toLowerCase() === String(item.id).toLowerCase();
+                return (g.id && String(g.id).toLowerCase() === String(item.id).toLowerCase()) ||
+                       (g.gameId && String(g.gameId).toLowerCase() === String(item.id).toLowerCase()) ||
+                       (g.name && item.name && String(g.name).toLowerCase().trim() === String(item.name).toLowerCase().trim());
+            });
+            setIsLiked(found);
+        };
+
+        syncLikeStatus();
+        window.addEventListener('secretarea_profile_sync', syncLikeStatus);
+
+        let unsubFirestore: (() => void) | null = null;
+        if (auth.currentUser) {
+            try {
+                const userDocRef = doc(db, 'users', auth.currentUser.uid);
+                unsubFirestore = onSnapshot(userDocRef, (snap) => {
+                    if (snap.exists()) {
+                        const data = snap.data();
+                        const likedList = data.liked || data.likedGames || [];
+                        const found = likedList.some((g: any) => {
+                            if (!g) return false;
+                            if (typeof g === 'string') return g.toLowerCase() === String(item.id).toLowerCase();
+                            return (g.id && String(g.id).toLowerCase() === String(item.id).toLowerCase()) ||
+                                   (g.gameId && String(g.gameId).toLowerCase() === String(item.id).toLowerCase()) ||
+                                   (g.name && item.name && String(g.name).toLowerCase().trim() === String(item.name).toLowerCase().trim());
+                        });
+                        setIsLiked(found);
+                    }
+                }, () => {});
+            } catch (e) {}
         }
 
-        const docRef = doc(db, 'users', auth.currentUser.uid);
-        getDoc(docRef).then(snap => {
-            if (snap.exists()) {
-                const likedGames = snap.data().likedGames || [];
-                setIsLiked(likedGames.some((g: any) => g.id === item.id));
-            }
-        }).catch(() => {});
-    }, [item.id]);
+        return () => {
+            window.removeEventListener('secretarea_profile_sync', syncLikeStatus);
+            if (unsubFirestore) unsubFirestore();
+        };
+    }, [item.id, item.name]);
 
     const handleLike = async () => {
-        if (!auth.currentUser || isLiking) return;
+        const activeUid = auth.currentUser?.uid || (localStorage.getItem('secret_area_unlocked') === 'true' ? 'guest' : null);
+        if (!activeUid || isLiking) return;
         setIsLiking(true);
         const nextLiked = !isLiked;
         setIsLiked(nextLiked);
 
         try {
-            await recordGameInteraction(auth.currentUser.uid, {
+            await recordGameInteraction(activeUid, {
                 id: item.id,
                 name: item.name,
                 coverImage: item.coverImage,
-                category: item.category
+                category: item.category,
+                genres: item.genres,
+                version: item.version,
+                repackSize: item.repackSize,
+                description: item.description,
+                links: item.links
             }, nextLiked ? 'like' : 'unlike');
         } catch (error) {
             console.warn("Error toggling like:", error);
+            setIsLiked(!nextLiked);
         }
         setIsLiking(false);
     };
 
-    if (!auth.currentUser) return null;
+    const activeUid = auth.currentUser?.uid || (localStorage.getItem('secret_area_unlocked') === 'true' ? 'guest' : null);
+    if (!activeUid) return null;
 
     return (
         <motion.button
@@ -2457,7 +3164,7 @@ export const ResourceDetailModal: React.FC<{
   onClose: () => void; 
   isHypervisor?: boolean; 
   stash?: string[];
-  toggleStash?: (id: string, e?: React.MouseEvent) => void;
+  toggleStash?: (id: string, e?: React.MouseEvent, itemObj?: ResourceItem) => void;
   onCompanyClick?: (companyName: string) => void;
   onGenreClick?: (genre: string) => void;
   resolvedDev?: string;
@@ -2469,12 +3176,122 @@ export const ResourceDetailModal: React.FC<{
   allResources?: Record<string, ResourceItem[]>;
   onItemSelect?: (item: ResourceItem) => void;
   currentGenreContext?: string | null;
-}> = ({ item, onClose, isHypervisor, stash = [], toggleStash = () => {}, onCompanyClick, onGenreClick, resolvedDev, isGuestMode, showGuestNotification, globalSpecs, initialScrollTarget, onDonateClick, allResources, onItemSelect, currentGenreContext }) => {
+}> = ({ item: rawItem, onClose, isHypervisor, stash = [], toggleStash = () => {}, onCompanyClick, onGenreClick, resolvedDev, isGuestMode, showGuestNotification, globalSpecs, initialScrollTarget, onDonateClick, allResources, onItemSelect, currentGenreContext }) => {
   const { dir, t } = useLanguage();
   const [showUploaderPopup, setShowUploaderPopup] = useState(false);
   const currentUser = auth.currentUser;
   const [adminAvatar, setAdminAvatar] = useState<string>(() => getCachedAdminAvatar());
   const [adminDisplayName, setAdminDisplayName] = useState<string>(() => getCachedAdminName());
+
+  // Resolve item if item.name is an ID or missing full details
+  const item: ResourceItem = useMemo(() => {
+    let current = rawItem;
+    if (!current) {
+      return {
+        id: 'game-default',
+        name: 'Game Details',
+        category: 'game',
+        coverImage: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&auto=format&fit=crop&q=80',
+        description: 'Game information and resources.',
+        version: 'v1.0',
+        repackSize: 'N/A',
+        originalSize: 'N/A',
+        genres: 'Game',
+        languages: 'English',
+        repackBy: 'NEXA',
+        galleryImages: [],
+        links: { parts: [], mirrors: [], ankerParts: [] },
+        isFree: true
+      };
+    }
+
+    const isIdLike = (str?: string) => {
+      if (!str) return true;
+      const trimmed = String(str).trim();
+      if (trimmed === 'Game Details' || trimmed === 'Item' || trimmed === 'Secure Fragment' || trimmed === 'Game') return true;
+      if (current.id && trimmed.toLowerCase() === String(current.id).toLowerCase()) return true;
+      if (/^[A-Za-z]{0,4}[-_ ]?\d+$/i.test(trimmed)) return true;
+      if (/^\d+$/.test(trimmed)) return true;
+      return false;
+    };
+
+    const needsResolution = isIdLike(current.name) || !current.links?.full || !current.description || (current.coverImage && current.coverImage.includes('unsplash.com'));
+
+    if (needsResolution && current.id) {
+      const rawTargetId = String(current.id).toLowerCase();
+      const targetNoDash = rawTargetId.replace(/[-_]/g, '');
+      const numMatch = rawTargetId.match(/\d+/);
+      const targetNum = numMatch ? numMatch[0] : '';
+
+      const checkItem = (r: ResourceItem) => {
+        if (!r) return false;
+        const rid = String(r.id || '').toLowerCase();
+        const rNoDash = rid.replace(/[-_]/g, '');
+        if (rid === rawTargetId || rNoDash === targetNoDash) return true;
+        const rGameId = String(r.gameId || '').toLowerCase();
+        if (rGameId && (rGameId === rawTargetId || rGameId === targetNoDash)) return true;
+        if (targetNum) {
+          const rNum = rid.match(/\d+/);
+          if (rNum && rNum[0] === targetNum) return true;
+        }
+        return false;
+      };
+
+      let found: ResourceItem | undefined;
+      if (allResources) {
+        for (const cat of Object.keys(allResources)) {
+          if (Array.isArray(allResources[cat])) {
+            found = allResources[cat].find(checkItem);
+            if (found) break;
+          }
+        }
+      }
+      if (!found) {
+        try {
+          const cached = localStorage.getItem('cached_transformed_resources');
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            for (const cat of Object.keys(parsed)) {
+              if (Array.isArray(parsed[cat])) {
+                found = parsed[cat].find(checkItem);
+                if (found) break;
+              }
+            }
+          }
+        } catch (e) {}
+      }
+
+      if (found) {
+        return {
+          ...found,
+          ...current,
+          name: (!isIdLike(found.name) ? found.name : (!isIdLike(current.name) ? current.name : found.name)) || found.name || current.name,
+          category: found.category || current.category,
+          coverImage: (found.coverImage && !found.coverImage.includes('unsplash.com')) ? found.coverImage : (current.coverImage || found.coverImage),
+          links: (found.links && (found.links.full || found.links.mirrors?.length || found.links.parts?.length)) ? found.links : (current.links || { parts: [], mirrors: [], ankerParts: [] }),
+          description: found.description || current.description,
+          repackSize: found.repackSize || current.repackSize,
+          originalSize: found.originalSize || current.originalSize,
+          version: found.version || current.version,
+          genres: found.genres || current.genres,
+          developer: found.developer || current.developer,
+          repackBy: found.repackBy || current.repackBy,
+          galleryImages: (found.galleryImages && found.galleryImages.length > 0) ? found.galleryImages : (current.galleryImages || [])
+        };
+      }
+    }
+
+    return current;
+  }, [rawItem, allResources]);
+
+  const getBreadcrumbCategoryLabel = (cat?: string) => {
+    const c = (cat || '').toLowerCase();
+    if (c === 'architect' || c === 'tools') return t('Tools') || 'Tools';
+    if (c === 'hypervisor') return t('Hypervisor') || 'Hypervisor';
+    if (c === 'steamtools') return t('SteamTools') || 'SteamTools';
+    if (c === 'extra' || c === 'savegame') return t('SaveGame') || 'SaveGame';
+    return t('Games') || 'Games';
+  };
 
   useEffect(() => {
     const unsub = subscribeAdminPublicProfile((data) => {
@@ -2516,7 +3333,89 @@ export const ResourceDetailModal: React.FC<{
   const [isCopied, setIsCopied] = useState(false);
   const [isCopiedGameId, setIsCopiedGameId] = useState(false);
 
-  // Sync current library status with local & remote profile
+  const [isFavorite, setIsFavorite] = useState<boolean>(() => {
+    if (stash && stash.some(s => String(s).toLowerCase() === String(item.id).toLowerCase())) return true;
+    try {
+      const savedStash = JSON.parse(localStorage.getItem('myStash') || localStorage.getItem('stash') || '[]');
+      if (Array.isArray(savedStash) && savedStash.some(s => String(s).toLowerCase() === String(item.id).toLowerCase())) return true;
+    } catch {}
+    return false;
+  });
+
+  // Sync Favorite status in real time with local & remote profile
+  useEffect(() => {
+    const syncFavoriteStatus = () => {
+      const activeUid = auth.currentUser?.uid || (isGuestMode || localStorage.getItem('secret_area_unlocked') === 'true' ? 'guest' : null);
+      let inFavorites = false;
+      try {
+        const savedStash = JSON.parse(localStorage.getItem('myStash') || localStorage.getItem('stash') || '[]');
+        if (Array.isArray(savedStash) && savedStash.some(s => String(s).toLowerCase() === String(item.id).toLowerCase())) {
+          inFavorites = true;
+        }
+      } catch {}
+
+      if (stash && stash.some(s => String(s).toLowerCase() === String(item.id).toLowerCase())) {
+        inFavorites = true;
+      }
+
+      if (activeUid) {
+        const prof = getLocalProfile(activeUid);
+        if (prof) {
+          const profStash = prof.stash || [];
+          if (profStash.some((s: any) => String(s).toLowerCase() === String(item.id).toLowerCase())) {
+            inFavorites = true;
+          }
+          const profFavs = prof.favorites || prof.favoriteGames || [];
+          if (profFavs.some((g: any) => {
+            if (!g) return false;
+            if (typeof g === 'string') return g.toLowerCase() === String(item.id).toLowerCase();
+            return (g.id && String(g.id).toLowerCase() === String(item.id).toLowerCase()) ||
+                   (g.gameId && String(g.gameId).toLowerCase() === String(item.id).toLowerCase()) ||
+                   (g.name && item.name && String(g.name).toLowerCase().trim() === String(item.name).toLowerCase().trim());
+          })) {
+            inFavorites = true;
+          }
+        }
+      }
+
+      setIsFavorite(inFavorites);
+    };
+
+    syncFavoriteStatus();
+    window.addEventListener('secretarea_profile_sync', syncFavoriteStatus);
+
+    let unsubFirestore: (() => void) | null = null;
+    if (auth.currentUser) {
+      try {
+        const userDocRef = doc(db, 'users', auth.currentUser.uid);
+        unsubFirestore = onSnapshot(userDocRef, (snap) => {
+          if (snap.exists()) {
+            const data = snap.data();
+            const sList = data.stash || [];
+            const fList = data.favorites || data.favoriteGames || [];
+            let inFav = sList.some((s: any) => String(s).toLowerCase() === String(item.id).toLowerCase());
+            if (!inFav) {
+              inFav = fList.some((g: any) => {
+                if (!g) return false;
+                if (typeof g === 'string') return g.toLowerCase() === String(item.id).toLowerCase();
+                return (g.id && String(g.id).toLowerCase() === String(item.id).toLowerCase()) ||
+                       (g.gameId && String(g.gameId).toLowerCase() === String(item.id).toLowerCase()) ||
+                       (g.name && item.name && String(g.name).toLowerCase().trim() === String(item.name).toLowerCase().trim());
+              });
+            }
+            setIsFavorite(inFav);
+          }
+        }, () => {});
+      } catch (e) {}
+    }
+
+    return () => {
+      window.removeEventListener('secretarea_profile_sync', syncFavoriteStatus);
+      if (unsubFirestore) unsubFirestore();
+    };
+  }, [item.id, item.name, stash, isGuestMode, currentUser]);
+
+  // Sync current library status in real time with local & remote profile
   useEffect(() => {
     const syncLibraryStatus = () => {
       const activeUid = auth.currentUser?.uid || (isGuestMode || localStorage.getItem('secret_area_unlocked') === 'true' ? 'guest' : null);
@@ -2525,14 +3424,46 @@ export const ResourceDetailModal: React.FC<{
         return;
       }
       const prof = getLocalProfile(activeUid);
-      const found = prof?.libraryGames?.find((g: any) => g.id === item.id);
-      setCurrentLibraryStatus(found ? found.status : null);
+      const libList = prof?.library || prof?.libraryGames || [];
+      const found = libList.find((g: any) => {
+        if (!g) return false;
+        if (typeof g === 'string') return g.toLowerCase() === String(item.id).toLowerCase();
+        return (g.id && String(g.id).toLowerCase() === String(item.id).toLowerCase()) ||
+               (g.gameId && String(g.gameId).toLowerCase() === String(item.id).toLowerCase()) ||
+               (g.name && item.name && String(g.name).toLowerCase().trim() === String(item.name).toLowerCase().trim());
+      });
+      setCurrentLibraryStatus(found ? (found.status || 'Playing') : null);
     };
 
     syncLibraryStatus();
     window.addEventListener('secretarea_profile_sync', syncLibraryStatus);
-    return () => window.removeEventListener('secretarea_profile_sync', syncLibraryStatus);
-  }, [item.id, isGuestMode, currentUser]);
+
+    let unsubFirestore: (() => void) | null = null;
+    if (auth.currentUser) {
+      try {
+        const userDocRef = doc(db, 'users', auth.currentUser.uid);
+        unsubFirestore = onSnapshot(userDocRef, (snap) => {
+          if (snap.exists()) {
+            const data = snap.data();
+            const libList = data.library || data.libraryGames || [];
+            const found = libList.find((g: any) => {
+              if (!g) return false;
+              if (typeof g === 'string') return g.toLowerCase() === String(item.id).toLowerCase();
+              return (g.id && String(g.id).toLowerCase() === String(item.id).toLowerCase()) ||
+                     (g.gameId && String(g.gameId).toLowerCase() === String(item.id).toLowerCase()) ||
+                     (g.name && item.name && String(g.name).toLowerCase().trim() === String(item.name).toLowerCase().trim());
+            });
+            setCurrentLibraryStatus(found ? (found.status || 'Playing') : null);
+          }
+        }, () => {});
+      } catch (e) {}
+    }
+
+    return () => {
+      window.removeEventListener('secretarea_profile_sync', syncLibraryStatus);
+      if (unsubFirestore) unsubFirestore();
+    };
+  }, [item.id, item.name, isGuestMode, currentUser]);
 
   // Click outside to close favorite/library dropdown
   useEffect(() => {
@@ -2567,7 +3498,12 @@ export const ResourceDetailModal: React.FC<{
           id: item.id,
           name: item.name,
           coverImage: item.coverImage || '',
-          category: item.category || 'Game'
+          category: item.category || 'Game',
+          genres: item.genres || '',
+          version: item.version || 'v1.0',
+          repackSize: item.repackSize || '',
+          description: item.description || '',
+          links: item.links || null
         }, 'library', status);
         setCurrentLibraryStatus(status);
         setLibraryFeedback(`${t('Added to Library') || 'Added to Library'}: ${t(status)}`);
@@ -2589,6 +3525,34 @@ export const ResourceDetailModal: React.FC<{
       setTimeout(() => setLibraryFeedback(null), 2500);
     } catch (err) {
       console.error("Error removing from library:", err);
+    }
+  };
+
+  const handleToggleFavorite = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    const nextFavorite = !isFavorite;
+    setIsFavorite(nextFavorite);
+
+    if (toggleStash) {
+      toggleStash(item.id, e, item);
+    } else {
+      const activeUid = auth.currentUser?.uid || (isGuestMode || localStorage.getItem('secret_area_unlocked') === 'true' ? 'guest' : null);
+      if (activeUid) {
+        await recordGameInteraction(activeUid, {
+          id: item.id,
+          name: item.name,
+          coverImage: item.coverImage || '',
+          category: item.category || 'game',
+          genres: item.genres || '',
+          version: item.version || 'v1.0',
+          repackSize: item.repackSize || '',
+          description: item.description || '',
+          links: item.links || null
+        }, nextFavorite ? 'favorite' : 'unfavorite');
+      }
     }
   };
 
@@ -2725,12 +3689,12 @@ export const ResourceDetailModal: React.FC<{
     >
       {/* Header with Breadcrumb and Close Button */}
       <div className="sticky top-0 z-50 bg-slate-50/90 dark:bg-[#0B1120]/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/50 px-4 sm:px-8 py-4 flex items-center justify-between">
-         <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
-            <span className="hover:text-primary-500 cursor-pointer" onClick={onClose}>{t('Home')}</span>
-            <span>/</span>
-            <span className="hover:text-primary-500 cursor-pointer capitalize" onClick={onClose}>{item.category === 'extra' ? t('SaveGame') : t(item.category || 'Games')}</span>
-            <span>/</span>
-            <span className="text-slate-900 dark:text-white">{item.name}</span>
+         <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400 overflow-hidden">
+            <span className="hover:text-primary-500 cursor-pointer shrink-0" onClick={onClose}>{t('Home')}</span>
+            <span className="shrink-0">/</span>
+            <span className="hover:text-primary-500 cursor-pointer capitalize shrink-0" onClick={onClose}>{getBreadcrumbCategoryLabel(item.category)}</span>
+            <span className="shrink-0">/</span>
+            <span className="text-slate-900 dark:text-white font-semibold truncate max-w-[200px] sm:max-w-md">{item.name}</span>
          </div>
          <button onClick={onClose} className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800">
              <Icon name="X" size={24} />
@@ -2879,16 +3843,16 @@ export const ResourceDetailModal: React.FC<{
                               className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-bold transition-all shadow-sm ${
                                   currentLibraryStatus
                                       ? 'bg-[#29aaea] text-white border-[#29aaea] shadow-[#29aaea]/20'
-                                      : stash.includes(item.id) 
+                                      : isFavorite 
                                           ? 'bg-amber-500 text-white border-amber-600 shadow-amber-500/20' 
                                           : 'bg-slate-100 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                               }`}
                           >
-                              <Icon name="Bookmark" size={16} className={stash.includes(item.id) ? "fill-current text-white" : ""} />
+                              <Icon name="Bookmark" size={16} className={isFavorite ? "fill-current text-white" : ""} />
                               <span>
                                   {currentLibraryStatus 
                                       ? t(currentLibraryStatus) 
-                                      : (stash.includes(item.id) ? t("Favorites") : t("Favorite"))}
+                                      : (isFavorite ? t("Favorites") : t("Favorite"))}
                               </span>
                               {currentLibraryStatus && (
                                   <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
@@ -2907,14 +3871,14 @@ export const ResourceDetailModal: React.FC<{
                               <div className="absolute top-full start-0 mt-2 w-56 bg-white dark:bg-[#151b28] border border-slate-200 dark:border-slate-700/80 rounded-xl shadow-2xl z-50 overflow-hidden text-sm font-medium py-1.5 backdrop-blur-md">
                                   {/* Quick Favorite/Bookmark toggle */}
                                   <button 
-                                      onClick={(e) => { toggleStash(item.id, e); }} 
+                                      onClick={(e) => { handleToggleFavorite(e); }} 
                                       className="w-full text-start px-3.5 py-2.5 hover:bg-slate-100 dark:hover:bg-slate-800/80 flex items-center justify-between transition-colors group"
                                   >
                                       <span className="flex items-center gap-2.5 text-slate-700 dark:text-slate-200 font-semibold text-xs sm:text-sm">
-                                          <Icon name="Bookmark" size={15} className={stash.includes(item.id) ? "fill-amber-400 text-amber-400" : "text-slate-400 group-hover:text-amber-400"} />
-                                          {stash.includes(item.id) ? t("Remove from Favorites") : t("Add to Favorites")}
+                                          <Icon name="Bookmark" size={15} className={isFavorite ? "fill-amber-400 text-amber-400" : "text-slate-400 group-hover:text-amber-400"} />
+                                          {isFavorite ? t("Remove from Favorites") : t("Add to Favorites")}
                                       </span>
-                                      {stash.includes(item.id) && (
+                                      {isFavorite && (
                                           <span className="text-[11px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold">★</span>
                                       )}
                                   </button>
@@ -4094,78 +5058,7 @@ const DownloadButton: React.FC<{
 };
 
 
-const LatestIntelPanel: React.FC<{
-  open: boolean;
-  onClose: () => void;
-  items: any[];
-}> = ({ open, onClose, items }) => {
-  const { dir, t } = useLanguage();
-  if (!open) return null;
-  return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-end p-0 sm:p-4"
-          onClick={onClose}
-        >
-          <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="w-full sm:w-[400px] bg-slate-50 dark:bg-[#0B1120] h-full sm:h-auto sm:max-h-full sm:rounded-2xl border-l sm:border border-slate-200 dark:border-slate-800 flex flex-col shadow-2xl overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-100 dark:bg-slate-900/50">
-              <div className="flex items-center gap-2">
-                <Icon name="Wifi" size={20} className="text-primary-500" />
-                <h2 className="font-bold text-slate-900 dark:text-white">{t('Latest Intel')}</h2>
-              </div>
-              <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full text-slate-500 transition-colors">
-                <Icon name="X" size={20} />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-              {items.map((item) => (
-                <div key={item.id} className="p-4 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 relative overflow-hidden shadow-sm">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${item.type === 'NEW' ? 'bg-emerald-500/10 text-emerald-900 dark:text-emerald-500 border border-emerald-500/20' : 'bg-blue-500/10 text-blue-500 border border-blue-500/20'}`}>
-                      {item.type}
-                    </span>
-                    <span className="text-[10px] text-slate-500 font-medium">
-                      {item.timestamp ? item.timestamp : t('Recent')}
-                    </span>
-                  </div>
-                  <h3 className="font-bold text-sm text-slate-900 dark:text-white mb-1 line-clamp-1">{item.title}</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{item.description}</p>
-                  <div className="mt-3 flex items-center gap-2">
-                    <span className="text-[10px] bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded font-medium text-slate-600 dark:text-slate-300">
-                      {item.category}
-                    </span>
-                    {item.version && item.category !== 'steamtools' && (
-                      <span className="text-[10px] bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded font-medium text-slate-600 dark:text-slate-300">
-                        v{item.version}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {items.length === 0 && (
-                <div className="text-center py-8 text-slate-500">
-                  <Icon name="Folder" size={32} className="mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No recent intel available</p>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-};
+
 
 const MostPopularRepacksModal: React.FC<{
     isOpen: boolean,
@@ -5010,28 +5903,47 @@ const SecretArea: React.FC = () => {
   const [showAllProfiles, setShowAllProfiles] = useState(false);
 
   useEffect(() => {
-    const savedStash = localStorage.getItem('myStash');
-    if (savedStash) {
-      try {
-        setStash(JSON.parse(savedStash));
-      } catch (e) {
-        console.error("Failed to parse stash from local storage");
+    const syncStashState = (e?: any) => {
+      if (e?.detail?.profile) {
+        const p = e.detail.profile;
+        if (Array.isArray(p.stash)) {
+          setStash(p.stash);
+          return;
+        }
+        if (Array.isArray(p.favorites)) {
+          setStash(p.favorites.map((f: any) => typeof f === 'string' ? f : (f?.id || f?.gameId || '')).filter(Boolean));
+          return;
+        }
       }
-    }
+      try {
+        const savedStash = JSON.parse(localStorage.getItem('myStash') || localStorage.getItem('stash') || '[]');
+        if (Array.isArray(savedStash)) {
+          setStash(savedStash);
+        }
+      } catch (err) {}
+    };
 
-    if (currentUser) {
-      let unsub: (() => void) | null = null;
+    syncStashState();
+    window.addEventListener('secretarea_profile_sync', syncStashState);
+
+    const activeUid = currentUser?.uid || (localStorage.getItem('secret_area_unlocked') === 'true' ? 'guest' : null);
+    let unsub: (() => void) | null = null;
+    if (activeUid) {
       import('../src/services/userService').then(({ subscribeUserProfile }) => {
-        unsub = subscribeUserProfile(currentUser.uid, (data) => {
+        unsub = subscribeUserProfile(activeUid, (data) => {
           if (data.stash && Array.isArray(data.stash)) {
             setStash(data.stash);
+          } else if (data.favorites && Array.isArray(data.favorites)) {
+            setStash(data.favorites.map((f: any) => typeof f === 'string' ? f : (f?.id || f?.gameId || '')).filter(Boolean));
           }
         }, currentUser);
       });
-      return () => {
-        if (unsub) unsub();
-      };
     }
+
+    return () => {
+      window.removeEventListener('secretarea_profile_sync', syncStashState);
+      if (unsub) unsub();
+    };
   }, [currentUser]);
 
   const showGuestNotification = () => {
@@ -5047,60 +5959,70 @@ const SecretArea: React.FC = () => {
     }, 8000);
   };
 
-  const toggleStash = (id: string, e?: React.MouseEvent) => {
+  const toggleStash = (id: string, e?: React.MouseEvent, itemObj?: ResourceItem) => {
     if (e) {
       e.stopPropagation();
       e.preventDefault();
     }
     
-    // Perform state updates and side effects separately to avoid React Strict Mode double-invocation issues
-    setStash(prev => {
-      const isAdding = !prev.includes(id);
-      const newStash = isAdding ? [...prev, id] : prev.filter(i => i !== id);
+    const isAdding = !stash.some(s => String(s).toLowerCase() === String(id).toLowerCase());
+    const newStash = isAdding 
+      ? [...stash.filter(i => String(i).toLowerCase() !== String(id).toLowerCase()), id] 
+      : stash.filter(i => String(i).toLowerCase() !== String(id).toLowerCase());
       
-      // We do local storage and animation synchronously with state update (safe enough here)
+    setStash(newStash);
+    try {
       localStorage.setItem('myStash', JSON.stringify(newStash));
-      if (isAdding) {
-         setAnimateStashTab(true);
-         setTimeout(() => setAnimateStashTab(false), 500);
-      }
-      return newStash;
-    });
+      localStorage.setItem('stash', JSON.stringify(newStash));
+    } catch (err) {}
 
-    // Fire-and-forget the Firestore sync outside the updater
-    const isAdding = !stash.includes(id);
-    import('../src/firebase').then(({ auth, db }) => {
-        if (auth.currentUser) {
-            const nextStashList = isAdding ? [...stash, id] : stash.filter(i => i !== id);
-            import('../src/services/userService').then(({ saveUserStash }) => {
-                saveUserStash(auth.currentUser!.uid, nextStashList);
-            });
+    if (isAdding) {
+       setAnimateStashTab(true);
+       setTimeout(() => setAnimateStashTab(false), 500);
+    }
 
-            let targetItem: ResourceItem | null = null;
-            for (const category in allResources) {
-                const match = allResources[category].find((r: any) => r.id === id);
-                if (match) {
-                    targetItem = match;
-                    break;
-                }
-            }
+    const activeUid = currentUser?.uid || (isGuestMode || localStorage.getItem('secret_area_unlocked') === 'true' ? 'guest' : null);
 
-            if (targetItem) {
-                recordGameInteraction(auth.currentUser.uid, {
-                    id: targetItem.id,
-                    name: targetItem.name,
-                    coverImage: targetItem.coverImage,
-                    category: targetItem.category
-                }, isAdding ? 'favorite' : 'unfavorite');
-            } else if (!isAdding) {
-                recordGameInteraction(auth.currentUser.uid, {
-                    id: id,
-                    name: '',
-                    coverImage: ''
-                }, 'unfavorite');
-            }
+    let targetItem: ResourceItem | null = itemObj || null;
+    if (!targetItem) {
+      for (const category in allResources) {
+        const match = allResources[category].find((r: any) => 
+          String(r.id).toLowerCase() === String(id).toLowerCase() || 
+          (r.gameId && String(r.gameId).toLowerCase() === String(id).toLowerCase())
+        );
+        if (match) {
+          targetItem = match;
+          break;
         }
-    });
+      }
+    }
+
+    if (activeUid) {
+      import('../src/services/userService').then(({ saveUserStash, recordGameInteraction }) => {
+        saveUserStash(activeUid, newStash);
+
+        if (targetItem) {
+          recordGameInteraction(activeUid, {
+            id: targetItem.id,
+            name: targetItem.name,
+            coverImage: targetItem.coverImage || '',
+            category: targetItem.category || 'game',
+            genres: targetItem.genres || '',
+            version: targetItem.version || 'v1.0',
+            repackSize: targetItem.repackSize || '',
+            description: targetItem.description || '',
+            links: targetItem.links || null
+          }, isAdding ? 'favorite' : 'unfavorite');
+        } else {
+          recordGameInteraction(activeUid, {
+            id: id,
+            name: id,
+            coverImage: '',
+            category: 'game'
+          }, isAdding ? 'favorite' : 'unfavorite');
+        }
+      });
+    }
   };
 
   const [selectedResource, setSelectedResource] = useState<ResourceItem | null>(null);
@@ -5183,6 +6105,19 @@ const SecretArea: React.FC = () => {
       }
     }
   }, [routerLocation.state, routerLocation.search, routerLocation.pathname, allResources]);
+
+  // Handle direct selection from Recent Products panel
+  useEffect(() => {
+    const handleOpenCatalogItem = (e: any) => {
+      if (e.detail) {
+        setSelectedResource(e.detail);
+      }
+    };
+    window.addEventListener('open-catalog-item', handleOpenCatalogItem);
+    return () => {
+      window.removeEventListener('open-catalog-item', handleOpenCatalogItem);
+    };
+  }, []);
 
   // Track user views and recent activity
   useEffect(() => {
@@ -5456,25 +6391,41 @@ const SecretArea: React.FC = () => {
     }
   };
 
-  // Global System Filter
-  const [globalSpecs, setGlobalSpecs] = useState({
-    ram: 16,
-    os: '10',
-    cpuModel: 'Core i5-12400',
-    gpuModel: 'GeForce RTX 3060',
-    isActive: false
-  });
-  const [showGlobalFilter, setShowGlobalFilter] = useState(false);
-  const [hideFailedGames, setHideFailedGames] = useState(false);
+  // Global System Filter - initialized directly from stored hardware specs
+  const [globalSpecs, setGlobalSpecs] = useState(() => getStoredHardwareSpecs());
+  const [hideFailedGames] = useState(false);
+
+  // Synchronize hardware specs in real time across Settings, Details Modal, and catalog cards
+  useEffect(() => {
+    const handleSync = (e: any) => {
+      if (e.detail) {
+        setGlobalSpecs(e.detail);
+      }
+    };
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'secretarea_hardware_specs' && e.newValue) {
+        try {
+          setGlobalSpecs(JSON.parse(e.newValue));
+        } catch (err) {}
+      }
+    };
+    window.addEventListener('secretarea_hardware_sync', handleSync);
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      window.removeEventListener('secretarea_hardware_sync', handleSync);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
 
   useEffect(() => {
     if (currentUser) {
         const local = getLocalProfile(currentUser.uid);
         if (local?.pcSpecs) {
-            setGlobalSpecs(prev => ({
-                ...prev,
-                ...local.pcSpecs
-            }));
+            setGlobalSpecs(prev => {
+                const merged = { ...prev, ...local.pcSpecs };
+                saveUserHardwareSpecs(currentUser.uid, merged);
+                return merged;
+            });
         }
         import('../src/firebase').then(({ db }) => {
             import('firebase/firestore').then(({ doc, getDoc }) => {
@@ -5482,10 +6433,11 @@ const SecretArea: React.FC = () => {
                 getDoc(docRef).then(snap => {
                     if (snap.exists() && snap.data().pcSpecs) {
                         const specs = snap.data().pcSpecs;
-                        setGlobalSpecs(prev => ({
-                            ...prev,
-                            ...specs
-                        }));
+                        setGlobalSpecs(prev => {
+                            const merged = { ...prev, ...specs };
+                            saveUserHardwareSpecs(currentUser.uid, merged);
+                            return merged;
+                        });
                     }
                 }).catch((err) => {
                     if (err?.code !== 'permission-denied' && !err?.message?.includes('permissions')) {
@@ -5548,7 +6500,6 @@ const SecretArea: React.FC = () => {
     addItems(allResources['steamtools'] || [], 'STEAMTOOLS');
     addItems(allResources['architect'] || [], 'ARCHITECT');
     addItems(allResources['extra'] || [], 'EXTRA');
-    addItems(upcomingGames || [], 'UPCOMING');
 
     // Sort globally by timestamp descending
     return items.sort((a, b) => {
@@ -5559,7 +6510,7 @@ const SecretArea: React.FC = () => {
         if (!isNaN(dB)) return 1;
         return 0;
     });
-  }, [allResources, upcomingGames]);
+  }, [allResources]);
 
   const recentProducts = useMemo(() => {
     let all: { item: ResourceItem, rowIndex: number, dateScore: number }[] = [];
@@ -5590,6 +6541,14 @@ const SecretArea: React.FC = () => {
   }, [allResources]);
 
   const [showSteamModal, setShowSteamModal] = useState(false);
+  const [rewardLoginModalTarget, setRewardLoginModalTarget] = useState<'steam' | 'mastergift' | null>(null);
+  const isGmailUser = Boolean(
+    currentUser &&
+    !isGuestMode &&
+    localStorage.getItem('nexa_guest_mode') !== 'true' &&
+    localStorage.getItem('secret_area_unlocked') !== 'guest' &&
+    (currentUser.email || currentUser.providerData?.some((p: any) => p?.providerId === 'google.com'))
+  );
 
   // Math Game State
   const [showMathGame, setShowMathGame] = useState(false);
@@ -6263,41 +7222,48 @@ const SecretArea: React.FC = () => {
         console.warn("Writing to cache failed:", cacheErr);
       }
     } catch (err: any) {
-      console.warn("Fetch failed, using local offline backup and cache data:", err);
+      const isAbortOrTeardown = err?.name === 'AbortError' || err?.message === 'Failed to fetch';
+      if (!silent && !isAbortOrTeardown) {
+        console.warn("Fetch failed, using local offline backup and cache data:", err);
+      }
       let loadedData = null;
       try {
         const cached = localStorage.getItem('cached_secret_resources');
         if (cached) {
           loadedData = JSON.parse(cached);
-          console.log("Successfully loaded resources from localStorage cache.");
+          if (!silent) console.log("Successfully loaded resources from localStorage cache.");
         }
       } catch (e) {
-        console.warn("LocalStorage cache read failed:", e);
+        if (!silent) console.warn("LocalStorage cache read failed:", e);
       }
 
       if (!loadedData) {
         loadedData = backupData;
-        console.log("Successfully fell back to local JSON backup.");
+        if (!silent) console.log("Successfully fell back to local JSON backup.");
       }
 
       if (loadedData) {
         processRawData(loadedData);
         dataToPreload = loadedData;
         
-        // Show subtle notification about offline mode
-        const notifId = Date.now();
-        setNotifications(prev => [...prev, {
-            id: notifId,
-            title: 'Offline Backup Active',
-            text: 'Connection to cloud database is unavailable. Displaying local offline database.',
-            time: 'Just now'
-        }]);
-        setTimeout(() => {
-            setNotifications(prev => prev.filter(n => n.id !== notifId));
-        }, 6000);
+        // Show subtle notification about offline mode only when active and not aborting
+        if (!silent && !isAbortOrTeardown) {
+          const notifId = Date.now();
+          setNotifications(prev => [...prev, {
+              id: notifId,
+              title: 'Offline Backup Active',
+              text: 'Connection to cloud database is unavailable. Displaying local offline database.',
+              time: 'Just now'
+          }]);
+          setTimeout(() => {
+              setNotifications(prev => prev.filter(n => n.id !== notifId));
+          }, 6000);
+        }
       } else {
-        setError("CRITICAL ERROR: Google Apps Script Connection Failed and no local backup could be found.");
-        setMaintenanceConfig(null);
+        if (!silent) {
+          setError("CRITICAL ERROR: Google Apps Script Connection Failed and no local backup could be found.");
+          setMaintenanceConfig(null);
+        }
       }
     } finally {
       setLoading(false);
@@ -6427,10 +7393,12 @@ const SecretArea: React.FC = () => {
       }
   };
 
+  const hasPrefetchedRef = useRef(false);
   useEffect(() => { 
       if (isUnlocked) {
           fetchData(); 
-      } else {
+      } else if (!hasPrefetchedRef.current) {
+          hasPrefetchedRef.current = true;
           fetchData(true);
       }
   }, [isUnlocked]);
@@ -6485,34 +7453,39 @@ const SecretArea: React.FC = () => {
     let currentTabData: ResourceItem[] = allResources[activeTab] || [];
 
     const query = searchQuery.toLowerCase();
-    const filtered = currentTabData.filter(item => 
+    let filtered = currentTabData.filter(item => 
       item.name.toLowerCase().includes(query) || 
       item.id.toLowerCase().includes(query) ||
       (item.genres && item.genres.toLowerCase().includes(query)) ||
       (item.gameId && String(item.gameId).toLowerCase().includes(query))
     );
+
+    if (globalSpecs.isActive && hideFailedGames) {
+      const activeSpecsWithTiers = {
+        ...globalSpecs,
+        cpuTier: getCpuTier(globalSpecs.cpuModel),
+        gpuTier: getGpuTier(globalSpecs.gpuModel)
+      };
+      filtered = filtered.filter(item => {
+        const comp = checkCompatibilityStatus(activeSpecsWithTiers, item.systemReqs || []);
+        return comp !== 'fail';
+      });
+    }
+
     return filtered.sort((a, b) => {
         if (a.isPinned === b.isPinned) return 0;
         return a.isPinned ? -1 : 1;
     });
-  }, [allResources, activeTab, searchQuery]);
+  }, [allResources, activeTab, searchQuery, globalSpecs, hideFailedGames]);
 
   
   useEffect(() => {
-    const handleOpenIntelPanel = () => {
-        setShowIntelPanel(true);
-        if (intelItems.length > 0) {
-            localStorage.setItem('last_seen_intel', String(new Date(intelItems[0].timestamp || 0).getTime()));
-        }
-        window.dispatchEvent(new Event('intel-opened'));
-    };
-    window.addEventListener('open-intel-panel', handleOpenIntelPanel);
-    return () => window.removeEventListener('open-intel-panel', handleOpenIntelPanel);
-  }, [intelItems]);
-
-  useEffect(() => {
     if (intelItems.length > 0) {
-        window.dispatchEvent(new CustomEvent('intel-updated', { detail: String(new Date(intelItems[0].timestamp || 0).getTime()) }));
+      try {
+        localStorage.setItem('cached_intel_items', JSON.stringify(intelItems));
+      } catch (e) {}
+      window.dispatchEvent(new CustomEvent('intel-items-data', { detail: intelItems }));
+      window.dispatchEvent(new CustomEvent('intel-updated', { detail: String(new Date(intelItems[0].timestamp || 0).getTime()) }));
     }
   }, [intelItems]);
 
@@ -7056,7 +8029,6 @@ const paginatedData = useMemo(() => {
       </div>
 
       <DisclaimerModal open={showDisclaimer} onClose={handleCloseDisclaimer} />
-      <LatestIntelPanel open={showIntelPanel} onClose={() => setShowIntelPanel(false)} items={intelItems} />
       <DuaPopup />
 
       <AnimatePresence>
@@ -7133,6 +8105,11 @@ const paginatedData = useMemo(() => {
                 open={showSteamModal} 
                 onClose={() => setShowSteamModal(false)} 
                 accounts={steamAccounts} 
+                isLockedForGuest={!isGmailUser}
+                onLoginClick={() => {
+                  setShowSteamModal(false);
+                  setRewardLoginModalTarget('steam');
+                }}
             />
         )}
       </AnimatePresence>
@@ -7143,6 +8120,27 @@ const paginatedData = useMemo(() => {
                 open={showMasterGiftModal} 
                 onClose={() => setShowMasterGiftModal(false)} 
                 accounts={masterGifts} 
+                isLockedForGuest={!isGmailUser}
+                onLoginClick={() => {
+                  setShowMasterGiftModal(false);
+                  setRewardLoginModalTarget('mastergift');
+                }}
+            />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {rewardLoginModalTarget && (
+            <RewardLoginModal
+                open={Boolean(rewardLoginModalTarget)}
+                target={rewardLoginModalTarget}
+                onClose={() => setRewardLoginModalTarget(null)}
+                onSuccess={() => {
+                  const target = rewardLoginModalTarget;
+                  setRewardLoginModalTarget(null);
+                  if (target === 'steam') setShowSteamModal(true);
+                  if (target === 'mastergift') setShowMasterGiftModal(true);
+                }}
             />
         )}
       </AnimatePresence>
@@ -7159,177 +8157,8 @@ const paginatedData = useMemo(() => {
         games={allResources['game']?.slice(0, 8) || []}
         onSelectGame={(game, action) => { setSelectedResource(game); setSelectedResourceAction(action); }}
       />
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-24 pb-4 md:pb-8 relative z-10">
-        
-        <header className="flex flex-col gap-6 lg:gap-8 mb-12 relative z-[9999] pointer-events-auto">
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 overflow-x-auto no-scrollbar max-w-full pb-1">
-               {isGuestMode && (
-                 <motion.div 
-                   initial={{ opacity: 0, y: -10 }}
-                   animate={{ opacity: 1, y: 0 }}
-                   className="px-3 py-1.5 border rounded-lg flex items-center gap-2.5 shadow-lg whitespace-nowrap shrink-0 relative overflow-hidden bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-200 shadow-[0_0_15px_rgba(148,163,184,0.3)]"
-                 >
-                    <Icon name="User" size={14} className="opacity-80" />
-                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider">{t('GUEST MODE')}</span>
-                 </motion.div>
-               )}
-               <motion.div 
-                 initial={{ opacity: 0, y: -10 }}
-                 animate={{ opacity: 1, y: 0 }}
-                 transition={{ duration: 0.5 }}
-                 className={`px-3 py-1.5 border rounded-lg flex items-center gap-2.5 shadow-lg whitespace-nowrap shrink-0 relative overflow-hidden group transition-all duration-300 ${
-                   networkStatus.isTesting
-                     ? 'bg-yellow-50 dark:bg-yellow-900/30 border-yellow-200 dark:border-yellow-500/40 text-yellow-600 dark:text-yellow-400 shadow-[0_0_15px_rgba(234,179,8,0.2)] hover:shadow-[0_0_25px_rgba(234,179,8,0.4)]'
-                     : networkStatus.quality === 'Excellent' || networkStatus.quality === 'Good' || !networkStatus.quality // default fallback
-                       ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-500/40 text-primary-600 dark:text-primary-400 shadow-[0_0_15px_rgba(14,165,233,0.2)] hover:shadow-[0_0_25px_rgba(14,165,233,0.4)]'
-                       : 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-500/40 text-red-600 dark:text-red-400 shadow-[0_0_15px_rgba(239,68,68,0.2)] hover:shadow-[0_0_25px_rgba(239,68,68,0.4)]'
-                 }`}
-               >
-                  <div className={`absolute inset-0 bg-gradient-to-r from-transparent to-transparent -start-full group-hover:animate-[shimmer_1.5s_infinite] ${
-                    networkStatus.isTesting ? 'via-yellow-400/10' : (networkStatus.quality === 'Poor' || networkStatus.quality === 'Fair' ? 'via-red-400/10' : 'via-primary-400/10')
-                  }`} />
-                  <span className="relative flex h-2 w-2">
-                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                      networkStatus.isTesting ? 'bg-yellow-400' : (networkStatus.quality === 'Poor' || networkStatus.quality === 'Fair' ? 'bg-red-400' : 'bg-primary-400')
-                    }`}></span>
-                    <span className={`relative inline-flex rounded-full h-2 w-2 ${
-                      networkStatus.isTesting ? 'bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,1)]' : (networkStatus.quality === 'Poor' || networkStatus.quality === 'Fair' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,1)]' : 'bg-primary-500 shadow-[0_0_8px_rgba(14,165,233,1)]')
-                    }`}></span>
-                  </span>
-                  <span className="text-[10px] font-mono font-bold tracking-[0.15em] flex items-center">
-                     <motion.span 
-                       className="hidden sm:inline"
-                       animate={{ opacity: [1, 0.7, 1], textShadow: ["0 0 0px transparent", `0 0 8px ${networkStatus.isTesting ? 'rgba(234,179,8,0.5)' : (networkStatus.quality === 'Poor' || networkStatus.quality === 'Fair' ? 'rgba(239,68,68,0.5)' : 'rgba(14,165,233,0.5)')}`, "0 0 0px transparent"] }}
-                       transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                     >
-                       {networkStatus.isTesting ? t('ANALYZING CONNECTION...') : (networkStatus.quality === 'Poor' || networkStatus.quality === 'Fair' ? t('CONNECTION UNSTABLE') : t('SECURE CONNECTION ESTABLISHED'))}
-                     </motion.span>
-                     <span className="sm:hidden">{networkStatus.isTesting ? t('ANALYZING') : (networkStatus.quality === 'Poor' || networkStatus.quality === 'Fair' ? t('UNSTABLE') : t('SECURE'))}</span>
-                  </span>
-               </motion.div>
-
-               <motion.div 
-                 initial={{ opacity: 0, y: -10 }}
-                 animate={{ opacity: 1, y: 0 }}
-                 transition={{ duration: 0.5, delay: 0.1 }}
-                 className="flex items-center gap-2.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-500/30 rounded-lg text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-700 dark:text-emerald-400 whitespace-nowrap shrink-0 relative overflow-hidden group shadow-[0_0_10px_rgba(16,185,129,0.1)] hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all duration-300"
-               >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-400/10 to-transparent -start-full group-hover:animate-[shimmer_1.5s_infinite]" />
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                    className="flex items-center justify-center text-emerald-900 dark:text-emerald-500"
-                  >
-                    <Icon name="Loader2" size={12} /> 
-                  </motion.div>
-                  <span className="tabular-nums tracking-wider">{visitorCount.toLocaleString()}</span> 
-                  <motion.span 
-                    className="hidden sm:inline tracking-[0.1em]"
-                    animate={{ opacity: [0.8, 1, 0.8], textShadow: ["0 0 0px transparent", "0 0 8px rgba(16,185,129,0.6)", "0 0 0px transparent"] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                  >{t('NODES ACTIVE')}</motion.span>
-                  <span className="sm:hidden text-emerald-900 dark:text-emerald-500 ms-1">
-                    <Icon name="Activity" size={12} />
-                  </span>
-               </motion.div>
-            </div>
-            
-            <h1 className="text-5xl md:text-7xl lg:text-[5rem] xl:text-7xl lg:whitespace-nowrap font-black text-slate-900 dark:text-white tracking-tighter leading-none uppercase italic relative shrink-0">
-              {t('SecretTitle1')} <motion.span 
-                className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-cyan-300 inline-block ms-2"
-                animate={{
-                  textShadow: [
-                    "0px 0px 0px transparent",
-                    "2px 0px 0px rgba(255,0,0,0.8), -2px 0px 0px rgba(0,0,255,0.8)",
-                    "0px 0px 0px transparent"
-                  ],
-                  x: [0, -2, 2, 0],
-                  skewX: [0, 10, -10, 0]
-                }}
-                transition={{
-                  duration: 0.25,
-                  repeat: Infinity,
-                  repeatDelay: 4,
-                  repeatType: "mirror",
-                  ease: "easeInOut"
-                }}
-              >{t('SecretTitle2')}</motion.span>
-            </h1>
-            <p className="text-slate-600 dark:text-slate-300 max-w-xl text-sm md:text-base font-medium leading-relaxed border-s-2 border-slate-300 dark:border-slate-800 ps-4">
-              {t('Everything you need, from games to tools, collected from trusted sources and presented in a clean experience ad-free.')}
-            </p>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap items-center gap-3 w-full mt-2 relative z-[90]">
-            <button 
-                id="btn-free-accounts"
-                type="button"
-                onClick={(e) => { 
-                    e.preventDefault(); 
-                    if (isGuestMode) { showGuestNotification?.(); return; }
-                    setShowSteamModal(true); 
-                }}
-                className="relative w-full md:w-auto flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden z-[100] cursor-pointer"
-            >
-                <Icon name="BrandSteam" size={18} className="group-hover:scale-110 transition-transform shrink-0 relative z-10" /> 
-                <span className="relative z-10 flex items-center gap-1.5">
-                    {t('Free Accounts')}
-                    {steamAccounts && steamAccounts.length > 0 && (
-                        <span className="flex items-center justify-center bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-black shadow-md border border-red-400">
-                            {steamAccounts.length}
-                        </span>
-                    )}
-                </span>
-            </button>
-            <button 
-                id="btn-master-gift"
-                type="button"
-                onClick={(e) => { e.preventDefault(); setShowMasterGiftModal(true); }}
-                className="relative w-full md:w-auto flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden z-[100] cursor-pointer"
-            >
-                <Icon name="Gift" size={18} className="text-yellow-300 group-hover:scale-110 transition-transform shrink-0 relative z-10" /> 
-                <span className="relative z-10 flex items-center gap-1.5">
-                    {t('Master Gift')}
-                    {masterGifts && masterGifts.length > 0 && (
-                        <span className="flex items-center justify-center bg-yellow-400 text-yellow-900 text-[9px] px-1.5 py-0.5 rounded-full font-black shadow-md border border-yellow-300">
-                            {masterGifts.length}
-                        </span>
-                    )}
-                </span>
-            </button>
-            <a id="join-community-btn" href={DISCORD_LINK} target="_blank" rel="noreferrer" className="relative z-[100] cursor-pointer w-full md:w-auto flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden">
-               <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-               <Icon name="Discord" size={18} className="group-hover:scale-110 transition-transform shrink-0 relative z-10" />
-                <span className="relative z-10">{t('Join Community')}</span>
-            </a>
-            <a id="channel-btn" href={TELEGRAM_LINK} target="_blank" rel="noreferrer" className="relative z-[100] cursor-pointer w-full md:w-auto flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-[#229ED9] hover:bg-[#1D85B8] text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden">
-               <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-               <Icon name="Telegram" size={18} className="group-hover:scale-110 transition-transform shrink-0 relative z-10" />
-                <span className="relative z-10 flex items-center gap-2">
-                   {t('Channel')} <span className="flex h-2 w-2 relative">
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-white shadow-[0_0_8px_rgba(255,255,255,1)]" style={{ animation: 'pulse 0.8s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}></span>
-                   </span>
-               </span>
-            </a>
-            <a id="subreddit-btn" href={REDDIT_LINK} target="_blank" rel="noreferrer" className="relative z-[100] cursor-pointer w-full md:w-auto flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-[#FF4500] hover:bg-[#E03D00] text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95 group text-center whitespace-nowrap overflow-hidden">
-               <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-               <Icon name="Reddit" size={18} className="group-hover:scale-110 transition-transform shrink-0 relative z-10" />
-                <span className="relative z-10 flex items-center gap-2">{t('Join Community')}</span>
-            </a>
-            <button 
-                onClick={(e) => { e.preventDefault(); setShowDonateModal(true); }}
-                className="relative w-full md:w-auto flex items-center justify-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-widest transition-all shadow-sm hover:shadow-md hover:shadow-pink-500/20 active:scale-95 group text-center whitespace-nowrap overflow-hidden z-[100] cursor-pointer"
-            >
-                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <Icon name="Heart" size={18} className="text-white group-hover:scale-110 group-hover:animate-pulse transition-transform shrink-0 relative z-10" /> 
-                <span className="relative z-10 flex items-center gap-1.5">{t('Support Us')}</span>
-            </button>
-          </div>
-        </header>
-
-        <div className="mb-12 lg:mb-16">
-          <NetworkDiagnostic onStatusChange={setNetworkStatus} />
-        </div>
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 md:pt-10 pb-4 md:pb-8 relative z-10">
+        <PartnersSection />
 
         {/* PROMO SECTION */}
         <section className="mb-16 w-full">
@@ -7349,7 +8178,17 @@ const paginatedData = useMemo(() => {
                   </p>
                   
                     <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start pt-2">
-                     <button onClick={(e) => { e.preventDefault(); setShowSteamModal(true); }} className="relative px-8 py-3.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-black uppercase tracking-widest shadow-lg transition-all active:scale-95 flex items-center gap-2">
+                     <button 
+                        onClick={(e) => { 
+                            e.preventDefault(); 
+                            if (!isGmailUser) {
+                                setRewardLoginModalTarget('steam');
+                                return;
+                            }
+                            setShowSteamModal(true); 
+                        }} 
+                        className="relative px-8 py-3.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-black uppercase tracking-widest shadow-lg transition-all active:scale-95 flex items-center gap-2"
+                     >
                         {steamAccounts && steamAccounts.length > 0 && (
                             <span className="absolute -top-1.5 -end-1.5 flex h-3.5 w-3.5 items-center justify-center z-20">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -7359,7 +8198,17 @@ const paginatedData = useMemo(() => {
                         <Icon name="User" size={20} />
                         {t('Free Accounts')}
                      </button>
-                     <button onClick={(e) => { e.preventDefault(); setShowMasterGiftModal(true); }} className="relative px-8 py-3.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-black uppercase tracking-widest shadow-lg transition-all active:scale-95 flex items-center gap-2">
+                     <button 
+                        onClick={(e) => { 
+                            e.preventDefault(); 
+                            if (!isGmailUser) {
+                                setRewardLoginModalTarget('mastergift');
+                                return;
+                            }
+                            setShowMasterGiftModal(true); 
+                        }} 
+                        className="relative px-8 py-3.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-black uppercase tracking-widest shadow-lg transition-all active:scale-95 flex items-center gap-2"
+                     >
                         {masterGifts && masterGifts.length > 0 && (
                             <span className="absolute -top-1.5 -end-1.5 flex h-3.5 w-3.5 items-center justify-center z-20">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -7507,16 +8356,55 @@ const paginatedData = useMemo(() => {
           </div>
         </section>
 
-        <div className="sticky top-20 z-40 mb-10">
-           <div className="bg-white/80 dark:bg-slate-900/80 md:backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-2 rounded-2xl shadow-2xl transition-all">
-              <div className="flex flex-col gap-3 items-stretch justify-between">
-                  <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between w-full min-w-0">
+        {/* Section Header: Title and Subtitle for game, hypervisor, steamtools, tools, savegame */}
+        <section id="secretarea-library" className="scroll-mt-24" dir={dir}>
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
+            <div>
+              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-primary-500/10 text-primary-500 border border-primary-500/20">
+                  {t('SecretArea Library')}
+                </span>
+                <span className="text-xs text-slate-400 font-bold select-none">/</span>
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                  {activeTab === 'hypervisor' ? t('Game Hypervisor') :
+                   activeTab === 'architect' ? t('Tools & Software') :
+                   activeTab === 'extra' ? t('SaveGame Archives') :
+                   activeTab === 'steamtools' ? t('SteamTools') :
+                   t('PC Games')}
+                </span>
+              </div>
+              <h2 
+                className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight" 
+                style={{ fontFamily: dir === 'rtl' ? "'Cairo', 'Amiri', sans-serif" : "'Oswald', sans-serif" }}
+              >
+                {activeTab === 'game' ? t('PC Games') :
+                 activeTab === 'hypervisor' ? t('Game Hypervisor') :
+                 activeTab === 'steamtools' ? t('SteamTools') :
+                 activeTab === 'architect' ? t('Tools & Software') :
+                 t('SaveGame Archives')}
+              </h2>
+              <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium mt-1 leading-relaxed max-w-3xl">
+                {activeTab === 'game' ? t('Explore verified PC games, repacks, and direct download channels.') :
+                 activeTab === 'hypervisor' ? t('Virtualization platforms, emulators, and system runtimes.') :
+                 activeTab === 'steamtools' ? t('Steam utility items, manifests, and library management tools.') :
+                 activeTab === 'architect' ? t('Architecture, graphic design, and productivity software tools.') :
+                 t('Completed game saves, progression unlocks, and backup archives.')}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="sticky top-16 sm:top-20 z-40 mb-8 sm:mb-10">
+           <div className="bg-white/80 dark:bg-slate-900/80 md:backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-2 sm:p-2.5 rounded-2xl shadow-2xl transition-all">
+              <div className="flex flex-col gap-2.5 sm:gap-3 items-stretch justify-between">
+                  <div className="flex flex-row gap-2 sm:gap-3 items-center justify-between w-full min-w-0">
                       <div className="flex overflow-x-auto no-scrollbar p-1 bg-slate-100 dark:bg-slate-950 rounded-xl flex-1 gap-1">
                         {(['game', 'hypervisor', 'steamtools', 'architect', 'extra'] as const).map(tab => (
                           <button 
                               key={tab}
                               onClick={() => setActiveTab(tab as any)}
-                              className={`shrink-0 relative px-4 py-2.5 sm:px-6 md:px-8 sm:py-3 rounded-lg font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all z-10 flex items-center justify-center ${activeTab === tab ? 'text-black dark:text-white' : 'text-slate-700 dark:text-slate-400 hover:text-black dark:hover:text-white'}`}
+                              className={`shrink-0 relative px-3 py-2 sm:px-5 md:px-7 sm:py-2.5 md:py-3 rounded-lg font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all z-10 flex items-center justify-center ${activeTab === tab ? 'text-black dark:text-white' : 'text-slate-700 dark:text-slate-400 hover:text-black dark:hover:text-white'}`}
                           >
                             {activeTab === tab && (
                               <motion.div layoutId="activeTab" className="absolute inset-0 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700" transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />
@@ -7524,7 +8412,7 @@ const paginatedData = useMemo(() => {
                             <span className="relative z-10 flex items-center gap-1.5">
                               {tab === 'hypervisor' ? (
                                 <>
-                                  {t('GAME')}
+                                  <span>{t('GAME')}</span>
                                   <span className="bg-red-600 text-white px-1.5 py-0.5 rounded-md text-[8px] sm:text-[9px] font-black tracking-widest shadow-sm">
                                     {t('HYPERVISOR')}
                                   </span>
@@ -7533,165 +8421,45 @@ const paginatedData = useMemo(() => {
                                 t('TOOLS')
                               ) : tab === 'extra' ? (
                                 t('SAVEGAME')
-                              ) : t(tab)}
+                              ) : tab === 'steamtools' ? (
+                                t('STEAMTOOLS')
+                              ) : t('GAME')}
                             </span>
                           </button>
                         ))}
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto shrink-0 mt-2 lg:mt-0">
-                          <button 
-                            onClick={() => window.dispatchEvent(new Event('open-intel-panel'))}
-                            className="relative flex items-center justify-center p-3 sm:p-3.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-200 rounded-xl transition-all flex-1 sm:flex-none"
-                            title="{t('Latest Intel')} (Live Changelog)"
-                          >
-                            <Icon name="Radar" size={20} className="animate-pulse text-primary-500" />
-                            <div className="absolute top-2 end-2 w-2 h-2 bg-red-500 rounded-full border-2 border-slate-200 dark:border-slate-800"></div>
-                          </button>
-
-                          <button 
-                            onClick={() => setShowGlobalFilter(!showGlobalFilter)}
-                            className={`flex items-center justify-center p-3 sm:p-3.5 rounded-xl transition-all border flex-1 sm:flex-none ${globalSpecs.isActive ? 'bg-primary-500 text-white border-primary-500 shadow-lg shadow-primary-500/20' : 'bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-200 border-transparent'}`}
-                            title={t('Global System Filter')}
-                          >
-                            <Icon name="Cpu" size={20} />
-                          </button>
-
+                      <div className="flex items-center gap-2 shrink-0">
                           <button 
                             onClick={() => fetchData()}
-                            className="flex items-center justify-center p-3 sm:p-3.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-200 rounded-xl transition-all flex-1 sm:flex-none"
-                            title="Reload Data"
+                            className="flex items-center justify-center p-2.5 sm:p-3 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-200 rounded-xl transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95"
+                            title={t('Reload Data') || 'Reload Data'}
+                            aria-label={t('Reload Data') || 'Reload Data'}
                           >
-                            <Icon name="RefreshCw" size={20} className={loading ? "animate-spin" : ""} />
-                          </button>
-
-                          <button 
-                            onClick={() => {
-                                navigate('/settings', { state: { tab: 'Request Item', requestTitle: searchQuery } });
-                            }}
-                            className="flex items-center justify-center gap-2 px-3 sm:px-4 py-3 sm:py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all w-full sm:w-auto sm:w-full md:w-auto"
-                            title={t('Request a game or tool not listed here')}
-                          >
-                            <Icon name="Plus" size={20} />
-                            <span className="text-xs sm:text-xs font-bold uppercase tracking-wider">{t('Request Item')}</span>
+                            <Icon name="RefreshCw" size={18} className={loading ? "animate-spin" : ""} />
                           </button>
                       </div>
                   </div>
 
                   <div className="relative w-full group">
-                    <div className="absolute start-4 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-300 group-focus-within:text-primary-500 transition-colors">
+                    <div className="absolute start-3.5 sm:start-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 group-focus-within:text-primary-500 transition-colors pointer-events-none">
                       <Icon name="Search" size={18} />
                     </div>
                     <input 
                       type="text" 
                       value={searchQuery} 
                       onChange={e => setSearchQuery(e.target.value)} 
-                      placeholder={`${t('SEARCH')} ${t(activeTab.toUpperCase())}...`} 
-                      className="w-full ps-12 pe-4 py-3 sm:py-3.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/20 text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider placeholder:text-slate-300 dark:placeholder:text-slate-600 transition-all truncate"
+                      placeholder={
+                        activeTab === 'game' ? `${t('SEARCH')} ${t('GAME')}...` :
+                        activeTab === 'hypervisor' ? `${t('SEARCH')} ${t('HYPERVISOR')}...` :
+                        activeTab === 'steamtools' ? `${t('SEARCH')} ${t('STEAMTOOLS')}...` :
+                        activeTab === 'architect' ? `${t('SEARCH')} ${t('TOOLS')}...` :
+                        `${t('SEARCH')} ${t('SAVEGAME')}...`
+                      } 
+                      className="w-full ps-11 sm:ps-12 pe-4 py-2.5 sm:py-3.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/20 text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all truncate"
                     />
                   </div>
               </div>
-
-              {/* Global Filter Panel */}
-              <AnimatePresence>
-                {showGlobalFilter && (
-                  <motion.div 
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="mt-4 p-4 sm:p-6 bg-slate-100 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                        <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
-                          <Icon name="Cpu" size={18} className="text-primary-500" />
-                          {t('Global System Filter')}
-                        </h3>
-                        <label className="flex items-center gap-2 cursor-pointer self-start sm:self-auto">
-                          <span className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">{t('Enable Filter')}</span>
-                          <div className="relative">
-                            <input type="checkbox" className="sr-only" checked={globalSpecs.isActive} onChange={(e) => setGlobalSpecs({...globalSpecs, isActive: e.target.checked})} />
-                            <div className={`block w-10 h-6 rounded-full transition-colors ${globalSpecs.isActive ? 'bg-primary-500' : 'bg-slate-300 dark:bg-slate-600'}`}></div>
-                            <div className={`dot absolute start-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${globalSpecs.isActive ? 'translate-x-4 rtl:-translate-x-4' : ''}`}></div>
-                          </div>
-                        </label>
-
-                        <label className="flex items-center gap-2 cursor-pointer self-start sm:self-auto ml-0 sm:ml-4 rtl:sm:ml-0 rtl:sm:mr-4 border-l-0 sm:border-l rtl:sm:border-l-0 rtl:sm:border-r border-slate-200 dark:border-slate-800 pl-0 sm:pl-4 rtl:sm:pl-0 rtl:sm:pr-4 mt-2 sm:mt-0">
-                          <span className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">{t('Hide Incompatible')}</span>
-                          <div className="relative">
-                            <input type="checkbox" className="sr-only" checked={hideFailedGames} onChange={(e) => setHideFailedGames(e.target.checked)} />
-                            <div className={`block w-10 h-6 rounded-full transition-colors ${hideFailedGames ? 'bg-primary-500' : 'bg-slate-300 dark:bg-slate-600'}`}></div>
-                            <div className={`dot absolute start-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${hideFailedGames ? 'translate-x-4 rtl:-translate-x-4' : ''}`}></div>
-                          </div>
-                        </label>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className="space-y-1">
-                          <label className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">OS</label>
-                          <select 
-                            value={globalSpecs.os}
-                            onChange={(e) => setGlobalSpecs({...globalSpecs, os: e.target.value})}
-                            className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
-                          >
-                            <option value="7">Windows 7</option>
-                            <option value="8">Windows 8</option>
-                            <option value="10">Windows 10</option>
-                            <option value="11">Windows 11</option>
-                          </select>
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">{t('RAM (GB)')}</label>
-                          <select 
-                            value={globalSpecs.ram}
-                            onChange={(e) => setGlobalSpecs({...globalSpecs, ram: parseInt(e.target.value)})}
-                            className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
-                          >
-                            <option value="4">4 GB</option>
-                            <option value="8">8 GB</option>
-                            <option value="16">16 GB</option>
-                            <option value="32">32 GB</option>
-                            <option value="64">64+ GB</option>
-                          </select>
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">CPU</label>
-                          <select 
-                            value={globalSpecs.cpuModel}
-                            onChange={(e) => setGlobalSpecs({...globalSpecs, cpuModel: e.target.value})}
-                            className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
-                          >
-                            <optgroup label="AMD">
-                                {CPU_DATA.AMD.map(cpu => <option key={cpu} value={cpu}>{cpu}</option>)}
-                            </optgroup>
-                            <optgroup label="Intel">
-                                {CPU_DATA.Intel.map(cpu => <option key={cpu} value={cpu}>{cpu}</option>)}
-                            </optgroup>
-                          </select>
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase">GPU</label>
-                          <select 
-                            value={globalSpecs.gpuModel}
-                            onChange={(e) => setGlobalSpecs({...globalSpecs, gpuModel: e.target.value})}
-                            className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
-                          >
-                            <optgroup label="NVIDIA">
-                                {GPU_DATA.NVIDIA.map(gpu => <option key={gpu} value={gpu}>{gpu}</option>)}
-                            </optgroup>
-                            <optgroup label="AMD">
-                                {GPU_DATA.AMD.map(gpu => <option key={gpu} value={gpu}>{gpu}</option>)}
-                            </optgroup>
-                            <optgroup label="Intel">
-                                {GPU_DATA.Intel.map(gpu => <option key={gpu} value={gpu}>{gpu}</option>)}
-                            </optgroup>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
            </div>
         </div>
 
@@ -7714,7 +8482,7 @@ const paginatedData = useMemo(() => {
                  }}
                  className="px-6 py-2.5 bg-blue-600 text-white font-bold uppercase tracking-wider text-xs rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20"
                >
-                 Request This Item
+                 {t('Request This Item')}
                </button>
             </div>
           ) : (
@@ -7777,13 +8545,13 @@ const paginatedData = useMemo(() => {
                             {/* Top Right Badges */}
                             <div className="absolute top-3 end-3 flex flex-col gap-2 z-30 items-end">
                                 {compStatus && compStatus !== 'unknown' && (
-                                    <div className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1 border ${
-                                        compStatus === 'pass' ? 'bg-emerald-500/90 text-white border-emerald-400' : 
-                                        compStatus === 'warn' ? 'bg-yellow-500/90 text-white border-yellow-400' : 
-                                        'bg-black/80 text-white border-white/20 backdrop-blur-md'
+                                    <div className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1 border transition-all ${
+                                        compStatus === 'pass' ? 'bg-emerald-500 text-white border-emerald-400 shadow-emerald-950/40' : 
+                                        compStatus === 'warn' ? 'bg-amber-500 text-white border-amber-300 shadow-amber-950/40' : 
+                                        'bg-rose-600 text-white border-rose-400 shadow-rose-950/40'
                                     }`}>
                                         <Icon name={compStatus === 'pass' ? 'CheckCircle' : compStatus === 'warn' ? 'AlertTriangle' : 'X'} size={12} />
-                                        {compStatus === 'pass' ? 'Runs Great' : compStatus === 'warn' ? 'Might Struggle' : 'Won\'t Run'}
+                                        <span>{compStatus === 'pass' ? (t('Runs Great') || 'Runs Great') : compStatus === 'warn' ? (t('Might Struggle') || 'Might Struggle') : (t("Won't Run") || "Won't Run")}</span>
                                     </div>
                                 )}
                                 {item.category === 'steamtools' ? (
@@ -7907,6 +8675,7 @@ const paginatedData = useMemo(() => {
             </div>
           )}
         </div>
+        </section>
 
         
         {['game', 'hypervisor', 'steamtools'].includes(activeTab) && allResources.hypervisor?.length > 0 && (

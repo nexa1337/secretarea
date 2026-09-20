@@ -14,10 +14,10 @@ import {
   TbUser, TbLock, TbKey, TbUsers, TbBrandDiscord, TbBrandTelegram, TbPin, TbAlertTriangle,
   TbLoader, TbSend, TbCopy, TbGhost, TbShoppingCart, TbShieldExclamation, TbGift,
   TbBold, TbItalic, TbList, TbCheckbox, TbGridDots, TbSearch, TbCalculator, TbBulb, TbSparkles, TbRefresh, TbInfoCircle,
-  TbTarget, TbEye, TbBookmark, TbRadar, TbTerminal, TbBell, TbHistory, TbFilter, TbMenu2, TbDots,
+  TbTarget, TbEye, TbEyeOff, TbBookmark, TbRadar, TbTerminal, TbBell, TbHistory, TbFilter, TbMenu2, TbDots,
   TbHash, TbFolder, TbDeviceFloppy, TbChartPie, TbCircleX, TbLogout, TbLogin, TbMessageCircle, TbBuildingMosque,
   TbCurrencyBitcoin, TbCurrencyEthereum, TbCurrencyMonero, TbCoin, TbWallet, TbStar,
-  TbShare, TbBrandAdobe, TbBrandOpenai, TbMagnet
+  TbShare, TbBrandAdobe, TbBrandOpenai, TbMagnet, TbSettings, TbAdjustments
 } from 'react-icons/tb';
 
 import {
@@ -222,6 +222,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   RefreshCw: TbRefresh,
   Target: TbTarget,
   Eye: TbEye,
+  EyeOff: TbEyeOff,
   Bookmark: TbBookmark,
   Radar: TbRadar,
   Terminal: TbTerminal,
@@ -243,6 +244,9 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Wallet: TbWallet,
   Star: TbStar,
   Magnet: TbMagnet,
+  Settings: TbSettings,
+  Settings2: TbAdjustments,
+  Gear: TbSettings,
 };
 
 const Icon: React.FC<IconProps> = ({ name, size = 24, className, style }) => {

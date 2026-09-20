@@ -63,6 +63,41 @@ const DiscoverGameButton = () => {
   );
 };
 
+const ScrollToLibraryButton = () => {
+  const { t } = useLanguage();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleScrollToLibrary = () => {
+    if (location.pathname === '/' || location.pathname === '') {
+      const el = document.getElementById('secretarea-library');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+    }
+    navigate('/');
+    setTimeout(() => {
+      const el = document.getElementById('secretarea-library');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 250);
+  };
+
+  return (
+    <button
+      onClick={handleScrollToLibrary}
+      className="hidden md:flex items-center gap-1.5 px-2.5 md:px-3 py-1.5 rounded-xl bg-slate-100/90 hover:bg-slate-200 dark:bg-slate-900/90 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800/80 text-slate-700 dark:text-slate-200 hover:text-primary-600 dark:hover:text-primary-400 font-bold text-xs uppercase tracking-wider transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
+      title={t('SecretArea Library')}
+      aria-label={t('SecretArea Library')}
+    >
+      <Icon name="Gamepad2" size={15} className="text-primary-500 shrink-0" />
+      <span className="whitespace-nowrap text-[11px] font-black">{t('Library')}</span>
+    </button>
+  );
+};
+
 
 
 const ThemeToggle = () => {
@@ -132,8 +167,8 @@ const NotificationBell = () => {
   return (
     <button 
       onClick={() => window.dispatchEvent(new Event('open-intel-panel'))} 
-      title={t('Notifications')}
-      aria-label={t('Notifications')}
+      title={t('Recent products')}
+      aria-label={t('Recent products')}
       className="relative w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full hover:bg-slate-200/80 dark:hover:bg-slate-800/80 transition-colors text-slate-600 dark:text-slate-300 shrink-0"
     >
       <Icon name="Bell" size={20} className={`sm:w-[22px] sm:h-[22px] ${hasNew ? "animate-pulse" : ""}`} />
@@ -418,6 +453,139 @@ const UserDropdown = ({
     </div>
   );
 };
+
+const GuestDropdown = ({
+  handleReturnToTerminal,
+  setShowLoginModal,
+  t,
+  dir
+}: {
+  handleReturnToTerminal: () => void;
+  setShowLoginModal: (show: boolean) => void;
+  t: any;
+  dir: string;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  return (
+    <div className="relative" ref={dropdownRef} dir={dir}>
+      {/* Responsive Guest Mode Trigger Button: compact icon+pulse on mobile, badge on laptop */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl border border-amber-500/30 dark:border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 font-bold text-xs transition-all shadow-xs active:scale-95 shrink-0 select-none cursor-pointer"
+        title={t('Guest mode')}
+        aria-label={t('Guest mode')}
+        aria-expanded={isOpen}
+      >
+        <span className="relative flex h-2 w-2 shrink-0">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+        </span>
+        <Icon name="Ghost" size={14} className="sm:hidden text-amber-500 shrink-0" />
+        <span className="hidden sm:inline font-bold whitespace-nowrap">
+          {t('Guest mode')}
+        </span>
+        <Icon 
+          name="ChevronDown" 
+          size={12} 
+          className={`text-slate-400 dark:text-slate-400 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`} 
+        />
+      </button>
+
+      {/* Dropdown Menu Overlay */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            className="absolute top-full end-0 mt-2.5 w-72 max-w-[calc(100vw-1.5rem)] bg-white dark:bg-[#111623] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700/70 p-3.5 z-50 text-slate-700 dark:text-[#94a3b8]"
+          >
+            {/* 1. Guest Mode Badge & Notice */}
+            <div className="p-3 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/25 mb-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400 font-bold text-xs">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
+                  <span className="whitespace-nowrap">{t('Guest mode')}</span>
+                </div>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300 font-semibold uppercase tracking-wider">
+                  Visitor
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-1.5 leading-relaxed">
+                {t('You are in Guest Mode. Login to save your profile.')}
+              </p>
+            </div>
+
+            {/* 2. Login & Terminal Buttons inside drop menu */}
+            <div className="space-y-2">
+              {/* Login Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  setShowLoginModal(true);
+                }}
+                className="w-full flex items-center justify-between px-3.5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs shadow-md shadow-blue-500/20 transition-all active:scale-[0.98] cursor-pointer"
+                title={t('Login')}
+              >
+                <div className="flex items-center gap-2">
+                  <Icon name="LogIn" size={16} className="shrink-0" />
+                  <span>{t('Login')}</span>
+                </div>
+                <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-md font-semibold tracking-wide uppercase">
+                  Google / Discord
+                </span>
+              </button>
+
+              {/* Terminal Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  handleReturnToTerminal();
+                }}
+                className="w-full flex items-center justify-between px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/90 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition-colors border border-slate-200 dark:border-slate-700/60 shadow-xs active:scale-[0.98] cursor-pointer"
+                title={t('Come back to terminal page')}
+              >
+                <div className="flex items-center gap-2">
+                  <Icon name="Terminal" size={16} className="text-emerald-500 shrink-0" />
+                  <span>{t('Terminal')}</span>
+                </div>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate max-w-[120px]">
+                  {t('Come back to terminal page')}
+                </span>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 const Header: React.FC = () => {
   const { t, dir } = useLanguage();
   const location = useLocation();
@@ -518,7 +686,7 @@ const Header: React.FC = () => {
     setCurrentUser(null);
     setProfileData(null);
     window.dispatchEvent(new Event('authChange'));
-    window.location.href = '/';
+    navigate('/', { replace: true });
   };
 
   const handleReturnToTerminal = () => {
@@ -558,47 +726,15 @@ const Header: React.FC = () => {
 
           {/* Right Actions */}
           <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 shrink-0">
+            <ScrollToLibraryButton />
             <Flags />
             <DiscoverGameButton />
             <LanguageSwitcher />
             <ThemeToggle />
             <NotificationBell />
 
-            {/* Guest mode badge and Come back to terminal page button (desktop/tablet md+) */}
-            {isGuest && !currentUser && (
-              <div className="hidden md:flex items-center gap-1.5 shrink-0">
-                <div 
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-400 font-bold text-xs shadow-xs select-none shrink-0"
-                  title={t('You are in Guest Mode. Login to save your profile.')}
-                >
-                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
-                  <span className="whitespace-nowrap">{t('Guest mode')}</span>
-                </div>
-
-                <button
-                  onClick={handleReturnToTerminal}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition-colors border border-slate-200 dark:border-slate-700/60 shadow-xs shrink-0 active:scale-95"
-                  title={t('Come back to terminal page')}
-                  aria-label={t('Come back to terminal page')}
-                >
-                  <Icon name="Terminal" size={14} className="shrink-0" />
-                  <span className="whitespace-nowrap">{t('Terminal')}</span>
-                </button>
-              </div>
-            )}
-
-            {/* If not logged in with real account, show Login button on desktop/tablet md+ */}
-            {!currentUser ? (
-              <button
-                onClick={() => setShowLoginModal(true)}
-                className="hidden md:flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl text-sm shadow-md shadow-blue-500/20 transition-all whitespace-nowrap active:scale-95 shrink-0"
-                title={t('Login')}
-                aria-label={t('Login')}
-              >
-                <Icon name="LogIn" size={14} className="shrink-0" />
-                <span>{t('Login')}</span>
-              </button>
-            ) : (
+            {/* User Dropdown (when logged in), Guest Dropdown (when in guest mode), or Login button */}
+            {currentUser ? (
               <UserDropdown 
                 handleLogout={handleLogout} 
                 t={t} 
@@ -606,6 +742,23 @@ const Header: React.FC = () => {
                 profileData={profileData} 
                 dir={dir} 
               />
+            ) : isGuest ? (
+              <GuestDropdown
+                handleReturnToTerminal={handleReturnToTerminal}
+                setShowLoginModal={setShowLoginModal}
+                t={t}
+                dir={dir}
+              />
+            ) : (
+              <button
+                onClick={() => setShowLoginModal(true)}
+                className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md shadow-blue-500/20 transition-all whitespace-nowrap active:scale-95 shrink-0 cursor-pointer"
+                title={t('Login')}
+                aria-label={t('Login')}
+              >
+                <Icon name="LogIn" size={14} className="shrink-0" />
+                <span className="hidden sm:inline">{t('Login')}</span>
+              </button>
             )}
 
             <LoginModal 

@@ -6,6 +6,7 @@ import Icon from './Icon';
 import { analyzeRequirements, checkCompatibilityStatus } from '../pages/SecretArea';
 import { getCpuTier, getGpuTier } from '../src/data/systemSpecs';
 import { useLanguage } from '../src/contexts/LanguageContext';
+import { getStoredHardwareSpecs, saveUserHardwareSpecs } from '../src/services/userService';
 
 interface Requirement {
   label: string;
@@ -60,36 +61,48 @@ const CircularProgress: React.FC<{ progress: number; colorClass: string }> = ({ 
 const HardwareCompatibility: React.FC<{ 
   requirements?: Requirement[], 
   globalSpecs?: { ram: number, os: string, cpuModel: string, gpuModel: string, isActive: boolean } 
-}> = ({ requirements, globalSpecs }) => {
+}> = ({ requirements, globalSpecs: initialGlobalSpecs }) => {
   const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [parsedSpecs, setParsedSpecs] = useState<any>(null);
+  const [activeSpecs, setActiveSpecs] = useState(() => initialGlobalSpecs || getStoredHardwareSpecs());
 
-  if (globalSpecs && !globalSpecs.isActive) {
-    return (
-      <Link to="/settings" state={{ tab: 'Hardware' }} className="block relative group cursor-pointer overflow-hidden rounded-xl bg-slate-50 dark:bg-[#0f151e] border border-slate-200 dark:border-slate-800/50 hover:border-primary-500/50 transition-colors p-4 flex flex-col items-center text-center gap-3">
-        <div className="p-3 bg-white dark:bg-slate-800 rounded-full shadow-sm text-slate-400 group-hover:text-primary-500 transition-colors">
-          <Icon name="Cpu" size={24} />
-        </div>
-        <div>
-          <h3 className="text-slate-900 dark:text-white font-bold">{t('Can I Run It?')}</h3>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{t('Click here to enable compatibility checker in your hardware settings.')}</p>
-        </div>
-      </Link>
-    );
-  }
+  useEffect(() => {
+    if (initialGlobalSpecs) {
+      setActiveSpecs(initialGlobalSpecs);
+    }
+  }, [initialGlobalSpecs]);
 
-
+  useEffect(() => {
+    const handleSync = (e: any) => {
+      if (e.detail) {
+        setActiveSpecs(e.detail);
+      }
+    };
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'secretarea_hardware_specs' && e.newValue) {
+        try {
+          setActiveSpecs(JSON.parse(e.newValue));
+        } catch (err) {}
+      }
+    };
+    window.addEventListener('secretarea_hardware_sync', handleSync);
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      window.removeEventListener('secretarea_hardware_sync', handleSync);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
 
   useEffect(() => {
     if (!requirements || requirements.length === 0) return;
 
     const parsedReqs = analyzeRequirements(requirements);
 
-    const userRam = globalSpecs?.isActive ? globalSpecs.ram : 16;
-    const userOs = parseInt(globalSpecs?.isActive ? globalSpecs.os : '11');
-    const userCpuModel = globalSpecs?.isActive ? globalSpecs.cpuModel : 'AMD Ryzen 5 3600';
-    const userGpuModel = globalSpecs?.isActive ? globalSpecs.gpuModel : 'NVIDIA GeForce RTX 3060';
+    const userRam = activeSpecs?.isActive ? activeSpecs.ram : 16;
+    const userOs = parseInt(activeSpecs?.isActive ? activeSpecs.os : '11');
+    const userCpuModel = activeSpecs?.isActive ? activeSpecs.cpuModel : 'AMD Ryzen 5 3600';
+    const userGpuModel = activeSpecs?.isActive ? activeSpecs.gpuModel : 'NVIDIA GeForce RTX 3060';
 
     const userCpuTier = getCpuTier(userCpuModel);
     const userGpuTier = getGpuTier(userGpuModel);
@@ -151,7 +164,7 @@ const HardwareCompatibility: React.FC<{
     }
 
     let summaryText = t('Your system comfortably meets all requirements. Experience optimal gameplay with high frame rates.');
-    if (status === 'GOOD') summaryText = t('Your system comfortably meets most requirements. You should be able to play at high settings with stable performance.');
+    if (status === 'GOOD') summaryText = t('Your system comfortably meets most requirements. You should be able to run smoothly with stable performance.');
     if (status === 'POOR') summaryText = t('Your system falls below the recommended requirements. You may experience performance issues, and an upgrade is recommended.');
 
     const finalSpecs = {
@@ -169,23 +182,35 @@ const HardwareCompatibility: React.FC<{
       specs: finalSpecs
     });
 
-  }, [requirements, globalSpecs]);
+  }, [requirements, activeSpecs]);
 
-  if (!parsedSpecs) return null;
-
-  if (!globalSpecs?.isActive) {
+  if (!activeSpecs?.isActive) {
     return (
-      <div className="relative overflow-hidden rounded-xl bg-white dark:bg-[#0f151e] border border-slate-200 dark:border-slate-800/50 p-4 flex items-center gap-4">
-        <div className="w-[46px] h-[46px] rounded-[14px] bg-emerald-100 dark:bg-[#0c2a23] text-emerald-600 dark:text-[#22c55e] flex items-center justify-center shrink-0">
+      <div className="relative overflow-hidden rounded-xl bg-slate-50 dark:bg-[#0f151e] border border-slate-200 dark:border-slate-800/50 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5 text-center sm:text-start">
+          <div className="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-primary-500 shrink-0">
             <Icon name="Cpu" size={24} />
+          </div>
+          <div>
+            <h3 className="text-slate-900 dark:text-white font-bold text-sm sm:text-base">{t('Can I Run It?')}</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-0.5">{t('Enable compatibility checker to benchmark against your hardware specs.')}</p>
+          </div>
         </div>
-        <div>
-            <h3 className="text-slate-900 dark:text-white font-bold text-[17px] tracking-tight leading-tight mb-1">{t('Can your PC run this game?')}</h3>
-            <p className="text-slate-500 dark:text-slate-400 text-[14.5px]">{t('Add your GPU, CPU, and RAM to get a compatibility score')}</p>
+        <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+          <Link
+            to="/settings"
+            state={{ tab: 'Hardware' }}
+            className="flex-1 sm:flex-none px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-lg font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
+          >
+            <Icon name="Tools" size={14} />
+            {t('Hardware Settings')}
+          </Link>
         </div>
       </div>
     );
   }
+
+  if (!parsedSpecs) return null;
 
   const { score, statusText, summaryText, specs } = parsedSpecs;
   const colorClass = score >= 70 ? 'text-emerald-400' : score >= 50 ? 'text-amber-400' : 'text-red-500';
@@ -193,6 +218,7 @@ const HardwareCompatibility: React.FC<{
 
   const dotCount = 5;
   const activeDots = Math.round((score / 100) * dotCount);
+  const displayBadgeText = statusText === 'POOR' ? t("WON'T RUN") : statusText === 'GOOD' ? t("MIGHT STRUGGLE") : t("RUNS GREAT");
 
   return (
     <>
@@ -208,10 +234,10 @@ const HardwareCompatibility: React.FC<{
           <div className="flex items-center gap-3 mb-1">
             <h3 className="text-slate-900 dark:text-white font-bold text-lg">{t('Can I Run It?')}</h3>
             <span className={`${badgeColor} text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider`}>
-              {statusText === 'POOR' ? "WON'T RUN" : statusText}
+              {displayBadgeText}
             </span>
           </div>
-          <p className="text-slate-500 dark:text-slate-400 text-sm">{t('View hardware analysis')}</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">{t('View hardware analysis')} &rarr;</p>
         </div>
 
         <div className="flex items-center gap-4">
@@ -257,7 +283,7 @@ const HardwareCompatibility: React.FC<{
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3 mb-2">
                     <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t('Can I Run It?')}</h2>
                     <span className={`${badgeColor} text-white text-xs font-bold px-2.5 py-1 rounded uppercase tracking-wider`}>
-                      {statusText === 'POOR' ? "WON'T RUN" : statusText}
+                      {displayBadgeText}
                     </span>
                   </div>
                   <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed max-w-xl">
@@ -283,10 +309,16 @@ const HardwareCompatibility: React.FC<{
               </div>
 
               <div className="px-6 py-4 bg-slate-50 dark:bg-[#0d1219] border-t border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
-                <Link to="/settings" state={{ tab: 'Hardware' }} className="flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors text-sm font-medium">
+                <Link to="/settings" state={{ tab: 'Hardware' }} className="flex items-center gap-2 text-primary-500 hover:text-primary-600 transition-colors text-sm font-semibold">
                   <Icon name="Tools" size={16} />
-                  {t('Update your PC Specifications')}
+                  {t('Update your PC Specifications in Settings')} &rarr;
                 </Link>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                >
+                  {t('Close')}
+                </button>
               </div>
             </motion.div>
           </div>
