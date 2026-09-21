@@ -142,6 +142,22 @@
       },
       "required": ["globalBannerURL"]
     },
+    "SystemAdminProfile": {
+      "title": "SystemAdminProfile",
+      "description": "Public system admin profile displayed on detail page badges and admin popup.",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "avatarURL": { "type": "string" },
+        "bio": { "type": "string" },
+        "bannerURL": { "type": "string" },
+        "role": { "type": "string" },
+        "rank": { "type": "string" },
+        "points": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
     "UserRequest": {
       "title": "UserRequest",
       "description": "Item request submitted by a user.",
@@ -156,6 +172,10 @@
     }
   },
   "firestore": {
+    "/system/{docId}": {
+      "schema": "SystemAdminProfile",
+      "description": "Public system documents such as admin_profile and banner. Publicly readable, admin writable."
+    },
     "/users/{userId}": {
       "schema": "UserProfile",
       "description": "Stores individual user profile and telemetry. Readable and writable by the user or by Admin."

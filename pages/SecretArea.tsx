@@ -3,8 +3,26 @@ import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { signInWithGoogle, signInWithDiscord, db, auth } from '../src/firebase';
-import { doc, getDoc, updateDoc, setDoc, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
-import { trackUserMovement, recordGameInteraction, getLocalProfile, removeGameFromLibrary, getCachedAdminAvatar, getCachedAdminName, subscribeAdminPublicProfile, getStoredHardwareSpecs, saveUserHardwareSpecs } from '../src/services/userService';
+import { doc, getDoc, updateDoc, setDoc, onSnapshot, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
+import { 
+  trackUserMovement, 
+  recordGameInteraction, 
+  getLocalProfile, 
+  removeGameFromLibrary, 
+  getCachedAdminAvatar, 
+  getCachedAdminName, 
+  getCachedAdminBio,
+  subscribeAdminPublicProfile, 
+  saveAdminPublicProfile,
+  saveUserProfileInfo,
+  isUserAdmin,
+  DEFAULT_ADMIN_BIO,
+  DEFAULT_ADMIN_AVATAR,
+  DEFAULT_ADMIN_BANNER,
+  getCachedAdminBanner,
+  getStoredHardwareSpecs, 
+  saveUserHardwareSpecs 
+} from '../src/services/userService';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../src/contexts/LanguageContext';
@@ -24,7 +42,20 @@ import MaintenancePage from '../components/MaintenancePage';
 import HardwareCompatibility from "../components/HardwareCompatibility";
 import { LowPolyBackground } from '../components/LowPolyBackground';
 import { FaFaceAngry } from 'react-icons/fa6';
-import { TbShieldCheck, TbCrown } from 'react-icons/tb';
+import { 
+  TbShieldCheck, 
+  TbCrown, 
+  TbPencil, 
+  TbUpload, 
+  TbUser, 
+  TbFileText, 
+  TbPhoto, 
+  TbLayoutDashboard, 
+  TbX, 
+  TbCheck, 
+  TbDeviceFloppy, 
+  TbLink 
+} from 'react-icons/tb';
 import backupData from '../data/backup_resources.json';
 
 // --- CONFIGURATION ---
@@ -159,20 +190,172 @@ const ADMIN_SOCIAL_LINKS = [
 const UploaderProfilePopup: React.FC<{ isOpen: boolean; onClose: () => void; gameItem?: ResourceItem }> = ({ isOpen, onClose, gameItem }) => {
     const { t } = useLanguage();
     const [adminAvatar, setAdminAvatar] = useState<string>(() => getCachedAdminAvatar());
+    const [adminBanner, setAdminBanner] = useState<string>(() => getCachedAdminBanner());
     const [adminDisplayName, setAdminDisplayName] = useState<string>(() => getCachedAdminName());
+    const [adminBio, setAdminBio] = useState<string>(() => getCachedAdminBio());
+    const [adminPoints, setAdminPoints] = useState<number>(50000);
+    const [adminRank, setAdminRank] = useState<string>('Fenrir');
+    const [adminRole, setAdminRole] = useState<string>('Root Admin');
+
+    // Admin edit state
+    const [isEditing, setIsEditing] = useState(false);
+    const [editName, setEditName] = useState('');
+    const [editBio, setEditBio] = useState('');
+    const [editAvatar, setEditAvatar] = useState('');
+    const [editBanner, setEditBanner] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveSuccess, setSaveSuccess] = useState(false);
+
+    const currentUser = auth.currentUser;
+    const isCurrentAdmin = isUserAdmin(currentUser?.email);
 
     useEffect(() => {
-        if (!isOpen) return;
+        if (!isOpen) {
+            setIsEditing(false);
+            return;
+        }
         const unsub = subscribeAdminPublicProfile((data) => {
             if (data.avatarURL) setAdminAvatar(data.avatarURL);
+            if (data.bannerURL) setAdminBanner(data.bannerURL);
             if (data.displayName) setAdminDisplayName(data.displayName);
+            if (data.bio !== undefined) setAdminBio(data.bio);
+            if (data.points) setAdminPoints(data.points);
+            if (data.rank) setAdminRank(data.rank);
+            if (data.role) setAdminRole(data.role);
         });
         return () => unsub();
     }, [isOpen]);
 
+    const handleStartEditing = () => {
+        setEditName(adminDisplayName);
+        setEditBio(adminBio);
+        setEditAvatar(adminAvatar);
+        setEditBanner(adminBanner || DEFAULT_ADMIN_BANNER);
+        setIsEditing(true);
+    };
+
+    const handleAvatarFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (readerEvent) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 400;
+                const MAX_HEIGHT = 400;
+                let width = img.width;
+                let height = img.height;
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        height *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
+                    }
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const compressed = canvas.toDataURL('image/webp', 0.85);
+                    setEditAvatar(compressed);
+                }
+            };
+            img.src = readerEvent.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleBannerFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (readerEvent) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 1200;
+                const MAX_HEIGHT = 500;
+                let width = img.width;
+                let height = img.height;
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        height *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
+                    }
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const compressed = canvas.toDataURL('image/webp', 0.85);
+                    setEditBanner(compressed);
+                }
+            };
+            img.src = readerEvent.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleSaveAdminProfile = async () => {
+        setIsSaving(true);
+        try {
+            const finalName = editName.trim() || adminDisplayName || 'SecretArea';
+            const finalAvatar = editAvatar.trim() || adminAvatar || DEFAULT_ADMIN_AVATAR;
+            const finalBio = editBio.trim() || adminBio || DEFAULT_ADMIN_BIO;
+            const finalBanner = editBanner.trim() || adminBanner || DEFAULT_ADMIN_BANNER;
+
+            await saveAdminPublicProfile({
+                displayName: finalName,
+                photoURL: finalAvatar,
+                avatarURL: finalAvatar,
+                bannerURL: finalBanner,
+                bio: finalBio,
+                role: adminRole,
+                rank: adminRank,
+                points: adminPoints
+            });
+
+            if (currentUser?.uid) {
+                await saveUserProfileInfo(currentUser.uid, currentUser, {
+                    displayName: finalName,
+                    photoURL: finalAvatar,
+                    bannerURL: finalBanner,
+                    bio: finalBio
+                });
+            }
+
+            setAdminDisplayName(finalName);
+            setAdminAvatar(finalAvatar);
+            setAdminBanner(finalBanner);
+            setAdminBio(finalBio);
+            setSaveSuccess(true);
+            setTimeout(() => {
+                setSaveSuccess(false);
+                setIsEditing(false);
+            }, 800);
+        } catch (err) {
+            console.error('Failed to save admin profile:', err);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     if (!isOpen) return null;
 
     const screenshotUrl = gameItem?.galleryImages?.[0] || gameItem?.coverImage;
+    const bannerSrc = isEditing && editBanner ? editBanner : (adminBanner || DEFAULT_ADMIN_BANNER);
 
     return createPortal(
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
@@ -181,84 +364,283 @@ const UploaderProfilePopup: React.FC<{ isOpen: boolean; onClose: () => void; gam
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                className="relative bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl"
+                className="relative bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-sm max-h-[92vh] overflow-y-auto custom-scrollbar shadow-2xl flex flex-col"
             >
-                {/* Header: displays actual game screenshot, not a generic banner */}
-                <div className="relative h-32 bg-slate-900 overflow-hidden">
-                    {screenshotUrl ? (
-                        <img 
-                            src={screenshotUrl} 
-                            alt={gameItem?.name || "Screenshot"} 
-                            className="w-full h-full object-cover opacity-60 scale-105" 
-                        />
-                    ) : (
-                        <div className="w-full h-full bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 opacity-90" />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0b1120] via-black/30 to-transparent" />
-                    <button onClick={onClose} className="absolute top-4 end-4 w-8 h-8 flex items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors z-20">
+                {/* Header: displays the real admin banner */}
+                <div className="relative h-32 sm:h-36 bg-slate-900 shrink-0 overflow-hidden w-full">
+                    <img 
+                        src={bannerSrc} 
+                        alt="Admin Banner" 
+                        className="w-full h-full object-cover select-none"
+                        onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = DEFAULT_ADMIN_BANNER;
+                        }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent pointer-events-none" />
+                    <button 
+                        onClick={onClose} 
+                        className="absolute top-3.5 end-3.5 z-30 w-8 h-8 flex items-center justify-center rounded-full bg-black/60 hover:bg-black/80 text-white transition-colors cursor-pointer shadow-md"
+                        title={t('Close')}
+                    >
                         <Icon name="X" size={16} />
                     </button>
                     {gameItem?.name && (
-                        <div className="absolute bottom-2 start-4 z-10 text-[11px] font-semibold text-slate-200 truncate max-w-[240px] drop-shadow">
-                            🎮 {gameItem.name}
+                        <div className="absolute top-3.5 start-3.5 z-20 text-[11px] font-semibold text-white/90 bg-black/50 backdrop-blur-xs px-2.5 py-1 rounded-full border border-white/10 truncate max-w-[200px] flex items-center gap-1.5 shadow-sm">
+                            <Icon name="Gamepad2" size={13} className="text-amber-400 shrink-0" />
+                            <span className="truncate">{gameItem.name}</span>
                         </div>
                     )}
                 </div>
-                <div className="px-6 pb-6 pt-0 relative">
-                    <div className="flex justify-between items-end -mt-10 mb-4">
+
+                {/* Body Content - notice NO overflow-y-auto here so negative margin on avatar will NOT be clipped */}
+                <div className="px-6 pb-6 pt-0 relative z-20">
+                    {/* Top Row: Avatar & Badges overlapping the banner seamlessly */}
+                    <div className="flex justify-between items-end -mt-11 sm:-mt-12 mb-4 relative z-30">
                         <div className="relative group">
-                            <div className="w-20 h-20 rounded-2xl border-4 border-white dark:border-[#0b1120] bg-gradient-to-br from-amber-500/40 via-amber-400/20 to-blue-500/30 p-0.5 flex items-center justify-center overflow-hidden relative z-10 shadow-xl ring-2 ring-amber-500/30">
-                                <div className="w-full h-full rounded-[14px] overflow-hidden bg-slate-900 flex items-center justify-center relative">
-                                    {adminAvatar ? (
-                                        <img 
-                                            src={adminAvatar} 
-                                            alt={adminDisplayName || "Admin"} 
-                                            referrerPolicy="no-referrer"
-                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                                            onError={() => {
-                                                setAdminAvatar('');
-                                            }}
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full bg-gradient-to-tr from-amber-600 via-amber-500 to-yellow-400 flex items-center justify-center text-slate-950 font-black text-2xl uppercase select-none shadow-inner">
-                                            {adminDisplayName ? adminDisplayName[0].toUpperCase() : 'W'}
-                                        </div>
-                                    )}
+                            <div className="w-20 h-20 sm:w-[88px] sm:h-[88px] rounded-2xl border-4 border-white dark:border-[#0b1120] bg-gradient-to-br from-amber-500/40 via-amber-400/20 to-blue-500/30 p-0.5 flex items-center justify-center relative shadow-2xl ring-2 ring-amber-500/40">
+                                <div className="w-full h-full rounded-[12px] overflow-hidden bg-slate-900 flex items-center justify-center relative">
+                                    <img 
+                                        src={isEditing && editAvatar ? editAvatar : (adminAvatar || DEFAULT_ADMIN_AVATAR)} 
+                                        alt={adminDisplayName || "Admin"} 
+                                        referrerPolicy="no-referrer"
+                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                        onError={(e) => {
+                                            (e.currentTarget as HTMLImageElement).src = DEFAULT_ADMIN_AVATAR;
+                                        }}
+                                    />
                                 </div>
                             </div>
                             {/* Verified Admin Avatar Badge */}
-                            <div className="absolute -bottom-1 -end-1 z-20 w-6 h-6 rounded-full bg-gradient-to-tr from-amber-600 to-amber-400 text-slate-950 flex items-center justify-center shadow-md border-2 border-white dark:border-[#0b1120]" title={t('Verified Admin')}>
+                            <div className="absolute -bottom-1 -end-1 z-40 w-6 h-6 rounded-full bg-gradient-to-tr from-amber-600 to-amber-400 text-slate-950 flex items-center justify-center shadow-lg border-2 border-white dark:border-[#0b1120]" title={t('Verified Admin')}>
                                 <TbShieldCheck size={13} className="stroke-[2.5]" />
                             </div>
                         </div>
-                        <div className="flex flex-col items-end mb-1">
-                            <span className="bg-amber-500/15 text-amber-600 dark:text-amber-400 font-black text-xs px-3 py-1 rounded-full border border-amber-500/30 uppercase tracking-widest flex items-center gap-1 shadow-sm">
+
+                        <div className="flex flex-col items-end gap-1.5 mb-1 relative z-30">
+                            <span className="bg-white/95 dark:bg-[#0b1120]/95 backdrop-blur-xs text-amber-600 dark:text-amber-400 font-black text-xs px-3 py-1 rounded-full border border-amber-500/40 uppercase tracking-widest flex items-center gap-1 shadow-md">
                                 <TbShieldCheck size={14} className="text-amber-500" /> Admin 🛡️
                             </span>
+                            {isCurrentAdmin && !isEditing && (
+                                <button
+                                    onClick={handleStartEditing}
+                                    className="px-2.5 py-1 rounded-lg bg-white/90 dark:bg-[#0b1120]/90 hover:bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[11px] font-bold border border-amber-500/30 flex items-center gap-1.5 transition-all active:scale-95 shadow-xs cursor-pointer"
+                                    title="Edit real admin display name, banner, avatar logo, and bio"
+                                >
+                                    <TbPencil size={12} className="text-amber-500" />
+                                    <span>{t('Edit Profile')}</span>
+                                </button>
+                            )}
                         </div>
                     </div>
-                    <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-xl font-black text-slate-900 dark:text-white">{adminDisplayName || 'Wolf'}</h3>
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-500 border border-blue-500/20">Verified Admin</span>
-                    </div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-4">InternetForEveryone.</p>
-                    
-                    <div className="grid grid-cols-3 gap-2.5 mb-4">
-                        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3 border border-slate-100 dark:border-slate-800 text-center">
-                            <div className="text-slate-400 text-[10px] uppercase font-bold tracking-wider mb-1">Points</div>
-                            <div className="text-base font-black text-slate-800 dark:text-slate-200">50,000</div>
-                        </div>
-                        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3 border border-slate-100 dark:border-slate-800 text-center">
-                            <div className="text-slate-400 text-[10px] uppercase font-bold tracking-wider mb-1">Rank</div>
-                            <div className="text-sm font-black text-rose-500 flex items-center justify-center gap-1">
-                                <TbCrown size={14} /> Fenrir
+
+                    {/* EDIT MODE: Admin Profile Editor */}
+                    {isEditing ? (
+                        <div className="space-y-3.5 mb-4 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-amber-500/30 shadow-inner">
+                            <div className="flex items-center justify-between pb-2.5 border-b border-slate-200/80 dark:border-slate-800">
+                                <div className="flex items-center gap-1.5 text-xs font-black text-amber-600 dark:text-amber-400">
+                                    <TbShieldCheck size={16} className="text-amber-500" />
+                                    <span>Realtime Admin Editor</span>
+                                </div>
+                                <span className="text-[10px] text-emerald-500 dark:text-emerald-400 font-bold flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                    Live Sync
+                                </span>
+                            </div>
+
+                            {/* Display Name Input */}
+                            <div>
+                                <label className="flex items-center gap-1.5 text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                    <TbUser size={13} className="text-amber-500 shrink-0" />
+                                    <span>Admin Display Name</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={editName}
+                                    onChange={(e) => setEditName(e.target.value)}
+                                    placeholder="Enter your real Admin name"
+                                    className="w-full px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                                />
+                            </div>
+
+                            {/* Bio Input */}
+                            <div>
+                                <label className="flex items-center gap-1.5 text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                    <TbFileText size={13} className="text-amber-500 shrink-0" />
+                                    <span>Admin Bio</span>
+                                </label>
+                                <textarea
+                                    value={editBio}
+                                    onChange={(e) => setEditBio(e.target.value)}
+                                    rows={2}
+                                    placeholder="Admin bio or motto..."
+                                    className="w-full px-3 py-1.5 rounded-xl text-xs font-medium bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 resize-none"
+                                />
+                            </div>
+
+                            {/* Avatar Logo Selection */}
+                            <div>
+                                <label className="flex items-center gap-1.5 text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                                    <TbPhoto size={13} className="text-amber-500 shrink-0" />
+                                    <span>Admin Avatar Logo</span>
+                                </label>
+                                {/* Preset Logos */}
+                                <div className="flex items-center gap-2 mb-2">
+                                    {[
+                                        { label: 'Wolf', src: '/images/logo01.png' },
+                                        { label: 'Shield', src: '/images/logo04.png' },
+                                        { label: 'Streamer', src: '/images/streamer.png' },
+                                        { label: 'Cyber', src: '/images/userprofile.png' },
+                                    ].map((preset) => (
+                                        <button
+                                            key={preset.src}
+                                            type="button"
+                                            onClick={() => setEditAvatar(preset.src)}
+                                            className={`relative w-9 h-9 rounded-xl overflow-hidden border-2 transition-all p-0.5 cursor-pointer ${
+                                                editAvatar === preset.src ? 'border-amber-500 scale-105 shadow-md ring-1 ring-amber-400/50' : 'border-slate-200 dark:border-slate-700 opacity-70 hover:opacity-100'
+                                            }`}
+                                            title={preset.label}
+                                        >
+                                            <img src={preset.src} alt={preset.label} className="w-full h-full object-cover rounded-lg" />
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Custom Upload / URL */}
+                                <div className="flex items-center gap-2">
+                                    <label className="flex-1 cursor-pointer flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-[11px] font-bold text-slate-700 dark:text-slate-200 transition-colors shadow-2xs">
+                                        <TbUpload size={13} className="text-amber-500 shrink-0" />
+                                        <span>Upload Logo</span>
+                                        <input type="file" accept="image/*" onChange={handleAvatarFileUpload} className="hidden" />
+                                    </label>
+                                    <div className="flex-1 relative">
+                                        <input 
+                                            type="url"
+                                            value={editAvatar.startsWith('data:') ? '' : editAvatar}
+                                            onChange={(e) => setEditAvatar(e.target.value)}
+                                            placeholder="Or image URL"
+                                            className="w-full ps-7 pe-2.5 py-1.5 rounded-xl text-[11px] bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                        />
+                                        <TbLink size={12} className="absolute start-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Banner Selection */}
+                            <div>
+                                <label className="flex items-center gap-1.5 text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                                    <TbLayoutDashboard size={13} className="text-amber-500 shrink-0" />
+                                    <span>Admin Banner</span>
+                                </label>
+                                <div className="flex items-center gap-2 mb-2">
+                                    {[
+                                        { label: 'Cyber Banner', src: '/images/userprofile.png' },
+                                        ...(screenshotUrl ? [{ label: 'Game Screenshot', src: screenshotUrl }] : []),
+                                    ].map((preset) => (
+                                        <button
+                                            key={preset.src}
+                                            type="button"
+                                            onClick={() => setEditBanner(preset.src)}
+                                            className={`relative h-8 px-2.5 rounded-xl overflow-hidden border-2 text-[10px] font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                                editBanner === preset.src ? 'border-amber-500 bg-amber-500/10 text-amber-500 scale-105 shadow-md ring-1 ring-amber-400/50' : 'border-slate-200 dark:border-slate-700 opacity-70 hover:opacity-100 text-slate-500 dark:text-slate-400'
+                                            }`}
+                                        >
+                                            <img src={preset.src} alt={preset.label} className="w-4 h-4 object-cover rounded" />
+                                            <span>{preset.label}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <label className="flex-1 cursor-pointer flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-[11px] font-bold text-slate-700 dark:text-slate-200 transition-colors shadow-2xs">
+                                        <TbUpload size={13} className="text-amber-500 shrink-0" />
+                                        <span>Upload Banner</span>
+                                        <input type="file" accept="image/*" onChange={handleBannerFileUpload} className="hidden" />
+                                    </label>
+                                    <div className="flex-1 relative">
+                                        <input 
+                                            type="url"
+                                            value={editBanner.startsWith('data:') ? '' : editBanner}
+                                            onChange={(e) => setEditBanner(e.target.value)}
+                                            placeholder="Or banner URL"
+                                            className="w-full ps-7 pe-2.5 py-1.5 rounded-xl text-[11px] bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                        />
+                                        <TbLink size={12} className="absolute start-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center gap-2 pt-1.5">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsEditing(false)}
+                                    disabled={isSaving}
+                                    className="flex-1 py-1.5 px-3 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                                >
+                                    <TbX size={13} />
+                                    <span>Cancel</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleSaveAdminProfile}
+                                    disabled={isSaving}
+                                    className="flex-1 py-1.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 text-xs font-black shadow-md flex items-center justify-center gap-1.5 transition-all disabled:opacity-50 cursor-pointer"
+                                >
+                                    {isSaving ? (
+                                        <>
+                                            <span className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                                            <span>Saving...</span>
+                                        </>
+                                    ) : saveSuccess ? (
+                                        <>
+                                            <TbCheck size={14} className="stroke-[3]" />
+                                            <span>Updated!</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <TbDeviceFloppy size={14} />
+                                            <span>Save & Update</span>
+                                        </>
+                                    )}
+                                </button>
                             </div>
                         </div>
-                        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3 border border-slate-100 dark:border-slate-800 text-center">
-                            <div className="text-slate-400 text-[10px] uppercase font-bold tracking-wider mb-1">Role</div>
-                            <div className="text-xs font-black text-amber-500">Root Admin</div>
-                        </div>
-                    </div>
+                    ) : (
+                        /* DISPLAY MODE: Real Admin Profile */
+                        <>
+                            <div className="flex items-center gap-2 mb-1">
+                                <h3 className="text-xl font-black text-slate-900 dark:text-white truncate">
+                                    {adminDisplayName || 'SecretArea'}
+                                </h3>
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-500 border border-blue-500/20 shrink-0">
+                                    Verified Admin
+                                </span>
+                            </div>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-4 break-words">
+                                {adminBio || 'InternetForEveryone.'}
+                            </p>
+                            
+                            <div className="grid grid-cols-3 gap-2.5 mb-4">
+                                <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3 border border-slate-100 dark:border-slate-800 text-center">
+                                    <div className="text-slate-400 text-[10px] uppercase font-bold tracking-wider mb-1">Points</div>
+                                    <div className="text-base font-black text-slate-800 dark:text-slate-200">
+                                        {adminPoints.toLocaleString()}
+                                    </div>
+                                </div>
+                                <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3 border border-slate-100 dark:border-slate-800 text-center">
+                                    <div className="text-slate-400 text-[10px] uppercase font-bold tracking-wider mb-1">Rank</div>
+                                    <div className="text-sm font-black text-rose-500 flex items-center justify-center gap-1">
+                                        <TbCrown size={14} /> {adminRank || 'Fenrir'}
+                                    </div>
+                                </div>
+                                <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3 border border-slate-100 dark:border-slate-800 text-center">
+                                    <div className="text-slate-400 text-[10px] uppercase font-bold tracking-wider mb-1">Role</div>
+                                    <div className="text-xs font-black text-amber-500 truncate">
+                                        {adminRole || 'Root Admin'}
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    )}
 
                     {/* Admin Social Links */}
                     <div className="pt-3.5 border-t border-slate-100 dark:border-slate-800/80">
@@ -3176,7 +3558,8 @@ export const ResourceDetailModal: React.FC<{
   allResources?: Record<string, ResourceItem[]>;
   onItemSelect?: (item: ResourceItem) => void;
   currentGenreContext?: string | null;
-}> = ({ item: rawItem, onClose, isHypervisor, stash = [], toggleStash = () => {}, onCompanyClick, onGenreClick, resolvedDev, isGuestMode, showGuestNotification, globalSpecs, initialScrollTarget, onDonateClick, allResources, onItemSelect, currentGenreContext }) => {
+  onCategoryClick?: (category: string) => void;
+}> = ({ item: rawItem, onClose, isHypervisor, stash = [], toggleStash = () => {}, onCompanyClick, onGenreClick, resolvedDev, isGuestMode, showGuestNotification, globalSpecs, initialScrollTarget, onDonateClick, allResources, onItemSelect, currentGenreContext, onCategoryClick }) => {
   const { dir, t } = useLanguage();
   const [showUploaderPopup, setShowUploaderPopup] = useState(false);
   const currentUser = auth.currentUser;
@@ -3198,11 +3581,27 @@ export const ResourceDetailModal: React.FC<{
         originalSize: 'N/A',
         genres: 'Game',
         languages: 'English',
-        repackBy: 'NEXA',
+        repackBy: '',
         galleryImages: [],
         links: { parts: [], mirrors: [], ankerParts: [] },
         isFree: true
       };
+    }
+
+    // Determine category from ID prefix if missing or mistakenly defaulted to game
+    const inferCategory = (itemObj?: ResourceItem): string => {
+      if (itemObj?.category && itemObj.category !== 'game') return itemObj.category;
+      const idStr = String(itemObj?.id || '').trim().toUpperCase();
+      if (idStr.startsWith('A-') || (/^A\d+$/i.test(idStr))) return 'architect';
+      if (idStr.startsWith('H-') || (/^H\d+$/i.test(idStr))) return 'hypervisor';
+      if (idStr.startsWith('S-') || (/^S\d+$/i.test(idStr))) return 'steamtools';
+      if (idStr.startsWith('E-') || (/^E\d+$/i.test(idStr))) return 'extra';
+      return itemObj?.category || 'game';
+    };
+
+    const inferredCategory = inferCategory(current);
+    if (!current.category || (current.category === 'game' && inferredCategory !== 'game')) {
+      current = { ...current, category: inferredCategory };
     }
 
     const isIdLike = (str?: string) => {
@@ -3215,14 +3614,25 @@ export const ResourceDetailModal: React.FC<{
       return false;
     };
 
-    const needsResolution = isIdLike(current.name) || !current.links?.full || !current.description || (current.coverImage && current.coverImage.includes('unsplash.com'));
+    const hasAnyLinks = !!(
+      current.links?.full || 
+      (current.links?.mirrors && current.links.mirrors.length > 0) || 
+      (current.links?.parts && current.links.parts.length > 0) || 
+      (current.links?.ankerParts && current.links.ankerParts.length > 0) || 
+      current.links?.utorrent || 
+      current.links?.preInstalled?.download || 
+      current.links?.preInstalled?.cloudDrop || 
+      current.links?.preInstalled?.torrent
+    );
+
+    // Only resolve if item is truly a hollow stub (e.g. name is an ID or missing title and links)
+    const needsResolution = isIdLike(current.name) || (!current.description && !hasAnyLinks) || (current.coverImage && current.coverImage.includes('unsplash.com') && isIdLike(current.name));
 
     if (needsResolution && current.id) {
       const rawTargetId = String(current.id).toLowerCase();
       const targetNoDash = rawTargetId.replace(/[-_]/g, '');
-      const numMatch = rawTargetId.match(/\d+/);
-      const targetNum = numMatch ? numMatch[0] : '';
 
+      // Strict check: must match id or gameId directly; never cross-match numbers across categories
       const checkItem = (r: ResourceItem) => {
         if (!r) return false;
         const rid = String(r.id || '').toLowerCase();
@@ -3230,31 +3640,53 @@ export const ResourceDetailModal: React.FC<{
         if (rid === rawTargetId || rNoDash === targetNoDash) return true;
         const rGameId = String(r.gameId || '').toLowerCase();
         if (rGameId && (rGameId === rawTargetId || rGameId === targetNoDash)) return true;
-        if (targetNum) {
-          const rNum = rid.match(/\d+/);
-          if (rNum && rNum[0] === targetNum) return true;
-        }
         return false;
       };
 
+      const targetCat = current.category || inferredCategory;
       let found: ResourceItem | undefined;
-      if (allResources) {
+
+      // 1. Search in the item's own category first
+      if (allResources && targetCat && Array.isArray(allResources[targetCat])) {
+        found = allResources[targetCat].find(checkItem);
+      }
+
+      // 2. Search other categories only if category is not explicitly constrained
+      if (!found && allResources) {
         for (const cat of Object.keys(allResources)) {
+          if (cat === targetCat) continue;
+          // Never look in 'game' if this is an architect/tools, hypervisor, or steamtools item
+          if (targetCat === 'architect' && cat !== 'architect') continue;
+          if (targetCat === 'hypervisor' && cat !== 'hypervisor') continue;
+          if (targetCat === 'steamtools' && cat !== 'steamtools') continue;
+          if (targetCat === 'extra' && cat !== 'extra') continue;
           if (Array.isArray(allResources[cat])) {
             found = allResources[cat].find(checkItem);
             if (found) break;
           }
         }
       }
+
+      // 3. Fallback to localStorage cache
       if (!found) {
         try {
           const cached = localStorage.getItem('cached_transformed_resources');
           if (cached) {
             const parsed = JSON.parse(cached);
-            for (const cat of Object.keys(parsed)) {
-              if (Array.isArray(parsed[cat])) {
-                found = parsed[cat].find(checkItem);
-                if (found) break;
+            if (targetCat && Array.isArray(parsed[targetCat])) {
+              found = parsed[targetCat].find(checkItem);
+            }
+            if (!found) {
+              for (const cat of Object.keys(parsed)) {
+                if (cat === targetCat) continue;
+                if (targetCat === 'architect' && cat !== 'architect') continue;
+                if (targetCat === 'hypervisor' && cat !== 'hypervisor') continue;
+                if (targetCat === 'steamtools' && cat !== 'steamtools') continue;
+                if (targetCat === 'extra' && cat !== 'extra') continue;
+                if (Array.isArray(parsed[cat])) {
+                  found = parsed[cat].find(checkItem);
+                  if (found) break;
+                }
               }
             }
           }
@@ -3262,11 +3694,14 @@ export const ResourceDetailModal: React.FC<{
       }
 
       if (found) {
+        const resolvedCategory = (current.category && current.category !== 'game') ? current.category : (found.category || inferredCategory || 'game');
+        const resolvedName = (!isIdLike(current.name) ? current.name : (!isIdLike(found.name) ? found.name : current.name)) || found.name || current.name;
+
         return {
           ...found,
           ...current,
-          name: (!isIdLike(found.name) ? found.name : (!isIdLike(current.name) ? current.name : found.name)) || found.name || current.name,
-          category: found.category || current.category,
+          name: resolvedName,
+          category: resolvedCategory,
           coverImage: (found.coverImage && !found.coverImage.includes('unsplash.com')) ? found.coverImage : (current.coverImage || found.coverImage),
           links: (found.links && (found.links.full || found.links.mirrors?.length || found.links.parts?.length)) ? found.links : (current.links || { parts: [], mirrors: [], ankerParts: [] }),
           description: found.description || current.description,
@@ -3284,12 +3719,19 @@ export const ResourceDetailModal: React.FC<{
     return current;
   }, [rawItem, allResources]);
 
-  const getBreadcrumbCategoryLabel = (cat?: string) => {
+  const getBreadcrumbCategoryLabel = (cat?: string, itemId?: string) => {
     const c = (cat || '').toLowerCase();
     if (c === 'architect' || c === 'tools') return t('Tools') || 'Tools';
     if (c === 'hypervisor') return t('Hypervisor') || 'Hypervisor';
     if (c === 'steamtools') return t('SteamTools') || 'SteamTools';
     if (c === 'extra' || c === 'savegame') return t('SaveGame') || 'SaveGame';
+    if (itemId) {
+      const upperId = String(itemId).trim().toUpperCase();
+      if (upperId.startsWith('A-') || /^A\d+$/i.test(upperId)) return t('Tools') || 'Tools';
+      if (upperId.startsWith('H-') || /^H\d+$/i.test(upperId)) return t('Hypervisor') || 'Hypervisor';
+      if (upperId.startsWith('S-') || /^S\d+$/i.test(upperId)) return t('SteamTools') || 'SteamTools';
+      if (upperId.startsWith('E-') || /^E\d+$/i.test(upperId)) return t('SaveGame') || 'SaveGame';
+    }
     return t('Games') || 'Games';
   };
 
@@ -3690,9 +4132,20 @@ export const ResourceDetailModal: React.FC<{
       {/* Header with Breadcrumb and Close Button */}
       <div className="sticky top-0 z-50 bg-slate-50/90 dark:bg-[#0B1120]/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/50 px-4 sm:px-8 py-4 flex items-center justify-between">
          <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400 overflow-hidden">
-            <span className="hover:text-primary-500 cursor-pointer shrink-0" onClick={onClose}>{t('Home')}</span>
+            <span className="hover:text-primary-500 cursor-pointer shrink-0 transition-colors" onClick={onClose}>{t('Home')}</span>
             <span className="shrink-0">/</span>
-            <span className="hover:text-primary-500 cursor-pointer capitalize shrink-0" onClick={onClose}>{getBreadcrumbCategoryLabel(item.category)}</span>
+            <span 
+              className="hover:text-primary-500 cursor-pointer capitalize shrink-0 transition-colors" 
+              onClick={() => {
+                if (onCategoryClick) {
+                  onCategoryClick(item.category);
+                } else {
+                  onClose();
+                }
+              }}
+            >
+              {getBreadcrumbCategoryLabel(item.category, item.id)}
+            </span>
             <span className="shrink-0">/</span>
             <span className="text-slate-900 dark:text-white font-semibold truncate max-w-[200px] sm:max-w-md">{item.name}</span>
          </div>
@@ -3754,9 +4207,6 @@ export const ResourceDetailModal: React.FC<{
 
               {/* Right Column (Details) */}
               <div className="flex-1 flex flex-col min-w-0">
-                 <div className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2 truncate">
-                     {item.name} {item.repackBy ? `${item.repackBy} Edition` : ""}
-                 </div>
                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight mb-4 leading-tight">
                      {item.name}
                  </h1>
@@ -3808,12 +4258,14 @@ export const ResourceDetailModal: React.FC<{
                                   alt={adminDisplayName || "Admin"} 
                                   referrerPolicy="no-referrer"
                                   className="w-full h-full object-cover group-hover:scale-110 transition-transform" 
-                                  onError={() => setAdminAvatar('')}
+                                  onError={() => setAdminAvatar('/images/logo01.png')}
                                />
                             ) : (
-                               <div className="w-full h-full bg-gradient-to-tr from-amber-600 to-yellow-400 text-slate-950 font-black text-[10px] flex items-center justify-center">
-                                   {adminDisplayName ? adminDisplayName[0].toUpperCase() : 'W'}
-                               </div>
+                               <img 
+                                  src="/images/logo01.png" 
+                                  alt={adminDisplayName || "Admin"} 
+                                  className="w-full h-full object-contain p-0.5" 
+                               />
                             )}
                          </div>
                          <div className="flex items-center gap-1.5">
@@ -3821,7 +4273,7 @@ export const ResourceDetailModal: React.FC<{
                                 <TbShieldCheck size={13} className="text-amber-500" />
                                 {t('Admin')}
                             </span>
-                            <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{adminDisplayName || 'Wolf'}</span>
+                            <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{adminDisplayName || 'SecretArea'}</span>
                          </div>
                      </div>
                  </div>
@@ -6079,18 +6531,20 @@ const SecretArea: React.FC = () => {
       // Fallback: check state passed from profile
       if (!gameToOpen && (routerLocation.state as any)?.gameData) {
         const gd = (routerLocation.state as any).gameData;
+        const targetIdUpper = String(gd.id || targetId).toUpperCase();
+        const fallbackCat = gd.category || (targetIdUpper.startsWith('A') ? 'architect' : targetIdUpper.startsWith('H') ? 'hypervisor' : targetIdUpper.startsWith('S') ? 'steamtools' : targetIdUpper.startsWith('E') ? 'extra' : 'game');
         gameToOpen = {
           id: String(gd.id || targetId),
           name: gd.name || targetId,
           coverImage: gd.coverImage || gd.background_image || gd.image || '',
-          category: gd.category || 'game',
+          category: fallbackCat,
           version: gd.version || 'Latest',
           description: gd.description || gd.name || 'Detailed game specifications and direct download resources.',
           repackSize: gd.repackSize || 'N/A',
           originalSize: gd.originalSize || 'N/A',
           genres: gd.genres || 'Action, Adventure',
           languages: gd.languages || 'English',
-          repackBy: gd.repackBy || 'NEXA',
+          repackBy: gd.repackBy || '',
           galleryImages: gd.galleryImages || [gd.coverImage || ''],
           isFree: true,
           links: gd.links || { parts: [], mirrors: [], ankerParts: [] }
@@ -7131,7 +7585,7 @@ const SecretArea: React.FC = () => {
             originalSize: getVal('originalSize') || 'N/A',
             genres: getVal('genres') || '',
             languages: getVal('languages') || 'ENG',
-            repackBy: getVal('repackBy') || 'NEXA',
+            repackBy: getVal('repackBy') || '',
             developer: getVal('developer') || getVal('studio') || getVal('company') || '',
             coverImage: getVal('coverImage') || 'https://placehold.co/600x800/0f172a/334155?text=ENCRYPTED',
             galleryImages: gallery,
@@ -7881,6 +8335,16 @@ const paginatedData = useMemo(() => {
                   currentGenreContext={selectedGenreView}
                   resolvedDev={getResolvedDeveloper(selectedResource)}
                   onCompanyClick={handleCompanyClick}
+                  onCategoryClick={(cat) => {
+                      const c = (cat || '').toLowerCase();
+                      const targetTab = (c === 'architect' || c === 'tools') ? 'architect'
+                        : (c === 'hypervisor') ? 'hypervisor'
+                        : (c === 'steamtools') ? 'steamtools'
+                        : (c === 'extra' || c === 'savegame') ? 'extra'
+                        : 'game';
+                      setActiveTab(targetTab);
+                      handleCloseDetailModal();
+                  }}
                   isGuestMode={isGuestMode}
                   showGuestNotification={showGuestNotification}
                   onGenreClick={(genre) => {
@@ -8050,6 +8514,16 @@ const paginatedData = useMemo(() => {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
               resolvedDev={getResolvedDeveloper(selectedResource)}
+              onCategoryClick={(cat) => {
+                const c = (cat || '').toLowerCase();
+                const targetTab = (c === 'architect' || c === 'tools') ? 'architect'
+                  : (c === 'hypervisor') ? 'hypervisor'
+                  : (c === 'steamtools') ? 'steamtools'
+                  : (c === 'extra' || c === 'savegame') ? 'extra'
+                  : 'game';
+                setActiveTab(targetTab);
+                handleCloseDetailModal();
+              }}
               isGuestMode={isGuestMode}
               showGuestNotification={showGuestNotification}
               initialScrollTarget={selectedResourceAction}

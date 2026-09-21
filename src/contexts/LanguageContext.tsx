@@ -383,6 +383,7 @@ export const translations: Translations = {
     'Top community favorites this year': { en: 'Top community favorites this year', fr: 'Favoris de la communauté cette année', es: 'Favoritos de la comunidad este año', ar: 'الألعاب المفضلة للمجتمع هذا العام' },
     'All Top': { en: 'All Top', fr: 'Tous les', es: 'Todos los', ar: 'أفضل' },
     'Games': { en: 'Games', fr: 'Jeux', es: 'Juegos', ar: 'ألعاب' },
+    'Tools': { en: 'Tools', fr: 'Outils', es: 'Herramientas', ar: 'الأدوات' },
     'SEE MORE GAMES': { en: 'SEE MORE GAMES', fr: 'VOIR PLUS DE JEUX', es: 'VER MÁS JUEGOS', ar: 'عرض المزيد من الألعاب' },
     'Positive': { en: 'Positive', fr: 'Positif', es: 'Positivo', ar: 'إيجابي' },
     'Mixed': { en: 'Mixed', fr: 'Mixte', es: 'Mixto', ar: 'مختلط' },

@@ -17,11 +17,21 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(uid)).data;
     }
 
-    // Role-based admin check: ONLY uses users/{uid}.role (zero email checks)
-    function isAdmin() {
+    // Root admin email check to bootstrap and guarantee permissions for primary administrator
+    function isRootAdminEmail() {
       return isSignedIn() &&
+        request.auth.token.email != null &&
+        (request.auth.token.email.lower() == 'secretarea1337@gmail.com' ||
+         request.auth.token.email.lower() == 'marouananouar02@gmail.com');
+    }
+
+    // Role-based admin check: supports root admin emails and users/{uid}.role
+    function isAdmin() {
+      return isRootAdminEmail() || (
+        isSignedIn() &&
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        getUser(request.auth.uid).role in ['admin', 'Admin'];
+        getUser(request.auth.uid).role in ['admin', 'Admin']
+      );
     }
 
     // Check if target user document has an Admin role

@@ -17,7 +17,8 @@ import {
   TbTarget, TbEye, TbEyeOff, TbBookmark, TbRadar, TbTerminal, TbBell, TbHistory, TbFilter, TbMenu2, TbDots,
   TbHash, TbFolder, TbDeviceFloppy, TbChartPie, TbCircleX, TbLogout, TbLogin, TbMessageCircle, TbBuildingMosque,
   TbCurrencyBitcoin, TbCurrencyEthereum, TbCurrencyMonero, TbCoin, TbWallet, TbStar,
-  TbShare, TbBrandAdobe, TbBrandOpenai, TbMagnet, TbSettings, TbAdjustments
+  TbShare, TbBrandAdobe, TbBrandOpenai, TbMagnet, TbSettings, TbAdjustments,
+  TbEdit, TbPencil, TbUpload, TbCloudUpload, TbCrown, TbShieldCheck
 } from 'react-icons/tb';
 
 import {
@@ -59,6 +60,13 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Plus: TbPlus,
   Minus: TbMinus,
   Download: TbDownload,
+  Upload: TbUpload,
+  UploadCloud: TbCloudUpload,
+  Edit: TbEdit,
+  Edit2: TbPencil,
+  Edit3: TbEdit,
+  Pencil: TbPencil,
+  Crown: TbCrown,
   ExternalLink: TbExternalLink,
   Info: TbInfoCircle,
   Network: TbNetwork,

@@ -63,7 +63,7 @@ const Settings = () => {
             isActive: nextIsActive
         };
         // Persist and broadcast immediately in real-time
-        saveUserHardwareSpecs(user?.uid || '', updated);
+        saveUserHardwareSpecs(user?.uid || 'guest', updated);
     };
 
     // Request Item form state
@@ -124,6 +124,11 @@ const Settings = () => {
                         setIsActive(data.pcSpecs.isActive !== false);
                     }
                 }, currentUser);
+            } else {
+                // Guest mode / unauthenticated visitor - access denied, redirect to home and prompt login
+                setUser(null);
+                navigate('/', { replace: true });
+                window.dispatchEvent(new CustomEvent('open-login-modal'));
             }
         });
 
@@ -142,20 +147,31 @@ const Settings = () => {
     };
 
     const handleSaveProfile = async () => {
-        if (!user) return;
         setIsSaving(true);
         try {
-            if (isAdmin && bannerURL) {
-                await saveGlobalBanner(bannerURL, user.email || 'admin');
+            if (user) {
+                if (isAdmin && bannerURL) {
+                    await saveGlobalBanner(bannerURL, user.email || 'admin');
+                }
+                await saveUserProfileInfo(user.uid, user, {
+                    displayName,
+                    username,
+                    bio,
+                    photoURL,
+                    bannerURL
+                });
+                triggerSuccess(isAdmin ? t('Profile and Global Banner updated!') : t('Profile updated and saved!'));
+            } else {
+                // Guest mode: save to local guest profile
+                await saveUserProfileInfo('guest', { displayName: displayName || 'Guest User', username: username || 'guest' }, {
+                    displayName,
+                    username,
+                    bio,
+                    photoURL,
+                    bannerURL
+                });
+                triggerSuccess(t('Profile updated locally (Guest Mode)!'));
             }
-            await saveUserProfileInfo(user.uid, user, {
-                displayName,
-                username,
-                bio,
-                photoURL,
-                bannerURL
-            });
-            triggerSuccess(isAdmin ? t('Profile and Global Banner updated!') : t('Profile updated and saved!'));
         } catch (e: any) {
             console.error("Error saving profile:", e);
         } finally {
@@ -165,8 +181,10 @@ const Settings = () => {
 
     const handleSubmitRequest = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!requestTitle || !requestSection || !user) return;
+        if (!requestTitle || !requestSection) return;
         setIsSubmittingRequest(true);
+        const reqUserId = user?.uid || 'guest';
+        const reqUserEmail = user?.email || 'guest@secretarea.local';
         try {
             await fetch('https://script.google.com/macros/s/AKfycbx7nzBZc_tIhbAUK5OvOzgifGVzaVorzjn5OXNe8ENC0p7Pjia7O-u4WggxjRZipt4v/exec', {
                 method: 'POST',
@@ -178,7 +196,8 @@ const Settings = () => {
                     title: requestTitle,
                     category: requestSection,
                     image: requestImageUrl,
-                    message: requestMessage
+                    message: requestMessage,
+                    user: reqUserEmail
                 })
             }).catch(() => {});
 
@@ -188,8 +207,8 @@ const Settings = () => {
                     section: requestSection,
                     imageUrl: requestImageUrl,
                     message: requestMessage,
-                    userId: user.uid,
-                    userEmail: user.email,
+                    userId: reqUserId,
+                    userEmail: reqUserEmail,
                     status: 'pending',
                     createdAt: new Date().toISOString()
                 });
@@ -204,8 +223,8 @@ const Settings = () => {
                         section: requestSection,
                         imageUrl: requestImageUrl,
                         message: requestMessage,
-                        userId: user.uid,
-                        userEmail: user.email,
+                        userId: reqUserId,
+                        userEmail: reqUserEmail,
                         status: 'pending',
                         createdAt: new Date().toISOString()
                     });
@@ -236,7 +255,8 @@ const Settings = () => {
             isActive
         };
         try {
-            await saveUserHardwareSpecs(user?.uid || '', specs);
+            const targetUid = user?.uid || 'guest';
+            await saveUserHardwareSpecs(targetUid, specs);
             triggerSuccess(user ? t('Hardware specs saved to Firestore!') : t('Hardware specs saved locally!'));
         } catch (e) {
             console.error("Error saving hardware:", e);
@@ -251,6 +271,35 @@ const Settings = () => {
                 <div className="flex flex-col items-center gap-3">
                     <div className="w-10 h-10 border-4 border-slate-300 dark:border-slate-700 border-t-[#29aaea] rounded-full animate-spin"></div>
                     <span className="text-xs text-slate-500 font-mono tracking-widest uppercase">Loading Settings...</span>
+                </div>
+            </div>
+        );
+    }
+
+    if (!user) {
+        return (
+            <div dir={dir} className="min-h-[70vh] flex items-center justify-center px-4 py-16">
+                <div className="max-w-md w-full p-8 rounded-3xl bg-white dark:bg-[#111623] border border-slate-200 dark:border-slate-800 text-center shadow-xl">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                        <Icon name="Lock" size={32} />
+                    </div>
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">{t('Gmail Login Required') || 'Login Required'}</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+                        {t('You must be signed in with a Google / Gmail account to access your Profile and Settings.') || 'You must be signed in with a Google / Gmail account to access your Profile and Settings.'}
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => window.dispatchEvent(new CustomEvent('open-login-modal'))}
+                        className="w-full py-3 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl text-sm shadow-md shadow-blue-500/25 transition-all cursor-pointer flex items-center justify-center gap-2"
+                    >
+                        <Icon name="LogIn" size={18} />
+                        <span>{t('Sign in with Google / Gmail') || 'Sign in with Google'}</span>
+                    </button>
+                    <div className="mt-4">
+                        <Link to="/" className="text-xs text-slate-500 dark:text-slate-400 hover:underline">
+                            &larr; {t('Back to Home') || 'Back to Home'}
+                        </Link>
+                    </div>
                 </div>
             </div>
         );
@@ -284,10 +333,21 @@ const Settings = () => {
                         <Icon name="ArrowLeft" size={18} className={dir === 'rtl' ? 'rotate-180' : ''} />
                         {t('Dashboard')}
                     </Link>
-                    <Link to="/profile" className="inline-flex items-center gap-1.5 text-xs text-[#29aaea] hover:underline font-semibold">
-                        <Icon name="User" size={14} />
-                        {t('View Profile')} &rarr;
-                    </Link>
+                    {user ? (
+                        <Link to="/profile" className="inline-flex items-center gap-1.5 text-xs text-[#29aaea] hover:underline font-semibold">
+                            <Icon name="User" size={14} />
+                            {t('View Profile')} &rarr;
+                        </Link>
+                    ) : (
+                        <button 
+                            type="button" 
+                            onClick={() => window.dispatchEvent(new CustomEvent('open-login-modal'))}
+                            className="inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 hover:underline font-semibold cursor-pointer"
+                        >
+                            <Icon name="LogIn" size={13} />
+                            {t('Login to Sync')}
+                        </button>
+                    )}
                 </div>
 
                 <div className="flex items-center gap-3.5 mb-6 pb-6 border-b border-slate-200 dark:border-slate-800">
@@ -349,8 +409,38 @@ const Settings = () => {
                                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t('Personal Info') || 'Personal Info'}</h2>
                             </div>
                             <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 max-w-lg">
-                                {t('This information is visible on your profile and synced directly with Firestore database.')}
+                                {user 
+                                    ? t('This information is visible on your profile and synced directly with Firestore database.')
+                                    : t('You are browsing in Guest Mode. Your hardware specifications and preferences are stored locally.')
+                                }
                             </p>
+
+                            {!user && (
+                                <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-slate-800 dark:text-slate-200">
+                                    <div className="flex items-center gap-2.5">
+                                        <span className="p-2 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0">
+                                            <Icon name="Ghost" size={18} />
+                                        </span>
+                                        <div>
+                                            <p className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                                {t('Guest Mode Active')}
+                                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 uppercase font-semibold">Local Only</span>
+                                            </p>
+                                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                                {t('Hardware settings and preferences are saved locally on this browser. Login with Google or Discord to sync across all devices.')}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => window.dispatchEvent(new CustomEvent('open-login-modal'))}
+                                        className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-blue-500/20 shrink-0 flex items-center justify-center gap-1.5 cursor-pointer"
+                                    >
+                                        <Icon name="LogIn" size={14} />
+                                        <span>{t('Login to Sync')}</span>
+                                    </button>
+                                </div>
+                            )}
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
                                 
@@ -414,7 +504,7 @@ const Settings = () => {
                                     </label>
                                     <input 
                                         type="email" 
-                                        value={user.email || ''} 
+                                        value={user?.email || (user ? '' : t('Guest Mode (Local Session)'))} 
                                         disabled
                                         className="w-full bg-slate-100 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-500 cursor-not-allowed outline-none text-sm"
                                     />
@@ -522,7 +612,14 @@ const Settings = () => {
                     <div className="space-y-8 animate-fade-in">
                         <div>
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
-                                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t('PC Specifications') || 'PC Specifications'}</h2>
+                                <div className="flex items-center gap-3">
+                                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t('PC Specifications') || 'PC Specifications'}</h2>
+                                    {!user && (
+                                        <span className="text-[11px] font-bold text-blue-500 bg-blue-500/10 border border-blue-500/20 px-2.5 py-0.5 rounded-md flex items-center gap-1">
+                                            <Icon name="Laptop" size={13} /> {t('Saved Locally (Guest Mode)')}
+                                        </span>
+                                    )}
+                                </div>
                                 <label className="flex items-center gap-2 cursor-pointer">
                                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">{t('Compatibility Checker')}</span>
                                     <div className="relative">

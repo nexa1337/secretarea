@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Icon from './Icon';
+import { auth } from '../src/firebase';
 import { analyzeRequirements, checkCompatibilityStatus } from '../pages/SecretArea';
 import { getCpuTier, getGpuTier } from '../src/data/systemSpecs';
 import { useLanguage } from '../src/contexts/LanguageContext';
@@ -63,9 +64,37 @@ const HardwareCompatibility: React.FC<{
   globalSpecs?: { ram: number, os: string, cpuModel: string, gpuModel: string, isActive: boolean } 
 }> = ({ requirements, globalSpecs: initialGlobalSpecs }) => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
+  const [currentUser, setCurrentUser] = useState<any>(() => auth.currentUser);
   const [isOpen, setIsOpen] = useState(false);
   const [parsedSpecs, setParsedSpecs] = useState<any>(null);
   const [activeSpecs, setActiveSpecs] = useState(() => initialGlobalSpecs || getStoredHardwareSpecs());
+
+  useEffect(() => {
+    const unsub = auth.onAuthStateChanged((user) => {
+      setCurrentUser(user);
+    });
+    return () => unsub();
+  }, []);
+
+  const handleHardwareSettingsClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!currentUser) {
+      window.dispatchEvent(new CustomEvent('open-login-modal'));
+    } else {
+      navigate('/settings', { state: { tab: 'Hardware' } });
+    }
+  };
+
+  const handleModalHardwareClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsOpen(false);
+    if (!currentUser) {
+      window.dispatchEvent(new CustomEvent('open-login-modal'));
+    } else {
+      navigate('/settings', { state: { tab: 'Hardware' } });
+    }
+  };
 
   useEffect(() => {
     if (initialGlobalSpecs) {
@@ -197,14 +226,14 @@ const HardwareCompatibility: React.FC<{
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
-          <Link
-            to="/settings"
-            state={{ tab: 'Hardware' }}
-            className="flex-1 sm:flex-none px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-lg font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
+          <button
+            type="button"
+            onClick={handleHardwareSettingsClick}
+            className="flex-1 sm:flex-none px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-lg font-bold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <Icon name="Tools" size={14} />
             {t('Hardware Settings')}
-          </Link>
+          </button>
         </div>
       </div>
     );
@@ -309,10 +338,14 @@ const HardwareCompatibility: React.FC<{
               </div>
 
               <div className="px-6 py-4 bg-slate-50 dark:bg-[#0d1219] border-t border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
-                <Link to="/settings" state={{ tab: 'Hardware' }} className="flex items-center gap-2 text-primary-500 hover:text-primary-600 transition-colors text-sm font-semibold">
+                <button 
+                  type="button" 
+                  onClick={handleModalHardwareClick}
+                  className="flex items-center gap-2 text-primary-500 hover:text-primary-600 transition-colors text-sm font-semibold cursor-pointer"
+                >
                   <Icon name="Tools" size={16} />
                   {t('Update your PC Specifications in Settings')} &rarr;
-                </Link>
+                </button>
                 <button
                   onClick={() => setIsOpen(false)}
                   className="px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"

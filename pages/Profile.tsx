@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLanguage } from '../src/contexts/LanguageContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import Icon from '../components/Icon';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   TbTrash, 
@@ -370,7 +371,7 @@ const Profile: React.FC = () => {
                                     originalSize: getVal('originalsize') || '',
                                     genres: getVal('genres') || getVal('category') || '',
                                     languages: getVal('languages') || 'ENG',
-                                    repackBy: getVal('repackby') || 'NEXA',
+                                    repackBy: getVal('repackby') || '',
                                     coverImage: coverVal,
                                     galleryImages: (getVal('galleryimages') || '').toString().split(/[,\n\|]/).map((s: string) => s.trim()).filter(Boolean),
                                     description: getVal('description') || '',
@@ -430,9 +431,10 @@ const Profile: React.FC = () => {
                     user
                 );
             } else {
-                // Guests and unauthenticated users cannot access profile - redirect to home
+                // Guests and unauthenticated users cannot access profile - redirect to home and prompt login
                 setIsLoadingProfile(false);
                 navigate('/', { replace: true });
+                window.dispatchEvent(new CustomEvent('open-login-modal'));
             }
         });
 
@@ -513,7 +515,32 @@ const Profile: React.FC = () => {
                 </div>
             );
         }
-        return null;
+        return (
+            <div dir={dir} className="min-h-[70vh] flex items-center justify-center px-4 py-16">
+                <div className="max-w-md w-full p-8 rounded-3xl bg-white dark:bg-[#111623] border border-slate-200 dark:border-slate-800 text-center shadow-xl">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                        <Icon name="Lock" size={32} />
+                    </div>
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">{t('Gmail Login Required') || 'Login Required'}</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+                        {t('You must be signed in with a Google / Gmail account to access your Profile and Settings.') || 'You must be signed in with a Google / Gmail account to access your Profile and Settings.'}
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => window.dispatchEvent(new CustomEvent('open-login-modal'))}
+                        className="w-full py-3 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl text-sm shadow-md shadow-blue-500/25 transition-all cursor-pointer flex items-center justify-center gap-2"
+                    >
+                        <Icon name="LogIn" size={18} />
+                        <span>{t('Sign in with Google / Gmail') || 'Sign in with Google'}</span>
+                    </button>
+                    <div className="mt-4">
+                        <Link to="/" className="text-xs text-slate-500 dark:text-slate-400 hover:underline">
+                            &larr; {t('Back to Home') || 'Back to Home'}
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     const earnedBadges = isAdmin ? ALL_BADGES : ALL_BADGES.filter(b => b.condition(profileData));
@@ -683,9 +710,19 @@ const Profile: React.FC = () => {
     };
 
     const handleClearHistory = async () => {
-        if (!window.confirm(t("Are you sure you want to clear your game history?"))) return;
-        if (activeUid) {
-            await clearGameHistory(activeUid);
+        const uid = activeUid || currentUser?.uid;
+        if (!uid) return;
+        setProfileData(prev => ({
+            ...prev,
+            gameHistory: [],
+            recentGames: [],
+            gamesViewed: 0
+        }));
+        setHistoryPage(1);
+        try {
+            await clearGameHistory(uid);
+        } catch (err) {
+            console.warn('Error clearing game history:', err);
         }
     };
 
@@ -717,7 +754,7 @@ const Profile: React.FC = () => {
                 originalSize: 'N/A',
                 genres: 'Game',
                 languages: 'English',
-                repackBy: 'NEXA',
+                repackBy: '',
                 galleryImages: [],
                 links: { parts: [], mirrors: [], ankerParts: [] },
                 isFree: true
@@ -823,7 +860,7 @@ const Profile: React.FC = () => {
             originalSize: (!isString && game.originalSize) ? game.originalSize : (matched?.originalSize || 'N/A'),
             genres: (!isString && game.genres) ? game.genres : (matched?.genres || matched?.category || 'Game'),
             languages: (!isString && game.languages) ? game.languages : (matched?.languages || 'ENG'),
-            repackBy: (!isString && game.repackBy) ? game.repackBy : (matched?.repackBy || 'NEXA'),
+            repackBy: (!isString && game.repackBy) ? game.repackBy : (matched?.repackBy || ''),
             galleryImages: (!isString && Array.isArray(game.galleryImages) && game.galleryImages.length > 0) ? game.galleryImages : (matched?.galleryImages || (coverImage ? [coverImage] : [])),
             developer: (!isString && game.developer) ? game.developer : (matched?.developer || ''),
             ratingPositive: (!isString && game.ratingPositive) ? game.ratingPositive : (matched?.ratingPositive || '95%'),
@@ -972,7 +1009,7 @@ const Profile: React.FC = () => {
         <div className="min-h-screen bg-slate-50 dark:bg-[#070b14] pt-24 pb-16 font-sans text-slate-900 dark:text-white transition-colors duration-200" dir={dir}>
             <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
                 
-                {/* Above Banner Action: "Back to Dashboard", "Settings", and "Edit Profile & Hardware" */}
+                {/* Above Banner Action: "Back to Dashboard" and "Settings" */}
                 <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
                     <button 
                         onClick={() => navigate('/')}
@@ -989,12 +1026,6 @@ const Profile: React.FC = () => {
                         >
                             <TbSettings size={16} />
                             <span>{t("Settings") || "Settings"}</span>
-                        </button>
-                        <button 
-                            onClick={() => navigate('/settings')}
-                            className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-blue-600/10 hover:bg-blue-600/20 text-blue-600 dark:text-blue-400 text-xs sm:text-sm font-semibold transition-all"
-                        >
-                            {t("Edit Profile & Hardware")}
                         </button>
                     </div>
                 </div>
@@ -1422,7 +1453,6 @@ const Profile: React.FC = () => {
                                         <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                             <TbHeart className="text-rose-500" /> {t("Liked Games")} ({liked.length})
                                         </h2>
-                                        <span className="text-xs text-slate-400">Stored in Firestore DB</span>
                                     </div>
                                     {liked.length > 0 ? (
                                         <GameGrid 
@@ -1629,7 +1659,6 @@ const Profile: React.FC = () => {
                                         <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                             <TbBookmark className="text-amber-400" /> {t("Favorites")} ({favorites.length})
                                         </h2>
-                                        <span className="text-xs text-slate-400">Stored in Firestore DB</span>
                                     </div>
                                     {favorites.length > 0 ? (
                                         <GameGrid 

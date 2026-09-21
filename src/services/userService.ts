@@ -1,4 +1,4 @@
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
 import { 
   doc, 
   getDoc, 
@@ -151,9 +151,10 @@ export const DEFAULT_PROFILE: UserProfileData = {
 };
 
 const ROOT_ADMIN_EMAIL = 'secretarea1337@gmail.com';
+const ROOT_ADMIN_EMAILS = ['secretarea1337@gmail.com', 'marouananouar02@gmail.com'];
 
 export function isUserAdmin(email?: string | null, role?: string | null): boolean {
-  if (email && email.toLowerCase() === ROOT_ADMIN_EMAIL.toLowerCase()) return true;
+  if (email && ROOT_ADMIN_EMAILS.some(e => e.toLowerCase() === email.trim().toLowerCase())) return true;
   if (role && role.toLowerCase() === 'admin') return true;
   return false;
 }
@@ -303,7 +304,7 @@ export async function ensureUserProfile(user: any): Promise<UserProfileData> {
     const snap = await getDoc(userDocRef);
     if (snap.exists()) {
       const data = snap.data() as UserProfileData;
-      const isAdmin = (user.email && user.email.toLowerCase() === ROOT_ADMIN_EMAIL.toLowerCase()) || data.role === 'admin';
+      const isAdmin = (user.email && ROOT_ADMIN_EMAILS.some(e => e.toLowerCase() === user.email?.trim().toLowerCase())) || data.role === 'admin';
       const updated: Partial<UserProfileData> = {
         lastLogin: new Date().toISOString(),
         lastActive: new Date().toISOString(),
@@ -312,6 +313,18 @@ export async function ensureUserProfile(user: any): Promise<UserProfileData> {
       await updateDoc(userDocRef, updated);
       const merged: UserProfileData = { ...DEFAULT_PROFILE, ...data, ...updated, uid };
       saveLocalProfile(uid, merged);
+      if (isAdmin) {
+        const adminName = merged.displayName && !['NEXA 1337', 'NEXA', 'SecretArea Gamer'].includes(merged.displayName)
+          ? merged.displayName
+          : (user.displayName || 'SecretArea');
+        saveAdminPublicProfile({
+          displayName: adminName,
+          photoURL: merged.photoURL || user.photoURL || DEFAULT_ADMIN_AVATAR,
+          avatarURL: merged.photoURL || user.photoURL || DEFAULT_ADMIN_AVATAR,
+          bannerURL: merged.bannerURL,
+          bio: merged.bio || DEFAULT_ADMIN_BIO
+        }).catch(() => {});
+      }
       return merged;
     }
   } catch (e: any) {
@@ -319,14 +332,15 @@ export async function ensureUserProfile(user: any): Promise<UserProfileData> {
   }
 
   // Create new profile if not found
-  const isAdmin = user.email && user.email.toLowerCase() === ROOT_ADMIN_EMAIL.toLowerCase();
+  const isAdmin = !!(user.email && ROOT_ADMIN_EMAILS.some(e => e.toLowerCase() === user.email?.trim().toLowerCase()));
   const newProfile: UserProfileData = {
     ...DEFAULT_PROFILE,
     uid,
     email: user.email || '',
-    displayName: user.displayName || 'SecretArea Gamer',
+    displayName: user.displayName || (isAdmin ? 'SecretArea' : 'Gamer'),
     username: user.email ? user.email.split('@')[0] : 'gamer',
     photoURL: user.photoURL || '',
+    bio: isAdmin ? DEFAULT_ADMIN_BIO : 'Exploring games and roadmaps in SecretArea.',
     bannerURL: '/images/userprofile.png',
     role: isAdmin ? 'admin' : 'user',
     points: 100, // Welcome points
@@ -348,6 +362,15 @@ export async function ensureUserProfile(user: any): Promise<UserProfileData> {
     console.warn('Firestore create profile note (handled):', err?.message);
   }
   saveLocalProfile(uid, newProfile);
+  if (isAdmin) {
+    saveAdminPublicProfile({
+      displayName: newProfile.displayName,
+      photoURL: newProfile.photoURL || user.photoURL || DEFAULT_ADMIN_AVATAR,
+      avatarURL: newProfile.photoURL || user.photoURL || DEFAULT_ADMIN_AVATAR,
+      bannerURL: newProfile.bannerURL,
+      bio: newProfile.bio
+    }).catch(() => {});
+  }
   return newProfile;
 }
 
@@ -404,29 +427,51 @@ export async function saveUserProfileInfo(
     console.warn('Firestore saveUserProfileInfo note (handled):', err?.message);
   }
 
-  // If this user is admin, sync to system/admin_profile in Firestore as well
-  if (isUserAdmin(user?.email, local.role)) {
+  // If this user is admin, sync to system/admin_profile in Firestore and local broadcast
+  if (isUserAdmin(user?.email, local.role) || isUserAdmin(auth.currentUser?.email, local.role)) {
     saveAdminPublicProfile({
       displayName: info.displayName || local.displayName,
       photoURL: info.photoURL || local.photoURL,
-      bannerURL: info.bannerURL || local.bannerURL
+      avatarURL: info.photoURL || local.photoURL,
+      bannerURL: info.bannerURL || local.bannerURL,
+      bio: info.bio !== undefined ? info.bio : local.bio
     }).catch(() => {});
   }
 }
 
-export async function saveAdminPublicProfile(data: { photoURL?: string; avatarURL?: string; displayName?: string; bannerURL?: string }): Promise<void> {
+export interface AdminPublicProfile {
+  photoURL?: string;
+  avatarURL?: string;
+  displayName?: string;
+  bio?: string;
+  bannerURL?: string;
+  role?: string;
+  rank?: string;
+  points?: number;
+  updatedAt?: string;
+}
+
+export async function saveAdminPublicProfile(data: AdminPublicProfile): Promise<void> {
   const photo = data.photoURL || data.avatarURL;
   if (photo) localStorage.setItem('secretarea_admin_avatar', photo);
   if (data.displayName) localStorage.setItem('secretarea_admin_name', data.displayName);
+  if (data.bio !== undefined) localStorage.setItem('secretarea_admin_bio', data.bio);
   if (data.bannerURL) localStorage.setItem('secretarea_admin_banner', data.bannerURL);
+
+  const payload: any = {
+    ...data,
+    ...(photo ? { photoURL: photo, avatarURL: photo } : {}),
+    updatedAt: new Date().toISOString()
+  };
+
+  // Immediate synchronous local broadcast
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('secretarea_admin_profile_sync', { detail: payload }));
+  }
 
   try {
     const adminDocRef = doc(db, 'system', 'admin_profile');
-    await setDoc(adminDocRef, {
-      ...data,
-      ...(photo ? { photoURL: photo, avatarURL: photo } : {}),
-      updatedAt: new Date().toISOString()
-    }, { merge: true });
+    await setDoc(adminDocRef, payload, { merge: true });
   } catch (e: any) {
     console.warn('Firestore saveAdminPublicProfile note (handled):', e?.message);
   }
@@ -818,7 +863,8 @@ export async function clearGameHistory(uid: string): Promise<void> {
   const updated: UserProfileData = {
     ...local,
     gameHistory: [],
-    recentGames: []
+    recentGames: [],
+    gamesViewed: 0
   };
   saveLocalProfile(uid, updated);
 
@@ -827,6 +873,7 @@ export async function clearGameHistory(uid: string): Promise<void> {
     await setDoc(userDocRef, {
       gameHistory: [],
       recentGames: [],
+      gamesViewed: 0,
       lastActive: now
     }, { merge: true });
   } catch (err: any) {
@@ -847,54 +894,179 @@ export function trackUserMovement(activity: { action: string; targetName?: strin
   } catch (e) {}
 }
 
-const DEFAULT_ADMIN_AVATAR = 'https://blogger.googleusercontent.com/img/a/AVvXsEg0cECd44EYPreCyyRdRXdrtpVgQ4zhKzzTRdtiusek9QZ6nOVADqxzHsfsdEmEc2uWMAzaWMRsNXcpsI3cAOarcDnfXSrFyDXvfPQbMfsFsdWRVsv0S6ZcNPDc2GsNLQhv2x9K9ftA9bthdBDkYEkCt5styw5GuPQ1R6ig_ao0lDy_8F69e5bhdQ3Px3zo';
+export const DEFAULT_ADMIN_AVATAR = '/images/logo01.png';
+export const DEFAULT_ADMIN_BIO = 'InternetForEveryone.';
+export const DEFAULT_ADMIN_BANNER = '/images/userprofile.png';
+
+export function getCachedAdminBanner(): string {
+  try {
+    const cached = localStorage.getItem('secretarea_admin_banner');
+    if (cached && cached.trim() !== '') return cached;
+    return DEFAULT_ADMIN_BANNER;
+  } catch (e) {
+    return DEFAULT_ADMIN_BANNER;
+  }
+}
 
 export function getCachedAdminAvatar(): string {
   try {
-    return localStorage.getItem('secretarea_admin_avatar') || DEFAULT_ADMIN_AVATAR;
+    const cached = localStorage.getItem('secretarea_admin_avatar');
+    if (cached && cached.trim() !== '') return cached;
+    return DEFAULT_ADMIN_AVATAR;
   } catch (e) {
     return DEFAULT_ADMIN_AVATAR;
   }
 }
 
-export function getCachedAdminName(): string {
+export function getCachedAdminBio(): string {
   try {
-    return localStorage.getItem('secretarea_admin_name') || 'NEXA 1337';
+    const cached = localStorage.getItem('secretarea_admin_bio');
+    if (cached && cached.trim() !== '') return cached;
+    return DEFAULT_ADMIN_BIO;
   } catch (e) {
-    return 'NEXA 1337';
+    return DEFAULT_ADMIN_BIO;
   }
 }
 
-export function subscribeAdminPublicProfile(callback: (data: { photoURL?: string; avatarURL?: string; displayName?: string; bannerURL?: string }) => void): () => void {
+export function getCachedAdminName(): string {
+  try {
+    const cached = localStorage.getItem('secretarea_admin_name');
+    if (cached && cached.trim() !== '' && cached !== 'NEXA 1337' && cached !== 'NEXA' && cached !== 'SecretArea Gamer') {
+      return cached;
+    }
+    // If current logged-in user is an admin, check their active profile display name
+    const email = auth.currentUser?.email;
+    if (email && ROOT_ADMIN_EMAILS.some(e => e.toLowerCase() === email.trim().toLowerCase())) {
+      const local = auth.currentUser?.uid ? getLocalProfile(auth.currentUser.uid) : null;
+      if (local?.displayName && local.displayName !== 'SecretArea Gamer') {
+        return local.displayName;
+      }
+      if (auth.currentUser?.displayName) {
+        return auth.currentUser.displayName;
+      }
+    }
+    return 'SecretArea';
+  } catch (e) {
+    return 'SecretArea';
+  }
+}
+
+export function subscribeAdminPublicProfile(callback: (data: AdminPublicProfile) => void): () => void {
+  // Clear any obsolete hardcoded 'NEXA 1337', 'NEXA', or 'SecretArea Gamer' placeholder in local storage
+  try {
+    const rawName = localStorage.getItem('secretarea_admin_name');
+    if (rawName === 'NEXA 1337' || rawName === 'NEXA' || rawName === 'SecretArea Gamer') {
+      localStorage.removeItem('secretarea_admin_name');
+    }
+  } catch (e) {}
+
   const avatar = getCachedAdminAvatar();
-  const cached = {
+  const cachedName = getCachedAdminName();
+  const cachedBio = getCachedAdminBio();
+  const cachedBanner = getCachedAdminBanner();
+
+  const initialData: AdminPublicProfile = {
     photoURL: avatar,
     avatarURL: avatar,
-    displayName: getCachedAdminName(),
-    bannerURL: localStorage.getItem('secretarea_admin_banner') || '/images/userprofile.png'
+    displayName: cachedName,
+    bio: cachedBio,
+    bannerURL: cachedBanner,
+    role: 'Root Admin',
+    rank: 'Fenrir',
+    points: 50000
   };
-  callback(cached);
+
+  callback(initialData);
+
+  // Immediate synchronous local broadcast listener
+  const handleLocalSync = (e: any) => {
+    if (e?.detail) {
+      const detail = e.detail;
+      const photo = detail.photoURL || detail.avatarURL || avatar;
+      const dName = detail.displayName || cachedName;
+      const dBio = detail.bio !== undefined ? detail.bio : cachedBio;
+      const dBanner = detail.bannerURL || cachedBanner;
+      callback({
+        photoURL: photo,
+        avatarURL: photo,
+        displayName: dName,
+        bio: dBio,
+        bannerURL: dBanner,
+        role: detail.role || 'Root Admin',
+        rank: detail.rank || 'Fenrir',
+        points: typeof detail.points === 'number' ? detail.points : 50000
+      });
+    }
+  };
+
+  const handleStorageSync = (e: StorageEvent) => {
+    if (e.key && e.key.startsWith('secretarea_admin_')) {
+      callback({
+        photoURL: getCachedAdminAvatar(),
+        avatarURL: getCachedAdminAvatar(),
+        displayName: getCachedAdminName(),
+        bio: getCachedAdminBio(),
+        bannerURL: localStorage.getItem('secretarea_admin_banner') || '/images/userprofile.png',
+        role: 'Root Admin',
+        rank: 'Fenrir',
+        points: 50000
+      });
+    }
+  };
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('secretarea_admin_profile_sync', handleLocalSync);
+    window.addEventListener('storage', handleStorageSync);
+  }
 
   try {
     const adminDocRef = doc(db, 'system', 'admin_profile');
     const unsub = onSnapshot(adminDocRef, (snap) => {
       if (snap.exists()) {
         const d = snap.data();
-        const photo = d.photoURL || d.avatarURL || cached.photoURL;
+        const photo = d.photoURL || d.avatarURL || getCachedAdminAvatar();
+        let displayName = d.displayName;
+        if (!displayName || displayName.trim() === '' || displayName === 'NEXA 1337' || displayName === 'NEXA' || displayName === 'SecretArea Gamer') {
+          displayName = getCachedAdminName();
+        }
+        const bio = d.bio !== undefined && d.bio !== null ? d.bio : getCachedAdminBio();
+
         if (photo) localStorage.setItem('secretarea_admin_avatar', photo);
-        if (d.displayName) localStorage.setItem('secretarea_admin_name', d.displayName);
+        if (displayName && displayName !== 'NEXA 1337' && displayName !== 'NEXA' && displayName !== 'SecretArea Gamer') {
+          localStorage.setItem('secretarea_admin_name', displayName);
+        }
+        if (bio) localStorage.setItem('secretarea_admin_bio', bio);
         if (d.bannerURL) localStorage.setItem('secretarea_admin_banner', d.bannerURL);
+
         callback({
           photoURL: photo,
           avatarURL: photo,
-          displayName: d.displayName || cached.displayName,
-          bannerURL: d.bannerURL || cached.bannerURL
+          displayName,
+          bio,
+          bannerURL: d.bannerURL || cachedBanner,
+          role: d.role || 'Root Admin',
+          rank: d.rank || 'Fenrir',
+          points: typeof d.points === 'number' ? d.points : 50000
         });
       }
-    }, () => {});
-    return unsub;
+    }, (err) => {
+      console.warn("Firestore admin_profile subscription notice (handled):", err);
+    });
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('secretarea_admin_profile_sync', handleLocalSync);
+        window.removeEventListener('storage', handleStorageSync);
+      }
+      unsub();
+    };
   } catch (e) {
-    return () => {};
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('secretarea_admin_profile_sync', handleLocalSync);
+        window.removeEventListener('storage', handleStorageSync);
+      }
+    };
   }
 }
 

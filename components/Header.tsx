@@ -278,7 +278,7 @@ const LoginModal = ({
               {t('Sign in to SecretArea')}
             </h3>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
-              {t('Login with Google or Discord to sync your favorites and profile.')}
+              {t('Login with Google / Gmail or Discord to access your profile and settings.')}
             </p>
           </div>
 
@@ -299,7 +299,7 @@ const LoginModal = ({
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                 </svg>
               )}
-              <span>{t('Login with Google')}</span>
+              <span>{t('Sign in with Google / Gmail')}</span>
             </button>
 
             {/* Discord button */}
