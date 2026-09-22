@@ -472,9 +472,9 @@ export const CommentsSection: React.FC<{ itemId: string, itemTitle?: string, ite
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
       className="mt-8 border-t border-slate-200 dark:border-slate-800 pt-8"
     >
       <h3 className="text-xl font-black uppercase tracking-wider text-slate-900 dark:text-white mb-6 flex items-center gap-2">
@@ -496,6 +496,7 @@ export const CommentsSection: React.FC<{ itemId: string, itemTitle?: string, ite
               maxLength={20}
             />
             <textarea
+              id="comment-input"
               placeholder={t("Drop your intel, review, or funny thoughts here...")}
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
@@ -562,6 +563,74 @@ export const CommentsSection: React.FC<{ itemId: string, itemTitle?: string, ite
             ))}
           </AnimatePresence>
         )}
+
+        {/* Wolf Intel Dispatch Terminal Footer Widget */}
+        <div className="mt-4 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950/60 to-slate-900 border border-blue-500/25 shadow-xl relative overflow-hidden text-white backdrop-blur-md">
+          {/* Subtle Cyberpunk ambient glow */}
+          <div className="absolute -top-10 -end-10 w-36 h-36 bg-blue-500/15 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute -bottom-10 -start-10 w-36 h-36 bg-indigo-500/15 rounded-full blur-2xl pointer-events-none" />
+
+          <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            {/* Left: Info & status badge */}
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center shrink-0 shadow-inner">
+                <SiWolframlanguage size={22} className="text-blue-400" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-mono font-bold tracking-wider text-blue-400 uppercase">
+                    {t('Wolf Intel Dispatch')}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-semibold">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                    </span>
+                    {t('Status: Synchronized')}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  {t('Got a working fix, crack update, or tip?')}
+                </p>
+              </div>
+            </div>
+
+            {/* Right: Quick actions */}
+            <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  const el = document.getElementById('comment-input');
+                  if (el) {
+                    el.focus();
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }
+                }}
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
+              >
+                <Icon name="MessageSquare" size={13} />
+                <span>{t('Share intel above')}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const modal = document.getElementById('modal-scroll-container');
+                  if (modal) {
+                    modal.scrollTo({ top: 0, behavior: 'smooth' });
+                  } else {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+                }}
+                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-slate-200 text-xs font-bold active:scale-95 transition-all cursor-pointer"
+                title={t('Back to Top')}
+              >
+                <Icon name="ArrowUp" size={13} />
+                <span className="hidden xs:inline">{t('Back to Top')}</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </motion.div>
   );

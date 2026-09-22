@@ -1,111 +1,30 @@
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
-import { GoogleGenAI } from "@google/genai";
-import { getApps, initializeApp } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
 
 async function startServer() {
   const app = express();
+  app.set("trust proxy", true);
   const PORT = 3000;
 
-  app.use(express.json());
-
-  // Lazy initialize Firebase Admin
-  let adminInitialized = false;
-  function ensureFirebaseAdmin() {
-    if (!adminInitialized) {
-      try {
-        if (getApps().length === 0) {
-          initializeApp({
-            projectId: "secretarea-1337"
-          });
-        }
-        adminInitialized = true;
-      } catch (err) {
-        console.warn("[Server] Firebase Admin initialization note:", err);
-      }
+  // CORS headers to support custom domains including secretarea.vercel.app
+  app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    const allowedOrigins = [
+      "https://secretarea.vercel.app",
+      "http://localhost:3000",
+      "http://localhost:5173"
+    ];
+    if (origin && (allowedOrigins.includes(origin) || origin.endsWith(".run.app") || origin.endsWith(".vercel.app"))) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+      res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
+      res.setHeader("Access-Control-Allow-Credentials", "true");
     }
-  }
-
-  // Lazy initialize Gemini client
-  let genAI: GoogleGenAI | null = null;
-  function getGeminiClient(): GoogleGenAI {
-    if (!genAI) {
-      const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
-      if (!apiKey) {
-        throw new Error("GEMINI_API_KEY environment variable is missing");
-      }
-      genAI = new GoogleGenAI({ apiKey });
+    if (req.method === "OPTIONS") {
+      return res.sendStatus(204);
     }
-    return genAI;
-  }
-
-  // API routes
-  app.get("/api/health", (req, res) => {
-    res.json({ status: "ok", timestamp: new Date().toISOString() });
-  });
-
-  // Client IP and network info endpoint for browser tracking
-  app.get("/api/client-info", (req, res) => {
-    const forwarded = req.headers["x-forwarded-for"];
-    const ip = typeof forwarded === "string" ? forwarded.split(",")[0].trim() : req.socket.remoteAddress || "127.0.0.1";
-    res.json({
-      ip,
-      userAgent: req.headers["user-agent"] || "unknown",
-      timestamp: new Date().toISOString()
-    });
-  });
-
-  // Admin remove user from Firebase Auth endpoint
-  app.post("/api/admin/remove-user", async (req, res) => {
-    try {
-      const { uid, email } = req.body;
-      if (!uid) {
-        return res.status(400).json({ error: "User UID is required" });
-      }
-
-      let authDeleted = false;
-      let note = "";
-
-      try {
-        ensureFirebaseAdmin();
-        if (getApps().length > 0) {
-          await getAuth().deleteUser(uid);
-          authDeleted = true;
-          console.log(`[Admin API] Successfully removed user ${uid} (${email}) from Firebase Auth.`);
-        } else {
-          note = "Firebase Admin SDK not configured with credentials in this container.";
-        }
-      } catch (authErr: any) {
-        console.warn(`[Admin API] Note during auth deletion for ${uid}:`, authErr?.message || authErr);
-        note = authErr?.message || "Auth deletion notice";
-      }
-
-      res.json({
-        success: true,
-        authDeleted,
-        uid,
-        email,
-        message: authDeleted ? "User deleted from Firebase Auth" : "User marked revoked and removed",
-        note
-      });
-    } catch (err: any) {
-      console.error("[Admin API] Error in remove-user:", err);
-      res.status(500).json({ error: err?.message || "Failed to remove user" });
-    }
-  });
-
-  // Request submission endpoint
-  app.post("/api/submit-request", (req, res) => {
-    try {
-      const { title, section, imageUrl, message } = req.body;
-      console.log("[Request API] Received submission:", { title, section, imageUrl, message });
-      res.json({ success: true, message: "Request received successfully" });
-    } catch (err: any) {
-      console.error("[Request API] Error:", err);
-      res.status(500).json({ error: "Failed to process request" });
-    }
+    next();
   });
 
   // speed test upload endpoint
@@ -114,27 +33,153 @@ async function startServer() {
     req.on("end", () => res.send("ok"));
   });
 
-  // Server-side Gemini chat endpoint
-  app.post("/api/chat", async (req, res) => {
+  // Discord OAuth URL endpoint
+  app.get("/api/auth/discord/url", (req, res) => {
+    const clientId = process.env.DISCORD_CLIENT_ID;
+    if (!clientId) {
+      return res.status(400).json({ error: "DISCORD_CLIENT_ID not configured in environment variables" });
+    }
+
+    let redirectUri = (req.query.redirect_uri as string)?.trim();
+    if (!redirectUri) {
+      if (process.env.APP_URL) {
+        redirectUri = `${process.env.APP_URL}/auth/discord/callback`;
+      } else {
+        const forwardedHost = (req.get("x-forwarded-host") || req.get("host") || "localhost:3000").split(",")[0].trim();
+        const rawProto = (req.get("x-forwarded-proto") || req.protocol || "https").split(",")[0].trim();
+        const protocol = forwardedHost.includes("localhost") ? "http" : rawProto;
+        redirectUri = `${protocol}://${forwardedHost}/auth/discord/callback`;
+      }
+    }
+
+    const state = Buffer.from(JSON.stringify({ redirectUri, ts: Date.now() })).toString("base64url");
+
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      response_type: "code",
+      scope: "identify email",
+      state: state,
+    });
+
+    const url = `https://discord.com/oauth2/authorize?${params.toString()}`;
+    res.json({ url, redirectUri });
+  });
+
+  // Discord OAuth Callback endpoint (Handles popup postMessage and closes)
+  app.get(["/auth/discord/callback", "/auth/discord/callback/"], async (req, res) => {
+    const { code, error, error_description, state } = req.query as Record<string, string>;
+
+    if (error) {
+      return res.send(`
+        <!DOCTYPE html>
+        <html>
+          <body style="background:#0F172A;color:white;font-family:sans-serif;padding:24px;text-align:center;">
+            <h3>Discord Login Cancelled</h3>
+            <p>${error_description || error}</p>
+            <script>setTimeout(() => window.close(), 2500);</script>
+          </body>
+        </html>
+      `);
+    }
+
+    const clientId = process.env.DISCORD_CLIENT_ID;
+    const clientSecret = process.env.DISCORD_CLIENT_SECRET;
+
+    if (!code || !clientId || !clientSecret) {
+      return res.status(400).send(`
+        <!DOCTYPE html>
+        <html>
+          <body style="background:#0F172A;color:white;font-family:sans-serif;padding:24px;">
+            <h3>Discord Authentication Failed</h3>
+            <p>Missing authorization code or Discord credentials in server environment.</p>
+            <script>setTimeout(() => window.close(), 3000);</script>
+          </body>
+        </html>
+      `);
+    }
+
     try {
-      const { message } = req.body;
-      if (!message || typeof message !== "string") {
-        return res.status(400).json({ error: "Message is required" });
+      let redirectUri: string | null = null;
+      if (state) {
+        try {
+          const decoded = JSON.parse(Buffer.from(state, "base64url").toString("utf-8"));
+          if (decoded?.redirectUri) {
+            redirectUri = decoded.redirectUri;
+          }
+        } catch (e) {
+          // fallback
+        }
       }
 
-      const ai = getGeminiClient();
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: message,
-        config: {
-          systemInstruction: "You are NEXA, the AI assistant for N E X A 1337's personal portfolio and secret area platform. Answer questions professionally, concisely, and helpfully.",
-        },
+      if (!redirectUri) {
+        const forwardedHost = (req.get("x-forwarded-host") || req.get("host") || "localhost:3000").split(",")[0].trim();
+        const rawProto = (req.get("x-forwarded-proto") || req.protocol || "https").split(",")[0].trim();
+        const protocol = forwardedHost.includes("localhost") ? "http" : rawProto;
+        redirectUri = `${protocol}://${forwardedHost}/auth/discord/callback`;
+      }
+
+      const tokenRes = await fetch("https://discord.com/api/oauth2/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: clientId,
+          client_secret: clientSecret,
+          grant_type: "authorization_code",
+          code,
+          redirect_uri: redirectUri,
+        }),
       });
 
-      res.json({ text: response.text });
+      const tokenData = (await tokenRes.json()) as any;
+      if (!tokenRes.ok || !tokenData.access_token) {
+        throw new Error(tokenData.error_description || tokenData.error || "Failed to exchange code for tokens");
+      }
+
+      // Fetch user profile from Discord
+      const userRes = await fetch("https://discord.com/api/users/@me", {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` },
+      });
+      const discordUser = await userRes.json();
+
+      res.send(`
+        <!DOCTYPE html>
+        <html>
+          <head><title>Discord Auth</title></head>
+          <body style="background:#0F172A;color:white;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;text-align:center;">
+            <div>
+              <h3>Connecting with Discord...</h3>
+              <p>Authentication successful! This window will close automatically.</p>
+            </div>
+            <script>
+              try {
+                if (window.opener) {
+                  window.opener.postMessage({
+                    type: 'DISCORD_AUTH_SUCCESS',
+                    user: ${JSON.stringify(discordUser)}
+                  }, '*');
+                  window.close();
+                } else {
+                  window.location.href = '${redirectUri.includes("secretarea.vercel.app") ? "https://secretarea.vercel.app" : "/"}';
+                }
+              } catch (e) {
+                window.location.href = '${redirectUri.includes("secretarea.vercel.app") ? "https://secretarea.vercel.app" : "/"}';
+              }
+            </script>
+          </body>
+        </html>
+      `);
     } catch (err: any) {
-      console.error("Gemini API server error:", err);
-      res.status(500).json({ error: err?.message || "Internal server error" });
+      res.status(500).send(`
+        <!DOCTYPE html>
+        <html>
+          <body style="background:#0F172A;color:white;font-family:sans-serif;padding:24px;">
+            <h3>Discord Login Error</h3>
+            <p>${err.message}</p>
+            <script>setTimeout(() => window.close(), 5000);</script>
+          </body>
+        </html>
+      `);
     }
   });
 
@@ -148,7 +193,7 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    app.get('*all', (req, res) => {
+    app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }

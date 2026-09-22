@@ -53,6 +53,8 @@ export interface UserProfileData {
   bannerURL?: string;
   bio?: string;
   role?: 'admin' | 'user' | string;
+  loginMethod?: 'gmail' | 'discord' | 'github' | string;
+  provider?: string;
   points?: number;
   level?: number;
   rank?: string;
@@ -126,6 +128,8 @@ export const DEFAULT_PROFILE: UserProfileData = {
   bannerURL: '/images/userprofile.png',
   bio: '',
   role: 'user',
+  loginMethod: 'gmail',
+  provider: 'gmail',
   points: 0,
   level: 1,
   rank: 'Scout',
@@ -152,6 +156,32 @@ export const DEFAULT_PROFILE: UserProfileData = {
 
 const ROOT_ADMIN_EMAIL = 'secretarea1337@gmail.com';
 const ROOT_ADMIN_EMAILS = ['secretarea1337@gmail.com', 'marouananouar02@gmail.com'];
+
+export function detectUserLoginMethod(user: any): 'discord' | 'github' | 'gmail' {
+  if (!user) return 'gmail';
+  const provider = (user.provider || user.loginMethod || user.providerId || '').toLowerCase();
+  const providerData = Array.isArray(user.providerData) ? user.providerData : [];
+  const email = (user.email || '').toLowerCase();
+  const uid = String(user.uid || user.id || '').toLowerCase();
+
+  if (
+    provider.includes('discord') ||
+    providerData.some((p: any) => p?.providerId?.includes('discord')) ||
+    uid.startsWith('discord_') ||
+    email.endsWith('@discord.com')
+  ) {
+    return 'discord';
+  }
+  if (
+    provider.includes('github') ||
+    providerData.some((p: any) => p?.providerId?.includes('github')) ||
+    uid.startsWith('github_') ||
+    email.endsWith('@github.com')
+  ) {
+    return 'github';
+  }
+  return 'gmail';
+}
 
 export function isUserAdmin(email?: string | null, role?: string | null): boolean {
   if (email && ROOT_ADMIN_EMAILS.some(e => e.toLowerCase() === email.trim().toLowerCase())) return true;
@@ -299,16 +329,20 @@ export async function ensureUserProfile(user: any): Promise<UserProfileData> {
   if (!user || !user.uid) return DEFAULT_PROFILE;
   const uid = user.uid;
   const userDocRef = doc(db, 'users', uid);
+  const detectedMethod = detectUserLoginMethod(user);
+  const isAdmin = !!(user.email && ROOT_ADMIN_EMAILS.some(e => e.toLowerCase() === user.email?.trim().toLowerCase()));
 
   try {
     const snap = await getDoc(userDocRef);
     if (snap.exists()) {
       const data = snap.data() as UserProfileData;
-      const isAdmin = (user.email && ROOT_ADMIN_EMAILS.some(e => e.toLowerCase() === user.email?.trim().toLowerCase())) || data.role === 'admin';
       const updated: Partial<UserProfileData> = {
         lastLogin: new Date().toISOString(),
         lastActive: new Date().toISOString(),
-        role: isAdmin ? 'admin' : (data.role || 'user')
+        loginMethod: data.loginMethod || detectedMethod,
+        provider: data.provider || detectedMethod,
+        // Default role is user; only root admin emails receive admin
+        role: isAdmin ? 'admin' : (data.role === 'admin' && !isAdmin ? 'user' : (data.role || 'user'))
       };
       await updateDoc(userDocRef, updated);
       const merged: UserProfileData = { ...DEFAULT_PROFILE, ...data, ...updated, uid };
@@ -331,18 +365,19 @@ export async function ensureUserProfile(user: any): Promise<UserProfileData> {
     console.warn('Firestore ensureUserProfile lookup note (handled):', e?.message);
   }
 
-  // Create new profile if not found
-  const isAdmin = !!(user.email && ROOT_ADMIN_EMAILS.some(e => e.toLowerCase() === user.email?.trim().toLowerCase()));
+  // Create new profile if not found - default role is strictly 'user' unless root admin
   const newProfile: UserProfileData = {
     ...DEFAULT_PROFILE,
     uid,
     email: user.email || '',
-    displayName: user.displayName || (isAdmin ? 'SecretArea' : 'Gamer'),
-    username: user.email ? user.email.split('@')[0] : 'gamer',
+    displayName: user.displayName || (isAdmin ? 'SecretArea' : (detectedMethod === 'discord' ? 'Discord Gamer' : (detectedMethod === 'github' ? 'GitHub Gamer' : 'Gamer'))),
+    username: user.username || (user.email ? user.email.split('@')[0] : (detectedMethod === 'discord' ? 'discord_gamer' : 'gamer')),
     photoURL: user.photoURL || '',
     bio: isAdmin ? DEFAULT_ADMIN_BIO : 'Exploring games and roadmaps in SecretArea.',
     bannerURL: '/images/userprofile.png',
-    role: isAdmin ? 'admin' : 'user',
+    role: isAdmin ? 'admin' : 'user', // Default role for any login is 'user'
+    loginMethod: detectedMethod,
+    provider: detectedMethod,
     points: 100, // Welcome points
     level: 1,
     rank: 'Scout',

@@ -2,6 +2,7 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
   getAuth, 
   GoogleAuthProvider, 
+  GithubAuthProvider,
   OAuthProvider, 
   signInWithPopup, 
   signOut as firebaseSignOut, 
@@ -36,6 +37,7 @@ if (typeof (auth as any).signOut !== 'function') {
 // Authentication Providers
 export const googleProvider = new GoogleAuthProvider();
 export const discordProvider = new OAuthProvider('discord.com');
+export const githubProvider = new GithubAuthProvider();
 
 // Sign-in helper functions
 export const signInWithGoogle = async () => {
@@ -53,6 +55,18 @@ export const signInWithGoogle = async () => {
 export const signInWithDiscord = async () => {
   try {
     return await signInWithPopup(auth, discordProvider);
+  } catch (error: any) {
+    if (error?.code === 'auth/unauthorized-domain' || error?.message?.includes('unauthorized-domain')) {
+      const host = typeof window !== 'undefined' ? window.location.hostname : '';
+      console.warn(`[Firebase Auth] Domain '${host}' is not in your Firebase Console Authorized Domains list. Please add it in Firebase Console -> Authentication -> Settings -> Authorized Domains.`);
+    }
+    throw error;
+  }
+};
+
+export const signInWithGithub = async () => {
+  try {
+    return await signInWithPopup(auth, githubProvider);
   } catch (error: any) {
     if (error?.code === 'auth/unauthorized-domain' || error?.message?.includes('unauthorized-domain')) {
       const host = typeof window !== 'undefined' ? window.location.hostname : '';

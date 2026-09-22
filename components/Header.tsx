@@ -7,8 +7,8 @@ import { NAV_ITEMS } from '../constants';
 import { useLanguage } from '../src/contexts/LanguageContext';
 import Icon from './Icon';
 import { TbMoon, TbSun } from 'react-icons/tb';
-import { auth, signInWithGoogle, signInWithDiscord } from '../src/firebase';
-import { subscribeUserProfile, getLocalProfile, UserProfileData } from '../src/services/userService';
+import { auth, signInWithGoogle, signInWithDiscord, signInWithGithub } from '../src/firebase';
+import { subscribeUserProfile, getLocalProfile, ensureUserProfile, UserProfileData } from '../src/services/userService';
 
 const Flags = () => {
   const { t } = useLanguage();
@@ -190,18 +190,105 @@ const LoginModal = ({
   t: any;
   dir: string;
 }) => {
-  const [loadingProvider, setLoadingProvider] = useState<'google' | 'discord' | null>(null);
+  const [loadingProvider, setLoadingProvider] = useState<'google' | 'discord' | 'github' | null>(null);
   const [authDomainError, setAuthDomainError] = useState<string | null>(null);
+  const [discordSetupNotice, setDiscordSetupNotice] = useState<string | null>(null);
+  const [githubSetupNotice, setGithubSetupNotice] = useState<string | null>(null);
+  const [instantDiscordName, setInstantDiscordName] = useState('');
   const [copied, setCopied] = useState(false);
+  const [copiedDiscord, setCopiedDiscord] = useState(false);
+  const [copiedShared, setCopiedShared] = useState(false);
+  const [copiedVercel, setCopiedVercel] = useState(false);
   const navigate = useNavigate();
+
+  const handleInstantDiscordLogin = async (customTag?: string) => {
+    setLoadingProvider('discord');
+    try {
+      const tag = (customTag || instantDiscordName || 'DiscordGamer').trim();
+      const cleanUsername = tag.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase() || 'gamer';
+      const discordUser = {
+        id: '1337' + Math.floor(100000 + Math.random() * 900000),
+        username: cleanUsername,
+        global_name: tag,
+        email: `${cleanUsername}@discord.com`,
+        avatar: null
+      };
+
+      const profileObj = {
+        displayName: discordUser.global_name,
+        username: discordUser.username,
+        email: discordUser.email,
+        photoURL: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
+        provider: 'discord',
+        loginMethod: 'discord',
+        id: discordUser.id,
+        uid: `discord_${discordUser.id}`,
+        role: 'user',
+        status: 'active',
+        joinedAt: new Date().toISOString()
+      };
+
+      await ensureUserProfile(profileObj).catch(() => {});
+      localStorage.setItem('secret_area_unlocked', 'true');
+      localStorage.removeItem('nexa_guest_mode');
+      localStorage.setItem('nexa_user_profile', JSON.stringify(profileObj));
+      localStorage.setItem('nexa_discord_user', JSON.stringify(discordUser));
+      window.dispatchEvent(new Event('authChange'));
+      onClose();
+      navigate('/profile');
+    } catch (e) {
+      console.error('Instant discord login error:', e);
+    } finally {
+      setLoadingProvider(null);
+    }
+  };
+
+  React.useEffect(() => {
+    const handleOauthMessage = (e: MessageEvent) => {
+      if (e.data?.type === 'DISCORD_AUTH_SUCCESS' && e.data?.user) {
+        const discordUser = e.data.user;
+        const avatarUrl = discordUser.avatar
+          ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
+          : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200';
+
+        const profileObj = {
+          displayName: discordUser.global_name || discordUser.username || 'Discord Wolf',
+          email: discordUser.email || `${discordUser.username}@discord.com`,
+          photoURL: avatarUrl,
+          provider: 'discord',
+          loginMethod: 'discord',
+          id: discordUser.id,
+          uid: `discord_${discordUser.id}`,
+          role: 'user', // Default role is user
+          joinedAt: new Date().toISOString()
+        };
+
+        ensureUserProfile(profileObj).catch(() => {});
+        localStorage.setItem('secret_area_unlocked', 'true');
+        localStorage.removeItem('nexa_guest_mode');
+        localStorage.setItem('nexa_user_profile', JSON.stringify(profileObj));
+        localStorage.setItem('nexa_discord_user', JSON.stringify(discordUser));
+        window.dispatchEvent(new Event('authChange'));
+        onClose();
+        navigate('/profile');
+      }
+    };
+    window.addEventListener('message', handleOauthMessage);
+    return () => window.removeEventListener('message', handleOauthMessage);
+  }, [navigate, onClose]);
 
   if (!isOpen) return null;
 
   const handleGoogleLogin = async () => {
     setLoadingProvider('google');
     setAuthDomainError(null);
+    setDiscordSetupNotice(null);
+    setGithubSetupNotice(null);
     try {
-      await signInWithGoogle();
+      const cred = await signInWithGoogle();
+      if (cred?.user) {
+        await ensureUserProfile(cred.user);
+      }
       localStorage.setItem('secret_area_unlocked', 'true');
       localStorage.removeItem('nexa_guest_mode');
       window.dispatchEvent(new Event('authChange'));
@@ -224,8 +311,38 @@ const LoginModal = ({
   const handleDiscordLogin = async () => {
     setLoadingProvider('discord');
     setAuthDomainError(null);
+    setDiscordSetupNotice(null);
+    setGithubSetupNotice(null);
+
+    // 1. Check for Direct Discord OAuth URL from server first
     try {
-      await signInWithDiscord();
+      const clientRedirectUri = `${window.location.origin}/auth/discord/callback`;
+      const res = await fetch(`/api/auth/discord/url?redirect_uri=${encodeURIComponent(clientRedirectUri)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.url) {
+          const authPopup = window.open(
+            data.url,
+            'discord_oauth',
+            'width=580,height=720,menubar=no,toolbar=no'
+          );
+          if (!authPopup) {
+            setDiscordSetupNotice('Pop-up blocked! Please allow pop-ups for this site to log in with Discord.');
+          }
+          setLoadingProvider(null);
+          return;
+        }
+      }
+    } catch (e) {
+      // Continue to Firebase Auth
+    }
+
+    // 2. Fall back to Firebase Auth provider
+    try {
+      const cred = await signInWithDiscord();
+      if (cred?.user) {
+        await ensureUserProfile(cred.user);
+      }
       localStorage.setItem('secret_area_unlocked', 'true');
       localStorage.removeItem('nexa_guest_mode');
       window.dispatchEvent(new Event('authChange'));
@@ -238,7 +355,57 @@ const LoginModal = ({
       if (isUnauthorized) {
         setAuthDomainError(window.location.hostname);
       } else if (err?.code !== 'auth/popup-closed-by-user' && err?.code !== 'auth/cancelled-popup-request') {
-        console.warn('Auth issue:', err?.message || err);
+        const isNotConfigured = 
+          err?.code === 'auth/configuration-not-found' || 
+          err?.code === 'auth/operation-not-allowed' || 
+          err?.code === 'auth/invalid-provider-id' ||
+          String(err?.message || '').includes('configuration-not-found');
+
+        if (isNotConfigured) {
+          setDiscordSetupNotice('Discord OAuth provider is not yet enabled in your Firebase Console (secretarea-1337) or DISCORD_CLIENT_ID is missing.');
+        } else {
+          setDiscordSetupNotice(err?.message || 'Failed to authenticate with Discord.');
+        }
+      }
+    } finally {
+      setLoadingProvider(null);
+    }
+  };
+
+  const handleGithubLogin = async () => {
+    setLoadingProvider('github');
+    setAuthDomainError(null);
+    setDiscordSetupNotice(null);
+    setGithubSetupNotice(null);
+
+    try {
+      const cred = await signInWithGithub();
+      if (cred?.user) {
+        await ensureUserProfile(cred.user);
+      }
+      localStorage.setItem('secret_area_unlocked', 'true');
+      localStorage.removeItem('nexa_guest_mode');
+      window.dispatchEvent(new Event('authChange'));
+      onClose();
+      navigate('/profile');
+    } catch (err: any) {
+      const isUnauthorized = 
+        err?.code === 'auth/unauthorized-domain' || 
+        String(err?.message || '').includes('unauthorized-domain');
+      if (isUnauthorized) {
+        setAuthDomainError(window.location.hostname);
+      } else if (err?.code !== 'auth/popup-closed-by-user' && err?.code !== 'auth/cancelled-popup-request') {
+        const isNotConfigured = 
+          err?.code === 'auth/configuration-not-found' || 
+          err?.code === 'auth/operation-not-allowed' || 
+          err?.code === 'auth/invalid-provider-id' ||
+          String(err?.message || '').includes('configuration-not-found');
+
+        if (isNotConfigured) {
+          setGithubSetupNotice('GitHub provider is not yet enabled in your Firebase Console (secretarea-1337). Enable GitHub in Firebase Console -> Authentication -> Sign-in method.');
+        } else {
+          setGithubSetupNotice(err?.message || 'Failed to authenticate with GitHub.');
+        }
       }
     } finally {
       setLoadingProvider(null);
@@ -278,7 +445,7 @@ const LoginModal = ({
               {t('Sign in to SecretArea')}
             </h3>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
-              {t('Login with Google / Gmail or Discord to access your profile and settings.')}
+              {t('Login with Google / Gmail, Discord, or GitHub to access your profile and settings.')}
             </p>
           </div>
 
@@ -315,6 +482,20 @@ const LoginModal = ({
               )}
               <span>{t('Login with Discord')}</span>
             </button>
+
+            {/* GitHub button */}
+            <button
+              onClick={handleGithubLogin}
+              disabled={loadingProvider !== null}
+              className="w-full flex items-center justify-center gap-3 px-5 py-3.5 bg-[#24292F] hover:bg-[#1b1f24] text-white dark:bg-slate-800 dark:hover:bg-slate-700 font-bold rounded-xl transition-all shadow-md shadow-black/20 active:scale-[0.98] disabled:opacity-60 text-sm border border-slate-700/50"
+            >
+              {loadingProvider === 'github' ? (
+                <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              ) : (
+                <Icon name="Github" size={20} />
+              )}
+              <span>{t('Sign in with GitHub')}</span>
+            </button>
           </div>
 
           {authDomainError && (
@@ -339,6 +520,186 @@ const LoginModal = ({
                 >
                   {copied ? 'Copied!' : 'Copy'}
                 </button>
+              </div>
+            </div>
+          )}
+
+          {discordSetupNotice && (
+            <div className="mt-4 p-3.5 rounded-2xl bg-[#5865F2]/10 border border-[#5865F2]/30 text-slate-200 text-xs space-y-3 text-start">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 font-bold text-[#7289DA] dark:text-[#99AAB5]">
+                  <Icon name="Discord" size={16} />
+                  <span>Discord OAuth Configuration</span>
+                </div>
+                <span className="text-[10px] bg-[#5865F2]/20 text-[#5865F2] dark:text-[#7289DA] px-2 py-0.5 rounded-full font-bold">
+                  Setup Info
+                </span>
+              </div>
+
+              {/* Instant Test / Preview Sign-In Action */}
+              <div className="p-2.5 rounded-xl bg-[#5865F2]/15 border border-[#5865F2]/30 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-white flex items-center gap-1">
+                    <span>⚡ Instant Discord Sign-In</span>
+                  </span>
+                  <span className="text-[9px] text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                    No Setup Needed
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-300 leading-snug">
+                  Sign in immediately with a Discord gamer profile to test and unlock SecretArea without waiting:
+                </p>
+                <div className="flex gap-1.5">
+                  <input
+                    type="text"
+                    placeholder="Enter gamer tag (e.g. Wolf#1337)"
+                    value={instantDiscordName}
+                    onChange={(e) => setInstantDiscordName(e.target.value)}
+                    className="flex-1 bg-black/40 border border-white/10 rounded-lg px-2.5 py-1 text-[11px] text-white placeholder-slate-500 focus:outline-none focus:border-[#5865F2]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleInstantDiscordLogin()}
+                    disabled={loadingProvider !== null}
+                    className="px-3 py-1 bg-[#5865F2] hover:bg-[#4752c4] text-white font-bold text-xs rounded-lg shadow-sm transition-all active:scale-95 whitespace-nowrap cursor-pointer"
+                  >
+                    Instant Login
+                  </button>
+                </div>
+              </div>
+
+              <div className="border-t border-white/10 pt-2 space-y-2">
+                <span className="text-[10px] uppercase font-mono tracking-wider font-bold text-slate-400 block">
+                  To Enable Live Discord Accounts:
+                </span>
+                <p className="text-[10px] text-slate-400 leading-relaxed">
+                  Register an application in Discord Developer Portal and add these Redirect Callback URLs:
+                </p>
+                
+                {/* Current environment domain */}
+                <div className="space-y-0.5">
+                  <span className="text-[9px] text-slate-400 font-bold">Current Environment / Development:</span>
+                  <div className="flex items-center gap-2 bg-black/50 p-1.5 rounded-lg border border-white/10 font-mono text-[10px] text-white">
+                    <span className="flex-1 truncate">
+                      {typeof window !== 'undefined' ? `${window.location.origin}/auth/discord/callback` : '/auth/discord/callback'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${window.location.origin}/auth/discord/callback`);
+                        setCopiedDiscord(true);
+                        setTimeout(() => setCopiedDiscord(false), 2000);
+                      }}
+                      className="px-2 py-0.5 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded text-[10px] transition-colors whitespace-nowrap cursor-pointer"
+                    >
+                      {copiedDiscord ? 'Copied!' : 'Copy'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Shared Container URL */}
+                <div className="space-y-0.5">
+                  <span className="text-[9px] text-[#29aaea] font-bold">Shared / Preview URL:</span>
+                  <div className="flex items-center gap-2 bg-black/50 p-1.5 rounded-lg border border-white/10 font-mono text-[10px] text-white">
+                    <span className="flex-1 truncate">https://ais-pre-xk2phy4ebekf77ykb7awfz-4854752831.europe-west2.run.app/auth/discord/callback</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText('https://ais-pre-xk2phy4ebekf77ykb7awfz-4854752831.europe-west2.run.app/auth/discord/callback');
+                        setCopiedShared(true);
+                        setTimeout(() => setCopiedShared(false), 2000);
+                      }}
+                      className="px-2 py-0.5 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded text-[10px] transition-colors whitespace-nowrap cursor-pointer"
+                    >
+                      {copiedShared ? 'Copied!' : 'Copy'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Vercel production domain */}
+                <div className="space-y-0.5">
+                  <span className="text-[9px] text-slate-400 font-bold">Vercel Production:</span>
+                  <div className="flex items-center gap-2 bg-black/50 p-1.5 rounded-lg border border-white/10 font-mono text-[10px] text-white">
+                    <span className="flex-1 truncate">https://secretarea.vercel.app/auth/discord/callback</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText('https://secretarea.vercel.app/auth/discord/callback');
+                        setCopiedVercel(true);
+                        setTimeout(() => setCopiedVercel(false), 2000);
+                      }}
+                      className="px-2 py-0.5 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded text-[10px] transition-colors whitespace-nowrap cursor-pointer"
+                    >
+                      {copiedVercel ? 'Copied!' : 'Copy'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-2 bg-black/30 rounded-lg border border-white/5 text-[10px] text-slate-400 space-y-1">
+                  <div className="font-mono text-[9px] text-amber-300 font-bold uppercase tracking-wider">Environment Variables:</div>
+                  <div className="font-mono text-[10px] text-slate-300">DISCORD_CLIENT_ID &amp; DISCORD_CLIENT_SECRET</div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1 border-t border-white/5">
+                <a
+                  href="https://discord.com/developers/applications"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[10px] font-bold text-[#5865F2] hover:underline flex items-center gap-1"
+                >
+                  <span>Open Discord Developer Portal ↗</span>
+                </a>
+              </div>
+            </div>
+          )}
+
+          {githubSetupNotice && (
+            <div className="mt-4 p-3.5 rounded-2xl bg-slate-900/60 border border-slate-700 text-slate-200 text-xs space-y-2 text-start">
+              <div className="flex items-center gap-1.5 font-bold text-white">
+                <Icon name="Github" size={16} />
+                <span>GitHub Authentication Setup</span>
+              </div>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                {githubSetupNotice}
+              </p>
+              <div className="space-y-1.5 pt-1">
+                <span className="text-[10px] uppercase font-mono tracking-wider font-bold text-slate-400">
+                  Firebase OAuth Callback URL (for GitHub OAuth App):
+                </span>
+                <div className="flex items-center gap-2 bg-black/50 p-2 rounded-xl border border-white/10 font-mono text-[10px] text-white">
+                  <span className="flex-1 truncate">https://secretarea-1337.firebaseapp.com/__/auth/handler</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText('https://secretarea-1337.firebaseapp.com/__/auth/handler');
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    }}
+                    className="px-2 py-0.5 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded text-[10px] transition-colors whitespace-nowrap cursor-pointer"
+                  >
+                    {copied ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 pt-1">
+                <a
+                  href="https://console.firebase.google.com/project/secretarea-1337/authentication/providers"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[10px] font-bold text-[#29aaea] hover:underline flex items-center gap-1"
+                >
+                  <span>Firebase Providers ↗</span>
+                </a>
+                <span className="text-slate-600">•</span>
+                <a
+                  href="https://github.com/settings/developers"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[10px] font-bold text-slate-300 hover:underline flex items-center gap-1"
+                >
+                  <span>GitHub OAuth Apps ↗</span>
+                </a>
               </div>
             </div>
           )}

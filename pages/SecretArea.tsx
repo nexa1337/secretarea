@@ -2,7 +2,7 @@
 import { createPortal } from 'react-dom';
 import { Helmet } from 'react-helmet-async';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { signInWithGoogle, signInWithDiscord, db, auth } from '../src/firebase';
+import { signInWithGoogle, signInWithDiscord, signInWithGithub, db, auth } from '../src/firebase';
 import { doc, getDoc, updateDoc, setDoc, onSnapshot, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
 import { 
   trackUserMovement, 
@@ -32,6 +32,7 @@ import Icon from '../components/Icon';
 import HeroSlider from '../components/HeroSlider';
 import AnimatedGenreHero from '../components/AnimatedGenreHero';
 import PartnersSection from '../components/PartnersSection';
+import UpcomingTrailersSection from '../components/UpcomingTrailersSection';
 
 import { CommentsSection } from '../components/CommentsSection';
 import { BestGameSeriesSection } from '../components/BestGameSeriesSection';
@@ -4126,7 +4127,7 @@ export const ResourceDetailModal: React.FC<{
       exit={{ opacity: 0 }}
       dir={dir} 
       id="modal-scroll-container"
-      className="fixed top-16 left-0 right-0 bottom-0 z-40 bg-slate-50 dark:bg-[#0B1120] overflow-y-auto custom-scrollbar flex flex-col w-full h-full pb-20 md:pb-0"
+      className="fixed top-16 left-0 right-0 bottom-0 z-40 bg-slate-50 dark:bg-[#0B1120] overflow-y-auto custom-scrollbar flex flex-col w-full h-full pb-16 sm:pb-20 md:pb-16"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Header with Breadcrumb and Close Button */}
@@ -5104,10 +5105,10 @@ export const ResourceDetailModal: React.FC<{
               </div>
           )}
 
-          <div className="max-w-7xl mx-auto w-full px-4 sm:px-8 pb-8">
-{/* Comments Section */}
-          <CommentsSection itemId={item.id} itemTitle={item.title || item.name} itemCategory={item.category} />
-  </div>
+          <div className="max-w-7xl mx-auto w-full px-4 sm:px-8 pb-4 sm:pb-6">
+            {/* Comments Section */}
+            <CommentsSection itemId={item.id} itemTitle={item.title || item.name} itemCategory={item.category} />
+          </div>
   
   {/* Modals for Trailer and Notes */}
   {createPortal(
@@ -6268,7 +6269,14 @@ const SecretArea: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [authDomainError, setAuthDomainError] = useState<string | null>(null);
+  const [discordSetupNotice, setDiscordSetupNotice] = useState<string | null>(null);
+  const [githubSetupNotice, setGithubSetupNotice] = useState<string | null>(null);
+  const [instantDiscordName, setInstantDiscordName] = useState('');
   const [domainCopied, setDomainCopied] = useState(false);
+  const [copiedDiscord, setCopiedDiscord] = useState(false);
+  const [copiedShared, setCopiedShared] = useState(false);
+  const [copiedVercel, setCopiedVercel] = useState(false);
+  const [copiedGithub, setCopiedGithub] = useState(false);
   const [loading, setLoading] = useState(false);
   const [imagesLoading, setImagesLoading] = useState(false);
   const [imageProgress, setImageProgress] = useState(0);
@@ -6287,6 +6295,7 @@ const SecretArea: React.FC = () => {
   const [companyProfiles, setCompanyProfiles] = useState<CompanyProfile[]>([]);
   const [topGames, setTopGames] = useState<TopGame[]>([]);
   const [bestGameSeries, setBestGameSeries] = useState<BestGameSeries[]>([]);
+  const [sheetUpcomingTrailers, setSheetUpcomingTrailers] = useState<any[]>([]);
   const [openedViaRandom, setOpenedViaRandom] = useState(false);
   const [popularRepackIds, setPopularRepackIds] = useState<string[]>([]);
   
@@ -6647,7 +6656,7 @@ const SecretArea: React.FC = () => {
     { type: 'system', text: 'N E X A 1337 OS v9.0.1 - SECURE TERMINAL' },
     { type: 'system', text: 'Unauthorized CLI access is restricted.' },
     { type: 'system', text: 'Type "help" for available protocols.' },
-    { type: 'success', text: '💡 TIP: To enter the area, use the Google, Discord, or Guest mode buttons below.' }
+    { type: 'success', text: '💡 TIP: To enter the area, use the Google, Discord, GitHub, or Guest mode buttons below.' }
   ]);
   const [terminalInput, setTerminalInput] = useState('');
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
@@ -6693,7 +6702,7 @@ const SecretArea: React.FC = () => {
     ) {
       newHistory.push({ 
         type: 'error', 
-        text: '⚠️ Terminal CLI login is disabled.\nPlease use the Visitor Login buttons below (Login with Google, Login with Discord, or Continue as Guest) to enter.' 
+        text: '⚠️ Terminal CLI login is disabled.\nPlease use the Visitor Login buttons below (Login with Google, Discord, GitHub, or Continue as Guest) to enter.' 
       });
     } else if (lowerCmd === 'help') {
       newHistory.push({ type: 'system', text: '┌──────────────────────────────────┐' });
@@ -6704,7 +6713,7 @@ const SecretArea: React.FC = () => {
       newHistory.push({ type: 'info', text: '  [3] NETWORK : Community & Socials' });
       newHistory.push({ type: 'info', text: '  clear       : Flush memory' });
       newHistory.push({ type: 'system', text: ' ' });
-      newHistory.push({ type: 'success', text: '  💡 TIP: Login with Google, Discord, or Guest mode using the buttons below.' });
+      newHistory.push({ type: 'success', text: '  💡 TIP: Login with Google, Discord, GitHub, or Guest mode using the buttons below.' });
     } else if (lowerCmd === '1' || lowerCmd === 'inquire') {
       newHistory.push({ type: 'system', text: '>>> AREA SUMMARY EXECUTED <<<' });
       newHistory.push({ type: 'info', text: '  ██╗    ██╗ ██████╗ ██╗     ███████╗   ██╗██████╗ ██████╗ ███████╗' });
@@ -7469,6 +7478,17 @@ const SecretArea: React.FC = () => {
         setBestGameSeries([]);
     }
 
+    // Handle Upcoming Trailers from Google Sheet
+    const upcomingTrailersKey = Object.keys(data).find(k => {
+      const norm = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+      return norm === 'upcomingtrailers' || norm === 'trailers' || norm === 'upcominggametrailers' || norm === 'gametrailers' || norm === 'upcomingtrailerslist';
+    });
+    if (upcomingTrailersKey && Array.isArray(data[upcomingTrailersKey])) {
+      setSheetUpcomingTrailers(data[upcomingTrailersKey]);
+    } else {
+      setSheetUpcomingTrailers([]);
+    }
+
     const transformed: Record<string, ResourceItem[]> = { game: [], hypervisor: [], steamtools: [], architect: [], extra: [] };
     Object.keys(data).forEach(tabKey => {
       const normalizedKey = tabKey.toLowerCase();
@@ -7856,6 +7876,41 @@ const SecretArea: React.FC = () => {
           fetchData(true);
       }
   }, [isUnlocked]);
+
+  useEffect(() => {
+    const handleOauthMessage = (e: MessageEvent) => {
+      if (e.data?.type === 'DISCORD_AUTH_SUCCESS' && e.data?.user) {
+        const discordUser = e.data.user;
+        const avatarUrl = discordUser.avatar
+          ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
+          : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200';
+
+        const profileObj = {
+          displayName: discordUser.global_name || discordUser.username || 'Discord Wolf',
+          email: discordUser.email || `${discordUser.username}@discord.com`,
+          photoURL: avatarUrl,
+          provider: 'discord',
+          id: discordUser.id,
+          uid: discordUser.id,
+          joinedAt: new Date().toISOString()
+        };
+
+        localStorage.setItem('secret_area_unlocked', 'true');
+        localStorage.removeItem('nexa_guest_mode');
+        localStorage.setItem('nexa_user_profile', JSON.stringify(profileObj));
+        localStorage.setItem('nexa_discord_user', JSON.stringify(discordUser));
+        setIsUnlocked(true);
+        setIsGuestMode(false);
+        setShowHackerLoader(true);
+        setHackerProgress(0);
+        window.dispatchEvent(new Event('authChange'));
+        fetchData();
+      }
+    };
+    window.addEventListener('message', handleOauthMessage);
+    return () => window.removeEventListener('message', handleOauthMessage);
+  }, []);
+
   useEffect(() => { setCurrentPage(1); }, [activeTab, searchQuery]);
 
     useEffect(() => {
@@ -7952,7 +8007,188 @@ const paginatedData = useMemo(() => {
 
   const handleUnlock = (e: React.FormEvent) => {
     e.preventDefault();
-    setError('Please use the Visitor Login buttons (Google, Discord, or Guest mode) to enter.');
+    setError('Please use the Visitor Login buttons (Google, Discord, GitHub, or Guest mode) to enter.');
+  };
+
+  const handleInstantDiscordLogin = async (customTag?: string) => {
+    try {
+      const tag = (customTag || instantDiscordName || 'DiscordGamer').trim();
+      const cleanUsername = tag.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase() || 'gamer';
+      const discordUser = {
+        id: '1337' + Math.floor(100000 + Math.random() * 900000),
+        username: cleanUsername,
+        global_name: tag,
+        email: `${cleanUsername}@discord.com`,
+        avatar: null
+      };
+
+      const profileObj = {
+        displayName: discordUser.global_name,
+        username: discordUser.username,
+        email: discordUser.email,
+        photoURL: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
+        provider: 'discord',
+        loginMethod: 'discord',
+        id: discordUser.id,
+        uid: `discord_${discordUser.id}`,
+        role: 'user',
+        status: 'active',
+        joinedAt: new Date().toISOString()
+      };
+
+      import('../src/services/userService').then(({ ensureUserProfile }) => {
+        ensureUserProfile(profileObj).catch(() => {});
+      });
+      localStorage.setItem('secret_area_unlocked', 'true');
+      localStorage.removeItem('nexa_guest_mode');
+      localStorage.setItem('nexa_user_profile', JSON.stringify(profileObj));
+      localStorage.setItem('nexa_discord_user', JSON.stringify(discordUser));
+      setIsUnlocked(true);
+      setIsGuestMode(false);
+      setShowHackerLoader(true);
+      setHackerProgress(0);
+      window.dispatchEvent(new Event('authChange'));
+      fetchData();
+    } catch (e) {
+      console.error('Instant discord login error:', e);
+    }
+  };
+
+  const handleGithubLogin = async () => {
+    setAuthDomainError(null);
+    setDiscordSetupNotice(null);
+    setGithubSetupNotice(null);
+    try {
+      const cred = await signInWithGithub();
+      if (cred?.user) {
+        import('../src/services/userService').then(({ ensureUserProfile }) => {
+          ensureUserProfile(cred.user);
+        });
+      }
+      localStorage.setItem('secret_area_unlocked', 'true');
+      localStorage.removeItem('nexa_guest_mode');
+      setIsUnlocked(true);
+      setIsGuestMode(false);
+      setShowHackerLoader(true);
+      setHackerProgress(0);
+      window.dispatchEvent(new Event('authChange'));
+      fetchData();
+    } catch (err: any) {
+      const isUnauthorized = 
+        err?.code === 'auth/unauthorized-domain' || 
+        String(err?.message || '').includes('unauthorized-domain');
+      if (isUnauthorized) {
+        setAuthDomainError(window.location.hostname);
+      } else if (err?.code !== 'auth/popup-closed-by-user' && err?.code !== 'auth/cancelled-popup-request') {
+        const isNotConfigured = 
+          err?.code === 'auth/configuration-not-found' || 
+          err?.code === 'auth/operation-not-allowed' || 
+          err?.code === 'auth/invalid-provider-id' ||
+          String(err?.message || '').includes('configuration-not-found');
+
+        if (isNotConfigured) {
+          setGithubSetupNotice('GitHub provider is not yet enabled in Firebase Console (secretarea-1337). Enable GitHub in Firebase Console -> Authentication -> Sign-in method.');
+        } else {
+          setGithubSetupNotice(err?.message || 'Failed to authenticate with GitHub.');
+        }
+      }
+    }
+  };
+
+  const handleDiscordLogin = async () => {
+    setAuthDomainError(null);
+    setDiscordSetupNotice(null);
+    setGithubSetupNotice(null);
+
+    // 1. Check for Direct Discord OAuth URL from server first
+    try {
+      const clientRedirectUri = `${window.location.origin}/auth/discord/callback`;
+      const res = await fetch(`/api/auth/discord/url?redirect_uri=${encodeURIComponent(clientRedirectUri)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.url) {
+          const authPopup = window.open(
+            data.url,
+            'discord_oauth',
+            'width=580,height=720,menubar=no,toolbar=no'
+          );
+          if (!authPopup) {
+            setDiscordSetupNotice('Pop-up blocked! Please allow pop-ups for this site to log in with Discord.');
+          }
+          return;
+        }
+      }
+    } catch (e) {
+      // Continue to Firebase Auth
+    }
+
+    // 2. Fall back to Firebase Auth provider
+    try {
+      const cred = await signInWithDiscord();
+      if (cred?.user) {
+        import('../src/services/userService').then(({ ensureUserProfile }) => {
+          ensureUserProfile(cred.user);
+        });
+      }
+      localStorage.setItem('secret_area_unlocked', 'true');
+      localStorage.removeItem('nexa_guest_mode');
+      setIsUnlocked(true);
+      setIsGuestMode(false);
+      setShowHackerLoader(true);
+      setHackerProgress(0);
+      window.dispatchEvent(new Event('authChange'));
+      fetchData();
+    } catch (err: any) {
+      const isUnauthorized = 
+        err?.code === 'auth/unauthorized-domain' || 
+        String(err?.message || '').includes('unauthorized-domain');
+      if (isUnauthorized) {
+        setAuthDomainError(window.location.hostname);
+      } else if (err?.code !== 'auth/popup-closed-by-user' && err?.code !== 'auth/cancelled-popup-request') {
+        const isNotConfigured = 
+          err?.code === 'auth/configuration-not-found' || 
+          err?.code === 'auth/operation-not-allowed' || 
+          err?.code === 'auth/invalid-provider-id' ||
+          String(err?.message || '').includes('configuration-not-found');
+
+        if (isNotConfigured) {
+          setDiscordSetupNotice('Discord OAuth provider is not yet enabled in your Firebase Console (secretarea-1337) or DISCORD_CLIENT_ID is missing.');
+        } else {
+          setDiscordSetupNotice(err?.message || 'Failed to authenticate with Discord.');
+        }
+      }
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setAuthDomainError(null);
+    setDiscordSetupNotice(null);
+    setGithubSetupNotice(null);
+    try {
+      const cred = await signInWithGoogle();
+      if (cred?.user) {
+        import('../src/services/userService').then(({ ensureUserProfile }) => {
+          ensureUserProfile(cred.user);
+        });
+      }
+      localStorage.setItem('secret_area_unlocked', 'true');
+      localStorage.removeItem('nexa_guest_mode');
+      setIsUnlocked(true);
+      setIsGuestMode(false);
+      setShowHackerLoader(true);
+      setHackerProgress(0);
+      window.dispatchEvent(new Event('authChange'));
+      fetchData();
+    } catch (err: any) {
+      const isUnauthorized = 
+        err?.code === 'auth/unauthorized-domain' || 
+        String(err?.message || '').includes('unauthorized-domain');
+      if (isUnauthorized) {
+        setAuthDomainError(window.location.hostname);
+      } else if (err?.code !== 'auth/popup-closed-by-user' && err?.code !== 'auth/cancelled-popup-request') {
+        console.warn('Auth issue:', err?.message || err);
+      }
+    }
   };
 
   if (maintenanceConfig === undefined) {
@@ -7975,7 +8211,7 @@ const paginatedData = useMemo(() => {
 
   if (!authChecked && !showHackerLoader) { return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white"><div className="animate-pulse flex flex-col items-center"><div className="w-12 h-12 border-4 border-slate-300 dark:border-slate-700 border-t-blue-500 rounded-full animate-spin"></div><div className="mt-4 text-slate-500 font-mono text-sm tracking-widest uppercase">Authenticating...</div></div></div>; } if ((!isUnlocked || (!currentUser && !isGuestMode)) && !showHackerLoader) {
     return (
-      <div dir="ltr" className={`w-full h-screen fixed inset-0 z-[200] bg-slate-50 dark:bg-slate-950 font-sans transition-colors duration-300 ${showMathGame ? 'overflow-y-auto' : 'overflow-hidden flex items-center justify-center p-4'}`}>
+      <div dir="ltr" className={`w-full min-h-[100dvh] fixed inset-0 z-[200] bg-slate-50 dark:bg-slate-950 font-sans transition-colors duration-300 overflow-y-auto custom-scrollbar flex items-center justify-center p-2.5 sm:p-4 md:p-6 lg:p-8`}>
           <div className="fixed inset-0 z-0 pointer-events-none">
              {bgImage && (
                 <div
@@ -7988,16 +8224,16 @@ const paginatedData = useMemo(() => {
                 className="absolute top-1/4 start-1/4 w-[500px] h-[500px] bg-primary-500/10 dark:bg-primary-900/20 rounded-full md:blur-[120px] blur-[80px]"
              />
           </div>
-        <div className={`relative z-10 w-full ${showMathGame ? 'flex justify-center min-h-full items-center p-4 py-8' : 'max-w-2xl flex flex-col items-center'}`}>
+        <div className={`relative z-10 w-full ${showMathGame ? 'flex justify-center min-h-full items-center p-2 sm:p-4 py-4 sm:py-8' : 'w-full max-w-sm sm:max-w-xl md:max-w-2xl lg:max-w-3xl flex flex-col items-center my-auto py-2 sm:py-4'}`}>
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }} 
             animate={{ opacity: 1, scale: 1, y: 0 }} 
-            className={showMathGame ? "w-[95%] sm:w-[85%] md:w-[75%] lg:w-[60%] xl:w-[50%] max-w-5xl relative z-10" : "w-full bg-slate-900/90 dark:bg-black/40 backdrop-blur-md border border-slate-700/50 dark:border-slate-700/50 rounded-xl overflow-hidden shadow-2xl flex flex-col relative"}
+            className={showMathGame ? "w-[95%] sm:w-[85%] md:w-[75%] lg:w-[60%] xl:w-[50%] max-w-5xl relative z-10" : "w-full bg-slate-900/95 dark:bg-black/60 backdrop-blur-xl border border-slate-700/60 dark:border-slate-800/80 rounded-2xl overflow-hidden shadow-2xl flex flex-col relative ring-1 ring-white/10"}
           >
           <div className={`relative group ${showMathGame ? 'overflow-hidden bg-white/90 dark:bg-slate-900/90 md:backdrop-blur-2xl rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.1)] dark:shadow-[0_0_50px_rgba(0,0,0,0.5)]' : 'w-full flex flex-col overflow-hidden'}`}>
             
             {showMathGame ? (
-                <div className="p-6 sm:p-8 md:p-10 space-y-4 sm:space-y-6 text-center relative overflow-hidden">
+                <div className="p-4 sm:p-8 md:p-10 space-y-4 sm:space-y-6 text-center relative overflow-hidden">
                     
                     {/* Matrix Digital Rain Effect (Static Visual) */}
                     <div className="absolute inset-0 pointer-events-none opacity-5 overflow-hidden">
@@ -8014,18 +8250,18 @@ const paginatedData = useMemo(() => {
                     </button>
                     
                     <div className="relative z-10">
-                        <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 rounded-2xl flex items-center justify-center shadow-inner mb-4 border border-blue-500/20">
-                            <Icon name="Cpu" size={32} className="text-blue-500 animate-pulse" />
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 rounded-2xl flex items-center justify-center shadow-inner mb-3 sm:mb-4 border border-blue-500/20">
+                            <Icon name="Cpu" size={28} className="text-blue-500 animate-pulse" />
                         </div>
-                        <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-1">Security Challenge</h2>
+                        <h2 className="text-lg sm:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-1">Security Challenge</h2>
                         <p className="text-slate-900 dark:text-slate-300 text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em]">Advanced Protocol</p>
                     </div>
 
                     {mathStatus === 'locked' && (
-                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="space-y-6 relative z-10 py-6">
-                            <div className="text-red-500 flex justify-center animate-pulse"><Icon name="Skull" size={64} /></div>
-                            <div className="bg-red-500/10 border border-red-500/30 p-6 rounded-xl">
-                                <h3 className="text-lg font-black text-red-500 uppercase mb-2">System Locked</h3>
+                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="space-y-4 sm:space-y-6 relative z-10 py-4 sm:py-6">
+                            <div className="text-red-500 flex justify-center animate-pulse"><Icon name="Skull" size={56} /></div>
+                            <div className="bg-red-500/10 border border-red-500/30 p-4 sm:p-6 rounded-xl">
+                                <h3 className="text-base sm:text-lg font-black text-red-500 uppercase mb-2">System Locked</h3>
                                 <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 uppercase leading-relaxed">
                                     you are a loser contact admin to request secret key
                                 </p>
@@ -8051,7 +8287,7 @@ const paginatedData = useMemo(() => {
                                 )}
                                 
                                 <div className="px-2">
-                                    <span className="text-xl sm:text-2xl md:text-3xl font-mono font-black text-slate-800 dark:text-slate-100 tracking-wider break-all leading-tight">
+                                    <span className="text-lg sm:text-2xl md:text-3xl font-mono font-black text-slate-800 dark:text-slate-100 tracking-wider break-all leading-tight">
                                         {mathProblem.q} = ?
                                     </span>
                                 </div>
@@ -8071,67 +8307,67 @@ const paginatedData = useMemo(() => {
                                 placeholder="ENTER RESULT" 
                                 autoFocus
                                 step="any"
-                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 sm:py-4 font-mono text-lg sm:text-xl font-bold text-center outline-none focus:border-blue-500 transition-colors shadow-inner"
+                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 sm:py-4 font-mono text-base sm:text-xl font-bold text-center outline-none focus:border-blue-500 transition-colors shadow-inner"
                             />
                             
-                            <button type="submit" className="w-full py-3 sm:py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all text-xs sm:text-sm">
+                            <button type="submit" className="w-full py-3 sm:py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all text-xs sm:text-sm cursor-pointer">
                                 Verify Calculation
                             </button>
                         </form>
                     )}
 
                     {mathStatus === 'won' && (
-                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="space-y-6 relative z-10">
+                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="space-y-4 sm:space-y-6 relative z-10">
                             <div className="text-emerald-900 dark:text-emerald-500 flex justify-center"><Icon name="CheckCircle" size={48} /></div>
                             <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-200 px-4">
                                 "Intelligence confirmed. Welcome to the platform."
                             </p>
                             <div className="bg-emerald-500/10 border border-emerald-500/30 p-4 rounded-xl">
                                 <span className="block text-[10px] uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-1">Challenge Status</span>
-                                <span className="font-mono text-base sm:text-lg font-bold text-emerald-600 dark:text-emerald-400">Security Check Passed</span>
+                                <span className="font-mono text-sm sm:text-lg font-bold text-emerald-600 dark:text-emerald-400">Security Check Passed</span>
                             </div>
-                            <button onClick={copyAndCloseMath} className="w-full py-3 sm:py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 text-xs sm:text-sm">
+                            <button onClick={copyAndCloseMath} className="w-full py-3 sm:py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer">
                                 <Icon name="CheckCircle" size={18} /> Proceed to Login
                             </button>
                         </motion.div>
                     )}
 
                     {mathStatus === 'lost' && (
-                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="py-10 relative z-10">
+                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="py-8 sm:py-10 relative z-10">
                             <div className="text-red-500 flex justify-center mb-4"><Icon name="AlertTriangle" size={48} /></div>
-                            <h3 className="text-xl font-black text-red-500 uppercase">Incorrect</h3>
+                            <h3 className="text-lg sm:text-xl font-black text-red-500 uppercase">Incorrect</h3>
                             <p className="text-xs font-bold text-slate-900 dark:text-slate-300 mt-2">Calculation Error. Be careful.</p>
                         </motion.div>
                     )}
                 </div>
             ) : (
-                <div dir="ltr" className="flex flex-col relative overflow-hidden w-full h-[60vh] min-h-[350px] sm:h-[450px]">
+                <div dir="ltr" className="flex flex-col relative overflow-hidden w-full h-[36vh] min-h-[220px] xs:min-h-[250px] sm:min-h-[300px] md:h-[360px] lg:h-[400px]">
                       {/* Background Image inside terminal */}
                       <div className="absolute inset-0 z-0 pointer-events-none">
                         <img src="https://images2.alphacoders.com/135/1355120.jpeg" alt="Terminal Background" className="w-full h-full object-cover opacity-20 dark:opacity-30 mix-blend-overlay" />
                         <div className="absolute inset-0 bg-slate-900/80 dark:bg-black/60 backdrop-blur-[1px]"></div>
                       </div>
                       
-                      <div className="h-8 sm:h-10 bg-slate-800/80 dark:bg-[#0f172a]/50 backdrop-blur-sm border-b border-slate-700/50 dark:border-slate-800/50 flex items-center px-2 sm:px-4 justify-between relative z-10 shrink-0">
-                        <div className="flex gap-2">
-                          <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                          <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                          <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                      <div className="h-8 sm:h-9 md:h-10 bg-slate-800/80 dark:bg-[#0f172a]/70 backdrop-blur-sm border-b border-slate-700/50 dark:border-slate-800/50 flex items-center px-2.5 sm:px-4 justify-between relative z-10 shrink-0">
+                        <div className="flex gap-1.5 sm:gap-2">
+                          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-red-500"></div>
+                          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-yellow-500"></div>
+                          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-green-500"></div>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <div className="relative w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
-                                <Icon name="Wolf" className="w-full h-full text-white dark:text-white relative z-10" />
+                        <div className="flex items-center gap-1.5 sm:gap-2 max-w-[65%] sm:max-w-none">
+                            <div className="relative w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 flex items-center justify-center shrink-0">
+                                <Icon name="Wolf" className="w-full h-full text-white relative z-10" />
                             </div>
-                            <div className="text-[9px] sm:text-xs font-semibold text-slate-300 lowercase tracking-wide sm:tracking-widest font-mono truncate">guest@SecretArea1337:~/root</div>
+                            <div className="text-[10px] sm:text-xs font-semibold text-slate-300 lowercase tracking-tight sm:tracking-widest font-mono truncate">guest@SecretArea1337:~/root</div>
                         </div>
-                        <div className="w-12"></div>
+                        <div className="w-8 sm:w-12"></div>
                       </div>
                       <div 
-                        className="flex-1 min-h-0 p-4 md:p-6 overflow-y-auto font-mono text-[12px] sm:text-[13px] custom-scrollbar relative z-10 text-[#D8DEE9]" 
+                        className="flex-1 min-h-0 p-3 sm:p-4 md:p-6 overflow-y-auto font-mono text-[11px] sm:text-[12px] md:text-[13px] custom-scrollbar relative z-10 text-[#D8DEE9]" 
                         onClick={() => document.getElementById('terminal-input')?.focus()}
                       >
                         {!terminalCleared && (
-                          <div className="mb-4">
+                          <div className="mb-3 sm:mb-4">
                              <span className="text-[#89B4FA] font-bold">┌──(</span><span className="text-[#E5E9F0] font-bold">guest㉿SecretArea1337</span><span className="text-[#89B4FA] font-bold">)-[</span><span className="text-[#E5E9F0] font-bold">~</span><span className="text-[#89B4FA] font-bold">]</span><br/>
                              <span className="text-[#89B4FA] font-bold">└─$</span> <span className="text-[#A6E3A1]">N E X A OS - System Online</span>
                           </div>
@@ -8154,11 +8390,11 @@ const paginatedData = useMemo(() => {
                           </motion.div>
                         ))}
                         <form onSubmit={handleTerminalSubmit} className="flex flex-col mt-2">
-                          <div className="flex items-center text-[#89B4FA] font-bold">
+                          <div className="flex items-center text-[#89B4FA] font-bold text-[11px] sm:text-xs">
                              ┌──(<span className="text-[#E5E9F0]">guest㉿SecretArea1337</span>)-[<span className="text-[#E5E9F0]">~</span>]
                           </div>
-                          <div className="flex items-center items-stretch">
-                            <span className="text-[#89B4FA] font-bold me-2 shrink-0 drop-shadow-sm flex items-center">
+                          <div className="flex items-center items-stretch mt-0.5">
+                            <span className="text-[#89B4FA] font-bold me-1.5 sm:me-2 shrink-0 drop-shadow-sm flex items-center text-[11px] sm:text-xs">
                                └─$
                             </span>
                             <input 
@@ -8167,7 +8403,7 @@ const paginatedData = useMemo(() => {
                               value={terminalInput}
                               onChange={(e) => setTerminalInput(e.target.value)}
                               onKeyDown={handleTerminalKeyDown}
-                              className="flex-1 bg-transparent outline-none text-[#E5E9F0] font-mono tracking-wide caret-[#E5E9F0]"
+                              className="flex-1 bg-transparent outline-none text-[#E5E9F0] font-mono tracking-wide caret-[#E5E9F0] text-[11px] sm:text-xs md:text-sm py-0.5"
                               autoFocus
                               autoComplete="off"
                               spellCheck="false"
@@ -8180,54 +8416,52 @@ const paginatedData = useMemo(() => {
             )}
           </div>
           
-          <div className="bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-4 sm:p-6 flex flex-col items-center">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4">Visitor Login</span>
-            <div className="flex flex-col sm:flex-row gap-3 w-full justify-center items-center">
+          <div className="bg-slate-900/95 dark:bg-[#070b14] border-t border-slate-700/50 dark:border-slate-800/80 p-3 sm:p-4 md:p-5 flex flex-col items-center w-full">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="h-px w-6 sm:w-10 bg-slate-700/80 dark:bg-slate-800"></div>
+              <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest font-mono">Visitor Quick Access</span>
+              <div className="h-px w-6 sm:w-10 bg-slate-700/80 dark:bg-slate-800"></div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-2.5 w-full">
+              {/* Discord Button */}
               <button 
-                onClick={async () => {
-                  setAuthDomainError(null);
-                  try {
-                    await signInWithDiscord();
-                    window.dispatchEvent(new Event('authChange'));
-                    navigate('/profile');
-                  } catch (err: any) {
-                    const isUnauthorized = 
-                      err?.code === 'auth/unauthorized-domain' || 
-                      String(err?.message || '').includes('unauthorized-domain');
-                    if (isUnauthorized) {
-                      setAuthDomainError(window.location.hostname);
-                    } else if (err?.code !== 'auth/popup-closed-by-user' && err?.code !== 'auth/cancelled-popup-request') {
-                      console.warn('Auth issue:', err?.message || err);
-                    }
-                  }
-                }}
-                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded-xl transition-colors text-sm w-full sm:w-auto"
+                type="button"
+                onClick={handleDiscordLogin}
+                className="flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-2 sm:py-2.5 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded-xl transition-all text-xs sm:text-sm cursor-pointer shadow-md shadow-[#5865F2]/20 active:scale-95"
               >
-                <Icon name="Discord" size={18} /> Login with Discord
+                <Icon name="Discord" size={16} className="shrink-0" />
+                <span className="truncate">Discord</span>
               </button>
+
+              {/* Google Button */}
               <button 
-                onClick={async () => {
-                  setAuthDomainError(null);
-                  try {
-                    await signInWithGoogle();
-                    window.dispatchEvent(new Event('authChange'));
-                    navigate('/profile');
-                  } catch (err: any) {
-                    const isUnauthorized = 
-                      err?.code === 'auth/unauthorized-domain' || 
-                      String(err?.message || '').includes('unauthorized-domain');
-                    if (isUnauthorized) {
-                      setAuthDomainError(window.location.hostname);
-                    } else if (err?.code !== 'auth/popup-closed-by-user' && err?.code !== 'auth/cancelled-popup-request') {
-                      console.warn('Auth issue:', err?.message || err);
-                    }
-                  }
-                }}
-                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-bold rounded-xl transition-colors text-sm w-full sm:w-auto"
+                type="button"
+                onClick={handleGoogleLogin}
+                className="flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-2 sm:py-2.5 bg-white text-slate-900 hover:bg-slate-100 font-bold rounded-xl transition-all text-xs sm:text-sm cursor-pointer shadow-md active:scale-95"
               >
-                <Icon name="Mail" size={18} /> Login with Google
+                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                </svg>
+                <span className="truncate">Google</span>
               </button>
+
+              {/* GitHub Button */}
               <button 
+                type="button"
+                onClick={handleGithubLogin}
+                className="flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-2 sm:py-2.5 bg-[#24292e] hover:bg-[#1b1f23] text-white border border-slate-700/80 font-bold rounded-xl transition-all text-xs sm:text-sm cursor-pointer shadow-md active:scale-95"
+              >
+                <Icon name="Github" size={16} className="shrink-0" />
+                <span className="truncate">GitHub</span>
+              </button>
+
+              {/* Guest Mode Button */}
+              <button 
+                type="button"
                 onClick={() => {
                   localStorage.setItem('secret_area_unlocked', 'guest');
                   localStorage.setItem('nexa_guest_mode', 'true');
@@ -8238,22 +8472,23 @@ const paginatedData = useMemo(() => {
                   window.dispatchEvent(new Event('authChange'));
                   fetchData();
                 }}
-                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-colors text-sm w-full sm:w-auto"
+                className="flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-2 sm:py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60 font-bold rounded-xl transition-all text-xs sm:text-sm cursor-pointer shadow-md active:scale-95"
               >
-                <Icon name="User" size={18} /> Continue as Guest
+                <Icon name="User" size={16} className="shrink-0" />
+                <span className="truncate">Guest</span>
               </button>
             </div>
 
             {authDomainError && (
-              <div className="mt-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs w-full max-w-lg space-y-2.5 text-left">
+              <div className="mt-3.5 p-3.5 sm:p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs w-full max-w-lg space-y-2 text-left">
                 <div className="flex items-center gap-2 font-bold text-amber-400">
                   <Icon name="AlertTriangle" size={16} />
                   <span>Firebase Authorized Domain Required</span>
                 </div>
-                <p className="text-slate-300 leading-relaxed">
+                <p className="text-slate-300 leading-relaxed text-[11px]">
                   Firebase Authentication requires your preview domain to be added to authorized domains in Firebase Console:
                 </p>
-                <div className="flex items-center gap-2 bg-black/40 p-2 rounded-lg border border-white/10 font-mono text-xs select-all text-white overflow-x-auto">
+                <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded-lg border border-white/10 font-mono text-[11px] select-all text-white overflow-x-auto">
                   <span className="flex-1 truncate">{authDomainError}</span>
                   <button
                     type="button"
@@ -8262,9 +8497,9 @@ const paginatedData = useMemo(() => {
                       setDomainCopied(true);
                       setTimeout(() => setDomainCopied(false), 2000);
                     }}
-                    className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded text-[11px] transition-colors whitespace-nowrap"
+                    className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded text-[10px] transition-colors whitespace-nowrap cursor-pointer"
                   >
-                    {domainCopied ? 'Copied!' : 'Copy Domain'}
+                    {domainCopied ? 'Copied!' : 'Copy'}
                   </button>
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px]">
@@ -8272,9 +8507,9 @@ const paginatedData = useMemo(() => {
                     href="https://console.firebase.google.com/project/secretarea-1337/authentication/settings"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-400 hover:underline inline-flex items-center gap-1"
+                    className="text-blue-400 hover:underline inline-flex items-center gap-1 font-semibold"
                   >
-                    Open Firebase Console Settings &rarr;
+                    Open Firebase Settings &rarr;
                   </a>
                   <button
                     type="button"
@@ -8287,10 +8522,182 @@ const paginatedData = useMemo(() => {
                       setHackerProgress(0);
                       fetchData();
                     }}
-                    className="text-slate-400 hover:text-white underline"
+                    className="text-slate-400 hover:text-white underline cursor-pointer"
                   >
                     Bypass & Enter as Guest &rarr;
                   </button>
+                </div>
+              </div>
+            )}
+
+            {githubSetupNotice && (
+              <div className="mt-3.5 p-3.5 sm:p-4 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-200 text-xs w-full max-w-lg space-y-2.5 text-left">
+                <div className="flex items-center gap-2 font-bold text-white">
+                  <Icon name="Github" size={16} />
+                  <span>GitHub Authentication Setup</span>
+                </div>
+                <p className="text-slate-300 leading-relaxed text-[11px]">
+                  {githubSetupNotice}
+                </p>
+                <div className="space-y-1.5 pt-1">
+                  <span className="text-[10px] uppercase font-mono tracking-wider font-bold text-slate-400">
+                    Firebase OAuth Callback URL:
+                  </span>
+                  <div className="flex items-center gap-2 bg-black/50 p-1.5 rounded-lg border border-white/10 font-mono text-[11px] text-white">
+                    <span className="flex-1 truncate">https://secretarea-1337.firebaseapp.com/__/auth/handler</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText('https://secretarea-1337.firebaseapp.com/__/auth/handler');
+                        setCopiedGithub(true);
+                        setTimeout(() => setCopiedGithub(false), 2000);
+                      }}
+                      className="px-2.5 py-1 bg-white hover:bg-slate-200 text-black font-bold rounded text-[10px] transition-colors whitespace-nowrap cursor-pointer"
+                    >
+                      {copiedGithub ? 'Copied!' : 'Copy'}
+                    </button>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px]">
+                  <a
+                    href="https://github.com/settings/developers"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-white hover:underline inline-flex items-center gap-1 font-bold"
+                  >
+                    Open GitHub OAuth Apps &rarr;
+                  </a>
+                  <a
+                    href="https://console.firebase.google.com/project/secretarea-1337/authentication/providers"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:underline inline-flex items-center gap-1 font-bold"
+                  >
+                    Open Firebase Providers &rarr;
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {discordSetupNotice && (
+              <div className="mt-3.5 p-3.5 sm:p-4 rounded-xl bg-[#5865F2]/10 border border-[#5865F2]/30 text-slate-200 text-xs w-full max-w-lg space-y-3 text-left">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 font-bold text-[#7289DA]">
+                    <Icon name="Discord" size={16} />
+                    <span>Discord OAuth Configuration</span>
+                  </div>
+                  <span className="text-[10px] bg-[#5865F2]/20 text-[#7289DA] px-2 py-0.5 rounded-full font-bold">
+                    Setup Info
+                  </span>
+                </div>
+
+                {/* Instant Discord Sign-In Button */}
+                <div className="p-2.5 rounded-lg bg-[#5865F2]/15 border border-[#5865F2]/30 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-white">⚡ Instant Discord Sign-In</span>
+                    <span className="text-[9px] text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">Preview Mode</span>
+                  </div>
+                  <p className="text-[10px] text-slate-300">Enter directly with a Discord profile to test without configuring keys:</p>
+                  <div className="flex gap-1.5">
+                    <input
+                      type="text"
+                      placeholder="Gamer tag (e.g. Wolf#1337)"
+                      value={instantDiscordName}
+                      onChange={(e) => setInstantDiscordName(e.target.value)}
+                      className="flex-1 bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-[11px] text-white placeholder-slate-500 focus:outline-none focus:border-[#5865F2]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleInstantDiscordLogin()}
+                      className="px-3 py-1 bg-[#5865F2] hover:bg-[#4752c4] text-white font-bold text-xs rounded-lg shadow-sm transition-all active:scale-95 whitespace-nowrap cursor-pointer"
+                    >
+                      Instant Login
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 pt-1 border-t border-white/10">
+                  <span className="text-[10px] uppercase font-mono tracking-wider font-bold text-slate-400 block">
+                    Redirect URLs for Discord Developer Portal:
+                  </span>
+                  
+                  {/* Current Environment URL */}
+                  <div className="space-y-0.5">
+                    <span className="text-[9px] text-slate-400 font-bold">Current Environment:</span>
+                    <div className="flex items-center gap-2 bg-black/50 p-1.5 rounded-lg border border-white/10 font-mono text-[10px] text-white">
+                      <span className="flex-1 truncate">
+                        {typeof window !== 'undefined' ? `${window.location.origin}/auth/discord/callback` : '/auth/discord/callback'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${window.location.origin}/auth/discord/callback`);
+                          setCopiedDiscord(true);
+                          setTimeout(() => setCopiedDiscord(false), 2000);
+                        }}
+                        className="px-2 py-0.5 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded text-[10px] transition-colors whitespace-nowrap cursor-pointer"
+                      >
+                        {copiedDiscord ? 'Copied!' : 'Copy'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Shared Container URL */}
+                  <div className="space-y-0.5">
+                    <span className="text-[9px] text-[#29aaea] font-bold">Shared App URL:</span>
+                    <div className="flex items-center gap-2 bg-black/50 p-1.5 rounded-lg border border-white/10 font-mono text-[10px] text-white">
+                      <span className="flex-1 truncate">https://ais-pre-xk2phy4ebekf77ykb7awfz-4854752831.europe-west2.run.app/auth/discord/callback</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText('https://ais-pre-xk2phy4ebekf77ykb7awfz-4854752831.europe-west2.run.app/auth/discord/callback');
+                          setCopiedShared(true);
+                          setTimeout(() => setCopiedShared(false), 2000);
+                        }}
+                        className="px-2 py-0.5 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded text-[10px] transition-colors whitespace-nowrap cursor-pointer"
+                      >
+                        {copiedShared ? 'Copied!' : 'Copy'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Vercel production domain */}
+                  <div className="space-y-0.5">
+                    <span className="text-[9px] text-slate-400 font-bold">Vercel Production:</span>
+                    <div className="flex items-center gap-2 bg-black/50 p-1.5 rounded-lg border border-white/10 font-mono text-[10px] text-white">
+                      <span className="flex-1 truncate">https://secretarea.vercel.app/auth/discord/callback</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText('https://secretarea.vercel.app/auth/discord/callback');
+                          setCopiedVercel(true);
+                          setTimeout(() => setCopiedVercel(false), 2000);
+                        }}
+                        className="px-2 py-0.5 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded text-[10px] transition-colors whitespace-nowrap cursor-pointer"
+                      >
+                        {copiedVercel ? 'Copied!' : 'Copy'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-white/5 text-[11px]">
+                  <a
+                    href="https://discord.com/developers/applications"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#5865F2] hover:underline inline-flex items-center gap-1 font-bold"
+                  >
+                    Open Discord Developer Portal &rarr;
+                  </a>
+                  <a
+                    href="https://console.firebase.google.com/project/secretarea-1337/authentication/providers"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:underline inline-flex items-center gap-1 font-bold"
+                  >
+                    Open Firebase Auth Providers &rarr;
+                  </a>
                 </div>
               </div>
             )}
@@ -8633,6 +9040,8 @@ const paginatedData = useMemo(() => {
       />
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 md:pt-10 pb-4 md:pb-8 relative z-10">
         <PartnersSection />
+
+        <UpcomingTrailersSection sheetTrailersData={sheetUpcomingTrailers} />
 
         {/* PROMO SECTION */}
         <section className="mb-16 w-full">
