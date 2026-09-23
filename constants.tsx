@@ -791,7 +791,7 @@ export const CATEGORIES: CategoryData[] = [
         },
     ],
     nexaBusinessLinks: [
-        { label: 'LinkTree', url: 'https://linktr.ee/nexa1337', description: 'Digital products, Print On demand & More' }
+        { label: 'LinkTree', url: 'https://nexa1337vcard.vercel.app/', description: 'Digital products, Print On demand & More' }
     ]
   }
 ];
