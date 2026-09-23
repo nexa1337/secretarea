@@ -28,7 +28,7 @@ import {
   SiLaravel, SiFlutter, SiDart, SiMysql, SiHackthebox, SiKalilinux, SiWireshark,
   SiMetasploit, SiNotion, SiShopify, SiGoogleanalytics,
   SiLangchain, SiHuggingface, SiYcombinator, SiUdemy, SiPortswigger,
-  SiTryhackme, SiCisco, SiKick, SiN8N, SiWoocommerce, SiZapier
+  SiTryhackme, SiCisco, SiKick, SiN8N, SiWoocommerce, SiZapier, SiImdb
 } from 'react-icons/si';
 
 import { FaLandmark } from 'react-icons/fa6';
@@ -102,6 +102,9 @@ const ICON_MAP: Record<string, React.ElementType> = {
   BookOpen: TbBook,
   Monitor: TbDeviceDesktop,
   Youtube: TbBrandYoutube,
+  Imdb: SiImdb,
+  IMDB: SiImdb,
+  imdb: SiImdb,
   Reddit: TbBrandReddit,
   BrandReddit: TbBrandReddit,
   Instagram: TbBrandInstagram,

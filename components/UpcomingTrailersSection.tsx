@@ -18,6 +18,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { TbBrandYoutube } from 'react-icons/tb';
+import { SiImdb } from 'react-icons/si';
 import { useLanguage } from '../src/contexts/LanguageContext';
 
 export interface TrailerItem {
@@ -71,7 +72,22 @@ export interface UpcomingGameTrailer {
   };
   trailers: TrailerItem[];
   isFeatured?: boolean;
+  imdbUrl?: string;
 }
+
+// Automatically resolves or creates the IMDb game lookup URL
+export const getGameImdbUrl = (game: UpcomingGameTrailer): string => {
+  if (game.imdbUrl && game.imdbUrl.trim()) {
+    return game.imdbUrl.trim();
+  }
+  // Title detection for IMDb lookup
+  const rawTitle = game.title?.en || game.title?.fr || game.title?.es || game.title?.ar || '';
+  // Clean special notes or parentheses that might hinder exact title matching
+  const cleanTitle = rawTitle
+    .replace(/\s*\((?:upcoming|coming soon|leak|trailer|rumor|\d{4})\)/gi, '')
+    .trim();
+  return `https://www.imdb.com/find/?q=${encodeURIComponent(cleanTitle || rawTitle)}`;
+};
 
 // Robust YouTube Video ID extractor supporting all formats
 export const extractYouTubeId = (urlOrId: string): string => {
@@ -745,6 +761,8 @@ export const parseGoogleSheetsTrailers = (rawData: any[]): UpcomingGameTrailer[]
     else if (lowerGenre.includes('sci') || lowerGenre.includes('space') || lowerGenre.includes('horror')) categoryKey = 'scifi';
     else if (lowerGenre.includes('advent')) categoryKey = 'adventure';
 
+    const imdbLink = getVal('imdb', 'imdblink', 'imdburl', 'imdb_url', 'imdb_link');
+
     return {
       id: `gs-trailer-${idx}`,
       title: { en: titleEn, fr: titleFr, es: titleEs, ar: titleAr },
@@ -756,7 +774,8 @@ export const parseGoogleSheetsTrailers = (rawData: any[]): UpcomingGameTrailer[]
       coverImage: cover,
       description: { en: descEn, fr: descFr, es: descEs, ar: descAr },
       tag: { en: tagEn, fr: tagFr, es: tagEs, ar: tagAr },
-      trailers: parsedTrailers
+      trailers: parsedTrailers,
+      imdbUrl: imdbLink || undefined
     };
   });
 };
@@ -1036,7 +1055,7 @@ export const UpcomingTrailersSection: React.FC<UpcomingTrailersSectionProps> = (
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 sm:h-2.5 w-2 sm:w-2.5 bg-red-500"></span>
               </span>
-              <span className="text-slate-700 dark:text-slate-300 font-bold">{t('Official Trailers & Reveals')}</span>
+              <span className="text-slate-700 dark:text-slate-300 font-bold">{t('Official Reveals Trailers & GamePlay')}</span>
               <span aria-hidden="true" className="opacity-40">·</span>
               <span className="text-purple-600 dark:text-purple-400 font-bold">
                 {allGames.length} {isArabic ? 'ألعاب مرتقبة' : t('upcoming titles')}
@@ -1251,7 +1270,7 @@ export const UpcomingTrailersSection: React.FC<UpcomingTrailersSectionProps> = (
                 </AnimatePresence>
 
                 {/* Primary Action & Additional Trailers Strip */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 shrink-0">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 shrink-0 flex-wrap">
                   {/* Main Play Button for Trailer 1 */}
                   <button
                     onClick={() => handleOpenCinema(currentFeaturedGame, 0)}
@@ -1260,6 +1279,19 @@ export const UpcomingTrailersSection: React.FC<UpcomingTrailersSectionProps> = (
                     <Play size={17} fill="currentColor" />
                     <span>{t('Watch Trailer')}</span>
                   </button>
+
+                  {/* IMDb Game Profile Button */}
+                  <a
+                    href={getGameImdbUrl(currentFeaturedGame)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 sm:px-5 py-3 sm:py-3.5 rounded-xl bg-[#F5C518]/15 hover:bg-[#F5C518] hover:text-black active:scale-95 text-[#F5C518] font-bold text-xs sm:text-sm tracking-wide border border-[#F5C518]/30 hover:border-[#F5C518] shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer shrink-0"
+                    title={t('View in IMDB')}
+                    aria-label={t('View in IMDB')}
+                  >
+                    <SiImdb size={18} />
+                    <span>{t('View in IMDB')}</span>
+                  </a>
 
                   {/* Multi-trailer switcher if available */}
                   {currentFeaturedGame.trailers.length > 1 && (
@@ -1455,21 +1487,17 @@ export const UpcomingTrailersSection: React.FC<UpcomingTrailersSectionProps> = (
                         <span>{t('Watch Trailer')}</span>
                       </button>
 
-                      {/* Spotlight Sync Button */}
-                      <button
-                        onClick={() => {
-                          setFeaturedIndex(gIdx);
-                          window.scrollTo({ top: cardsScrollRef.current ? cardsScrollRef.current.offsetTop - 550 : 0, behavior: 'smooth' });
-                        }}
-                        className={`px-3 py-2 text-xs font-semibold rounded-xl border transition-colors shrink-0 ${
-                          isSelectedInSpotlight
-                            ? 'bg-purple-600 text-white border-purple-600'
-                            : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
-                        }`}
-                        title={t('View in Spotlight')}
+                      {/* View in IMDB Button */}
+                      <a
+                        href={getGameImdbUrl(game)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-2.5 py-2 text-xs font-bold rounded-xl border transition-all shrink-0 flex items-center justify-center bg-[#F5C518]/10 hover:bg-[#F5C518] hover:text-black dark:bg-[#F5C518]/15 dark:hover:bg-[#F5C518] dark:hover:text-black text-[#E2B616] dark:text-[#F5C518] border-[#F5C518]/30 hover:border-[#F5C518] shadow-xs active:scale-95 group/imdb cursor-pointer"
+                        title={t('View in IMDB')}
+                        aria-label={t('View in IMDB')}
                       >
-                        <Flame size={14} className={isSelectedInSpotlight ? 'text-amber-300' : 'text-purple-500'} />
-                      </button>
+                        <SiImdb size={18} className="transition-transform group-hover/imdb:scale-110" />
+                      </a>
 
                       {/* External YouTube Link */}
                       {mainTrailer?.url && (
@@ -1558,6 +1586,17 @@ export const UpcomingTrailersSection: React.FC<UpcomingTrailersSectionProps> = (
                         </>
                       )}
                     </button>
+
+                    <a
+                      href={getGameImdbUrl(activeCinemaGame)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2 rounded-lg bg-slate-800 hover:bg-[#F5C518]/20 text-slate-200 hover:text-[#F5C518] transition-colors flex items-center justify-center"
+                      title={t('View in IMDB')}
+                      aria-label={t('View in IMDB')}
+                    >
+                      <SiImdb size={18} />
+                    </a>
 
                     <a
                       href={activeCinemaGame.trailers[activeTrailerIndex]?.url}
