@@ -8137,9 +8137,34 @@ const paginatedData = useMemo(() => {
     setDiscordSetupNotice(null);
     setGithubSetupNotice(null);
 
-    // 1. Check for Direct Discord OAuth URL from server first
+    const clientRedirectUri = `${window.location.origin}/auth/discord/callback`;
+    const clientId = (process.env.DISCORD_CLIENT_ID || (import.meta as any).env?.VITE_DISCORD_CLIENT_ID || '').trim();
+
+    // 1. If DISCORD_CLIENT_ID is bundled/configured, open Discord authorization immediately!
+    if (clientId) {
+      const state = btoa(JSON.stringify({ redirectUri: clientRedirectUri, ts: Date.now() }))
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      const params = new URLSearchParams({
+        client_id: clientId,
+        redirect_uri: clientRedirectUri,
+        response_type: 'code',
+        scope: 'identify email',
+        state: state,
+      });
+      const authUrl = `https://discord.com/oauth2/authorize?${params.toString()}`;
+      const authPopup = window.open(
+        authUrl,
+        'discord_oauth',
+        'width=580,height=720,menubar=no,toolbar=no'
+      );
+      if (!authPopup) {
+        setDiscordSetupNotice('Pop-up blocked! Please allow pop-ups for this site to log in with Discord.');
+      }
+      return;
+    }
+
+    // 2. Otherwise try requesting Discord auth URL from backend API (/api/auth/discord/url)
     try {
-      const clientRedirectUri = `${window.location.origin}/auth/discord/callback`;
       const res = await fetch(`/api/auth/discord/url?redirect_uri=${encodeURIComponent(clientRedirectUri)}`);
       if (res.ok) {
         const data = await res.json();
@@ -8159,7 +8184,7 @@ const paginatedData = useMemo(() => {
       // Continue to Firebase Auth
     }
 
-    // 2. Fall back to Firebase Auth provider
+    // 3. Fall back to Firebase Auth provider
     try {
       const cred = await signInWithDiscord();
       if (cred?.user) {
