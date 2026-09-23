@@ -194,15 +194,13 @@ const LoginModal = ({
   const [authDomainError, setAuthDomainError] = useState<string | null>(null);
   const [discordSetupNotice, setDiscordSetupNotice] = useState<string | null>(null);
   const [githubSetupNotice, setGithubSetupNotice] = useState<string | null>(null);
-  const [instantDiscordName, setInstantDiscordName] = useState('');
   const [copied, setCopied] = useState(false);
   const [copiedDiscord, setCopiedDiscord] = useState(false);
-  const [copiedShared, setCopiedShared] = useState(false);
   const [copiedVercel, setCopiedVercel] = useState(false);
+  const [instantDiscordName, setInstantDiscordName] = useState('secretarea1337');
   const navigate = useNavigate();
 
   const handleInstantDiscordLogin = async (customTag?: string) => {
-    setLoadingProvider('discord');
     try {
       const tag = (customTag || instantDiscordName || 'DiscordGamer').trim();
       const cleanUsername = tag.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase() || 'gamer';
@@ -228,7 +226,7 @@ const LoginModal = ({
         joinedAt: new Date().toISOString()
       };
 
-      await ensureUserProfile(profileObj).catch(() => {});
+      ensureUserProfile(profileObj as any).catch(() => {});
       localStorage.setItem('secret_area_unlocked', 'true');
       localStorage.removeItem('nexa_guest_mode');
       localStorage.setItem('nexa_user_profile', JSON.stringify(profileObj));
@@ -238,8 +236,6 @@ const LoginModal = ({
       navigate('/profile');
     } catch (e) {
       console.error('Instant discord login error:', e);
-    } finally {
-      setLoadingProvider(null);
     }
   };
 
@@ -314,9 +310,35 @@ const LoginModal = ({
     setDiscordSetupNotice(null);
     setGithubSetupNotice(null);
 
-    // 1. Check for Direct Discord OAuth URL from server first
+    const clientRedirectUri = `${window.location.origin}/auth/discord/callback`;
+    const clientId = (process.env.DISCORD_CLIENT_ID || (import.meta as any).env?.VITE_DISCORD_CLIENT_ID || '').trim();
+
+    // 1. If DISCORD_CLIENT_ID is bundled/configured, open Discord authorization immediately!
+    if (clientId) {
+      const state = btoa(JSON.stringify({ redirectUri: clientRedirectUri, ts: Date.now() }))
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      const params = new URLSearchParams({
+        client_id: clientId,
+        redirect_uri: clientRedirectUri,
+        response_type: 'code',
+        scope: 'identify email',
+        state: state,
+      });
+      const authUrl = `https://discord.com/oauth2/authorize?${params.toString()}`;
+      const authPopup = window.open(
+        authUrl,
+        'discord_oauth',
+        'width=580,height=720,menubar=no,toolbar=no'
+      );
+      if (!authPopup) {
+        setDiscordSetupNotice('Pop-up blocked! Please allow pop-ups for this site to log in with Discord.');
+      }
+      setLoadingProvider(null);
+      return;
+    }
+
+    // 2. Otherwise try requesting Discord auth URL from backend API (/api/auth/discord/url)
     try {
-      const clientRedirectUri = `${window.location.origin}/auth/discord/callback`;
       const res = await fetch(`/api/auth/discord/url?redirect_uri=${encodeURIComponent(clientRedirectUri)}`);
       if (res.ok) {
         const data = await res.json();
@@ -337,7 +359,7 @@ const LoginModal = ({
       // Continue to Firebase Auth
     }
 
-    // 2. Fall back to Firebase Auth provider
+    // 3. Fall back to Firebase Auth provider
     try {
       const cred = await signInWithDiscord();
       if (cred?.user) {
@@ -525,128 +547,77 @@ const LoginModal = ({
           )}
 
           {discordSetupNotice && (
-            <div className="mt-4 p-3.5 rounded-2xl bg-[#5865F2]/10 border border-[#5865F2]/30 text-slate-200 text-xs space-y-3 text-start">
+            <div className="mt-4 p-3.5 rounded-2xl bg-[#5865F2]/10 border border-[#5865F2]/30 text-slate-200 text-xs space-y-2.5 text-start">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 font-bold text-[#7289DA] dark:text-[#99AAB5]">
                   <Icon name="Discord" size={16} />
                   <span>Discord OAuth Configuration</span>
                 </div>
-                <span className="text-[10px] bg-[#5865F2]/20 text-[#5865F2] dark:text-[#7289DA] px-2 py-0.5 rounded-full font-bold">
-                  Setup Info
-                </span>
+                <button
+                  type="button"
+                  onClick={() => setDiscordSetupNotice(null)}
+                  className="text-slate-400 hover:text-white p-1 rounded transition-colors cursor-pointer text-xs"
+                >
+                  ✕
+                </button>
               </div>
 
-              {/* Instant Test / Preview Sign-In Action */}
-              <div className="p-2.5 rounded-xl bg-[#5865F2]/15 border border-[#5865F2]/30 space-y-2">
+              {/* Instant Discord Sign-In Option */}
+              <div className="p-2.5 rounded-xl bg-[#5865F2]/15 border border-[#5865F2]/30 space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-white flex items-center gap-1">
-                    <span>⚡ Instant Discord Sign-In</span>
-                  </span>
-                  <span className="text-[9px] text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
-                    No Setup Needed
-                  </span>
+                  <span className="text-[11px] font-bold text-white">⚡ Instant Discord Sign-In</span>
+                  <span className="text-[9px] text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">Ready Now</span>
                 </div>
-                <p className="text-[10px] text-slate-300 leading-snug">
-                  Sign in immediately with a Discord gamer profile to test and unlock SecretArea without waiting:
-                </p>
+                <p className="text-[10px] text-slate-300">Enter immediately with any Discord username:</p>
                 <div className="flex gap-1.5">
                   <input
                     type="text"
-                    placeholder="Enter gamer tag (e.g. Wolf#1337)"
+                    placeholder="Discord username"
                     value={instantDiscordName}
                     onChange={(e) => setInstantDiscordName(e.target.value)}
-                    className="flex-1 bg-black/40 border border-white/10 rounded-lg px-2.5 py-1 text-[11px] text-white placeholder-slate-500 focus:outline-none focus:border-[#5865F2]"
+                    className="flex-1 bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-[11px] text-white placeholder-slate-500 focus:outline-none focus:border-[#5865F2]"
                   />
                   <button
                     type="button"
                     onClick={() => handleInstantDiscordLogin()}
-                    disabled={loadingProvider !== null}
-                    className="px-3 py-1 bg-[#5865F2] hover:bg-[#4752c4] text-white font-bold text-xs rounded-lg shadow-sm transition-all active:scale-95 whitespace-nowrap cursor-pointer"
+                    className="px-2.5 py-1 bg-[#5865F2] hover:bg-[#4752c4] text-white font-bold text-xs rounded-lg shadow-sm transition-all active:scale-95 whitespace-nowrap cursor-pointer"
                   >
                     Instant Login
                   </button>
                 </div>
               </div>
 
-              <div className="border-t border-white/10 pt-2 space-y-2">
+              <div className="space-y-1.5 pt-1 border-t border-white/10">
                 <span className="text-[10px] uppercase font-mono tracking-wider font-bold text-slate-400 block">
-                  To Enable Live Discord Accounts:
+                  Redirect Callback URL:
                 </span>
-                <p className="text-[10px] text-slate-400 leading-relaxed">
-                  Register an application in Discord Developer Portal and add these Redirect Callback URLs:
-                </p>
                 
                 {/* Current environment domain */}
-                <div className="space-y-0.5">
-                  <span className="text-[9px] text-slate-400 font-bold">Current Environment / Development:</span>
-                  <div className="flex items-center gap-2 bg-black/50 p-1.5 rounded-lg border border-white/10 font-mono text-[10px] text-white">
-                    <span className="flex-1 truncate">
-                      {typeof window !== 'undefined' ? `${window.location.origin}/auth/discord/callback` : '/auth/discord/callback'}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText(`${window.location.origin}/auth/discord/callback`);
-                        setCopiedDiscord(true);
-                        setTimeout(() => setCopiedDiscord(false), 2000);
-                      }}
-                      className="px-2 py-0.5 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded text-[10px] transition-colors whitespace-nowrap cursor-pointer"
-                    >
-                      {copiedDiscord ? 'Copied!' : 'Copy'}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Shared Container URL */}
-                <div className="space-y-0.5">
-                  <span className="text-[9px] text-[#29aaea] font-bold">Shared / Preview URL:</span>
-                  <div className="flex items-center gap-2 bg-black/50 p-1.5 rounded-lg border border-white/10 font-mono text-[10px] text-white">
-                    <span className="flex-1 truncate">https://ais-pre-xk2phy4ebekf77ykb7awfz-4854752831.europe-west2.run.app/auth/discord/callback</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText('https://ais-pre-xk2phy4ebekf77ykb7awfz-4854752831.europe-west2.run.app/auth/discord/callback');
-                        setCopiedShared(true);
-                        setTimeout(() => setCopiedShared(false), 2000);
-                      }}
-                      className="px-2 py-0.5 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded text-[10px] transition-colors whitespace-nowrap cursor-pointer"
-                    >
-                      {copiedShared ? 'Copied!' : 'Copy'}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Vercel production domain */}
-                <div className="space-y-0.5">
-                  <span className="text-[9px] text-slate-400 font-bold">Vercel Production:</span>
-                  <div className="flex items-center gap-2 bg-black/50 p-1.5 rounded-lg border border-white/10 font-mono text-[10px] text-white">
-                    <span className="flex-1 truncate">https://secretarea.vercel.app/auth/discord/callback</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText('https://secretarea.vercel.app/auth/discord/callback');
-                        setCopiedVercel(true);
-                        setTimeout(() => setCopiedVercel(false), 2000);
-                      }}
-                      className="px-2 py-0.5 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded text-[10px] transition-colors whitespace-nowrap cursor-pointer"
-                    >
-                      {copiedVercel ? 'Copied!' : 'Copy'}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="p-2 bg-black/30 rounded-lg border border-white/5 text-[10px] text-slate-400 space-y-1">
-                  <div className="font-mono text-[9px] text-amber-300 font-bold uppercase tracking-wider">Environment Variables:</div>
-                  <div className="font-mono text-[10px] text-slate-300">DISCORD_CLIENT_ID &amp; DISCORD_CLIENT_SECRET</div>
+                <div className="flex items-center gap-2 bg-black/50 p-2 rounded-xl border border-white/10 font-mono text-[10px] text-white">
+                  <span className="flex-1 truncate">
+                    {typeof window !== 'undefined' ? `${window.location.origin}/auth/discord/callback` : 'https://secretarea.vercel.app/auth/discord/callback'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const uri = typeof window !== 'undefined' ? `${window.location.origin}/auth/discord/callback` : 'https://secretarea.vercel.app/auth/discord/callback';
+                      navigator.clipboard.writeText(uri);
+                      setCopiedDiscord(true);
+                      setTimeout(() => setCopiedDiscord(false), 2000);
+                    }}
+                    className="px-2 py-0.5 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded text-[10px] transition-colors whitespace-nowrap cursor-pointer"
+                  >
+                    {copiedDiscord ? 'Copied!' : 'Copy'}
+                  </button>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 pt-1 border-t border-white/5">
+              <div className="flex items-center justify-between pt-1 text-[10px]">
                 <a
                   href="https://discord.com/developers/applications"
                   target="_blank"
                   rel="noreferrer"
-                  className="text-[10px] font-bold text-[#5865F2] hover:underline flex items-center gap-1"
+                  className="font-bold text-[#5865F2] hover:underline flex items-center gap-1"
                 >
                   <span>Open Discord Developer Portal ↗</span>
                 </a>
