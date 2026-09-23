@@ -6239,11 +6239,48 @@ const SecretArea: React.FC = () => {
       setShowMathGame(false);
     };
 
+    const handleAuthMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'DISCORD_AUTH_SUCCESS' && event.data.user) {
+        const discordUser = event.data.user;
+        const profileObj = {
+          displayName: discordUser.global_name || discordUser.username,
+          username: discordUser.username,
+          email: discordUser.email || `${discordUser.username}@discord.com`,
+          photoURL: discordUser.avatar 
+            ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
+            : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
+          provider: 'discord',
+          loginMethod: 'discord',
+          id: discordUser.id,
+          uid: `discord_${discordUser.id}`,
+          role: 'user',
+          status: 'active',
+          joinedAt: new Date().toISOString()
+        };
+
+        import('../src/services/userService').then(({ ensureUserProfile }) => {
+          ensureUserProfile(profileObj).catch(() => {});
+        });
+        localStorage.setItem('secret_area_unlocked', 'true');
+        localStorage.removeItem('nexa_guest_mode');
+        localStorage.setItem('nexa_user_profile', JSON.stringify(profileObj));
+        localStorage.setItem('nexa_discord_user', JSON.stringify(discordUser));
+        setIsUnlocked(true);
+        setIsGuestMode(false);
+        setShowHackerLoader(true);
+        setHackerProgress(0);
+        window.dispatchEvent(new Event('authChange'));
+        fetchData();
+      }
+    };
+
     window.addEventListener('authChange', handleAuthChange);
     window.addEventListener('return-to-terminal', handleReturnToTerminal);
+    window.addEventListener('message', handleAuthMessage);
     return () => {
       window.removeEventListener('authChange', handleAuthChange);
       window.removeEventListener('return-to-terminal', handleReturnToTerminal);
+      window.removeEventListener('message', handleAuthMessage);
     };
   }, []);
 
@@ -8586,25 +8623,37 @@ const paginatedData = useMemo(() => {
                     <Icon name="Discord" size={16} />
                     <span>Discord OAuth Configuration</span>
                   </div>
-                  <span className="text-[10px] bg-[#5865F2]/20 text-[#7289DA] px-2 py-0.5 rounded-full font-bold">
-                    Setup Info
-                  </span>
+                  <button 
+                    type="button" 
+                    onClick={() => setDiscordSetupNotice(null)}
+                    className="text-slate-400 hover:text-white p-1 rounded transition-colors cursor-pointer text-xs"
+                    title="Close"
+                  >
+                    ✕
+                  </button>
                 </div>
 
-                {/* Instant Discord Sign-In Button */}
+                <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-200 text-[11px] leading-relaxed">
+                  <span className="font-bold text-amber-400">Why are you seeing this on Vercel?</span>
+                  <p className="mt-1 text-slate-300">
+                    Discord OAuth requires your app credentials and redirect URL to match. To make it work in 1 click or connect your official bot:
+                  </p>
+                </div>
+
+                {/* Option 1: Instant Discord Sign-In (Works without keys) */}
                 <div className="p-2.5 rounded-lg bg-[#5865F2]/15 border border-[#5865F2]/30 space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-white">⚡ Instant Discord Sign-In</span>
-                    <span className="text-[9px] text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">Preview Mode</span>
+                    <span className="text-[11px] font-bold text-white">⚡ Option 1: Instant Discord Sign-In</span>
+                    <span className="text-[9px] text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">Ready Now</span>
                   </div>
-                  <p className="text-[10px] text-slate-300">Enter directly with a Discord profile to test without configuring keys:</p>
+                  <p className="text-[10px] text-slate-300">Enter immediately with any Discord username (no API keys needed):</p>
                   <div className="flex gap-1.5">
                     <input
                       type="text"
                       placeholder="Gamer tag (e.g. Wolf#1337)"
                       value={instantDiscordName}
                       onChange={(e) => setInstantDiscordName(e.target.value)}
-                      className="flex-1 bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-[11px] text-white placeholder-slate-500 focus:outline-none focus:border-[#5865F2]"
+                      className="flex-1 bg-black/40 border border-white/10 rounded-lg px-2.5 py-1 text-[11px] text-white placeholder-slate-500 focus:outline-none focus:border-[#5865F2]"
                     />
                     <button
                       type="button"
@@ -8616,66 +8665,32 @@ const paginatedData = useMemo(() => {
                   </div>
                 </div>
 
+                {/* Option 2: Setup Discord Keys on Vercel */}
                 <div className="space-y-1.5 pt-1 border-t border-white/10">
                   <span className="text-[10px] uppercase font-mono tracking-wider font-bold text-slate-400 block">
-                    Redirect URLs for Discord Developer Portal:
+                    ⚡ Option 2: Official Discord Login on Vercel:
                   </span>
+                  <p className="text-[10px] text-slate-400 leading-normal">
+                    Add <code className="text-white bg-black/40 px-1 py-0.5 rounded">DISCORD_CLIENT_ID</code> and <code className="text-white bg-black/40 px-1 py-0.5 rounded">DISCORD_CLIENT_SECRET</code> in your <strong>Vercel Project Settings &rarr; Environment Variables</strong>, then paste this Redirect URI into your Discord App:
+                  </p>
                   
                   {/* Current Environment URL */}
-                  <div className="space-y-0.5">
-                    <span className="text-[9px] text-slate-400 font-bold">Current Environment:</span>
+                  <div className="space-y-0.5 pt-1">
                     <div className="flex items-center gap-2 bg-black/50 p-1.5 rounded-lg border border-white/10 font-mono text-[10px] text-white">
                       <span className="flex-1 truncate">
-                        {typeof window !== 'undefined' ? `${window.location.origin}/auth/discord/callback` : '/auth/discord/callback'}
+                        {typeof window !== 'undefined' ? `${window.location.origin}/auth/discord/callback` : 'https://secretarea.vercel.app/auth/discord/callback'}
                       </span>
                       <button
                         type="button"
                         onClick={() => {
-                          navigator.clipboard.writeText(`${window.location.origin}/auth/discord/callback`);
+                          const uri = typeof window !== 'undefined' ? `${window.location.origin}/auth/discord/callback` : 'https://secretarea.vercel.app/auth/discord/callback';
+                          navigator.clipboard.writeText(uri);
                           setCopiedDiscord(true);
                           setTimeout(() => setCopiedDiscord(false), 2000);
                         }}
-                        className="px-2 py-0.5 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded text-[10px] transition-colors whitespace-nowrap cursor-pointer"
+                        className="px-2.5 py-0.5 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded text-[10px] transition-colors whitespace-nowrap cursor-pointer"
                       >
                         {copiedDiscord ? 'Copied!' : 'Copy'}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Shared Container URL */}
-                  <div className="space-y-0.5">
-                    <span className="text-[9px] text-[#29aaea] font-bold">Shared App URL:</span>
-                    <div className="flex items-center gap-2 bg-black/50 p-1.5 rounded-lg border border-white/10 font-mono text-[10px] text-white">
-                      <span className="flex-1 truncate">https://ais-pre-xk2phy4ebekf77ykb7awfz-4854752831.europe-west2.run.app/auth/discord/callback</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigator.clipboard.writeText('https://ais-pre-xk2phy4ebekf77ykb7awfz-4854752831.europe-west2.run.app/auth/discord/callback');
-                          setCopiedShared(true);
-                          setTimeout(() => setCopiedShared(false), 2000);
-                        }}
-                        className="px-2 py-0.5 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded text-[10px] transition-colors whitespace-nowrap cursor-pointer"
-                      >
-                        {copiedShared ? 'Copied!' : 'Copy'}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Vercel production domain */}
-                  <div className="space-y-0.5">
-                    <span className="text-[9px] text-slate-400 font-bold">Vercel Production:</span>
-                    <div className="flex items-center gap-2 bg-black/50 p-1.5 rounded-lg border border-white/10 font-mono text-[10px] text-white">
-                      <span className="flex-1 truncate">https://secretarea.vercel.app/auth/discord/callback</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigator.clipboard.writeText('https://secretarea.vercel.app/auth/discord/callback');
-                          setCopiedVercel(true);
-                          setTimeout(() => setCopiedVercel(false), 2000);
-                        }}
-                        className="px-2 py-0.5 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded text-[10px] transition-colors whitespace-nowrap cursor-pointer"
-                      >
-                        {copiedVercel ? 'Copied!' : 'Copy'}
                       </button>
                     </div>
                   </div>
@@ -8691,12 +8706,12 @@ const paginatedData = useMemo(() => {
                     Open Discord Developer Portal &rarr;
                   </a>
                   <a
-                    href="https://console.firebase.google.com/project/secretarea-1337/authentication/providers"
+                    href="https://vercel.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-400 hover:underline inline-flex items-center gap-1 font-bold"
+                    className="text-white hover:underline inline-flex items-center gap-1 font-bold"
                   >
-                    Open Firebase Auth Providers &rarr;
+                    Open Vercel Dashboard &rarr;
                   </a>
                 </div>
               </div>
